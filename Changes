@@ -1,0 +1,5 @@
+Revision history for Perl extension AnyEvent.
+
+0.01  Tue Sep 21 18:12:09 CEST 2004
+	- original version; copied from Convert::Scalar.
+
