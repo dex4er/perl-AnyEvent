@@ -2,6 +2,9 @@ Revision history for Perl extension AnyEvent.
 
 0.2   Thu Dec  1 22:18:49 CET 2005
 	- check wether a valid method was called, to avoid endless loops.
+        - move condvars into their own class (cleaner, safer).
+        - don't die when some modules are not available.
+        - Tk is too broken to allow for words. Will work once Tk works.
 
 0.1   Thu Dec  1 19:44:57 CET 2005
 	- spiced up and cleaned up for release.

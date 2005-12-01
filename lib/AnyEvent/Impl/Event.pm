@@ -28,28 +28,26 @@ sub timer {
 sub cancel {
    my ($self) = @_;
 
-   return unless HASH:: eq ref $self;
-
    $$self->cancel;
 }
 
 sub DESTROY {
    my ($self) = @_;
 
-   $$self->cancel;
+   $self->cancel;
 }
 
 sub condvar {
    my $class = shift;
 
-   bless \my $x, $class
+   bless \my $x, AnyEvent::Impl::Event::CondVar::
 }
 
-sub broadcast {
-   ${$_[0]}++
+sub AnyEvent::Impl::Event::CondVar::broadcast {
+   ${$_[0]}++;
 }
 
-sub wait {
+sub AnyEvent::Impl::Event::CondVar::wait {
    Event::one_event() while !${$_[0]};
 }
 

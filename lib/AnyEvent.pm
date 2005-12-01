@@ -80,9 +80,7 @@ sub AUTOLOAD {
       for (@models) {
          my ($model, $package) = @$_;
          if (scalar keys %{ *{"$package\::"} }) {
-            eval "require AnyEvent::Impl::$model"
-               or die;
-
+            eval "require AnyEvent::Impl::$model";
             last if $MODEL;
          }
       }
@@ -92,9 +90,7 @@ sub AUTOLOAD {
 
          for (@models) {
             my ($model, $package) = @$_;
-            eval "require AnyEvent::Impl::$model"
-               or die;
-
+            eval "require AnyEvent::Impl::$model";
             last if $MODEL;
          }
 

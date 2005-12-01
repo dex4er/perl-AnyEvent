@@ -13,7 +13,7 @@ my %RWE = (
 sub io {
    my ($class, %arg) = @_;
    
-   my $self = \%arg, $class;
+   my $self = bless \%arg, $class;
    my $rcb = \$self->{cb};
 
    my @cond;
@@ -32,7 +32,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   my $self = \%arg, $class;
+   my $self = bless \%arg, $class;
    my $cb = $self->{cb};
 
    $self->{source} = add Glib::Timeout $self->{after} * 1000, sub {
@@ -45,8 +45,6 @@ sub timer {
 
 sub cancel {
    my ($self) = @_;
-
-   return unless HASH:: eq ref $self;
 
    remove Glib::Source delete $self->{source} if $self->{source};
    $self->{cb} = undef;
@@ -62,14 +60,14 @@ sub DESTROY {
 sub condvar {
    my $class = shift;
 
-   bless \my $x, $class;
+   bless \my $x, AnyEvent::Impl::Glib::CondVar::
 }
 
-sub broadcast {
-   ${$_[0]}++
+sub AnyEvent::Impl::Glib::CondVar::broadcast {
+   ${$_[0]}++;
 }
 
-sub wait {
+sub AnyEvent::Impl::Glib::CondVar::wait {
    $maincontext->iteration (1) while !${$_[0]};
 }
 

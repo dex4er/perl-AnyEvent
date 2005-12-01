@@ -8,12 +8,12 @@ $mw->withdraw;
 sub io {
    my ($class, %arg) = @_;
    
-   my $self = \%arg, $class;
-   my $rcb = \$self->{cb};
+   my $self = bless \%arg, $class;
+   my $cb = $self->{cb};
 
-   $mw->fileevent ($self->{fh}, readable => sub { $$rcb->("r") })
+   $mw->fileevent ($self->{fh}, readable => sub { $cb->("r") })
       if $self->{poll} =~ /r/i;
-   $mw->fileevent ($self->{fh}, writable => sub { $$rcb->("w") })
+   $mw->fileevent ($self->{fh}, writable => sub { $cb->("w") })
       if $self->{poll} =~ /w/i;
 
    $self
@@ -22,7 +22,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   my $self = \%arg, $class;
+   my $self = bless \%arg, $class;
    my $rcb = \$self->{cb};
 
    $mw->after ($self->{after} * 1000, sub {
@@ -34,8 +34,6 @@ sub timer {
 
 sub cancel {
    my ($self) = @_;
-
-   return unless HASH:: eq ref $self;
 
    $mw->fileevent ($self->{fh}, readable => "")
       if $self->{poll} =~ /r/i;
@@ -55,14 +53,14 @@ sub DESTROY {
 sub condvar {
    my $class = shift;
 
-   bless \my $x, $class
+   bless \my $x, AnyEvent::Impl::Tk::CondVar;
 }
 
-sub broadcast {
-   ${$_[0]}++
+sub AnyEvent::Impl::Tk::CondVar::broadcast {
+   ${$_[0]}++;
 }
 
-sub wait {
+sub AnyEvent::Impl::Tk::CondVar::wait {
    Tk::DoOneEvent (0) while !${$_[0]};
 }
 
