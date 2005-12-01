@@ -2,15 +2,16 @@ package AnyEvent::Impl::Coro;
 
 use base AnyEvent::Impl::Event;
 
-use Coro;
-use Coro::Event;
-use Coro::Signal;
+use Coro::Event ();
+use Coro::Signal ();
 
 #############################################################################
 
-sub new_signal {
-   new Coro::Signal;
+sub condvar {
+   new Coro::Signal
 }
 
-1;
+$AnyEvent::MODEL = __PACKAGE__;
+
+1
 

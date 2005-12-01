@@ -2,67 +2,71 @@ package AnyEvent::Impl::Tk;
 
 use Tk ();
 
-my $mw;
+my $mw = new MainWindow;
+$mw->withdraw;
 
-sub new_from_fh {
-   my ($class, $fh) = @_;
-
-   bless { fh => $fh }, $class;
-}
-
-sub cb {
-   my ($self, $cb) = @_;
-   $self->{cb} = $cb;
-   $self;
-}
-
-sub poll {
-   my ($self, $r, $w, $e) = @_;
-
-   # we ignore $e, it's impossible
+sub io {
+   my ($class, %arg) = @_;
    
-   my $cb = \$self->{cb}; # avoid $self-reference
+   my $self = \%arg, $class;
+   my $rcb = \$self->{cb};
 
-   Tk::Event::IO::fileevent undef, $self->{fh}, readable => ""; # a mess!
-   Tk::Event::IO::fileevent undef, $self->{fh}, writable => ""; # even more so!
+   $mw->fileevent ($self->{fh}, readable => sub { $$rcb->("r") })
+      if $self->{poll} =~ /r/i;
+   $mw->fileevent ($self->{fh}, writable => sub { $$rcb->("w") })
+      if $self->{poll} =~ /w/i;
 
-   Tk::Event::IO::fileevent undef, $self->{fh}, readable => sub { $$cb->() } if $r;
-   Tk::Event::IO::fileevent undef, $self->{fh}, writable => sub { $$cb->() } if $w;
+   $self
+}
 
-   $self;
+sub timer {
+   my ($class, %arg) = @_;
+   
+   my $self = \%arg, $class;
+   my $rcb = \$self->{cb};
+
+   $mw->after ($self->{after} * 1000, sub {
+      $$rcb->() if $$rcb;
+   });
+
+   $self
+}
+
+sub cancel {
+   my ($self) = @_;
+
+   return unless HASH:: eq ref $self;
+
+   $mw->fileevent ($self->{fh}, readable => "")
+      if $self->{poll} =~ /r/i;
+   $mw->fileevent ($self->{fh}, writable => "")
+      if $self->{poll} =~ /w/i;
+
+   undef $self->{cb};
+   delete $self->{cb};
 }
 
 sub DESTROY {
    my ($self) = @_;
 
-   if ($self->{fh}) {
-      Tk::Event::IO::fileevent undef, $self->{fh}, readable => "";
-      Tk::Event::IO::fileevent undef, $self->{fh}, writable => "";
-   }
-
-   undef $mw;
+   $self->cancel;
 }
 
-#############
-
-sub new_signal {
+sub condvar {
    my $class = shift;
 
-   bless \my $x, $class;
+   bless \my $x, $class
 }
 
-sub send {
-   ${$_[0]}++;
+sub broadcast {
+   ${$_[0]}++
 }
 
 sub wait {
-   unless ($mw) {
-      $mw = new MainWindow;
-      $mw->withdraw;
-   }
-
    Tk::DoOneEvent (0) while !${$_[0]};
 }
 
-1;
+$AnyEvent::MODEL = __PACKAGE__;
+
+1
 

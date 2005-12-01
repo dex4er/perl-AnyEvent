@@ -2,29 +2,35 @@ package AnyEvent::Impl::Event;
 
 use Event ();
 
-sub new_from_fh {
-   my ($class, $fh) = @_;
+sub io {
+   my ($class, %arg) = @_;
+   $arg{fd} = delete $arg{fh};
+   my $rcb = \$arg{cb};
    bless \(my $x = Event->io (
-         fd   => $fh,
-         poll => 'e',
-         cb   => sub { die "no callback set for watcher" },
-      )), $class;
+      %arg,
+      cb => sub {
+         $$rcb->($_[0]->got . "")
+      },
+   )), $class
 }
 
-sub cb {
-   my ($self, $cb) = @_;
-   $$self->cb ($cb);
-   $self;
+sub timer {
+   my ($class, %arg) = @_;
+   my $rcb = \$arg{cb};
+   bless \(my $x = Event->timer (
+      %arg,
+      cb => sub {
+         $$rcb->();
+      },
+   )), $class
 }
 
-sub poll {
-   my ($self, $r, $w, $e) = @_;
-   $$self->poll (
-     ($r ? "r" : "") .
-     ($w ? "w" : "") .
-     ($e ? "e" : "")
-   );
-   $self;
+sub cancel {
+   my ($self) = @_;
+
+   return unless HASH:: eq ref $self;
+
+   $$self->cancel;
 }
 
 sub DESTROY {
@@ -33,21 +39,21 @@ sub DESTROY {
    $$self->cancel;
 }
 
-#############
-
-sub new_signal {
+sub condvar {
    my $class = shift;
 
-   bless \my $x, $class;
+   bless \my $x, $class
 }
 
-sub send {
-   # nop
+sub broadcast {
+   ${$_[0]}++
 }
 
 sub wait {
-   Event::one_event();
+   Event::one_event() while !${$_[0]};
 }
 
-1;
+$AnyEvent::MODEL = __PACKAGE__;
+
+1
 
