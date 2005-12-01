@@ -1,0 +1,77 @@
+NAME
+    AnyEvent - provide framework for multiple event loops
+
+    Event, Coro, Glib, Tk - various supported event loops
+
+SYNOPSIS
+    use AnyEvent;
+
+       my $w = AnyEvent->timer (fh => ..., poll => "[rw]+", cb => sub {
+          my ($poll_got) = @_;
+          ...
+       });
+       my $w = AnyEvent->io (after => $seconds, cb => sub {
+          ...
+       });
+
+       # watchers get canceled whenever $w is destroyed
+       # only one watcher per $fh and $poll type is allowed
+       # (i.e. on a socket you cna have one r + one w or one rw
+       # watcher, not any more.
+       # timers can only be used once
+
+       my $w = AnyEvent->condvar; # kind of main loop replacement
+       # can only be used once
+       $w->wait; # enters main loop till $condvar gets ->send
+       $w->broadcast; # wake up waiting and future wait's
+
+DESCRIPTION
+    AnyEvent provides an identical interface to multiple event loops. This
+    allows module authors to utilizy an event loop without forcing module
+    users to use the same event loop (as only a single event loop can
+    coexist peacefully at any one time).
+
+    The interface itself is vaguely similar but not identical to the Event
+    module.
+
+    On the first call of any method, the module tries to detect the
+    currently loaded event loop by probing wether any of the following
+    modules is loaded: Coro::Event, Event, Glib, Tk. The first one found is
+    used. If none is found, the module tries to load these modules in the
+    order given. The first one that could be successfully loaded will be
+    used. If still none could be found, it will issue an error.
+
+EXAMPLE
+    The following program uses an io watcher to read data from stdin, a
+    timer to display a message once per second, and a condvar to exit the
+    program when the user enters quit:
+
+       use AnyEvent;
+
+       my $cv = AnyEvent->condvar;
+
+       my $io_watcher = AnyEvent->io (fh => \*STDIN, poll => 'r', cb => sub {
+          warn "io event <$_[0]>\n";   # will always output <r>
+          chomp (my $input = <STDIN>); # read a line
+          warn "read: $input\n";       # output what has been read
+          $cv->broadcast if $input =~ /^q/i; # quit program if /^q/i
+       });
+
+       my $time_watcher; # can only be used once
+
+       sub new_timer {
+          $timer = AnyEvent->timer (after => 1, cb => sub {
+             warn "timeout\n"; # print 'timeout' about every second
+             &new_timer; # and restart the time
+          });
+       }
+
+       new_timer; # create first timer
+
+       $cv->wait; # wait until user enters /^q/i
+
+SEE ALSO
+    Coro::Event, Coro, Event, Glib::Event, Glib, AnyEvent::Impl::Coro,
+    AnyEvent::Impl::Event, AnyEvent::Impl::Glib, AnyEvent::Impl::Tk.
+
+
