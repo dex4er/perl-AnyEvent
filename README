@@ -6,24 +6,35 @@ NAME
 SYNOPSIS
     use AnyEvent;
 
-       my $w = AnyEvent->timer (fh => ..., poll => "[rw]+", cb => sub {
+       my $w = AnyEvent->io (fh => ..., poll => "[rw]+", cb => sub {
           my ($poll_got) = @_;
           ...
        });
-       my $w = AnyEvent->io (after => $seconds, cb => sub {
+
+    - only one io watcher per $fh and $poll type is allowed (i.e. on a
+    socket you can have one r + one w or one rw watcher, not any more.
+
+    - AnyEvent will keep filehandles alive, so as long as the watcher
+    exists, the filehandle exists.
+
+       my $w = AnyEvent->timer (after => $seconds, cb => sub {
           ...
        });
 
-       # watchers get canceled whenever $w is destroyed
-       # only one watcher per $fh and $poll type is allowed
-       # (i.e. on a socket you cna have one r + one w or one rw
-       # watcher, not any more.
-       # timers can only be used once
+    - io and time watchers get canceled whenever $w is destroyed, so keep a
+    copy
+
+    - timers can only be used once and must be recreated for repeated
+    operation
 
        my $w = AnyEvent->condvar; # kind of main loop replacement
-       # can only be used once
-       $w->wait; # enters main loop till $condvar gets ->send
-       $w->broadcast; # wake up waiting and future wait's
+       $w->wait; # enters main loop till $condvar gets ->broadcast
+       $w->broadcast; # wake up current and all future wait's
+
+    - condvars are used to give blocking behaviour when neccessary. Create a
+    condvar for any "request" or "event" your module might create,
+    "->broadcast" it when the event happens and provide a function that
+    calls "->wait" for it. See the examples below.
 
 DESCRIPTION
     AnyEvent provides an identical interface to multiple event loops. This
@@ -70,8 +81,132 @@ EXAMPLE
 
        $cv->wait; # wait until user enters /^q/i
 
+REAL-WORLD EXAMPLE
+    Consider the Net::FCP module. It features (among others) the following
+    API calls, which are to freenet what HTTP GET requests are to http:
+
+       my $data = $fcp->client_get ($url); # blocks
+
+       my $transaction = $fcp->txn_client_get ($url); # does not block
+       $transaction->cb ( sub { ... } ); # set optional result callback
+       my $data = $transaction->result; # possibly blocks
+
+    The "client_get" method works like "LWP::Simple::get": it requests the
+    given URL and waits till the data has arrived. It is defined to be:
+
+       sub client_get { $_[0]->txn_client_get ($_[1])->result }
+
+    And in fact is automatically generated. This is the blocking API of
+    Net::FCP, and it works as simple as in any other, similar, module.
+
+    More complicated is "txn_client_get": It only creates a transaction
+    (completion, result, ...) object and initiates the transaction.
+
+       my $txn = bless { }, Net::FCP::Txn::;
+
+    It also creates a condition variable that is used to signal the
+    completion of the request:
+
+       $txn->{finished} = AnyAvent->condvar;
+
+    It then creates a socket in non-blocking mode.
+
+       socket $txn->{fh}, ...;
+       fcntl $txn->{fh}, F_SETFL, O_NONBLOCK;
+       connect $txn->{fh}, ...
+          and !$!{EWOULDBLOCK}
+          and !$!{EINPROGRESS}
+          and Carp::croak "unable to connect: $!\n";
+
+    Then it creates a write-watcher which gets called wehnever an error
+    occurs or the connection succeeds:
+
+       $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'w', cb => sub { $txn->fh_ready_w });
+
+    And returns this transaction object. The "fh_ready_w" callback gets
+    called as soon as the event loop detects that the socket is ready for
+    writing.
+
+    The "fh_ready_w" method makes the socket blocking again, writes the
+    request data and replaces the watcher by a read watcher (waiting for
+    reply data). The actual code is more complicated, but that doesn't
+    matter for this example:
+
+       fcntl $txn->{fh}, F_SETFL, 0;
+       syswrite $txn->{fh}, $txn->{request}
+          or die "connection or write error";
+       $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'r', cb => sub { $txn->fh_ready_r });
+
+    Again, "fh_ready_r" waits till all data has arrived, and then stores the
+    result and signals any possible waiters that the request ahs finished:
+
+       sysread $txn->{fh}, $txn->{buf}, length $txn->{$buf};
+
+       if (end-of-file or data complete) {
+         $txn->{result} = $txn->{buf};
+         $txn->{finished}->broadcast;
+       }
+
+    The "result" method, finally, just waits for the finished signal (if the
+    request was already finished, it doesn't wait, of course, and returns
+    the data:
+
+       $txn->{finished}->wait;
+       return $txn->{buf};
+
+    The actual code goes further and collects all errors ("die"s,
+    exceptions) that occured during request processing. The "result" method
+    detects wether an exception as thrown (it is stored inside the $txn
+    object) and just throws the exception, which means connection errors and
+    other problems get reported tot he code that tries to use the result,
+    not in a random callback.
+
+    All of this enables the following usage styles:
+
+    1. Blocking:
+
+       my $data = $fcp->client_get ($url);
+
+    2. Blocking, but parallelizing:
+
+       my @datas = map $_->result,
+                      map $fcp->txn_client_get ($_),
+                         @urls;
+
+    Both blocking examples work without the module user having to know
+    anything about events.
+
+    3a. Event-based in a main program, using any support Event module:
+
+       use Event;
+
+       $fcp->txn_client_get ($url)->cb (sub {
+          my $txn = shift;
+          my $data = $txn->result;
+          ...
+       });
+
+       Event::loop;
+
+    3b. The module user could use AnyEvent, too:
+
+       use AnyEvent;
+
+       my $quit = AnyEvent->condvar;
+
+       $fcp->txn_client_get ($url)->cb (sub {
+          ...
+          $quit->broadcast;
+       });
+
+       $quit->wait;
+
 SEE ALSO
-    Coro::Event, Coro, Event, Glib::Event, Glib, AnyEvent::Impl::Coro,
-    AnyEvent::Impl::Event, AnyEvent::Impl::Glib, AnyEvent::Impl::Tk.
+    Event modules: Coro::Event, Coro, Event, Glib::Event, Glib.
+
+    Implementations: AnyEvent::Impl::Coro, AnyEvent::Impl::Event,
+    AnyEvent::Impl::Glib, AnyEvent::Impl::Tk.
+
+    Nontrivial usage example: Net::FCP.
 
 
