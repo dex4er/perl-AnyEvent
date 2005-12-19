@@ -185,7 +185,7 @@ It then creates a socket in non-blocking mode.
       and !$!{EINPROGRESS}
       and Carp::croak "unable to connect: $!\n";
 
-Then it creates a write-watcher which gets called wehnever an error occurs
+Then it creates a write-watcher which gets called whenever an error occurs
 or the connection succeeds:
 
    $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'w', cb => sub { $txn->fh_ready_w });
@@ -212,6 +212,7 @@ result and signals any possible waiters that the request ahs finished:
    if (end-of-file or data complete) {
      $txn->{result} = $txn->{buf};
      $txn->{finished}->broadcast;
+     $txb->{cb}->($txn) of $txn->{cb}; # also call callback
    }
 
 The C<result> method, finally, just waits for the finished signal (if the
@@ -219,7 +220,7 @@ request was already finished, it doesn't wait, of course, and returns the
 data:
 
    $txn->{finished}->wait;
-   return $txn->{buf};
+   return $txn->{result};
 
 The actual code goes further and collects all errors (C<die>s, exceptions)
 that occured during request processing. The C<result> method detects

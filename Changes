@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- fixed errors in the documentation.
+
 0.3   Sun Dec  4 10:43:33 CET 2005
         - no changes to the code.
 	- fixed documentation.
