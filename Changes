@@ -1,6 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
+0.9  Fri Dec 30 02:25:41 CET 2005
 	- fixed errors in the documentation.
+        - going back to using $VERSION as "load check",
+          as suggested by Jörn Reder. Let's see why I stopped using
+          this method.
+        - add 'hup' to the list of events to receive for glib
+          and generate 'rw' events for it, as some versions of
+          glib seem to require this, while this breaks other
+          (older) versions of glib.
+        - implemented PERL_ANYEVENT_VERBOSE env variable.
 
 0.3   Sun Dec  4 10:43:33 CET 2005
         - no changes to the code.

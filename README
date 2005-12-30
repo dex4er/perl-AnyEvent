@@ -4,34 +4,40 @@ NAME
     Event, Coro, Glib, Tk - various supported event loops
 
 SYNOPSIS
-    use AnyEvent;
+       use AnyEvent;
 
        my $w = AnyEvent->io (fh => ..., poll => "[rw]+", cb => sub {
           my ($poll_got) = @_;
           ...
        });
 
-    - only one io watcher per $fh and $poll type is allowed (i.e. on a
-    socket you can have one r + one w or one rw watcher, not any more.
+    * only one io watcher per $fh and $poll type is allowed (i.e. on a
+    socket you can have one r + one w or one rw watcher, not any more
+    (limitation by Tk).
 
-    - AnyEvent will keep filehandles alive, so as long as the watcher
+    * the $poll_got passed to the handler needs to be checked by looking for
+    single characters (e.g. with a regex), as it can contain more event
+    types than were requested (e.g. a 'w' watcher might generate 'rw'
+    events, limitation by Glib).
+
+    * AnyEvent will keep filehandles alive, so as long as the watcher
     exists, the filehandle exists.
 
        my $w = AnyEvent->timer (after => $seconds, cb => sub {
           ...
        });
 
-    - io and time watchers get canceled whenever $w is destroyed, so keep a
+    * io and time watchers get canceled whenever $w is destroyed, so keep a
     copy
 
-    - timers can only be used once and must be recreated for repeated
-    operation
+    * timers can only be used once and must be recreated for repeated
+    operation (limitation by Glib and Tk).
 
        my $w = AnyEvent->condvar; # kind of main loop replacement
        $w->wait; # enters main loop till $condvar gets ->broadcast
        $w->broadcast; # wake up current and all future wait's
 
-    - condvars are used to give blocking behaviour when neccessary. Create a
+    * condvars are used to give blocking behaviour when neccessary. Create a
     condvar for any "request" or "event" your module might create,
     "->broadcast" it when the event happens and provide a function that
     calls "->wait" for it. See the examples below.
@@ -51,6 +57,12 @@ DESCRIPTION
     used. If none is found, the module tries to load these modules in the
     order given. The first one that could be successfully loaded will be
     used. If still none could be found, it will issue an error.
+
+ENVIRONMENT VARIABLES
+    The following environment variables are used by this module:
+
+    "PERL_ANYEVENT_VERBOSE" when set to 2 or higher, reports which event
+    model gets used.
 
 EXAMPLE
     The following program uses an io watcher to read data from stdin, a
@@ -118,7 +130,7 @@ REAL-WORLD EXAMPLE
           and !$!{EINPROGRESS}
           and Carp::croak "unable to connect: $!\n";
 
-    Then it creates a write-watcher which gets called wehnever an error
+    Then it creates a write-watcher which gets called whenever an error
     occurs or the connection succeeds:
 
        $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'w', cb => sub { $txn->fh_ready_w });
@@ -145,6 +157,7 @@ REAL-WORLD EXAMPLE
        if (end-of-file or data complete) {
          $txn->{result} = $txn->{buf};
          $txn->{finished}->broadcast;
+         $txb->{cb}->($txn) of $txn->{cb}; # also call callback
        }
 
     The "result" method, finally, just waits for the finished signal (if the
@@ -152,7 +165,7 @@ REAL-WORLD EXAMPLE
     the data:
 
        $txn->{finished}->wait;
-       return $txn->{buf};
+       return $txn->{result};
 
     The actual code goes further and collects all errors ("die"s,
     exceptions) that occured during request processing. The "result" method

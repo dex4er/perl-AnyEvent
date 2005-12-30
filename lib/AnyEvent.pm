@@ -6,33 +6,39 @@ Event, Coro, Glib, Tk - various supported event loops
 
 =head1 SYNOPSIS
 
-use AnyEvent;
+   use AnyEvent;
 
    my $w = AnyEvent->io (fh => ..., poll => "[rw]+", cb => sub {
       my ($poll_got) = @_;
       ...
    });
 
-- only one io watcher per $fh and $poll type is allowed
-(i.e. on a socket you can have one r + one w or one rw
-watcher, not any more.
+* only one io watcher per $fh and $poll type is allowed (i.e. on a socket
+you can have one r + one w or one rw watcher, not any more (limitation by
+Tk).
 
-- AnyEvent will keep filehandles alive, so as long as the watcher exists,
+* the C<$poll_got> passed to the handler needs to be checked by looking
+for single characters (e.g. with a regex), as it can contain more event
+types than were requested (e.g. a 'w' watcher might generate 'rw' events,
+limitation by Glib).
+
+* AnyEvent will keep filehandles alive, so as long as the watcher exists,
 the filehandle exists.
 
    my $w = AnyEvent->timer (after => $seconds, cb => sub {
       ...
    });
 
-- io and time watchers get canceled whenever $w is destroyed, so keep a copy
+* io and time watchers get canceled whenever $w is destroyed, so keep a copy
 
-- timers can only be used once and must be recreated for repeated operation
+* timers can only be used once and must be recreated for repeated
+operation (limitation by Glib and Tk).
 
    my $w = AnyEvent->condvar; # kind of main loop replacement
    $w->wait; # enters main loop till $condvar gets ->broadcast
    $w->broadcast; # wake up current and all future wait's
 
-- condvars are used to give blocking behaviour when neccessary. Create
+* condvars are used to give blocking behaviour when neccessary. Create
 a condvar for any "request" or "event" your module might create, C<<
 ->broadcast >> it when the event happens and provide a function that calls
 C<< ->wait >> for it. See the examples below.
@@ -64,11 +70,13 @@ no warnings;
 use strict 'vars';
 use Carp;
 
-our $VERSION = 0.3;
+our $VERSION = '0.4';
 our $MODEL;
 
 our $AUTOLOAD;
 our @ISA;
+
+our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 
 my @models = (
       [Coro  => Coro::Event::],
@@ -89,8 +97,9 @@ sub AUTOLOAD {
       # check for already loaded models
       for (@models) {
          my ($model, $package) = @$_;
-         if (scalar keys %{ *{"$package\::"} }) {
+         if (${"$package\::VERSION"} > 0) {
             eval "require AnyEvent::Impl::$model";
+            warn "AnyEvent: found model '$model', using it.\n" if $MODEL && $verbose > 1;
             last if $MODEL;
          }
       }
@@ -101,6 +110,7 @@ sub AUTOLOAD {
          for (@models) {
             my ($model, $package) = @$_;
             eval "require AnyEvent::Impl::$model";
+            warn "AnyEvent: autprobed and loaded model '$model', using it.\n" if $MODEL && $verbose > 1;
             last if $MODEL;
          }
 
@@ -116,6 +126,13 @@ sub AUTOLOAD {
 }
 
 =back
+
+=head1 ENVIRONMENT VARIABLES
+
+The following environment variables are used by this module:
+
+C<PERL_ANYEVENT_VERBOSE> when set to C<2> or higher, reports which event
+model gets used.
 
 =head1 EXAMPLE
 

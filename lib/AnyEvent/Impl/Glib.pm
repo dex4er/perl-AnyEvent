@@ -5,6 +5,7 @@ use Glib ();
 my $maincontext = Glib::MainContext->default;
 
 my %RWE = (
+   hup => 'rw',
    in  => 'r',
    out => 'w',
    pri => 'e',
@@ -16,10 +17,10 @@ sub io {
    my $self = bless \%arg, $class;
    my $rcb = \$self->{cb};
 
-   my @cond;
-   push @cond, "in"  if $self->{poll} =~ /r/i;
-   push @cond, "out" if $self->{poll} =~ /w/i;
-   push @cond, "pri" if $self->{poll} =~ /e/i;
+   # some glibs need hup, others error with it, YMMV
+   push @cond, "in",  "hup" if $self->{poll} =~ /r/i;
+   push @cond, "out", "hup" if $self->{poll} =~ /w/i;
+   push @cond, "pri"        if $self->{poll} =~ /e/i;
 
    $self->{source} = add_watch Glib::IO fileno $self->{fh}, \@cond, sub {
       $$rcb->(join "", map $RWE{$_}, @{ $_[1] });
@@ -73,5 +74,5 @@ sub AnyEvent::Impl::Glib::CondVar::wait {
 
 $AnyEvent::MODEL = __PACKAGE__;
 
-1;
+1
 
