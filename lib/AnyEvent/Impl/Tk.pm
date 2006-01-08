@@ -64,7 +64,5 @@ sub AnyEvent::Impl::Tk::CondVar::wait {
    Tk::DoOneEvent (0) while !${$_[0]};
 }
 
-$AnyEvent::MODEL = __PACKAGE__;
-
 1
 

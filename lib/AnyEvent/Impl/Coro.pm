@@ -9,7 +9,5 @@ sub condvar {
    new Coro::Signal
 }
 
-$AnyEvent::MODEL = __PACKAGE__;
-
 1
 

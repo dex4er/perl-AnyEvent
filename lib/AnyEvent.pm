@@ -70,7 +70,7 @@ no warnings;
 use strict 'vars';
 use Carp;
 
-our $VERSION = '0.4';
+our $VERSION = '1.0';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -78,11 +78,13 @@ our @ISA;
 
 our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 
+our @REGISTRY;
+
 my @models = (
-      [Coro  => Coro::Event::],
-      [Event => Event::],
-      [Glib  => Glib::],
-      [Tk    => Tk::],
+      [Coro::Event:: => AnyEvent::Impl::Coro::],
+      [Event::       => AnyEvent::Impl::Event::],
+      [Glib::        => AnyEvent::Impl::Glib::],
+      [Tk::          => AnyEvent::Impl::Tk::],
 );
 
 our %method = map +($_ => 1), qw(io timer condvar broadcast wait cancel DESTROY);
@@ -95,23 +97,27 @@ sub AUTOLOAD {
 
    unless ($MODEL) {
       # check for already loaded models
-      for (@models) {
-         my ($model, $package) = @$_;
+      for (@REGISTRY, @models) {
+         my ($package, $model) = @$_;
          if (${"$package\::VERSION"} > 0) {
-            eval "require AnyEvent::Impl::$model";
-            warn "AnyEvent: found model '$model', using it.\n" if $MODEL && $verbose > 1;
-            last if $MODEL;
+            if (eval "require $model") {
+               $MODEL = $model;
+               warn "AnyEvent: found model '$model', using it.\n" if $verbose > 1;
+               last;
+            }
          }
       }
 
       unless ($MODEL) {
          # try to load a model
 
-         for (@models) {
-            my ($model, $package) = @$_;
-            eval "require AnyEvent::Impl::$model";
-            warn "AnyEvent: autprobed and loaded model '$model', using it.\n" if $MODEL && $verbose > 1;
-            last if $MODEL;
+         for (@REGISTRY, @models) {
+            my ($package, $model) = @$_;
+            if (eval "require $model") {
+               $MODEL = $model;
+               warn "AnyEvent: autoprobed and loaded model '$model', using it.\n" if $verbose > 1;
+               last;
+            }
          }
 
          $MODEL
@@ -126,6 +132,30 @@ sub AUTOLOAD {
 }
 
 =back
+
+=head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
+
+If you need to support another event library which isn't directly
+supported by AnyEvent, you can supply your own interface to it by
+pushing, before the first watch gets created, the package name of
+the event module and the package name of the interface to use onto
+C<@AnyEvent::REGISTRY>. You can do that before and even without loading
+AnyEvent.
+
+Example:
+
+   push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
+
+This tells AnyEvent to (literally) use the C<urxvt::anyevent::> module
+when it finds the C<urxvt> module is loaded. When AnyEvent is loaded and
+requested to find a suitable event model, it will first check for the
+urxvt module.
+
+The above isn't fictitious, the I<rxvt-unicode> (a.k.a. urxvt) uses
+the above line exactly. An interface isn't included in AnyEvent
+because it doesn't make sense outside the embedded interpreter inside
+I<rxvt-unicode>, and it is updated and maintained as part of the
+I<rxvt-unicode> distribution.
 
 =head1 ENVIRONMENT VARIABLES
 

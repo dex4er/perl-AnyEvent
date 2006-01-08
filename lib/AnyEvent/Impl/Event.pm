@@ -51,7 +51,5 @@ sub AnyEvent::Impl::Event::CondVar::wait {
    Event::one_event() while !${$_[0]};
 }
 
-$AnyEvent::MODEL = __PACKAGE__;
-
 1
 

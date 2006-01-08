@@ -72,7 +72,5 @@ sub AnyEvent::Impl::Glib::CondVar::wait {
    $maincontext->iteration (1) while !${$_[0]};
 }
 
-$AnyEvent::MODEL = __PACKAGE__;
-
 1
 

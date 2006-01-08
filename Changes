@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+1.0
+	- allow third-party interfaces to be added at runtime.
+        - fix version number.
+
 0.9  Fri Dec 30 02:25:41 CET 2005
 	- fixed errors in the documentation.
         - going back to using $VERSION as "load check",
