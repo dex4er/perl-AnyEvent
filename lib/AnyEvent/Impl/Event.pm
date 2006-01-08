@@ -20,6 +20,7 @@ sub timer {
    bless \(my $x = Event->timer (
       %arg,
       cb => sub {
+         # watcher gets canceled automatically
          $$rcb->();
       },
    )), $class

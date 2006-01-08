@@ -58,6 +58,29 @@ DESCRIPTION
     order given. The first one that could be successfully loaded will be
     used. If still none could be found, it will issue an error.
 
+SUPPLYING YOUR OWN EVENT MODEL INTERFACE
+    If you need to support another event library which isn't directly
+    supported by AnyEvent, you can supply your own interface to it by
+    pushing, before the first watch gets created, the package name of the
+    event module and the package name of the interface to use onto
+    @AnyEvent::REGISTRY. You can do that before and even without loading
+    AnyEvent.
+
+    Example:
+
+       push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
+
+    This tells AnyEvent to (literally) use the "urxvt::anyevent::" module
+    when it finds the "urxvt" module is loaded. When AnyEvent is loaded and
+    requested to find a suitable event model, it will first check for the
+    urxvt module.
+
+    The above isn't fictitious, the *rxvt-unicode* (a.k.a. urxvt) uses the
+    above line exactly. An interface isn't included in AnyEvent because it
+    doesn't make sense outside the embedded interpreter inside
+    *rxvt-unicode*, and it is updated and maintained as part of the
+    *rxvt-unicode* distribution.
+
 ENVIRONMENT VARIABLES
     The following environment variables are used by this module:
 
