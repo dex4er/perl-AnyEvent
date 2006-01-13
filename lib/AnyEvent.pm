@@ -70,7 +70,7 @@ no warnings;
 use strict 'vars';
 use Carp;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 our $MODEL;
 
 our $AUTOLOAD;

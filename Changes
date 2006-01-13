@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+1.02 Fri Jan 13 14:15:40 CET 2006
+	- add COPYING to clarify license.
+
 1.01 Sun Jan  8 05:48:09 CET 2006
 	- correctly cancel Event timers, avoid memory leaks.
 
