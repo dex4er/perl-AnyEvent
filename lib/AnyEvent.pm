@@ -146,16 +146,26 @@ Example:
 
    push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
 
-This tells AnyEvent to (literally) use the C<urxvt::anyevent::> module
-when it finds the C<urxvt> module is loaded. When AnyEvent is loaded and
-requested to find a suitable event model, it will first check for the
-urxvt module.
+This tells AnyEvent to (literally) use the C<urxvt::anyevent::>
+package/class when it finds the C<urxvt> package/module is loaded. When
+AnyEvent is loaded and asked to find a suitable event model, it will
+first check for the presence of urxvt.
 
-The above isn't fictitious, the I<rxvt-unicode> (a.k.a. urxvt) uses
-the above line exactly. An interface isn't included in AnyEvent
+The class should prove implementations for all watcher types (see
+L<AnyEvent::Impl::Event> (source code), L<AnyEvent::Impl::Glib>
+(Source code) and so on for actual examples, use C<perldoc -m
+AnyEvent::Impl::Glib> to see the sources).
+
+The above isn't fictitious, the I<rxvt-unicode> (a.k.a. urxvt)
+uses the above line as-is. An interface isn't included in AnyEvent
 because it doesn't make sense outside the embedded interpreter inside
 I<rxvt-unicode>, and it is updated and maintained as part of the
 I<rxvt-unicode> distribution.
+
+I<rxvt-unicode> also cheats a bit by not providing blocking access to
+condition variables: code blocking while waiting for a condition will
+C<die>. This still works with most modules/usages, and blocking calls must
+not be in an interactive appliation, so it makes sense.
 
 =head1 ENVIRONMENT VARIABLES
 
