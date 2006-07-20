@@ -46,7 +46,7 @@ C<< ->wait >> for it. See the examples below.
 =head1 DESCRIPTION
 
 L<AnyEvent> provides an identical interface to multiple event loops. This
-allows module authors to utilizy an event loop without forcing module
+allows module authors to utilise an event loop without forcing module
 users to use the same event loop (as only a single event loop can coexist
 peacefully at any one time).
 
