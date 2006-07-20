@@ -137,7 +137,7 @@ sub AUTOLOAD {
 
 If you need to support another event library which isn't directly
 supported by AnyEvent, you can supply your own interface to it by
-pushing, before the first watch gets created, the package name of
+pushing, before the first watcher gets created, the package name of
 the event module and the package name of the interface to use onto
 C<@AnyEvent::REGISTRY>. You can do that before and even without loading
 AnyEvent.
