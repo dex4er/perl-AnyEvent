@@ -1,5 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
+2.0
+	- INCOMPATIBLE CHANGE:
+          poll can now either be "r" or "w" but not both.
+	- INCOMPATIBLE CHANGE:
+          io watcher callbacks have no arguments anymore.
+        - new pure-perl model added, AnyEvent now always
+          works.
+        - improved documentation.
+        - reduced cpu overhead.
+
 1.02 Fri Jan 13 14:15:40 CET 2006
 	- add COPYING to clarify license.
 

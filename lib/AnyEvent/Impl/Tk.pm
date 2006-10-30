@@ -11,10 +11,10 @@ sub io {
    my $self = bless \%arg, $class;
    my $cb = $self->{cb};
 
-   $mw->fileevent ($self->{fh}, readable => sub { $cb->("r") })
-      if $self->{poll} =~ /r/i;
-   $mw->fileevent ($self->{fh}, writable => sub { $cb->("w") })
-      if $self->{poll} =~ /w/i;
+   $mw->fileevent ($self->{fh}, readable => sub { $cb->() })
+      if $self->{poll} eq "r";
+   $mw->fileevent ($self->{fh}, writable => sub { $cb->() })
+      if $self->{poll} eq "w";
 
    $self
 }
@@ -36,9 +36,9 @@ sub cancel {
    my ($self) = @_;
 
    $mw->fileevent ($self->{fh}, readable => "")
-      if $self->{poll} =~ /r/i;
+      if $self->{poll} eq "r";
    $mw->fileevent ($self->{fh}, writable => "")
-      if $self->{poll} =~ /w/i;
+      if $self->{poll} eq "w";
 
    undef $self->{cb};
    delete $self->{cb};

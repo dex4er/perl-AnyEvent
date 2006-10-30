@@ -5,50 +5,43 @@ use Event ();
 sub io {
    my ($class, %arg) = @_;
    $arg{fd} = delete $arg{fh};
-   my $rcb = \$arg{cb};
+   my $cb = $arg{cb};
    bless \(my $x = Event->io (
       %arg,
-      cb => sub {
-         $$rcb->($_[0]->got . "")
-      },
+      cb => $arg{cb},
    )), $class
 }
 
 sub timer {
    my ($class, %arg) = @_;
-   my $rcb = \$arg{cb};
+   my $cb = $arg{cb};
    bless \(my $x = Event->timer (
       %arg,
       cb => sub {
          $_[0]->w->cancel;
-         $$rcb->();
+         $cb->();
       },
    )), $class
-}
-
-sub cancel {
-   my ($self) = @_;
-
-   $$self->cancel;
 }
 
 sub DESTROY {
    my ($self) = @_;
 
-   $self->cancel;
+   $$self->cancel;
+   %$self = ();
 }
 
 sub condvar {
    my $class = shift;
 
-   bless \my $x, AnyEvent::Impl::Event::CondVar::
+   bless \my $flag, $class
 }
 
-sub AnyEvent::Impl::Event::CondVar::broadcast {
+sub broadcast {
    ${$_[0]}++;
 }
 
-sub AnyEvent::Impl::Event::CondVar::wait {
+sub wait {
    Event::one_event() while !${$_[0]};
 }
 
