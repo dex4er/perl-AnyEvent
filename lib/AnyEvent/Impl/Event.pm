@@ -24,7 +24,7 @@ sub timer {
 }
 
 sub DESTROY {
-   $_[0]->cancel;
+   ${$_[0]}->cancel;
 }
 
 sub condvar {
