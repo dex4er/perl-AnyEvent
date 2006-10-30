@@ -8,4 +8,5 @@ lib/AnyEvent/Impl/Coro.pm
 lib/AnyEvent/Impl/Event.pm
 lib/AnyEvent/Impl/Glib.pm
 lib/AnyEvent/Impl/Tk.pm
+lib/AnyEvent/Impl/Perl.pm
 META.yml                                 Module meta-data (added by MakeMaker)

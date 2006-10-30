@@ -5,11 +5,8 @@ use 5.008;
 print <<EOF;
 
 ***
-*** You *need* one or more of the following modules to make use of this module:
-*** Coro, Event, Glib, Tk
-***
-*** The Makefile.PL depends on Event, but you can ignore this dependency if
-*** any of the other modules are installed.
+*** One or more of these modules, in order of importance, is recommended:
+*** Event, Coro, Glib, Tk
 ***
 
 EOF
@@ -22,8 +19,8 @@ WriteMakefile(
 	           },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
-    PREREQ_PM    => {
-       Event      => 0.86,
-    },
+#    PREREQ_PM    => {
+#       Event      => 0.86,
+#    },
 );
 
