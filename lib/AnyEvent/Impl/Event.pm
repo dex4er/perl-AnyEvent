@@ -5,7 +5,6 @@ use Event ();
 sub io {
    my ($class, %arg) = @_;
    $arg{fd} = delete $arg{fh};
-   my $cb = $arg{cb};
    bless \(my $x = Event->io (
       %arg,
       cb => $arg{cb},
@@ -15,7 +14,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    my $cb = $arg{cb};
-   bless \(my $x = Event->timer (
+   bless \(my $w = Event->timer (
       %arg,
       cb => sub {
          $_[0]->w->cancel;
@@ -25,10 +24,7 @@ sub timer {
 }
 
 sub DESTROY {
-   my ($self) = @_;
-
-   $$self->cancel;
-   %$self = ();
+   $_[0]->cancel;
 }
 
 sub condvar {
