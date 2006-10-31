@@ -12,26 +12,22 @@ my $need_sort;
 sub add_fh($$) {
    my ($self, $fds) = @_;
 
-   my $fd = fileno $self->{fh};
+   (vec $fds->{v}, $self->{fd}, 1) = 1
+      unless $fds->{w}{$self->{fd}};
 
-   (vec $fds->{v}, $fd, 1) = 1
-      unless $fds->{w}{$fd};
-
-   push @{ $fds->{w}{$fd} }, $self;
-   Scalar::Util::weaken $fds->{w}{$fd}[-1];
+   push @{ $fds->{w}{$self->{fd}} }, $self;
+   Scalar::Util::weaken $fds->{w}{$self->{fd}}[-1];
 }
 
 sub del_fh($$) {
    my ($self, $fds) = @_;
 
-   my $fd = fileno $self->{fh};
-
-   if (@{ $fds->{w}{$fd} } == 1) {
-      delete $fds->{w}{$fd};
-      (vec $fds->{v}, $fd, 1) = 0;
+   if (@{ $fds->{w}{$self->{fd}} } == 1) {
+      delete $fds->{w}{$self->{fd}};
+      (vec $fds->{v}, $self->{fd}, 1) = 0;
    } else {
-      $fds->{w}{$fd} = [
-         grep $_ != $self, @{ $fds->{w}{$fd} }
+      $fds->{w}{$self->{fd}} = [
+         grep $_ != $self, @{ $fds->{w}{$self->{fd}} }
       ];
    }
 }
@@ -79,6 +75,8 @@ sub iteration {
 
 sub io {
    my ($class, %arg) = @_;
+
+   $arg{fd} = fileno $arg{fh};
    
    my $self = bless \%arg, $class;
 
