@@ -1,50 +1,26 @@
 NAME
     AnyEvent - provide framework for multiple event loops
 
-    Event, Coro, Glib, Tk - various supported event loops
+    Event, Coro, Glib, Tk, Perl - various supported event loops
 
 SYNOPSIS
        use AnyEvent;
 
-       my $w = AnyEvent->io (fh => ..., poll => "[rw]+", cb => sub {
-          my ($poll_got) = @_;
+       my $w = AnyEvent->io (fh => $fh, poll => "r|w", cb => sub {
           ...
        });
-
-    * only one io watcher per $fh and $poll type is allowed (i.e. on a
-    socket you can have one r + one w or one rw watcher, not any more
-    (limitation by Tk).
-
-    * the $poll_got passed to the handler needs to be checked by looking for
-    single characters (e.g. with a regex), as it can contain more event
-    types than were requested (e.g. a 'w' watcher might generate 'rw'
-    events, limitation by Glib).
-
-    * AnyEvent will keep filehandles alive, so as long as the watcher
-    exists, the filehandle exists.
 
        my $w = AnyEvent->timer (after => $seconds, cb => sub {
           ...
        });
 
-    * io and time watchers get canceled whenever $w is destroyed, so keep a
-    copy
-
-    * timers can only be used once and must be recreated for repeated
-    operation (limitation by Glib and Tk).
-
-       my $w = AnyEvent->condvar; # kind of main loop replacement
-       $w->wait; # enters main loop till $condvar gets ->broadcast
+       my $w = AnyEvent->condvar; # stores wether a condition was flagged
+       $w->wait; # enters "main loop" till $condvar gets ->broadcast
        $w->broadcast; # wake up current and all future wait's
-
-    * condvars are used to give blocking behaviour when neccessary. Create a
-    condvar for any "request" or "event" your module might create,
-    "->broadcast" it when the event happens and provide a function that
-    calls "->wait" for it. See the examples below.
 
 DESCRIPTION
     AnyEvent provides an identical interface to multiple event loops. This
-    allows module authors to utilizy an event loop without forcing module
+    allows module authors to utilise an event loop without forcing module
     users to use the same event loop (as only a single event loop can
     coexist peacefully at any one time).
 
@@ -56,12 +32,154 @@ DESCRIPTION
     modules is loaded: Coro::Event, Event, Glib, Tk. The first one found is
     used. If none is found, the module tries to load these modules in the
     order given. The first one that could be successfully loaded will be
-    used. If still none could be found, it will issue an error.
+    used. If still none could be found, AnyEvent will fall back to a
+    pure-perl event loop, which is also not very efficient.
+
+    Because AnyEvent first checks for modules that are already loaded,
+    loading an Event model explicitly before first using AnyEvent will
+    likely make that model the default. For example:
+
+       use Tk;
+       use AnyEvent;
+
+       # .. AnyEvent will likely default to Tk
+
+    The pure-perl implementation of AnyEvent is called
+    "AnyEvent::Impl::Perl". Like other event modules you can load it
+    explicitly.
+
+WATCHERS
+    AnyEvent has the central concept of a *watcher*, which is an object that
+    stores relevant data for each kind of event you are waiting for, such as
+    the callback to call, the filehandle to watch, etc.
+
+    These watchers are normal Perl objects with normal Perl lifetime. After
+    creating a watcher it will immediately "watch" for events and invoke the
+    callback. To disable the watcher you have to destroy it (e.g. by setting
+    the variable that stores it to "undef" or otherwise deleting all
+    references to it).
+
+    All watchers are created by calling a method on the "AnyEvent" class.
+
+  IO WATCHERS
+    You can create I/O watcher by calling the "AnyEvent->io" method with the
+    following mandatory arguments:
+
+    "fh" the Perl *filehandle* (not filedescriptor) to watch for events.
+    "poll" must be a string that is either "r" or "w", that creates a
+    watcher waiting for "r"eadable or "w"ritable events. "cb" teh callback
+    to invoke everytime the filehandle becomes ready.
+
+    Only one io watcher per "fh" and "poll" combination is allowed (i.e. on
+    a socket you can have one r + one w, not any more (limitation comes from
+    Tk - if you are sure you are not using Tk this limitation is gone).
+
+    Filehandles will be kept alive, so as long as the watcher exists, the
+    filehandle exists, too.
+
+    Example:
+
+       # wait for readability of STDIN, then read a line and disable the watcher
+       my $w; $w = AnyEvent->io (fh => \*STDIN, poll => 'r', cb => sub {
+          chomp (my $input = <STDIN>);
+          warn "read: $input\n";
+          undef $w;
+       });
+
+  TIMER WATCHERS
+    You can create a timer watcher by calling the "AnyEvent->timer" method
+    with the following mandatory arguments:
+
+    "after" after how many seconds (fractions are supported) should the
+    timer activate. "cb" the callback to invoke.
+
+    The timer callback will be invoked at most once: if you want a repeating
+    timer you have to create a new watcher (this is a limitation by both Tk
+    and Glib).
+
+    Example:
+
+       # fire an event after 7.7 seconds
+       my $w = AnyEvent->timer (after => 7.7, cb => sub {
+          warn "timeout\n";
+       });
+
+       # to cancel the timer:
+       undef $w
+
+  CONDITION WATCHERS
+    Condition watchers can be created by calling the "AnyEvent->condvar"
+    method without any arguments.
+
+    A condition watcher watches for a condition - precisely that the
+    "->broadcast" method has been called.
+
+    The watcher has only two methods:
+
+    $cv->wait
+        Wait (blocking if necessary) until the "->broadcast" method has been
+        called on c<$cv>, while servicing other watchers normally.
+
+        Not all event models support a blocking wait - some die in that
+        case, so if you are using this from a module, never require a
+        blocking wait, but let the caller decide wether the call will block
+        or not (for example, by coupling condition variables with some kind
+        of request results and supporting callbacks so the caller knows that
+        getting the result will not block, while still suppporting blockign
+        waits if the caller so desires).
+
+        You can only wait once on a condition - additional calls will return
+        immediately.
+
+    $cv->broadcast
+        Flag the condition as ready - a running "->wait" and all further
+        calls to "wait" will return after this method has been called. If
+        nobody is waiting the broadcast will be remembered..
+
+        Example:
+
+           # wait till the result is ready
+           my $result_ready = AnyEvent->condvar;
+
+           # do something such as adding a timer
+           # or socket watcher the calls $result_ready->broadcast
+           # when the "result" is ready.
+
+           $result_ready->wait;
+
+WHAT TO DO IN A MODULE
+    As a module author, you should "use AnyEvent" and call AnyEvent methods
+    freely, but you should not load a specific event module or rely on it.
+
+    Be careful when you create watchers in the module body - Anyevent will
+    decide which event module to use as soon as the first method is called,
+    so by calling AnyEvent in your module body you force the user of your
+    module to load the event module first.
+
+WHAT TO DO IN THE MAIN PROGRAM
+    There will always be a single main program - the only place that should
+    dictate which event model to use.
+
+    If it doesn't care, it can just "use AnyEvent" and use it itself, or not
+    do anything special and let AnyEvent decide which implementation to
+    chose.
+
+    If the main program relies on a specific event model (for example, in
+    Gtk2 programs you have to rely on either Glib or Glib::Event), you
+    should load it before loading AnyEvent or any module that uses it,
+    generally, as early as possible. The reason is that modules might create
+    watchers when they are loaded, and AnyEvent will decide on the event
+    model to use as soon as it creates watchers, and it might chose the
+    wrong one unless you load the correct one yourself.
+
+    You can chose to use a rather inefficient pure-perl implementation by
+    loading the "AnyEvent::Impl::Perl" module, but letting AnyEvent chose is
+    generally better.
 
 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
     If you need to support another event library which isn't directly
     supported by AnyEvent, you can supply your own interface to it by
-    pushing, before the first watch gets created, the package name of the
+    pushing, before the first watcher gets created, the package name of the
     event module and the package name of the interface to use onto
     @AnyEvent::REGISTRY. You can do that before and even without loading
     AnyEvent.
@@ -70,16 +188,26 @@ SUPPLYING YOUR OWN EVENT MODEL INTERFACE
 
        push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
 
-    This tells AnyEvent to (literally) use the "urxvt::anyevent::" module
-    when it finds the "urxvt" module is loaded. When AnyEvent is loaded and
-    requested to find a suitable event model, it will first check for the
-    urxvt module.
+    This tells AnyEvent to (literally) use the "urxvt::anyevent::"
+    package/class when it finds the "urxvt" package/module is loaded. When
+    AnyEvent is loaded and asked to find a suitable event model, it will
+    first check for the presence of urxvt.
+
+    The class should prove implementations for all watcher types (see
+    AnyEvent::Impl::Event (source code), AnyEvent::Impl::Glib (Source code)
+    and so on for actual examples, use "perldoc -m AnyEvent::Impl::Glib" to
+    see the sources).
 
     The above isn't fictitious, the *rxvt-unicode* (a.k.a. urxvt) uses the
-    above line exactly. An interface isn't included in AnyEvent because it
+    above line as-is. An interface isn't included in AnyEvent because it
     doesn't make sense outside the embedded interpreter inside
     *rxvt-unicode*, and it is updated and maintained as part of the
     *rxvt-unicode* distribution.
+
+    *rxvt-unicode* also cheats a bit by not providing blocking access to
+    condition variables: code blocking while waiting for a condition will
+    "die". This still works with most modules/usages, and blocking calls
+    must not be in an interactive appliation, so it makes sense.
 
 ENVIRONMENT VARIABLES
     The following environment variables are used by this module:

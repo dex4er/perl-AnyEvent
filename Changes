@@ -1,9 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: testsuite, now that we can be sure that some model
-TODO: is available at all times
+TODO: testsuite, now that we can be sure that a model is available at all times
 
-2.0
+2.0  Wed Nov  1 02:21:30 CET 2006
 	- INCOMPATIBLE CHANGE: poll can now either be "r" or "w" but not both.
 	- INCOMPATIBLE CHANGE: io watcher callbacks have no arguments anymore.
         - EXPERIMENTAL:
