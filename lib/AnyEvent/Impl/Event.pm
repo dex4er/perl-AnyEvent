@@ -5,15 +5,12 @@ use Event ();
 sub io {
    my ($class, %arg) = @_;
    $arg{fd} = delete $arg{fh};
-   bless \(my $x = Event->io (
-      %arg,
-      cb => $arg{cb},
-   )), $class
+   bless \(my $x = Event->io (%arg)), $class
 }
 
 sub timer {
    my ($class, %arg) = @_;
-   my $cb = $arg{cb};
+   my $cb = delete $arg{cb};
    bless \(my $w = Event->timer (
       %arg,
       cb => sub {

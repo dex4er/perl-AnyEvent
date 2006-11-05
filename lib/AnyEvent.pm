@@ -159,6 +159,28 @@ Example:
 
 =back
 
+=head1 GLOBALS
+
+=over 4
+
+=item $AnyEvent::MODEL
+
+Contains C<undef> until the first watcher is being created. Then it
+contains the event model that is being used, which is the name of the
+Perl class implementing the model. This class is usually one of the
+C<AnyEvent::Impl:xxx> modules, but can be any other class in the case
+AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
+
+The known classes so far are:
+
+   AnyEvent::Impl::Coro      based on Coro::Event, best choise.
+   AnyEvent::Impl::Event     based on Event, also best choice :)
+   AnyEvent::Impl::Glib      based on Glib, second-best choice.
+   AnyEvent::Impl::Tk        based on Tk, very bad choice.
+   AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
+
+=back
+
 =head1 WHAT TO DO IN A MODULE
 
 As a module author, you should "use AnyEvent" and call AnyEvent methods
