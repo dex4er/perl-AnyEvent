@@ -219,7 +219,7 @@ no warnings;
 use strict 'vars';
 use Carp;
 
-our $VERSION = '2.0';
+our $VERSION = '2.1';
 our $MODEL;
 
 our $AUTOLOAD;

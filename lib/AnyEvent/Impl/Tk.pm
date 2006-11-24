@@ -64,5 +64,9 @@ sub AnyEvent::Impl::Tk::CondVar::wait {
    Tk::DoOneEvent (0) while !${$_[0]};
 }
 
+sub one_event {
+   Tk::DoOneEvent (0);
+}
+
 1
 

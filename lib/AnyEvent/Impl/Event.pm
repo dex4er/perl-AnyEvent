@@ -35,7 +35,11 @@ sub broadcast {
 }
 
 sub wait {
-   Event::one_event() while !${$_[0]};
+   Event::one_event while !${$_[0]};
+}
+
+sub one_event {
+   Event::one_event;
 }
 
 1
