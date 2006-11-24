@@ -1,5 +1,7 @@
 package AnyEvent::Impl::Event;
 
+no warnings;
+
 use Event ();
 
 sub io {

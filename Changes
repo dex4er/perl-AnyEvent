@@ -2,7 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: testsuite, now that we can be sure that a model is available at all times
 
-2.1
+2.1  Fri Nov 24 15:50:48 CET 2006
 	- better docs.
         - simple testsuite.
         - added AnyEvent->one_event method for special purposes.

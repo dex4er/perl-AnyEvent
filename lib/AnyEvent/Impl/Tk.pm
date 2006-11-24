@@ -1,5 +1,7 @@
 package AnyEvent::Impl::Tk;
 
+no warnings;
+
 use Tk ();
 
 my $mw = new MainWindow;

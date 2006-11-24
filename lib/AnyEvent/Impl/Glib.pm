@@ -1,5 +1,7 @@
 package AnyEvent::Impl::Glib;
 
+no warnings;
+
 use Glib ();
 
 my $maincontext = Glib::MainContext->default;
