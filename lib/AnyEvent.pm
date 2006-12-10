@@ -230,20 +230,20 @@ our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 our @REGISTRY;
 
 my @models = (
-      [Coro::Event::          => AnyEvent::Impl::Coro::],
-      [Event::                => AnyEvent::Impl::Event::],
-      [Glib::                 => AnyEvent::Impl::Glib::],
-      [Tk::                   => AnyEvent::Impl::Tk::],
-      [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
+   [Coro::Event::          => AnyEvent::Impl::Coro::],
+   [Event::                => AnyEvent::Impl::Event::],
+   [Glib::                 => AnyEvent::Impl::Glib::],
+   [Tk::                   => AnyEvent::Impl::Tk::],
+   [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
 );
 
 our %method = map +($_ => 1), qw(io timer condvar broadcast wait DESTROY);
 
 sub AUTOLOAD {
-   $AUTOLOAD =~ s/.*://;
+   (my $func = $AUTOLOAD) =~ s/.*://;
 
-   $method{$AUTOLOAD}
-      or croak "$AUTOLOAD: not a valid method for AnyEvent objects";
+   $method{$func}
+      or croak "$func: not a valid method for AnyEvent objects";
 
    unless ($MODEL) {
       # check for already loaded models
@@ -278,7 +278,7 @@ sub AUTOLOAD {
    @ISA = $MODEL;
 
    my $class = shift;
-   $class->$AUTOLOAD (@_);
+   $class->$func (@_);
 }
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
