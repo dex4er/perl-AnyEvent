@@ -249,7 +249,7 @@ no warnings;
 use strict;
 use Carp;
 
-our $VERSION = '2.5';
+our $VERSION = '2.51';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -290,7 +290,9 @@ sub detect() {
 
          for (@REGISTRY, @models) {
             my ($package, $model) = @$_;
-            if (eval "require $model") {
+            if (eval "require $package"
+                and ${"$package\::VERSION"} > 0
+                and eval "require $model") {
                $MODEL = $model;
                warn "AnyEvent: autoprobed and loaded model '$model', using it.\n" if $verbose > 1;
                last;
