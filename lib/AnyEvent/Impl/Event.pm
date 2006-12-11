@@ -31,20 +31,6 @@ sub DESTROY {
    ${$_[0]}->cancel;
 }
 
-sub condvar {
-   my $class = shift;
-
-   bless \my $flag, $class
-}
-
-sub broadcast {
-   ${$_[0]}++;
-}
-
-sub wait {
-   Event::one_event while !${$_[0]};
-}
-
 sub one_event {
    Event::one_event;
 }

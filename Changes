@@ -1,6 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+2.5  Mon Dec 11 02:15:28 CET 2006
 	- avoid $AUTOLOAD because many perls corrupt it.
+        - AnyEvent::detect forces autodetection.
+        - implement signal watchers (experimental)
+          (Tk does not support async signals (<= 804.027 at least),
+          so they might get delayed indefinitely on Tk).
+        - implement child watchers (experimental).
+        - moved default condvar implementation into base module, simplifying
+          most implementation modules.
 
 2.1  Fri Nov 24 15:50:48 CET 2006
 	- better docs.

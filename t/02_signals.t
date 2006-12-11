@@ -1,5 +1,5 @@
 $|=1;
-BEGIN { print "1..5\n" }
+BEGIN { print "1..6\n" }
 
 use AnyEvent;
 
@@ -16,10 +16,12 @@ print "ok 2\n";
 kill 'CHLD', 0;
 $cv->wait;
 
+print "ok 4\n";
+
 undef $sw;
 
-print "ok 4\n";
+print "ok 5\n";
 
 kill 'CHLD', 0;
 
-print "ok 5\n";
+print "ok 6\n";

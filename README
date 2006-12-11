@@ -86,8 +86,8 @@ WATCHERS
           undef $w;
        });
 
-  TIMER WATCHERS
-    You can create a timer watcher by calling the "AnyEvent->timer" method
+  TIME WATCHERS
+    You can create a time watcher by calling the "AnyEvent->timer" method
     with the following mandatory arguments:
 
     "after" after how many seconds (fractions are supported) should the
@@ -147,6 +147,28 @@ WATCHERS
 
            $result_ready->wait;
 
+  SIGNAL WATCHERS
+    You can listen for signals using a signal watcher, "signal" is the
+    signal *name* without any "SIG" prefix. Multiple signals events can be
+    clumped together into one callback invocation, and callbakc invocation
+    might or might not be asynchronous.
+
+    These watchers might use %SIG, so programs overwriting those signals
+    directly will likely not work correctly.
+
+    Example: exit on SIGINT
+
+       my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+
+  CHILD PROCESS WATCHERS
+    You can also listen for the status of a child process specified by the
+    "pid" argument. The watcher will only trigger once. This works by
+    installing a signal handler for "SIGCHLD".
+
+    Example: wait for pid 1333
+
+      my $w = AnyEvent->child (pid => 1333, cb => sub { warn "exit status $?" });
+
 GLOBALS
     $AnyEvent::MODEL
         Contains "undef" until the first watcher is being created. Then it
@@ -162,6 +184,12 @@ GLOBALS
            AnyEvent::Impl::Glib      based on Glib, second-best choice.
            AnyEvent::Impl::Tk        based on Tk, very bad choice.
            AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
+
+    AnyEvent::detect
+        Returns $AnyEvent::MODEL, forcing autodetection of the event model
+        if necessary. You should only call this function right before you
+        would have created an AnyEvent watcher anyway, that is, very late at
+        runtime.
 
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods
@@ -209,7 +237,7 @@ SUPPLYING YOUR OWN EVENT MODEL INTERFACE
     AnyEvent is loaded and asked to find a suitable event model, it will
     first check for the presence of urxvt.
 
-    The class should prove implementations for all watcher types (see
+    The class should provide implementations for all watcher types (see
     AnyEvent::Impl::Event (source code), AnyEvent::Impl::Glib (Source code)
     and so on for actual examples, use "perldoc -m AnyEvent::Impl::Glib" to
     see the sources).

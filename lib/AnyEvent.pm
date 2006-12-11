@@ -162,7 +162,9 @@ Example:
 =head2 SIGNAL WATCHERS
 
 You can listen for signals using a signal watcher, C<signal> is the signal
-I<name> without any C<SIG> prefix.
+I<name> without any C<SIG> prefix. Multiple signals events can be clumped
+together into one callback invocation, and callbakc invocation might or
+might not be asynchronous.
 
 These watchers might use C<%SIG>, so programs overwriting those signals
 directly will likely not work correctly.
@@ -170,6 +172,16 @@ directly will likely not work correctly.
 Example: exit on SIGINT
 
    my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+
+=head2 CHILD PROCESS WATCHERS
+
+You can also listen for the status of a child process specified by the
+C<pid> argument. The watcher will only trigger once. This works by
+installing a signal handler for C<SIGCHLD>.
+
+Example: wait for pid 1333
+
+  my $w = AnyEvent->child (pid => 1333, cb => sub { warn "exit status $?" });
 
 =head1 GLOBALS
 
@@ -310,7 +322,21 @@ sub AUTOLOAD {
 
 package AnyEvent::Base;
 
-# default implementation for signal
+# default implementation for ->condvar, ->wait, ->broadcast
+
+sub condvar {
+   bless \my $flag, "AnyEvent::Base::CondVar"
+}
+
+sub AnyEvent::Base::CondVar::broadcast {
+   ${$_[0]}++;
+}
+
+sub AnyEvent::Base::CondVar::wait {
+   AnyEvent->one_event while !${$_[0]};
+}
+
+# default implementation for ->signal
 
 our %SIG_CB;
 
@@ -320,14 +346,12 @@ sub signal {
    my $signal = uc $arg{signal}
       or Carp::croak "required option 'signal' is missing";
 
-   my $w = bless [$signal, $arg{cb}], "AnyEvent::Base::Signal";
-
    $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
    $SIG{$signal} ||= sub {
-      $_->() for values %{ $SIG_CB{$signal} };
+      $_->() for values %{ $SIG_CB{$signal} || {} };
    };
 
-   $w
+   bless [$signal, $arg{cb}], "AnyEvent::Base::Signal"
 }
 
 sub AnyEvent::Base::Signal::DESTROY {
@@ -336,6 +360,49 @@ sub AnyEvent::Base::Signal::DESTROY {
    delete $SIG_CB{$signal}{$cb};
 
    $SIG{$signal} = 'DEFAULT' unless keys %{ $SIG_CB{$signal} };
+}
+
+# default implementation for ->child
+
+our %PID_CB;
+our $CHLD_W;
+our $PID_IDLE;
+our $WNOHANG;
+
+sub _child_wait {
+   while (0 < (my $pid = waitpid -1, $WNOHANG)) {
+      $_->() for values %{ (delete $PID_CB{$pid}) || {} };
+   }
+
+   undef $PID_IDLE;
+}
+
+sub child {
+   my (undef, %arg) = @_;
+
+   my $pid = uc $arg{pid}
+      or Carp::croak "required option 'pid' is missing";
+
+   $PID_CB{$pid}{$arg{cb}} = $arg{cb};
+
+   unless ($WNOHANG) {
+      $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_child_wait);
+      $WNOHANG = eval { require POSIX; &POSIX::WNOHANG } || 1;
+   }
+
+   # child could be a zombie already
+   $PID_IDLE ||= AnyEvent->timer (after => 0, cb => \&_child_wait);
+
+   bless [$pid, $arg{cb}], "AnyEvent::Base::Child"
+}
+
+sub AnyEvent::Base::Child::DESTROY {
+   my ($pid, $cb) = @{$_[0]};
+
+   delete $PID_CB{$pid}{$cb};
+   delete $PID_CB{$pid} unless keys %{ $PID_CB{$pid} };
+
+   undef $CHLD_W unless keys %PID_CB;
 }
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE

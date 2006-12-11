@@ -52,20 +52,6 @@ sub DESTROY {
    $self->cancel;
 }
 
-sub condvar {
-   my $class = shift;
-
-   bless \my $x, AnyEvent::Impl::Tk::CondVar;
-}
-
-sub AnyEvent::Impl::Tk::CondVar::broadcast {
-   ${$_[0]}++;
-}
-
-sub AnyEvent::Impl::Tk::CondVar::wait {
-   Tk::DoOneEvent (0) while !${$_[0]};
-}
-
 sub one_event {
    Tk::DoOneEvent (0);
 }

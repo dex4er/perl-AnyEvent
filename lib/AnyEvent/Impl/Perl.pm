@@ -109,20 +109,5 @@ sub DESTROY {
    %$self = ();
 }
 
-sub condvar {
-   my $class = shift;
-
-   bless \my $flag, $class
-}
-
-sub broadcast {
-   ${$_[0]}++;
-}
-
-sub wait {
-   one_event while !${$_[0]};
-}
-
-
 1
 
