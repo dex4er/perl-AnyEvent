@@ -163,7 +163,7 @@ Example:
 
 You can listen for signals using a signal watcher, C<signal> is the signal
 I<name> without any C<SIG> prefix. Multiple signals events can be clumped
-together into one callback invocation, and callbakc invocation might or
+together into one callback invocation, and callback invocation might or
 might not be asynchronous.
 
 These watchers might use C<%SIG>, so programs overwriting those signals
