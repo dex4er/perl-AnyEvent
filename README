@@ -150,7 +150,7 @@ WATCHERS
   SIGNAL WATCHERS
     You can listen for signals using a signal watcher, "signal" is the
     signal *name* without any "SIG" prefix. Multiple signals events can be
-    clumped together into one callback invocation, and callbakc invocation
+    clumped together into one callback invocation, and callback invocation
     might or might not be asynchronous.
 
     These watchers might use %SIG, so programs overwriting those signals

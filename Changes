@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+2.52 Wed Mar  7 18:36:16 CET 2007
+	- child watchers stopped working permanently when
+          all current child wacthers were destroyed.
+
 2.51 Mon Dec 11 21:33:24 CET 2006
 	- work around bugs in perl where eval "require Module" returns
           true even if the module couldn't be loaded :/.
