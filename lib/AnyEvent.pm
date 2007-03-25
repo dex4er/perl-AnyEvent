@@ -247,6 +247,7 @@ package AnyEvent;
 
 no warnings;
 use strict;
+
 use Carp;
 
 our $VERSION = '2.52';

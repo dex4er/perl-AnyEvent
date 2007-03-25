@@ -1,6 +1,7 @@
 package AnyEvent::Impl::Coro;
 
 no warnings;
+use strict;
 
 use base AnyEvent::Impl::Event;
 

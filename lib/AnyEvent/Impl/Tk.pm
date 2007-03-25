@@ -1,6 +1,7 @@
 package AnyEvent::Impl::Tk;
 
 no warnings;
+use strict;
 
 use Tk ();
 

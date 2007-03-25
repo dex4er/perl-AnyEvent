@@ -1,6 +1,7 @@
 package AnyEvent::Impl::Glib;
 
 no warnings;
+use strict;
 
 use Glib ();
 

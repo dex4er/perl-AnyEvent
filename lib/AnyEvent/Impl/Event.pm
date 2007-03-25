@@ -1,6 +1,7 @@
 package AnyEvent::Impl::Event;
 
 no warnings;
+use strict;
 
 use Event ();
 

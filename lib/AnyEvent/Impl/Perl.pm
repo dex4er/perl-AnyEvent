@@ -1,6 +1,7 @@
 package AnyEvent::Impl::Perl;
 
 no warnings;
+use strict;
 
 use Time::HiRes qw(time);
 use Scalar::Util ();
