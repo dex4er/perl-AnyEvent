@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+2.53 Sun Jul  8 10:51:53 CEST 2007
+	- make Glib interface work again (spotted by elmex).
+
 2.52 Wed Mar  7 18:36:16 CET 2007
 	- child watchers stopped working permanently when
           all current child watchers were destroyed.

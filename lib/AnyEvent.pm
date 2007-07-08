@@ -250,7 +250,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.52';
+our $VERSION = '2.53';
 our $MODEL;
 
 our $AUTOLOAD;
