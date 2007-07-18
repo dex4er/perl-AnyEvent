@@ -1,5 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+2.54 Wed Jul 18 17:36:23 CEST 2007
+	- work around a perl bug that results in
+          BEGIN not safe after errors--compilation aborted without
+          any discernible reason or error message by once
+          again not use'ing strict.
+
 2.53 Sun Jul  8 10:51:53 CEST 2007
 	- make Glib interface work again (spotted by elmex).
 

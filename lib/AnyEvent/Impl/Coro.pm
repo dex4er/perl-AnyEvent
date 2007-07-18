@@ -1,9 +1,9 @@
 package AnyEvent::Impl::Coro;
 
-no warnings;
-use strict;
-
 use base AnyEvent::Impl::Event;
+
+use strict;
+no warnings;
 
 use Coro::Event ();
 use Coro::Signal ();
