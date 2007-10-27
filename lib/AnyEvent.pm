@@ -197,7 +197,8 @@ AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
 
 The known classes so far are:
 
-   AnyEvent::Impl::Coro      based on Coro::Event, best choise.
+   AnyEvent::Impl::Coro      based on Coro::Event, best choice.
+   EV::AnyEvent              based on EV (an interface to libevent)
    AnyEvent::Impl::Event     based on Event, also best choice :)
    AnyEvent::Impl::Glib      based on Glib, second-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
@@ -250,7 +251,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.54';
+our $VERSION = '2.55';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -262,6 +263,7 @@ our @REGISTRY;
 
 my @models = (
    [Coro::Event::          => AnyEvent::Impl::Coro::],
+   [EV::                   => EV::AnyEvent::],
    [Event::                => AnyEvent::Impl::Event::],
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
