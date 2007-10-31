@@ -197,9 +197,9 @@ AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
 
 The known classes so far are:
 
-   AnyEvent::Impl::Coro      based on Coro::Event, best choice.
-   EV::AnyEvent              based on EV (an interface to libevent)
-   AnyEvent::Impl::Event     based on Event, also best choice :)
+   EV::AnyEvent              based on EV (an interface to libev, best choice)
+   AnyEvent::Impl::Coro      based on Coro::Event, second best choice.
+   AnyEvent::Impl::Event     based on Event, also second best choice :)
    AnyEvent::Impl::Glib      based on Glib, second-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
    AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
