@@ -351,7 +351,7 @@ sub signal {
    my $signal = uc $arg{signal}
       or Carp::croak "required option 'signal' is missing";
 
-   $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+   $SIG_CB{$signal}{$arg{cb} += 0} = $arg{cb};
    $SIG{$signal} ||= sub {
       $_->() for values %{ $SIG_CB{$signal} || {} };
    };
@@ -376,7 +376,7 @@ our $WNOHANG;
 
 sub _child_wait {
    while (0 < (my $pid = waitpid -1, $WNOHANG)) {
-      $_->() for values %{ (delete $PID_CB{$pid}) || {} };
+      $_->() for values %{ $PID_CB{$pid} || {} }, %{ $PID_CB{0} || {} };
    }
 
    undef $PID_IDLE;
