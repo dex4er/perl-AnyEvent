@@ -1,5 +1,5 @@
 $|=1;
-BEGIN { print "1..4\n" }
+BEGIN { print "1..5\n" }
 
 use AnyEvent;
 
@@ -26,7 +26,18 @@ my $w = AnyEvent->child (pid => $pid, cb => sub {
 
 $cv->wait;
 
-print "ok 4\n";
+fork || exit 7;
+
+my $cv2 = AnyEvent->condvar;
+
+my $w2 = AnyEvent->child (pid => 0, cb => sub {
+   print 7 == ($? >> 8) ? "" : "not ", "ok 4\n";
+   $cv2->broadcast;
+});
+
+$cv2->wait;
+
+print "ok 5\n";
 
 
 

@@ -6,7 +6,7 @@ MAYBE: http://svn.xantus.org/shortbus/trunk/cometd-perl/lab/aio.pl
 2.55
 	- add EV to the list of supported event models.
         - do not auto-reset pid watchers.
-        - allow a pid of zero.
+        - allow a pid of zero to watch for all children in child watchers.
 
 2.54 Wed Jul 18 17:36:23 CEST 2007
 	- work around a perl bug that results in

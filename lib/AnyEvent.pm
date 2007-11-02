@@ -176,8 +176,9 @@ Example: exit on SIGINT
 =head2 CHILD PROCESS WATCHERS
 
 You can also listen for the status of a child process specified by the
-C<pid> argument. The watcher will only trigger once. This works by
-installing a signal handler for C<SIGCHLD>.
+C<pid> argument (or any child if the pid argument is 0). The watcher will
+trigger as often as status change for the child are received. This works
+by installing a signal handler for C<SIGCHLD>.
 
 Example: wait for pid 1333
 
@@ -351,7 +352,7 @@ sub signal {
    my $signal = uc $arg{signal}
       or Carp::croak "required option 'signal' is missing";
 
-   $SIG_CB{$signal}{$arg{cb} += 0} = $arg{cb};
+   $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
    $SIG{$signal} ||= sub {
       $_->() for values %{ $SIG_CB{$signal} || {} };
    };
@@ -376,7 +377,8 @@ our $WNOHANG;
 
 sub _child_wait {
    while (0 < (my $pid = waitpid -1, $WNOHANG)) {
-      $_->() for values %{ $PID_CB{$pid} || {} }, %{ $PID_CB{0} || {} };
+      $_->() for (values %{ $PID_CB{$pid} || {} }),
+                 (values %{ $PID_CB{0}    || {} });
    }
 
    undef $PID_IDLE;
@@ -385,7 +387,7 @@ sub _child_wait {
 sub child {
    my (undef, %arg) = @_;
 
-   my $pid = uc $arg{pid}
+   defined (my $pid = $arg{pid} + 0)
       or Carp::croak "required option 'pid' is missing";
 
    $PID_CB{$pid}{$arg{cb}} = $arg{cb};
