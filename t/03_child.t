@@ -20,24 +20,26 @@ unless ($pid) {
 }
 
 my $w = AnyEvent->child (pid => $pid, cb => sub {
-   print 3 == ($? >> 8) ? "" : "not ", "ok 3\n";
+   print $pid == $_[0] ? "" : "not ", "ok 3\n";
+   print 3 == ($_[1] >> 8) ? "" : "not ", "ok 4\n";
    $cv->broadcast;
 });
 
 $cv->wait;
 
-fork || exit 7;
+my $pid2 = fork || exit 7;
 
 my $cv2 = AnyEvent->condvar;
 
 my $w2 = AnyEvent->child (pid => 0, cb => sub {
-   print 7 == ($? >> 8) ? "" : "not ", "ok 4\n";
+   print $pid2 == $_[0] ? "" : "not ", "ok 5\n";
+   print 7 == ($_[1] >> 8) ? "" : "not ", "ok 6\n";
    $cv2->broadcast;
 });
 
 $cv2->wait;
 
-print "ok 5\n";
+print "ok 7\n";
 
 
 
