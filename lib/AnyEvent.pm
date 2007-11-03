@@ -178,7 +178,8 @@ Example: exit on SIGINT
 You can also listen for the status of a child process specified by the
 C<pid> argument (or any child if the pid argument is 0). The watcher will
 trigger as often as status change for the child are received. This works
-by installing a signal handler for C<SIGCHLD>.
+by installing a signal handler for C<SIGCHLD>. The callback will be called with
+the pid and exit status (as returned by waitpid).
 
 Example: wait for pid 1333
 
@@ -376,9 +377,9 @@ our $PID_IDLE;
 our $WNOHANG;
 
 sub _child_wait {
-   while (0 < (my $pid = waitpid -1, $WNOHANG)) {
-      $_->() for (values %{ $PID_CB{$pid} || {} }),
-                 (values %{ $PID_CB{0}    || {} });
+   while (0 <= (my $pid = waitpid -1, $WNOHANG)) {
+      $_->($pid, $?) for (values %{ $PID_CB{$pid} || {} }),
+                         (values %{ $PID_CB{0}    || {} });
    }
 
    undef $PID_IDLE;
