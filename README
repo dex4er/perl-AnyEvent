@@ -162,8 +162,10 @@ WATCHERS
 
   CHILD PROCESS WATCHERS
     You can also listen for the status of a child process specified by the
-    "pid" argument. The watcher will only trigger once. This works by
-    installing a signal handler for "SIGCHLD".
+    "pid" argument (or any child if the pid argument is 0). The watcher will
+    trigger as often as status change for the child are received. This works
+    by installing a signal handler for "SIGCHLD". The callback will be
+    called with the pid and exit status (as returned by waitpid).
 
     Example: wait for pid 1333
 
@@ -179,8 +181,9 @@ GLOBALS
 
         The known classes so far are:
 
-           AnyEvent::Impl::Coro      based on Coro::Event, best choise.
-           AnyEvent::Impl::Event     based on Event, also best choice :)
+           EV::AnyEvent              based on EV (an interface to libev, best choice)
+           AnyEvent::Impl::Coro      based on Coro::Event, second best choice.
+           AnyEvent::Impl::Event     based on Event, also second best choice :)
            AnyEvent::Impl::Glib      based on Glib, second-best choice.
            AnyEvent::Impl::Tk        based on Tk, very bad choice.
            AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
