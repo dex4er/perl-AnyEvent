@@ -1,7 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
-MAYBE: http://svn.xantus.org/shortbus/trunk/cometd-perl/lab/aio.pl
-       (poe makes their own "anyevent", unfortunately).
+2.6
+	- fix bug in testsuite.
+        - move EV adaptor modules to AnyEvent.
+        - add Coro+EV adaptor module.
 
 2.55 Tue Nov  6 17:41:32 CET 2007
 	- add EV to the list of supported event models.

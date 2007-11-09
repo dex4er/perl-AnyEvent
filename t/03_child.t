@@ -1,5 +1,5 @@
 $|=1;
-BEGIN { print "1..5\n" }
+BEGIN { print "1..7\n" }
 
 use AnyEvent;
 
