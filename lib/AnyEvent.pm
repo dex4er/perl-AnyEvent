@@ -199,7 +199,8 @@ AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
 
 The known classes so far are:
 
-   EV::AnyEvent              based on EV (an interface to libev, best choice)
+   AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
+   AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
    AnyEvent::Impl::Coro      based on Coro::Event, second best choice.
    AnyEvent::Impl::Event     based on Event, also second best choice :)
    AnyEvent::Impl::Glib      based on Glib, second-best choice.
@@ -264,8 +265,9 @@ our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 our @REGISTRY;
 
 my @models = (
+   [Coro::EV::             => AnyEvent::Impl::CoroEV::],
+   [EV::                   => AnyEvent::Impl::EV::],
    [Coro::Event::          => AnyEvent::Impl::Coro::],
-   [EV::                   => EV::AnyEvent::],
    [Event::                => AnyEvent::Impl::Event::],
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
