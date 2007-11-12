@@ -6,7 +6,7 @@ print <<EOF;
 
 ***
 *** One or more of these modules, in order of importance, is recommended:
-*** Event, Coro, Glib, Tk
+*** EV, Event, Coro, Glib, Tk
 ***
 
 EOF
