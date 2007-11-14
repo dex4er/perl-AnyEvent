@@ -307,7 +307,7 @@ sub detect() {
          }
 
          $MODEL
-           or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: Event (or Coro+Event), Glib or Tk.";
+           or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV (or Coro+EV), Event (or Coro+Event), Glib or Tk.";
       }
 
       unshift @ISA, $MODEL;
