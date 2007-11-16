@@ -72,7 +72,7 @@ the following mandatory arguments:
 
 C<fh> the Perl I<filehandle> (not filedescriptor) to watch for
 events. C<poll> must be a string that is either C<r> or C<w>, that creates
-a watcher waiting for "r"eadable or "w"ritable events. C<cb> teh callback
+a watcher waiting for "r"eadable or "w"ritable events. C<cb> the callback
 to invoke everytime the filehandle becomes ready.
 
 Only one io watcher per C<fh> and C<poll> combination is allowed (i.e. on
