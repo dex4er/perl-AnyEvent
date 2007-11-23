@@ -1,7 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
+2.7  Fri Nov 23 11:41:14 CET 2007
 	- force use of AnyEvent::Impl::Perl in testsuite, there is
           too much breakage outside AnyEvent.
+        - deliver signals synchronously in AnyEvent::Impl::Perl
+          or any other event loop that relies on AnyEvents child
+          watcher emulation. *Could* help with hanging testsuite
+          (except when Event or EV are installed).
 
 2.6  Fri Nov  9 20:36:35 CET 2007
 	- fix bug in testsuite.

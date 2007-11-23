@@ -67,7 +67,7 @@ WATCHERS
 
     "fh" the Perl *filehandle* (not filedescriptor) to watch for events.
     "poll" must be a string that is either "r" or "w", that creates a
-    watcher waiting for "r"eadable or "w"ritable events. "cb" teh callback
+    watcher waiting for "r"eadable or "w"ritable events. "cb" the callback
     to invoke everytime the filehandle becomes ready.
 
     Only one io watcher per "fh" and "poll" combination is allowed (i.e. on
@@ -105,7 +105,7 @@ WATCHERS
        });
 
        # to cancel the timer:
-       undef $w
+       undef $w;
 
   CONDITION WATCHERS
     Condition watchers can be created by calling the "AnyEvent->condvar"

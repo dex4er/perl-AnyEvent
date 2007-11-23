@@ -111,7 +111,7 @@ Example:
    });
 
    # to cancel the timer:
-   undef $w
+   undef $w;
 
 =head2 CONDITION WATCHERS
 
@@ -254,7 +254,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.6';
+our $VERSION = '2.7';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -375,6 +375,7 @@ sub AnyEvent::Base::Signal::DESTROY {
 
 our %PID_CB;
 our $CHLD_W;
+our $CHLD_DELAY_W;
 our $PID_IDLE;
 our $WNOHANG;
 
@@ -385,6 +386,14 @@ sub _child_wait {
    }
 
    undef $PID_IDLE;
+}
+
+sub _sigchld {
+   # make sure we deliver these changes "synchronous" with the event loop.
+   $CHLD_DELAY_W ||= AnyEvent->timer (after => 0, cb => sub {
+      undef $CHLD_DELAY_W;
+      &_child_wait;
+   });
 }
 
 sub child {
@@ -400,9 +409,9 @@ sub child {
    }
 
    unless ($CHLD_W) {
-      $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_child_wait);
-      # child could be a zombie already
-      $PID_IDLE ||= AnyEvent->timer (after => 0, cb => \&_child_wait);
+      $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_sigchld);
+      # child could be a zombie already, so make at least one round
+      &_sigchld;
    }
 
    bless [$pid, $arg{cb}], "AnyEvent::Base::Child"
