@@ -11,7 +11,7 @@ my $pid = fork;
 defined $pid or die "unable to fork";
 
 # work around Tk bug until it has been fixed.
-my $timer = AnyEvent->timer (after => 2, cb => sub { });
+#my $timer = AnyEvent->timer (after => 2, cb => sub { });
 
 my $cv = AnyEvent->condvar;
 
