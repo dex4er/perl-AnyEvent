@@ -254,7 +254,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.7';
+our $VERSION = '2.8';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -380,7 +380,7 @@ our $PID_IDLE;
 our $WNOHANG;
 
 sub _child_wait {
-   while (0 <= (my $pid = waitpid -1, $WNOHANG)) {
+   while (0 < (my $pid = waitpid -1, $WNOHANG)) {
       $_->($pid, $?) for (values %{ $PID_CB{$pid} || {} }),
                          (values %{ $PID_CB{0}    || {} });
    }

@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+2.8  Sun Nov 25 15:06:03 CET 2007
+	- waitpid can validly return 0. accept this fact of life
+          instead of reporting it to any watchers.
+
 2.7  Fri Nov 23 11:41:14 CET 2007
 	- force use of AnyEvent::Impl::Perl in testsuite, there is
           too much breakage outside AnyEvent.
