@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+2.9  Mon Jan 28 13:31:54 CET 2008
+	- update for EV 3.0 API changes.
+
 2.8  Sun Nov 25 15:06:03 CET 2007
 	- waitpid can validly return 0. accept this fact of life
           instead of reporting it to any watchers.

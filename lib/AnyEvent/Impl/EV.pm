@@ -53,7 +53,7 @@ sub child {
 
    my $cb = $arg{cb};
 
-   EV::child $arg{pid}, sub {
+   EV::child $arg{pid}, 0, sub {
       $cb->($_[0]->rpid, $_[0]->rstatus);
    }
 }

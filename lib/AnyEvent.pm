@@ -254,7 +254,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.8';
+our $VERSION = '2.9';
 our $MODEL;
 
 our $AUTOLOAD;
