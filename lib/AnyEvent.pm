@@ -20,6 +20,48 @@ Event, Coro, Glib, Tk, Perl - various supported event loops
    $w->wait; # enters "main loop" till $condvar gets ->broadcast
    $w->broadcast; # wake up current and all future wait's
 
+=head1 WHY YOU SHOULD USE THIS MODULE
+
+Glib, POE, IO::Async, Event... CPAN offers event models by the dozen
+nowadays. So what is different about AnyEvent?
+
+Executive Summary: AnyEvent is I<compatible>, AnyEvent is I<free of
+policy> and AnyEvent is I<small and efficient>.
+
+First and foremost, I<AnyEvent is not an event model> itself, it only
+interfaces to whatever event model the main program happens to use in a
+pragmatic way. For event models and certain classes of immortals alike,
+the statement "there can only be one" is a bitter reality, and AnyEvent
+helps hiding the differences.
+
+The goal of AnyEvent is to offer module authors the ability to do event
+programming (waiting for I/O or timer events) without subscribing to a
+religion, a way of living, and most importantly: without forcing your
+module users into the same thing by forcing them to use the same event
+model you use.
+
+For modules like POE or IO::Async (the latter of which is actually
+named confusingly, as it does neither do I/O nor does it do anything
+asynchronously...), using them in your module is like joining a
+cult: After you joined, you are dependent on them and you cannot use
+anything else, as it is simply incompatible to everything that isn't
+itself.
+
+AnyEvent + POE works fine. AnyEvent + Glib works fine. AnyEvent + Tk
+works fine etc. etc. but none of these work together with the rest: POE
++ IO::Async? no go. Tk + Event? no go. If your module uses one of
+those, every user of your module has to use it, too. If your module
+uses AnyEvent, it works transparently with all event models it supports
+(including stuff like POE and IO::Async).
+
+In addition of being free of having to use I<the one and only true event
+model>, AnyEvent also is free of bloat and policy: with POE or similar
+modules, you get an enourmous amount of code and strict rules you have
+to follow. AnyEvent, on the other hand, is lean and to the point by only
+offering the functionality that is useful, in as thin as a wrapper as
+technically possible.
+
+
 =head1 DESCRIPTION
 
 L<AnyEvent> provides an identical interface to multiple event loops. This
@@ -120,6 +162,12 @@ method without any arguments.
 
 A condition watcher watches for a condition - precisely that the C<<
 ->broadcast >> method has been called.
+
+Note that condition watchers recurse into the event loop - if you have
+two watchers that call C<< ->wait >> in a round-robbin fashion, you
+lose. Therefore, condition watchers are good to export to your caller, but
+you should avoid making a blocking wait, at least in callbacks, as this
+usually asks for trouble.
 
 The watcher has only two methods:
 
@@ -254,7 +302,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '2.9';
+our $VERSION = '3.0';
 our $MODEL;
 
 our $AUTOLOAD;

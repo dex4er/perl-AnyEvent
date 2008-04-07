@@ -1,5 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
+3.0
+	- Coro::Signal changed semantics, roll our own, also cleaning
+          up the Coro implementation in general.
+        - rename Coro backend to CoroEvent.
+        - add some decision helping paragraph to the manpage that should
+          help people to decide wether AnyEvent is the right thing for them.
+
 2.9  Mon Jan 28 13:31:54 CET 2008
 	- update for EV 3.0 API changes.
 

@@ -1,5 +1,7 @@
 package AnyEvent::Impl::Coro;
 
+# this is not really a backend, it is just used by CoroEV and CoroEvent.
+
 use strict;
 no warnings;
 
