@@ -40,9 +40,8 @@ religion, a way of living, and most importantly: without forcing your
 module users into the same thing by forcing them to use the same event
 model you use.
 
-For modules like POE or IO::Async (the latter of which is actually
-named confusingly, as it does neither do I/O nor does it do anything
-asynchronously...), using them in your module is like joining a
+For modules like POE or IO::Async (which is actually doing all I/O
+I<synchronously>...), using them in your module is like joining a
 cult: After you joined, you are dependent on them and you cannot use
 anything else, as it is simply incompatible to everything that isn't
 itself.
