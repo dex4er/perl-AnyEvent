@@ -4,13 +4,14 @@ Changes
 README
 Makefile.PL
 lib/AnyEvent.pm
-lib/AnyEvent/Impl/CoroEV.pm
 lib/AnyEvent/Impl/EV.pm
-lib/AnyEvent/Impl/Coro.pm
 lib/AnyEvent/Impl/Event.pm
 lib/AnyEvent/Impl/Glib.pm
 lib/AnyEvent/Impl/Tk.pm
 lib/AnyEvent/Impl/Perl.pm
+lib/AnyEvent/Impl/Coro.pm
+lib/AnyEvent/Impl/CoroEV.pm
+lib/AnyEvent/Impl/CoroEvent.pm
 t/00_load.t
 t/01_basic.t
 t/02_signals.t

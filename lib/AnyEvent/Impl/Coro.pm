@@ -1,15 +1,25 @@
 package AnyEvent::Impl::Coro;
 
-use base AnyEvent::Impl::Event;
-
 use strict;
 no warnings;
 
-use Coro::Event ();
+use Coro ();
 use Coro::Signal ();
 
 sub condvar {
-   new Coro::Signal
+   bless [], __PACKAGE__
+}
+
+sub broadcast {
+   $_[0][0] = 1;
+   $_[0][1]->ready if $_[0][1];
+}
+
+sub wait {
+   while (!$_[0][0]) {
+      local $_[0][1] = $Coro::current;
+      Coro::schedule;
+   }
 }
 
 1

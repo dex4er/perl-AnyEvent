@@ -201,7 +201,7 @@ The known classes so far are:
 
    AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
    AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
-   AnyEvent::Impl::Coro      based on Coro::Event, second best choice.
+   AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
    AnyEvent::Impl::Event     based on Event, also second best choice :)
    AnyEvent::Impl::Glib      based on Glib, second-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
@@ -267,7 +267,7 @@ our @REGISTRY;
 my @models = (
    [Coro::EV::             => AnyEvent::Impl::CoroEV::],
    [EV::                   => AnyEvent::Impl::EV::],
-   [Coro::Event::          => AnyEvent::Impl::Coro::],
+   [Coro::Event::          => AnyEvent::Impl::CoroEvent::],
    [Event::                => AnyEvent::Impl::Event::],
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
