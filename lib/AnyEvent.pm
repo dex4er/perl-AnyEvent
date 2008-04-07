@@ -60,9 +60,9 @@ to follow. AnyEvent, on the other hand, is lean and to the point by only
 offering the functionality that is useful, in as thin as a wrapper as
 technically possible.
 
-Of course, if you want lots of policy (this can arguably be somewhat
-useful) and you want to force your users to the one and only event model
-your module forces on them, you should I<not> use this module.
+Of course, if you want lots of policy (this is arguably somewhat useful in
+many cases) and you want your users to the one and only event model your
+module forces on them, you should I<not> use this module.
 
 
 =head1 DESCRIPTION
