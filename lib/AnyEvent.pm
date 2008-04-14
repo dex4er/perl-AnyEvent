@@ -644,7 +644,7 @@ All of this enables the following usage styles:
 
    my $data = $fcp->client_get ($url);
 
-2. Blocking, but parallelizing:
+2. Blocking, but running in parallel:
 
    my @datas = map $_->result,
                   map $fcp->txn_client_get ($_),
@@ -653,9 +653,9 @@ All of this enables the following usage styles:
 Both blocking examples work without the module user having to know
 anything about events.
 
-3a. Event-based in a main program, using any support Event module:
+3a. Event-based in a main program, using any supported event module:
 
-   use Event;
+   use EV;
 
    $fcp->txn_client_get ($url)->cb (sub {
       my $txn = shift;
@@ -663,7 +663,7 @@ anything about events.
       ...
    });
 
-   Event::loop;
+   EV::loop;
 
 3b. The module user could use AnyEvent, too:
 
@@ -680,11 +680,14 @@ anything about events.
 
 =head1 SEE ALSO
 
-Event modules: L<Coro::Event>, L<Coro>, L<Event>, L<Glib::Event>, L<Glib>.
+Event modules: L<Coro::EV>, L<EV>, L<EV::Glib>, L<Glib::EV>,
+L<Coro::Event>, L<Event>, L<Glib::Event>, L<Glib>, L<Coro>, L<Tk>.
 
-Implementations: L<AnyEvent::Impl::Coro>, L<AnyEvent::Impl::Event>, L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>.
+Implementations: L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::EV>,
+L<AnyEvent::Impl::CoroEvent>, L<AnyEvent::Impl::Event>,
+L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>.
 
-Nontrivial usage example: L<Net::FCP>.
+Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
 
 =head1
 
