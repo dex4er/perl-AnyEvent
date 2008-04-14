@@ -181,15 +181,23 @@ The watcher has only two methods:
 Wait (blocking if necessary) until the C<< ->broadcast >> method has been
 called on c<$cv>, while servicing other watchers normally.
 
-Not all event models support a blocking wait - some die in that case, so
-if you are using this from a module, never require a blocking wait, but
-let the caller decide wether the call will block or not (for example,
-by coupling condition variables with some kind of request results and
-supporting callbacks so the caller knows that getting the result will not
-block, while still suppporting blockign waits if the caller so desires).
-
 You can only wait once on a condition - additional calls will return
 immediately.
+
+Not all event models support a blocking wait - some die in that case
+(programs might want to do that so they stay interactive), so I<if you
+are using this from a module, never require a blocking wait>, but let the
+caller decide wether the call will block or not (for example, by coupling
+condition variables with some kind of request results and supporting
+callbacks so the caller knows that getting the result will not block,
+while still suppporting blocking waits if the caller so desires).
+
+Another reason I<never> to C<< ->wait >> in a module is that you cannot
+sensibly have two C<< ->wait >>'s in parallel, as that would require
+multiple interpreters or coroutines/threads, none of which C<AnyEvent>
+can supply (the coroutine-aware backends C<Coro::EV> and C<Coro::Event>
+explicitly support concurrent C<< ->wait >>'s from different coroutines,
+however).
 
 =item $cv->broadcast
 
