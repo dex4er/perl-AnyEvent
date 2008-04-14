@@ -262,9 +262,9 @@ The known classes so far are:
    AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
    AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
    AnyEvent::Impl::Event     based on Event, also second best choice :)
-   AnyEvent::Impl::Glib      based on Glib, second-best choice.
+   AnyEvent::Impl::Glib      based on Glib, third-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
-   AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
+   AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
 
 =item AnyEvent::detect
 
