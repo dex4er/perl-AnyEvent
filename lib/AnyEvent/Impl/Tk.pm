@@ -14,10 +14,15 @@ sub io {
    my $self = bless \%arg, $class;
    my $cb = $self->{cb};
 
-   $mw->fileevent ($self->{fh}, readable => sub { $cb->() })
-      if $self->{poll} eq "r";
-   $mw->fileevent ($self->{fh}, writable => sub { $cb->() })
-      if $self->{poll} eq "w";
+   my ($tk, $mode) = $self->{poll} eq "r" ? ("readable", "<")
+                   : $self->{poll} eq "w" ? ("writable", ">")
+                   : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
+
+   # cygwin requires the mode to be matching, unix doesn't
+   open my $fh, "$mode&" . fileno $self->{fh}
+      or die "cannot dup() filehandle: $!";
+   
+   $mw->fileevent ($self->{fh} = $fh, $tk => $cb);
 
    $self
 }
