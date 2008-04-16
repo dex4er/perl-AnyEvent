@@ -1,8 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
 	- work around recurring bugs in Tk by dup'ing filehandles, the
-          only method with good success chances to work on Tk.
-        - lift the restriction of only one watcher per fh direction.
+          only method with good success chances on Tk.
+        - lift the restriction of only one watcher per fh direction
+          (as the Tk bug workaround also lifts it and only Tk imposed
+          such strong limits).
         - changed probe order to prefer coro adaptors.
         - explain why recursion into the event loop is not supported
           unless the backend supports it (only Coro::EV does without
