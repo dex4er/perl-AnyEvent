@@ -1,6 +1,26 @@
-package AnyEvent::Impl::Coro;
+=head1 NAME
 
-# this is not really a backend, it is just used by CoroEV and CoroEvent.
+AnyEvent::Impl::Coro - Base class for Coro::EV and Coro::Event
+
+=head1 SYNOPSIS
+
+  # this module gets loaded automatically as required, never
+  # load it manually.
+
+=head1 DESCRIPTION
+
+This module provides general coro support for both
+L<AnyEvent::Impl::CoroEV> and L<AnyEvent::Impl::CoroEvent>.
+
+It is recommended to use L<Coro::unblock> to register callbacks
+if your program uses Coroutines, as most event models are not
+coroutine-safe/reentrant (only L<EV> is known to be).
+
+Internally, L<Coro::Signal>'s are used to implement AnyEvent's condvars.
+
+=cut
+
+package AnyEvent::Impl::Coro;
 
 use strict;
 no warnings;
@@ -24,5 +44,17 @@ sub wait {
    }
 }
 
-1
+1;
+
+=head1 SEE ALSO
+
+  L<AnyEvent>, L<Coro>, L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::CoroEvent>.
+
+=head1 AUTHOR
+
+ Marc Lehmann <schmorp@schmorp.de>
+ http://home.schmorp.de/
+
+=cut
+
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::Impl::EV - anyevent adaptor for EV
+AnyEvent::Impl::EV - AnyEvent adaptor for EV
 
 =head1 SYNOPSIS
 
@@ -11,9 +11,9 @@ AnyEvent::Impl::EV - anyevent adaptor for EV
 
 =head1 DESCRIPTION
 
-This module provides transparent support for AnyEvent. You don't
-have to do anything to make EV work with AnyEvent except by loading it
-before creating the first AnyEvent watcher.
+This module provides transparent support for AnyEvent. You don't have to
+do anything to make EV work with AnyEvent except by loading EV before
+creating the first AnyEvent watcher.
 
 =cut
 
@@ -79,7 +79,7 @@ sub one_event {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>.
+  L<AnyEvent>, L<EV>.
 
 =head1 AUTHOR
 

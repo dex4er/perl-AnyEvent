@@ -1,3 +1,26 @@
+=head1 NAME
+
+AnyEvent::Impl::Perl - Pure-Perl event loop and AnyEvent adaptor for itself
+
+=head1 SYNOPSIS
+
+  use AnyEvent;
+  # use AnyEvent::Impl::Perl;
+
+  # this module gets loaded automatically as required
+
+=head1 DESCRIPTION
+
+This module provides transparent support for AnyEvent in case no other
+event loop could be found or loaded. You don't have to do anything to make
+it work with AnyEvent except by possibly loading it before creating the
+first AnyEvent watcher.
+
+If you want to use this module instead of autoloading another event loop
+you can simply load it before creating the first watcher.
+
+=cut
+
 package AnyEvent::Impl::Perl;
 
 no warnings;
@@ -110,5 +133,17 @@ sub DESTROY {
    %$self = ();
 }
 
-1
+1;
+
+=head1 SEE ALSO
+
+  L<AnyEvent>.
+
+=head1 AUTHOR
+
+ Marc Lehmann <schmorp@schmorp.de>
+ http://home.schmorp.de/
+
+=cut
+
 
