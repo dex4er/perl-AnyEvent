@@ -1,7 +1,8 @@
 NAME
     AnyEvent - provide framework for multiple event loops
 
-    Event, Coro, Glib, Tk, Perl - various supported event loops
+    EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl - various supported
+    event loops
 
 SYNOPSIS
        use AnyEvent;
@@ -71,11 +72,11 @@ DESCRIPTION
 
     On the first call of any method, the module tries to detect the
     currently loaded event loop by probing wether any of the following
-    modules is loaded: Coro::Event, Event, Glib, Tk. The first one found is
-    used. If none is found, the module tries to load these modules in the
-    order given. The first one that could be successfully loaded will be
-    used. If still none could be found, AnyEvent will fall back to a
-    pure-perl event loop, which is also not very efficient.
+    modules is loaded: Coro::EV, Coro::Event, EV, Event, Glib, Tk. The first
+    one found is used. If none are found, the module tries to load these
+    modules in the order given. The first one that could be successfully
+    loaded will be used. If still none could be found, AnyEvent will fall
+    back to a pure-perl event loop, which is also not very efficient.
 
     Because AnyEvent first checks for modules that are already loaded,
     loading an Event model explicitly before first using AnyEvent will
@@ -111,10 +112,6 @@ WATCHERS
     "poll" must be a string that is either "r" or "w", that creates a
     watcher waiting for "r"eadable or "w"ritable events. "cb" the callback
     to invoke everytime the filehandle becomes ready.
-
-    Only one io watcher per "fh" and "poll" combination is allowed (i.e. on
-    a socket you can have one r + one w, not any more (limitation comes from
-    Tk - if you are sure you are not using Tk this limitation is gone).
 
     Filehandles will be kept alive, so as long as the watcher exists, the
     filehandle exists, too.
@@ -168,16 +165,24 @@ WATCHERS
         Wait (blocking if necessary) until the "->broadcast" method has been
         called on c<$cv>, while servicing other watchers normally.
 
-        Not all event models support a blocking wait - some die in that
-        case, so if you are using this from a module, never require a
-        blocking wait, but let the caller decide wether the call will block
-        or not (for example, by coupling condition variables with some kind
-        of request results and supporting callbacks so the caller knows that
-        getting the result will not block, while still suppporting blockign
-        waits if the caller so desires).
-
         You can only wait once on a condition - additional calls will return
         immediately.
+
+        Not all event models support a blocking wait - some die in that case
+        (programs might want to do that so they stay interactive), so *if
+        you are using this from a module, never require a blocking wait*,
+        but let the caller decide wether the call will block or not (for
+        example, by coupling condition variables with some kind of request
+        results and supporting callbacks so the caller knows that getting
+        the result will not block, while still suppporting blocking waits if
+        the caller so desires).
+
+        Another reason *never* to "->wait" in a module is that you cannot
+        sensibly have two "->wait"'s in parallel, as that would require
+        multiple interpreters or coroutines/threads, none of which
+        "AnyEvent" can supply (the coroutine-aware backends "Coro::EV" and
+        "Coro::Event" explicitly support concurrent "->wait"'s from
+        different coroutines, however).
 
     $cv->broadcast
         Flag the condition as ready - a running "->wait" and all further
@@ -230,12 +235,12 @@ GLOBALS
         The known classes so far are:
 
            AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
-           AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
            AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
+           AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
            AnyEvent::Impl::Event     based on Event, also second best choice :)
-           AnyEvent::Impl::Glib      based on Glib, second-best choice.
+           AnyEvent::Impl::Glib      based on Glib, third-best choice.
            AnyEvent::Impl::Tk        based on Tk, very bad choice.
-           AnyEvent::Impl::Perl      pure-perl implementation, inefficient.
+           AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
 
     AnyEvent::detect
         Returns $AnyEvent::MODEL, forcing autodetection of the event model
@@ -427,7 +432,7 @@ REAL-WORLD EXAMPLE
 
        my $data = $fcp->client_get ($url);
 
-    2. Blocking, but parallelizing:
+    2. Blocking, but running in parallel:
 
        my @datas = map $_->result,
                       map $fcp->txn_client_get ($_),
@@ -436,9 +441,9 @@ REAL-WORLD EXAMPLE
     Both blocking examples work without the module user having to know
     anything about events.
 
-    3a. Event-based in a main program, using any support Event module:
+    3a. Event-based in a main program, using any supported event module:
 
-       use Event;
+       use EV;
 
        $fcp->txn_client_get ($url)->cb (sub {
           my $txn = shift;
@@ -446,7 +451,7 @@ REAL-WORLD EXAMPLE
           ...
        });
 
-       Event::loop;
+       EV::loop;
 
     3b. The module user could use AnyEvent, too:
 
@@ -462,11 +467,13 @@ REAL-WORLD EXAMPLE
        $quit->wait;
 
 SEE ALSO
-    Event modules: Coro::Event, Coro, Event, Glib::Event, Glib.
+    Event modules: Coro::EV, EV, EV::Glib, Glib::EV, Coro::Event, Event,
+    Glib::Event, Glib, Coro, Tk.
 
-    Implementations: AnyEvent::Impl::Coro, AnyEvent::Impl::Event,
-    AnyEvent::Impl::Glib, AnyEvent::Impl::Tk.
+    Implementations: AnyEvent::Impl::CoroEV, AnyEvent::Impl::EV,
+    AnyEvent::Impl::CoroEvent, AnyEvent::Impl::Event, AnyEvent::Impl::Glib,
+    AnyEvent::Impl::Tk, AnyEvent::Impl::Perl.
 
-    Nontrivial usage example: Net::FCP.
+    Nontrivial usage examples: Net::FCP, Net::XMPP2.
 
 

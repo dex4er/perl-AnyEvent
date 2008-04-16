@@ -1,7 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+3.1  Wed Apr 16 17:09:01 CEST 2008
 	- work around recurring bugs in Tk by dup'ing filehandles, the
-          only method with good success chances on Tk.
+          only method with good success chances on Tk (the bugs apparently
+          don't get fixed anytime soon).
         - lift the restriction of only one watcher per fh direction
           (as the Tk bug workaround also lifts it and only Tk imposed
           such strong limits).
