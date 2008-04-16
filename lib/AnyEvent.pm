@@ -2,7 +2,7 @@
 
 AnyEvent - provide framework for multiple event loops
 
-Event, Coro, Glib, Tk, Perl - various supported event loops
+EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl - various supported event loops
 
 =head1 SYNOPSIS
 
@@ -77,11 +77,11 @@ module.
 
 On the first call of any method, the module tries to detect the currently
 loaded event loop by probing wether any of the following modules is
-loaded: L<Coro::Event>, L<Event>, L<Glib>, L<Tk>. The first one found is
-used. If none is found, the module tries to load these modules in the
-order given. The first one that could be successfully loaded will be
-used. If still none could be found, AnyEvent will fall back to a pure-perl
-event loop, which is also not very efficient.
+loaded: L<Coro::EV>, L<Coro::Event>, L<EV>, L<Event>, L<Glib>, L<Tk>. The
+first one found is used. If none are found, the module tries to load these
+modules in the order given. The first one that could be successfully
+loaded will be used. If still none could be found, AnyEvent will fall back
+to a pure-perl event loop, which is also not very efficient.
 
 Because AnyEvent first checks for modules that are already loaded, loading
 an Event model explicitly before first using AnyEvent will likely make
@@ -119,10 +119,6 @@ C<fh> the Perl I<filehandle> (not filedescriptor) to watch for
 events. C<poll> must be a string that is either C<r> or C<w>, that creates
 a watcher waiting for "r"eadable or "w"ritable events. C<cb> the callback
 to invoke everytime the filehandle becomes ready.
-
-Only one io watcher per C<fh> and C<poll> combination is allowed (i.e. on
-a socket you can have one r + one w, not any more (limitation comes from
-Tk - if you are sure you are not using Tk this limitation is gone).
 
 Filehandles will be kept alive, so as long as the watcher exists, the
 filehandle exists, too.
@@ -259,8 +255,8 @@ AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
 The known classes so far are:
 
    AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
-   AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
    AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
+   AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
    AnyEvent::Impl::Event     based on Event, also second best choice :)
    AnyEvent::Impl::Glib      based on Glib, third-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
@@ -325,8 +321,8 @@ our @REGISTRY;
 
 my @models = (
    [Coro::EV::             => AnyEvent::Impl::CoroEV::],
-   [EV::                   => AnyEvent::Impl::EV::],
    [Coro::Event::          => AnyEvent::Impl::CoroEvent::],
+   [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],

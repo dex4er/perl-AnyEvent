@@ -14,15 +14,23 @@ sub io {
    my $self = bless \%arg, $class;
    my $cb = $self->{cb};
 
+   # cygwin requires the fh mode to be matching, unix doesn't
    my ($tk, $mode) = $self->{poll} eq "r" ? ("readable", "<")
                    : $self->{poll} eq "w" ? ("writable", ">")
                    : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
 
-   # cygwin requires the mode to be matching, unix doesn't
-   open my $fh, "$mode&" . fileno $self->{fh}
+   # work around these bugs in Tk:
+   # - removing a callback will destroy other callbacks
+   # - removing a callback might crash
+   # - adding a callback might destroy other callbacks
+   # - only one callback per fh
+   # - only one clalback per fh/poll combination
+   open $self->{fh2}, "$mode&" . fileno $self->{fh}
       or die "cannot dup() filehandle: $!";
+
+   eval { fcntl $self->{fh2}, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC }; # eval in case paltform doesn't support it
    
-   $mw->fileevent ($self->{fh} = $fh, $tk => $cb);
+   $mw->fileevent ($self->{fh2}, $tk => $cb);
 
    $self
 }
@@ -43,10 +51,12 @@ sub timer {
 sub cancel {
    my ($self) = @_;
 
-   $mw->fileevent ($self->{fh}, readable => "")
-      if $self->{poll} eq "r";
-   $mw->fileevent ($self->{fh}, writable => "")
-      if $self->{poll} eq "w";
+   if (my $fh = delete $self->{fh2}) {
+      # work around another bug: watchers don't get removed when
+      # the fh is closed contrary to documentation.
+      $mw->fileevent ($fh, readable => "");
+      $mw->fileevent ($fh, writable => "");
+   }
 
    undef $self->{cb};
    delete $self->{cb};

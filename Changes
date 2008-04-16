@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- work around recurring bugs in Tk by dup'ing filehandles, the
+          only method with good success chances to work on Tk.
+        - lift the restriction of only one watcher per fh direction.
+        - changed probe ordet to ptefer coro adaptors.
+
 3.0  Mon Apr  7 21:30:23 CEST 2008
 	- Coro::Signal changed semantics, roll our own, also cleaning
           up the Coro implementation in general.
