@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+3.11 Sat Apr 19 06:57:31 CEST 2008
+	- major documentation rework.
+        - document the fact that child watchers only watch for zombies.
+        - fix the child watcher example.
+
 3.1  Wed Apr 16 17:09:01 CEST 2008
 	- work around recurring bugs in Tk by dup'ing filehandles, the
           only method with good success chances on Tk (the bugs apparently
