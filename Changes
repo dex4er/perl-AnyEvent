@@ -18,7 +18,7 @@ Revision history for Perl extension AnyEvent.
           up the Coro implementation in general.
         - rename Coro backend to CoroEvent.
         - add some decision helping paragraph to the manpage that should
-          help people to decide wether AnyEvent is the right thing for them.
+          help people to decide whether AnyEvent is the right thing for them.
 
 2.9  Mon Jan 28 13:31:54 CET 2008
 	- update for EV 3.0 API changes.
@@ -114,7 +114,7 @@ Revision history for Perl extension AnyEvent.
         - vastly improved documentation with a long example.
 
 0.2   Thu Dec  1 22:18:49 CET 2005
-	- check wether a valid method was called, to avoid endless loops.
+	- check whether a valid method was called, to avoid endless loops.
         - move condvars into their own class (cleaner, safer).
         - don't die when some modules are not available.
         - Tk is too broken to allow for words. Will work once Tk works.

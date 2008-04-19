@@ -16,7 +16,7 @@ EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl - various supported event loops
       ...
    });
 
-   my $w = AnyEvent->condvar; # stores wether a condition was flagged
+   my $w = AnyEvent->condvar; # stores whether a condition was flagged
    $w->wait; # enters "main loop" till $condvar gets ->broadcast
    $w->broadcast; # wake up current and all future wait's
 
@@ -76,7 +76,7 @@ The interface itself is vaguely similar but not identical to the Event
 module.
 
 On the first call of any method, the module tries to detect the currently
-loaded event loop by probing wether any of the following modules is
+loaded event loop by probing whether any of the following modules is
 loaded: L<Coro::EV>, L<Coro::Event>, L<EV>, L<Event>, L<Glib>, L<Tk>. The
 first one found is used. If none are found, the module tries to load these
 modules in the order given. The first one that could be successfully
@@ -183,7 +183,7 @@ immediately.
 Not all event models support a blocking wait - some die in that case
 (programs might want to do that so they stay interactive), so I<if you
 are using this from a module, never require a blocking wait>, but let the
-caller decide wether the call will block or not (for example, by coupling
+caller decide whether the call will block or not (for example, by coupling
 condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
 while still suppporting blocking waits if the caller so desires).
@@ -629,7 +629,7 @@ data:
 
 The actual code goes further and collects all errors (C<die>s, exceptions)
 that occured during request processing. The C<result> method detects
-wether an exception as thrown (it is stored inside the $txn object)
+whether an exception as thrown (it is stored inside the $txn object)
 and just throws the exception, which means connection errors and other
 problems get reported tot he code that tries to use the result, not in a
 random callback.

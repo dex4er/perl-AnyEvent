@@ -17,7 +17,7 @@ creating the first AnyEvent watcher.
 
 Glib is probably the most inefficient event loop that has ever seen the
 light of the world: Glib not only scans all its watchers (really, ALL
-of them, wether I/O-related, timer-related or not) during each loop
+of them, whether I/O-related, timer-related or not) during each loop
 iteration, it also does so multiple times and rebuilds the poll list for
 the kernel each time again, dynamically even.
 
