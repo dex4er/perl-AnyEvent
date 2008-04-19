@@ -59,7 +59,7 @@ sub one_event {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>, L<Event>.
+L<AnyEvent>, L<Event>.
 
 =head1 AUTHOR
 

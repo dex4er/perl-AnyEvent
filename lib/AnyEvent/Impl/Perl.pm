@@ -137,7 +137,7 @@ sub DESTROY {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>.
+L<AnyEvent>.
 
 =head1 AUTHOR
 

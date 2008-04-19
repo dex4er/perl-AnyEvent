@@ -48,7 +48,7 @@ sub wait {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>, L<Coro>, L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::CoroEvent>.
+L<AnyEvent>, L<Coro>, L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::CoroEvent>.
 
 =head1 AUTHOR
 

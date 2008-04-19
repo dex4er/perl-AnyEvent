@@ -88,7 +88,7 @@ sub one_event {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>, L<Glib>.
+L<AnyEvent>, L<Glib>.
 
 =head1 AUTHOR
 

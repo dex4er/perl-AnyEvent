@@ -114,7 +114,7 @@ sub one_event {
 
 =head1 SEE ALSO
 
-  L<AnyEvent>, L<Tk>.
+L<AnyEvent>, L<Tk>.
 
 =head1 AUTHOR
 

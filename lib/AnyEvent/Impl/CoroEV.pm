@@ -37,7 +37,7 @@ use Coro::EV ();
 
 =head1 SEE ALSO
 
-  L<AnyEvent>, L<AnyEvent::Impl::Coro>, L<Coro::EV>.
+L<AnyEvent>, L<AnyEvent::Impl::Coro>, L<Coro::EV>.
 
 =head1 AUTHOR
 
