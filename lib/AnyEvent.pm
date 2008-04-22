@@ -420,7 +420,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '3.11';
+our $VERSION = '3.12';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -809,7 +809,10 @@ L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>.
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
 
-=head1
+=head1 AUTHOR
+
+ Marc Lehmann <schmorp@schmorp.de>
+ http://home.schmorp.de/
 
 =cut
 

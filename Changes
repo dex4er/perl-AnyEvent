@@ -1,5 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+3.12 Tue Apr 22 07:11:46 CEST 2008
+	- reinstate AUTHOR section that got lost somehow.
+        - do not hang in the testsuite with badly broken perls (activestate,
+          strawberry...), but instead diagnose the problem and continue.
+        - use INT instead of CHLD in an attempt to support broken windows perls
+          better (this decreases the test quality, unfortunately).
+        - do not send the signal to the process group
+          (no problem for CHLD, bad for INT :).
+
 3.11 Sat Apr 19 06:57:31 CEST 2008
 	- major documentation rework.
         - document the fact that child watchers only watch for zombies.

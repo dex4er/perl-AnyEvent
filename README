@@ -600,4 +600,7 @@ SEE ALSO
 
     Nontrivial usage examples: Net::FCP, Net::XMPP2.
 
+AUTHOR
+     Marc Lehmann <schmorp@schmorp.de>
+     http://home.schmorp.de/
 
