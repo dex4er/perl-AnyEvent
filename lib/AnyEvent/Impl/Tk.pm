@@ -62,7 +62,7 @@ sub io {
    # - removing a callback might crash
    # - adding a callback might destroy other callbacks
    # - only one callback per fh
-   # - only one clalback per fh/poll combination
+   # - only one callback per fh/poll combination
    open $self->{fh2}, "$mode&" . fileno $self->{fh}
       or die "cannot dup() filehandle: $!";
 

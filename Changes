@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- implement PERL_ANYEVENT_MODEL env variable.
+
 3.12 Tue Apr 22 07:11:46 CEST 2008
 	- reinstate AUTHOR section that got lost somehow.
         - do not hang in the testsuite with badly broken perls (activestate,

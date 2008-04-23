@@ -14,7 +14,7 @@ my $timer1 = AnyEvent->timer (after => 0.1, cb => sub { print "ok 5\n"; $cv->bro
 
 print "ok 3\n";
 
-AnyEvent->timer (after => 0.05, cb => sub { print "not ok 5\n" });
+AnyEvent->timer (after => 1, cb => sub { print "not ok 5\n" });
 
 print "ok 4\n";
 
