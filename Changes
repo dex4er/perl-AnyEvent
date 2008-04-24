@@ -1,6 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
 	- implement PERL_ANYEVENT_MODEL env variable.
+        - implement interface to the (very crashy/buggy) Event::Lib module.
+        - tried to implement an interface to Qt, but perl-Qt is in a
+          totally broken state (Qt::app returns an invalid object, memory
+          corruption ensues etc.)
 
 3.12 Tue Apr 22 07:11:46 CEST 2008
 	- reinstate AUTHOR section that got lost somehow.

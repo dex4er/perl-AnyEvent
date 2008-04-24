@@ -19,8 +19,5 @@ WriteMakefile(
 	           },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
-#    PREREQ_PM    => {
-#       Event      => 0.86,
-#    },
 );
 
