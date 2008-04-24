@@ -80,13 +80,14 @@ The interface itself is vaguely similar, but not identical to the L<Event>
 module.
 
 During the first call of any watcher-creation method, the module tries
-to detect the currently loaded event loop by probing whether one of the
-following modules is already loaded: L<Coro::EV>, L<Coro::Event>, L<EV>,
-L<Event>, L<Glib>, L<Tk>. The first one found is used. If none are found,
-the module tries to load these modules in the stated order. The first one
-that can be successfully loaded will be used. If, after this, still none
-could be found, AnyEvent will fall back to a pure-perl event loop, which
-is not very efficient, but should work everywhere.
+to detect the currently loaded event loop by probing whether one of
+the following modules is already loaded: L<Coro::EV>, L<Coro::Event>,
+L<EV>, L<Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>. The first one
+found is used. If none are found, the module tries to load these modules
+(excluding Event::Lib and Qt) in the order given. The first one that can
+be successfully loaded will be used. If, after this, still none could be
+found, AnyEvent will fall back to a pure-perl event loop, which is not
+very efficient, but should work everywhere.
 
 Because AnyEvent first checks for modules that are already loaded, loading
 an event model explicitly before first using AnyEvent will likely make
