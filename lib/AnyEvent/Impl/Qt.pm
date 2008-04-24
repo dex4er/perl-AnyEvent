@@ -37,7 +37,7 @@ use Qt::isa qw(Qt::Timer);
 use Qt::slots cb => [];
 
 # having to go through these contortions just to get a timer event is
-# considered an avdantage over other gui toolkits how?
+# considered an advantage over other gui toolkits how?
 
 sub NEW {
    my ($class, $after, $cb) = @_;
