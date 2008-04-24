@@ -209,15 +209,16 @@ There are two ways to handle timers: based on real time (relative, "fire
 in 10 seconds") and based on wallclock time (absolute, "fire at 12
 o'clock").
 
-While most event loops expect timers to specified in a relative way, they use
-absolute time internally. This makes a difference when your clock "jumps",
-for example, when ntp decides to set your clock backwards from the wrong 2014-01-01 to
-2008-01-01, a watcher that you created to fire "after" a second might actually take
-six years to finally fire.
+While most event loops expect timers to specified in a relative way, they
+use absolute time internally. This makes a difference when your clock
+"jumps", for example, when ntp decides to set your clock backwards from
+the wrong date of 2014-01-01 to 2008-01-01, a watcher that is supposed to
+fire "after" a second might actually take six years to finally fire.
 
 AnyEvent cannot compensate for this. The only event loop that is conscious
-about these issues is L<EV>, which offers both relative (ev_timer) and
-absolute (ev_periodic) timers.
+about these issues is L<EV>, which offers both relative (ev_timer, based
+on true relative time) and absolute (ev_periodic, based on wallclock time)
+timers.
 
 AnyEvent always prefers relative timers, if available, matching the
 AnyEvent API.
@@ -228,7 +229,7 @@ You can watch for signals using a signal watcher, C<signal> is the signal
 I<name> without any C<SIG> prefix, C<cb> is the Perl callback to
 be invoked whenever a signal occurs.
 
-Multiple signals occurances can be clumped together into one callback
+Multiple signal occurances can be clumped together into one callback
 invocation, and callback invocation will be synchronous. synchronous means
 that it might take a while until the signal gets handled by the process,
 but it is guarenteed not to interrupt any other callbacks.
