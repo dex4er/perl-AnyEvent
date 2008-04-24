@@ -5,8 +5,8 @@ use 5.008;
 print <<EOF;
 
 ***
-*** One or more of these modules, in order of importance, are recommended:
-*** EV, Event, Glib, Tk
+*** The EV or Event modules are recommended for performance, unless
+*** you have to use one of the other adaptors (Glib, Tk, etc.).
 ***
 
 EOF

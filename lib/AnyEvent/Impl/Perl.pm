@@ -63,7 +63,7 @@ sub fds_chk($$) {
 
    for my $fd (keys %{ $fds->{w} }) {
       if (vec $vec, $fd, 1) {
-         $_->{cb}()
+         $_ && $_->{cb}()
             for @{ $fds->{w}{$fd} || [] };
       }
    }
