@@ -1,8 +1,8 @@
 NAME
     AnyEvent - provide framework for multiple event loops
 
-    EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl - various supported
-    event loops
+    EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt -
+    various supported event loops
 
 SYNOPSIS
        use AnyEvent;
@@ -78,11 +78,12 @@ DESCRIPTION
     During the first call of any watcher-creation method, the module tries
     to detect the currently loaded event loop by probing whether one of the
     following modules is already loaded: Coro::EV, Coro::Event, EV, Event,
-    Glib, Tk. The first one found is used. If none are found, the module
-    tries to load these modules in the stated order. The first one that can
-    be successfully loaded will be used. If, after this, still none could be
-    found, AnyEvent will fall back to a pure-perl event loop, which is not
-    very efficient, but should work everywhere.
+    Glib, Tk, Event::Lib, Qt. The first one found is used. If none are
+    found, the module tries to load these modules (excluding Event::Lib and
+    Qt) in the order given. The first one that can be successfully loaded
+    will be used. If, after this, still none could be found, AnyEvent will
+    fall back to a pure-perl event loop, which is not very efficient, but
+    should work everywhere.
 
     Because AnyEvent first checks for modules that are already loaded,
     loading an event model explicitly before first using AnyEvent will
@@ -140,8 +141,8 @@ WATCHERS
     watcher waiting for "r"eadable or "w"ritable events, respectively. "cb"
     is the callback to invoke each time the file handle becomes ready.
 
-    File handles will be kept alive, so as long as the watcher exists, the
-    file handle exists, too.
+    As long as the I/O watcher exists it will keep the file descriptor or a
+    copy of it alive/open.
 
     It is not allowed to close a file handle as long as any watcher is
     active on the underlying file descriptor.
@@ -202,12 +203,14 @@ WATCHERS
     While most event loops expect timers to specified in a relative way,
     they use absolute time internally. This makes a difference when your
     clock "jumps", for example, when ntp decides to set your clock backwards
-    from the wrong 2014-01-01 to 2008-01-01, a watcher that you created to
-    fire "after" a second might actually take six years to finally fire.
+    from the wrong date of 2014-01-01 to 2008-01-01, a watcher that is
+    supposed to fire "after" a second might actually take six years to
+    finally fire.
 
     AnyEvent cannot compensate for this. The only event loop that is
     conscious about these issues is EV, which offers both relative
-    (ev_timer) and absolute (ev_periodic) timers.
+    (ev_timer, based on true relative time) and absolute (ev_periodic, based
+    on wallclock time) timers.
 
     AnyEvent always prefers relative timers, if available, matching the
     AnyEvent API.
@@ -217,7 +220,7 @@ WATCHERS
     *name* without any "SIG" prefix, "cb" is the Perl callback to be invoked
     whenever a signal occurs.
 
-    Multiple signals occurances can be clumped together into one callback
+    Multiple signal occurances can be clumped together into one callback
     invocation, and callback invocation will be synchronous. synchronous
     means that it might take a while until the signal gets handled by the
     process, but it is guarenteed not to interrupt any other callbacks.
@@ -334,11 +337,13 @@ GLOBAL VARIABLES AND FUNCTIONS
 
            AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
            AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
-           AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
-           AnyEvent::Impl::Event     based on Event, also second best choice :)
+           AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
+           AnyEvent::Impl::Event     based on Event, second best choice.
            AnyEvent::Impl::Glib      based on Glib, third-best choice.
            AnyEvent::Impl::Tk        based on Tk, very bad choice.
            AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
+           AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
+           AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
 
     AnyEvent::detect
         Returns $AnyEvent::MODEL, forcing autodetection of the event model
@@ -433,8 +438,24 @@ SUPPLYING YOUR OWN EVENT MODEL INTERFACE
 ENVIRONMENT VARIABLES
     The following environment variables are used by this module:
 
-    "PERL_ANYEVENT_VERBOSE" when set to 2 or higher, cause AnyEvent to
-    report to STDERR which event model it chooses.
+    "PERL_ANYEVENT_VERBOSE"
+        When set to 2 or higher, cause AnyEvent to report to STDERR which
+        event model it chooses.
+
+    "PERL_ANYEVENT_MODEL"
+        This can be used to specify the event model to be used by AnyEvent,
+        before autodetection and -probing kicks in. It must be a string
+        consisting entirely of ASCII letters. The string "AnyEvent::Impl::"
+        gets prepended and the resulting module name is loaded and if the
+        load was successful, used as event model. If it fails to load
+        AnyEvent will proceed with autodetection and -probing.
+
+        This functionality might change in future versions.
+
+        For example, to force the pure perl model (AnyEvent::Impl::Perl) you
+        could start your program like this:
+
+          PERL_ANYEVENT_MODEL=Perl perl ...
 
 EXAMPLE PROGRAM
     The following program uses an IO watcher to read data from STDIN, a
@@ -590,13 +611,36 @@ REAL-WORLD EXAMPLE
 
        $quit->wait;
 
+FORK
+    Most event libraries are not fork-safe. The ones who are usually are
+    because they are so inefficient. Only EV is fully fork-aware.
+
+    If you have to fork, you must either do so *before* creating your first
+    watcher OR you must not use AnyEvent at all in the child.
+
+SECURITY CONSIDERATIONS
+    AnyEvent can be forced to load any event model via
+    $ENV{PERL_ANYEVENT_MODEL}. While this cannot (to my knowledge) be used
+    to execute arbitrary code or directly gain access, it can easily be used
+    to make the program hang or malfunction in subtle ways, as AnyEvent
+    watchers will not be active when the program uses a different event
+    model than specified in the variable.
+
+    You can make AnyEvent completely ignore this variable by deleting it
+    before the first watcher gets created, e.g. with a "BEGIN" block:
+
+      BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
+
+      use AnyEvent;
+
 SEE ALSO
     Event modules: Coro::EV, EV, EV::Glib, Glib::EV, Coro::Event, Event,
-    Glib::Event, Glib, Coro, Tk.
+    Glib::Event, Glib, Coro, Tk, Event::Lib, Qt.
 
     Implementations: AnyEvent::Impl::CoroEV, AnyEvent::Impl::EV,
     AnyEvent::Impl::CoroEvent, AnyEvent::Impl::Event, AnyEvent::Impl::Glib,
-    AnyEvent::Impl::Tk, AnyEvent::Impl::Perl.
+    AnyEvent::Impl::Tk, AnyEvent::Impl::Perl, AnyEvent::Impl::EventLib,
+    AnyEvent::Impl::Qt.
 
     Nontrivial usage examples: Net::FCP, Net::XMPP2.
 

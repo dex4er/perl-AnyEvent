@@ -8,6 +8,7 @@ Revision history for Perl extension AnyEvent.
 	- implement PERL_ANYEVENT_MODEL env variable.
         - (experimental) implement interface to the (very crashy/buggy) Event::Lib module.
         - (experimental) implement interface to the Qt module (cannot be autoprobed).
+        - this release is IO:AnyEvent-proof.
 
 3.12 Tue Apr 22 07:11:46 CEST 2008
 	- reinstate AUTHOR section that got lost somehow.
