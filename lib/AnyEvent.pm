@@ -2,7 +2,7 @@
 
 AnyEvent - provide framework for multiple event loops
 
-EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib - various supported event loops
+EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt - various supported event loops
 
 =head1 SYNOPSIS
 
@@ -147,8 +147,8 @@ creates a watcher waiting for "r"eadable or "w"ritable events,
 respectively. C<cb> is the callback to invoke each time the file handle
 becomes ready.
 
-File handles will be kept alive, so as long as the watcher exists, the
-file handle exists, too.
+As long as the I/O watcher exists it will keep the file descriptor or a
+copy of it alive/open.
 
 It is not allowed to close a file handle as long as any watcher is active
 on the underlying file descriptor.
@@ -355,11 +355,12 @@ The known classes so far are:
 
    AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
    AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
-   AnyEvent::Impl::EV        based on EV (an interface to libev, also best choice).
-   AnyEvent::Impl::Event     based on Event, also second best choice :)
+   AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
+   AnyEvent::Impl::Event     based on Event, second best choice.
    AnyEvent::Impl::Glib      based on Glib, third-best choice.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
    AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
+   AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
 
 =item AnyEvent::detect
@@ -439,10 +440,13 @@ my @models = (
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
-   [Event::Lib::           => AnyEvent::Impl::EventLib::],
+);
+my @models_detect = (
+   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
 );
 
-our %method = map +($_ => 1), qw(io timer condvar broadcast wait signal one_event DESTROY);
+our %method = map +($_ => 1), qw(io timer signal child condvar broadcast wait one_event DESTROY);
 
 sub detect() {
    unless ($MODEL) {
@@ -458,7 +462,7 @@ sub detect() {
 
       # check for already loaded models
       unless ($MODEL) {
-         for (@REGISTRY, @models) {
+         for (@REGISTRY, @models, @models_detect) {
             my ($package, $model) = @$_;
             if (${"$package\::VERSION"} > 0) {
                if (eval "require $model") {
@@ -860,11 +864,12 @@ before the first watcher gets created, e.g. with a C<BEGIN> block:
 
 Event modules: L<Coro::EV>, L<EV>, L<EV::Glib>, L<Glib::EV>,
 L<Coro::Event>, L<Event>, L<Glib::Event>, L<Glib>, L<Coro>, L<Tk>,
-L<Event::Lib>.
+L<Event::Lib>, L<Qt>.
 
 Implementations: L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::EV>,
 L<AnyEvent::Impl::CoroEvent>, L<AnyEvent::Impl::Event>, L<AnyEvent::Impl::Glib>,
-L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>, L<AnyEvent::Impl::EventLib>.
+L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>, L<AnyEvent::Impl::EventLib>,
+L<AnyEvent::Impl::Qt>.
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
 
