@@ -950,7 +950,8 @@ more than 2000 watchers is a big setback, however, as correctness takes
 precedence over speed. Nevertheless, its performance is surprising, as the
 file descriptor is dup()ed for each watcher. This shows that the dup()
 employed by some adaptors is not a big performance issue (it does incur a
-hidden memory cost inside the kernel, though).
+hidden memory cost inside the kernel, though, that is not reflected in the
+figures above).
 
 C<POE>, regardless of underlying event loop (wether using its pure perl
 select-based backend or the Event module) shows abysmal performance and
