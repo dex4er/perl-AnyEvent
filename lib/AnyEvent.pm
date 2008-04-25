@@ -866,27 +866,38 @@ anything about events.
 =head1 BENCHMARK
 
 To give you an idea of the performance and overheads that AnyEvent adds
-over the backends directly, here is a benchmark of various supported event
-models natively and with anyevent. The benchmark creates a lot of timers
-(with a zero timeout) and io watchers (watching STDOUT, a pty, to become
-writable), lets them fire exactly once and destroys them again.
+over the event loops directly, here is a benchmark of various supported
+event models natively and with anyevent. The benchmark creates a lot of
+timers (with a zero timeout) and io watchers (watching STDOUT, a pty, to
+become writable, which it is), lets them fire exactly once and destroys
+them again.
 
-Explanation of the fields:
+=head2 Explanation of the fields
 
-I<watcher> is the number of event watchers created/destroyed. Sicne
-different event models have vastly different performance each backend was
-handed a number of watchers so that overall runtime is acceptable and
-similar to all backends (and keep them from crashing).
+I<watcher> is the number of event watchers created/destroyed. Since
+different event models feature vastly different performances, each event
+loop was given a number of watchers so that overall runtime is acceptable
+and similar between tested event loop (and keep them from crashing): Glib
+would probably take thousands of years if asked to process the same number
+of watchers as EV in this benchmark.
 
-I<bytes> is the number of bytes (as measured by resident set size) used by
-each watcher.
+I<bytes> is the number of bytes (as measured by the resident set size,
+RSS) consumed by each watcher. This method of measuring captures both C
+and Perl-based overheads.
 
-I<create> is the time, in microseconds, to create a single watcher.
+I<create> is the time, in microseconds (millionths of seconds), that it
+takes to create a single watcher. The callback is a closure shared between
+all watchers, to avoid adding memory overhead. That means closure creation
+and memory usage is not included in the figures.
 
-I<invoke> is the time, in microseconds, used to invoke a simple callback
-that simply counts down.
+I<invoke> is the time, in microseconds, used to invoke a simple
+callback. The callback simply counts down a Perl variable and after it was
+invoked "watcher" times, it would C<< ->broadcast >> a condvar once.
 
-I<destroy> is the time, in microseconds, to destroy a single watcher.
+I<destroy> is the time, in microseconds, that it takes destroy a single
+watcher.
+
+=head2 Results
 
           name watcher bytes create invoke destroy comment
          EV/EV  400000   244   0.56   0.46    0.31 EV native interface
@@ -900,36 +911,45 @@ I<destroy> is the time, in microseconds, to destroy a single watcher.
     POE/Select    2000  6343  94.69 807.65  562.69 POE::Loop::Select
      POE/Event    2000  6644 108.15 768.19   14.33 POE::Loop::Event
 
-Discussion: The benchmark does I<not> bench scalability of the
-backend. For example a select-based backend (such as the pureperl one) can
-never compete with a backend using epoll. In this benchmark, only a single
-filehandle is used.
+=head2 Discussion
 
-EV is the sole leader regarding speed and memory use, which are both
-maximal/minimal. Even when going through AnyEvent, there is only one event
-loop that uses less memory (the Event module natively), and no faster
-event model.
+The benchmark does I<not> measure scalability of the event loop very
+well. For example, a select-based event loop (such as the pure perl one)
+can never compete with an event loop that uses epoll when the number of
+file descriptors grows high. In this benchmark, only a single filehandle
+is used (although some of the AnyEvent adaptors dup() its file descriptor
+to worka round bugs).
+
+C<EV> is the sole leader regarding speed and memory use, which are both
+maximal/minimal, respectively. Even when going through AnyEvent, there is
+only one event loop that uses less memory (the C<Event> module natively), and
+no faster event model, not event C<Event> natively.
 
 The pure perl implementation is hit in a few sweet spots (both the
 zero timeout and the use of a single fd hit optimisations in the perl
-interpreter and the backend itself), but it shows that it adds very little
-overhead in itself. Like any select-based backend it's performance becomes
-really bad with lots of file descriptors.
+interpreter and the backend itself). Nevertheless tis shows that it
+adds very little overhead in itself. Like any select-based backend its
+performance becomes really bad with lots of file descriptors, of course,
+but this was not subjetc of this benchmark.
 
-The Event module has a relatively high setup and callback invocation cost,
+The C<Event> module has a relatively high setup and callback invocation cost,
 but overall scores on the third place.
 
-Glib has a little higher memory cost, a bit fster callback invocation and
-has a similar speed as Event.
+C<Glib>'s memory usage is quite a bit bit higher, features a faster
+callback invocation and overall lands in the same class as C<Event>.
 
-The Tk backend works relatively well, the fact that it crashes with
+The C<Tk> adaptor works relatively well, the fact that it crashes with
 more than 2000 watchers is a big setback, however, as correctness takes
-precedence over speed.
+precedence over speed. Nevertheless, its performance is surprising, as the
+file descriptor is dup()ed for each watcher. This shows that the dup()
+employed by some adaptors is not a big performance issue (it does incur a
+hidden memory cost inside the kernel, though).
 
-POE, regardless of backend (wether it's pure perl select backend or the
-Event backend) shows abysmal performance and memory usage: Watchers use
-almost 30 times as much memory as EV watchers, and 10 times as much memory
-as both Event or EV via AnyEvent.
+C<POE>, regardless of backend (wether using its pure perl select-based
+backend or the Event backend) shows abysmal performance and memory
+usage: Watchers use almost 30 times as much memory as EV watchers, and 10
+times as much memory as both Event or EV via AnyEvent. Watcher invocation
+is almost 700 times slower as with AnyEvent's pure perl implementation.
 
 Summary: using EV through AnyEvent is faster than any other event
 loop. The overhead AnyEvent adds can be very small, and you should avoid
