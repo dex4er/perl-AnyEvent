@@ -947,15 +947,27 @@ file descriptor is dup()ed for each watcher. This shows that the dup()
 employed by some adaptors is not a big performance issue (it does incur a
 hidden memory cost inside the kernel, though).
 
-C<POE>, regardless of backend (wether using its pure perl select-based
-backend or the Event backend) shows abysmal performance and memory
-usage: Watchers use almost 30 times as much memory as EV watchers, and 10
-times as much memory as both Event or EV via AnyEvent. Watcher invocation
-is almost 700 times slower as with AnyEvent's pure perl implementation.
+C<POE>, regardless of underlying event loop (wether using its pure perl
+select-based backend or the Event module) shows abysmal performance and
+memory usage: Watchers use almost 30 times as much memory as EV watchers,
+and 10 times as much memory as both Event or EV via AnyEvent. Watcher
+invocation is almost 700 times slower than with AnyEvent's pure perl
+implementation. The design of the POE adaptor class in AnyEvent can not
+really account for this, as session creation overhead is small compared
+to execution of the state machine, which is coded pretty optimally within
+L<AnyEvent::Impl::POE>. POE simply seems to be abysmally slow.
 
-Summary: using EV through AnyEvent is faster than any other event
-loop. The overhead AnyEvent adds can be very small, and you should avoid
-POE like the plague if you want performance or reasonable memory usage.
+=head2 Summary
+
+Using EV through AnyEvent is faster than any other event loop, but most
+event loops have acceptable performance with or without AnyEvent.
+
+The overhead AnyEvent adds is usually much smaller than the overhead of
+the actual event loop, only with extremely fast event loops such as the EV
+adds Anyevent significant overhead.
+
+And you should simply avoid POE like the plague if you want performance or
+reasonable memory usage.
 
 
 =head1 FORK
