@@ -5,7 +5,7 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 =head1 SYNOPSIS
 
   use AnyEvent;
-  use EV;
+  use POE;
 
   # this module gets loaded automatically as required
 
@@ -14,6 +14,46 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 This module provides transparent support for AnyEvent. You don't have to
 do anything to make POE work with AnyEvent except by loading POE before
 creating the first AnyEvent watcher.
+
+POE is badly designed, badly documented and badly implemented.
+
+Here is why, and what it means to you if you want to be interoperable with
+it:
+
+=over 4
+
+=item Weird messages
+
+If you only use C<run_one_timeslice>, POE will print an ugly,
+unsupressable, message at program exit:
+
+   Sessions were started, but POE::Kernel's run() method was never...
+
+The message is correct, the question is why POE prints it in the first
+place in a correct program (this is not a singular case though).
+
+The only way I found to work around this bug was to call C<<
+->run >> at anyevent loading time and stop the kernel imemdiately
+again. Unfortunately, due to another design bug in POE, this cannot be
+done (by documented means at least) without throwing away events in the
+event queue.
+
+This means that you will either have to live with lost events or you have
+to make sure to load AnyEvent early enough (this is usually not that
+difficult in a main program, but hard in a module).
+
+=item One session per Event
+
+AnyEvent has to create one POE::Session per event watcher, which is
+immsensely slow and makes watchers very large.
+
+=item One watcher per fd/event combo
+
+POE, of course, suffers from the same bug as Tk and some other badly
+designed event models in that it doesn't support multiple watchers per
+fd/poll combo.
+
+=back
 
 - one session per event
 - messages output
@@ -43,20 +83,25 @@ sub io {
    my ($class, %arg) = @_;
    my $poll = delete $arg{poll};
    my $cb   = delete $arg{cb};
-   my $fh   = delete $arg{fh};
-   my $id;
+
+   # cygwin requires the fh mode to be matching, unix doesn't
+   my ($pee, $mode) = $poll eq "r" ? ("select_read" , "<")
+                    : $poll eq "w" ? ("select_write", ">")
+                    : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
+
+   open my $fh, "$mode&" . fileno $arg{fh}
+      or die "cannot dup() filehandle: $!";
+
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
-            $poll eq "r" ? $_[KERNEL]->select_read  ($fh => "ready")
-                         : $_[KERNEL]->select_write ($fh => "ready")
+            $_[KERNEL]->$pee ($fh => "ready");
          },
          ready => sub {
             $cb->();
          },
          stop => sub {
-            $poll eq "r" ? $_[KERNEL]->select_read  ($fh)
-                         : $_[KERNEL]->select_read  ($fh)
+            $_[KERNEL]->$pee ($fh);
          },
       },
    );
