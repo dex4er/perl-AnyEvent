@@ -143,11 +143,15 @@ declared.
 You can create an I/O watcher by calling the C<< AnyEvent->io >> method
 with the following mandatory key-value pairs as arguments:
 
-C<fh> the Perl I<file handle> (I<not> file descriptor) to watch for
-events. C<poll> must be a string that is either C<r> or C<w>, which
-creates a watcher waiting for "r"eadable or "w"ritable events,
+C<fh> the Perl I<file handle> (I<not> file descriptor) to watch
+for events. C<poll> must be a string that is either C<r> or C<w>,
+which creates a watcher waiting for "r"eadable or "w"ritable events,
 respectively. C<cb> is the callback to invoke each time the file handle
 becomes ready.
+
+Although the callback might get passed parameters, their value and
+presence is undefined and you cannot rely on them. Portable AnyEvent
+callbacks cannot use arguments passed to I/O watcher callbacks.
 
 The I/O watcher might use the underlying file descriptor or a copy of it.
 You must not close a file handle as long as any watcher is active on the
@@ -156,10 +160,6 @@ underlying file descriptor.
 Some event loops issue spurious readyness notifications, so you should
 always use non-blocking calls when reading/writing from/to your file
 handles.
-
-Although the callback might get passed parameters, their value and
-presence is undefined and you cannot rely on them. Portable AnyEvent
-callbacks cannot use arguments passed to I/O watcher callbacks.
 
 Example:
 
@@ -176,16 +176,16 @@ You can create a time watcher by calling the C<< AnyEvent->timer >>
 method with the following mandatory arguments:
 
 C<after> specifies after how many seconds (fractional values are
-supported) should the timer activate. C<cb> the callback to invoke in that
-case.
-
-The timer callback will be invoked at most once: if you want a repeating
-timer you have to create a new watcher (this is a limitation by both Tk
-and Glib).
+supported) the callback should be invoked. C<cb> is the callback to invoke
+in that case.
 
 Although the callback might get passed parameters, their value and
 presence is undefined and you cannot rely on them. Portable AnyEvent
 callbacks cannot use arguments passed to time watcher callbacks.
+
+The timer callback will be invoked at most once: if you want a repeating
+timer you have to create a new watcher (this is a limitation by both Tk
+and Glib).
 
 Example:
 
@@ -236,6 +236,10 @@ You can watch for signals using a signal watcher, C<signal> is the signal
 I<name> without any C<SIG> prefix, C<cb> is the Perl callback to
 be invoked whenever a signal occurs.
 
+Although the callback might get passed parameters, their value and
+presence is undefined and you cannot rely on them. Portable AnyEvent
+callbacks cannot use arguments passed to signal watcher callbacks.
+
 Multiple signal occurances can be clumped together into one callback
 invocation, and callback invocation will be synchronous. synchronous means
 that it might take a while until the signal gets handled by the process,
@@ -259,7 +263,8 @@ The child process is specified by the C<pid> argument (if set to C<0>, it
 watches for any child process exit). The watcher will trigger as often
 as status change for the child are received. This works by installing a
 signal handler for C<SIGCHLD>. The callback will be called with the pid
-and exit status (as returned by waitpid).
+and exit status (as returned by waitpid), so unlike other watcher types,
+you I<can> rely on child watcher callback arguments.
 
 There is a slight catch to child watchers, however: you usually start them
 I<after> the child process was created, and this means the process could
