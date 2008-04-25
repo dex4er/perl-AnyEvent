@@ -26,8 +26,9 @@ interoperable with POE:
 
 =item Weird messages
 
-If you only use C<run_one_timeslice>, POE will print an ugly,
-unsupressable, message at program exit:
+If you only use C<run_one_timeslice> (as AnyEvent has to for it's
+condition variables), POE will print an ugly, unsupressable, message at
+program exit:
 
    Sessions were started, but POE::Kernel's run() method was never...
 
