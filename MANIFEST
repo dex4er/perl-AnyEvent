@@ -14,6 +14,7 @@ lib/AnyEvent/Impl/Coro.pm
 lib/AnyEvent/Impl/CoroEV.pm
 lib/AnyEvent/Impl/CoroEvent.pm
 lib/AnyEvent/Impl/Qt.pm
+lib/AnyEvent/Impl/POE.pm
 t/00_load.t
 t/01_basic.t
 t/02_signals.t

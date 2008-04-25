@@ -459,6 +459,8 @@ sub detect() {
          if (eval "require $model") {
             $MODEL = $model;
             warn "AnyEvent: loaded model '$model' (forced by \$PERL_ANYEVENT_MODEL), using it.\n" if $verbose > 1;
+         } else {
+            warn "AnyEvent: unable to load model '$model' (from \$PERL_ANYEVENT_MODEL):\n$@" if $verbose;
          }
       }
 
@@ -660,6 +662,14 @@ The following environment variables are used by this module:
 =over 4
 
 =item C<PERL_ANYEVENT_VERBOSE>
+
+By default, AnyEvent will be completely silent except in fatal
+conditions. You can set this environment variable to make AnyEvent more
+talkative.
+
+When set to C<1> or higher, causes AnyEvent to warn about unexpected
+conditions, such as not being able to load the event model specified by
+C<PERL_ANYEVENT_MODEL>.
 
 When set to C<2> or higher, cause AnyEvent to report to STDERR which event
 model it chooses.
