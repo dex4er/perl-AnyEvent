@@ -2,6 +2,8 @@
 
 AnyEvent::Impl::POE - AnyEvent adaptor for POE
 
+=encoding utf-8
+
 =head1 SYNOPSIS
 
   use AnyEvent;

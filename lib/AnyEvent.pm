@@ -865,10 +865,12 @@ anything about events.
 
 =head1 BENCHMARK
 
-To give you an idea of the performance an doverheads that AnyEvent adds
-over the backends, here is a benchmark of various supported backends. The
-benchmark creates a lot of timers (with zero timeout) and io events
-(watching STDOUT, a pty, to become writable).
+To give you an idea of the performance and overheads that AnyEvent adds
+over the backends directly, here is a benchmark of various supported event
+models natively and with anyevent. The benchmark creates a lot of timers
+(with a zero timeout) and io watchers (watching STDOUT, a pty, to become
+writable, which it is), lets them fire exactly once and destroys them
+again.
 
 Explanation of the fields:
 
