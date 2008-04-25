@@ -1,8 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- add a benchmark section showing AnyEvent overhead and comparing
+          the different event loops with each other.
 	- make Qt and Event::Lib support non-experimental.
         - support POE as "backend" (with some caveats, POE is not generic
-          enough).
+          enough, and darn slow).
         - support Wx and Prima through POE.
 
 3.2  Thu Apr 24 10:10:40 CEST 2008

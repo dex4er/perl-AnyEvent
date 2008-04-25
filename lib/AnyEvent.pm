@@ -901,17 +901,17 @@ watcher.
 
 =head2 Results
 
-          name watcher bytes create invoke destroy comment
-         EV/EV  400000   244   0.56   0.46    0.31 EV native interface
-        EV/Any  100000   610   3.52   0.91    0.75 EV + AnyEvent watchers
-    CoroEV/Any  100000   610   3.49   0.92    0.75 coroutines + Coro::Signal
-      Perl/Any   16000   654   4.64   1.22    0.77 pure perl implementation
-   Event/Event   16000   523  28.05  21.38    0.86 Event native interface
-     Event/Any   16000   943  34.43  20.48    1.39 Event + AnyEvent watchers
-      Glib/Any   16000  1357  96.99  12.55   55.51 quadratic behaviour
-        Tk/Any    2000  1855  27.01  66.61   14.03 SEGV with >> 2000 watchers
-     POE/Event    2000  6644 108.15 768.19   14.33 via POE::Loop::Event
-    POE/Select    2000  6343  94.69 807.65  562.69 via POE::Loop::Select
+          name watchers bytes create invoke destroy comment
+         EV/EV   400000   244   0.56   0.46    0.31 EV native interface
+        EV/Any   100000   610   3.52   0.91    0.75 EV + AnyEvent watchers
+    CoroEV/Any   100000   610   3.49   0.92    0.75 coroutines + Coro::Signal
+      Perl/Any    16000   654   4.64   1.22    0.77 pure perl implementation
+   Event/Event    16000   523  28.05  21.38    0.86 Event native interface
+     Event/Any    16000   943  34.43  20.48    1.39 Event + AnyEvent watchers
+      Glib/Any    16000  1357  96.99  12.55   55.51 quadratic behaviour
+        Tk/Any     2000  1855  27.01  66.61   14.03 SEGV with >> 2000 watchers
+     POE/Event     2000  6644 108.15 768.19   14.33 via POE::Loop::Event
+    POE/Select     2000  6343  94.69 807.65  562.69 via POE::Loop::Select
 
 =head2 Discussion
 
