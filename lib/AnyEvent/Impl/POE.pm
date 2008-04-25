@@ -45,7 +45,7 @@ This means that you will either have to live with lost events or you have
 to make sure to load AnyEvent early enough (this is usually not that
 difficult in a main program, but hard in a module).
 
-=item One session per Event
+=item One POE session per Event
 
 AnyEvent has to create one POE::Session per event watcher, which is
 immensely slow and makes watchers very large. The reason for this is
@@ -60,6 +60,9 @@ designed event models in that it doesn't support multiple watchers per
 fd/poll combo. The workaround is the same as with Tk: AnyEvent::Impl::POE
 creates a separate file descriptor to hand to POE, which isn't fast and
 certainly not nice to your resources.
+
+Of course, without the workaround, POE also prints ugly messages again
+that say the program *might* be buggy.
 
 =item Timing Deficiencies
 
@@ -82,15 +85,25 @@ How one manages to even implement stuff that way escapes me.
 
 =item Child Watchers
 
-POE offers child watchers - which is a laudable thing, few event loops
+POE offers child watchers - which is a laudable thing, as few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
 watchers: they are not generic enough.
 
 Of course, if POE reaps an unrelated child it will also output a message
 for it. Very professional.
 
-Therefore, AnyEvent has to resort to it's own SIGCHLD management, which
-may interfere with POE.
+As a workaround, AnyEvent::Impl::POE will take advantage of undocumented
+behaviour in POE::Kernel to catch the status fo all child processes.
+
+Unfortunately, POE's child handling is racy: if the child exits before the
+handler is created (which is impossible to guarantee...), one has to wait
+for another event to occur, which can take an indefinite time (apparently
+POE does a busy-waiting loop every second, but this is not guarenteed
+or documented, so in practise child status events can be delayed for a
+second).
+
+How one manages to have such a glaring bug in an event loop after ten
+years of development escapes me.
 
 =item Documentation Quality
 
@@ -229,6 +242,30 @@ sub signal {
          stop => sub {
             $_[KERNEL]->refcount_decrement ($_[SESSION]->ID => "poe");
             $_[KERNEL]->sig ($signal);
+         },
+      },
+   );
+   bless \\$session, AnyEvent::Impl::POE::
+}
+
+sub child {
+   my ($class, %arg) = @_;
+   my $pid = delete $arg{pid};
+   my $cb  = delete $arg{cb};
+   my $session = POE::Session->create (
+      inline_states => {
+         _start => sub {
+            $_[KERNEL]->sig (CHLD => "child");
+            $_[KERNEL]->refcount_increment ($_[SESSION]->ID => "poe");
+         },
+         child => sub {
+            my ($rpid, $status) = @_[ARG1, ARG2];
+
+            $cb->($rpid, $status) if $rpid == $pid || $pid == 0;
+         },
+         stop => sub {
+            $_[KERNEL]->refcount_decrement ($_[SESSION]->ID => "poe");
+            $_[KERNEL]->sig ("CHLD");
          },
       },
    );
