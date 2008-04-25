@@ -872,7 +872,7 @@ timers (with a zero timeout) and io watchers (watching STDOUT, a pty, to
 become writable, which it is), lets them fire exactly once and destroys
 them again.
 
-=head2 Explanation of the fields
+=head2 Explanation of the columns
 
 I<watcher> is the number of event watchers created/destroyed. Since
 different event models feature vastly different performances, each event
@@ -892,7 +892,8 @@ and memory usage is not included in the figures.
 
 I<invoke> is the time, in microseconds, used to invoke a simple
 callback. The callback simply counts down a Perl variable and after it was
-invoked "watcher" times, it would C<< ->broadcast >> a condvar once.
+invoked "watcher" times, it would C<< ->broadcast >> a condvar once to
+signal the end of this phase.
 
 I<destroy> is the time, in microseconds, that it takes destroy a single
 watcher.
