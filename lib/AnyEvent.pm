@@ -905,7 +905,7 @@ watcher.
          EV/EV   400000   244   0.56   0.46    0.31 EV native interface
         EV/Any   100000   610   3.52   0.91    0.75 EV + AnyEvent watchers
     CoroEV/Any   100000   610   3.49   0.92    0.75 coroutines + Coro::Signal
-      Perl/Any    16000   654   4.64   1.22    0.77 pure perl implementation
+      Perl/Any   100000   513   4.91   0.92    1.15 pure perl implementation
    Event/Event    16000   523  28.05  21.38    0.86 Event native interface
      Event/Any    16000   943  34.43  20.48    1.39 Event + AnyEvent watchers
       Glib/Any    16000  1357  96.99  12.55   55.51 quadratic behaviour
@@ -923,16 +923,17 @@ is used (although some of the AnyEvent adaptors dup() its file descriptor
 to worka round bugs).
 
 C<EV> is the sole leader regarding speed and memory use, which are both
-maximal/minimal, respectively. Even when going through AnyEvent, there is
-only one event loop that uses less memory (the C<Event> module natively), and
-no faster event model, not event C<Event> natively.
+maximal/minimal, respectively. Even when going through AnyEvent, there are
+only two event loops that use slightly less memory (the C<Event> module
+natively and the pure perl backend), and no faster event models, not even
+C<Event> natively.
 
 The pure perl implementation is hit in a few sweet spots (both the
 zero timeout and the use of a single fd hit optimisations in the perl
 interpreter and the backend itself). Nevertheless tis shows that it
 adds very little overhead in itself. Like any select-based backend its
 performance becomes really bad with lots of file descriptors, of course,
-but this was not subjetc of this benchmark.
+but this was not subject of this benchmark.
 
 The C<Event> module has a relatively high setup and callback invocation cost,
 but overall scores on the third place.

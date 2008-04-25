@@ -1,11 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+        - fix a bug in the pure perl backend that kept watchers alive
+          when multiple watchers were registered for the same fh/poll combo.
 	- add a benchmark section showing AnyEvent overhead and comparing
           the different event loops with each other.
 	- make Qt and Event::Lib support non-experimental.
         - support POE as "backend" (with some caveats, POE is not generic
           enough, and darn slow).
         - support Wx and Prima through POE.
+        - optimise perl backend a bit (less memory).
 
 3.2  Thu Apr 24 10:10:40 CEST 2008
 	- do not die when anyevent watchers are destroyed while running callbacks
