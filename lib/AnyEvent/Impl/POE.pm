@@ -68,9 +68,12 @@ that say the program *might* be buggy.
 
 POE manages to not have a function that returns the current time. This is
 extremely problematic, as POE can use different time functions, which can
-differ by more than a second. In addition, most timer functions in POE
-want an absoltue timestamp, which is hard to create if all you have is a
-relative time and no function to return the "current time".
+differ by more than a second - and user code is left guessing which one is
+used.
+
+In addition, most timer functions in POE want an absoltue timestamp, which
+is hard to create if all you have is a relative time and no function to
+return the "current time".
 
 AnyEvent works around this by using relative timer fucntions, in the hope
 that POE gets it right at least internally.
@@ -87,13 +90,16 @@ How one manages to even implement stuff that way escapes me.
 
 POE offers child watchers - which is a laudable thing, as few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
-watchers: they are not generic enough.
+watchers: they are not generic enough (even the POE implementation itself
+isn't generic enough to let properly designed event loops such as EV use
+their child watcher instead - it insist on doing it itself the slow way).
 
 Of course, if POE reaps an unrelated child it will also output a message
-for it. Very professional.
+for it that you cannot suppress (which shouldn't be too surprising at this
+point). Very professional.
 
 As a workaround, AnyEvent::Impl::POE will take advantage of undocumented
-behaviour in POE::Kernel to catch the status fo all child processes.
+behaviour in POE::Kernel to catch the status of all child processes.
 
 Unfortunately, POE's child handling is racy: if the child exits before the
 handler is created (which is impossible to guarantee...), one has to wait
@@ -131,10 +137,31 @@ this is utterly useless information.
 Although AnyEvent calls C<sig_handled>, removing it has no apparent
 effects on POE handling SIGINT.
 
+   refcount_increment SESSION_ID, COUNTER_NAME
+
+Nowhere is explained which COUNTER_NAMEs are valid and which aren't - not
+all scalars (or even strings) are valid counter names. Take your guess,
+failure is of course completely silent.
+
+   get_next_event_time() returns the time the next event is due, in a form
+   compatible with the UNIX time() function.
+
+And surely, one would hope that POE supports subsecond accuracy as
+documented elsewhere, unlike the explanation above implies. Yet:
+
+   POE::Kernel timers support subsecond accuracy, but don’t expect too
+   much here. Perl is not the right language for realtime programming.
+
+... of course, Perl is not the right language to expect subsecond accuray
+- the manpage author must hate Perl to spread so much FUD in so little
+space. The Deliantra game server logs with 100µs-accuracy because Perl is
+fast enough to require this, and is still able to deliver map updates with
+little jitter at exactly the right time. It does not, however, use POE.
+
    Furthermore, since the Kernel keeps track of everything sessions do, it
    knows when a session has run out of tasks to perform.
 
-This is impossible - how does the kernel now that a session is no longer
+This is impossible - how does the kernel know that a session is no longer
 watching for some (external) event (e.g. by some other session)? It
 cannot, and therefore this is wrong - but you would be hard pressed to
 find out how to work around this and tell the kernel manually about such
