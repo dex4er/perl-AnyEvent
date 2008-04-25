@@ -866,7 +866,8 @@ anything about events.
 =head1 BENCHMARK
 
 To give you an idea of the performance and overheads that AnyEvent adds
-over the event loops directly, here is a benchmark of various supported
+over the event loops themselves (and to give you an impression of the
+speed of various event loops), here is a benchmark of various supported
 event models natively and with anyevent. The benchmark creates a lot of
 timers (with a zero timeout) and io watchers (watching STDOUT, a pty, to
 become writable, which it is), lets them fire exactly once and destroys
@@ -895,7 +896,7 @@ callback. The callback simply counts down a Perl variable and after it was
 invoked "watcher" times, it would C<< ->broadcast >> a condvar once to
 signal the end of this phase.
 
-I<destroy> is the time, in microseconds, that it takes destroy a single
+I<destroy> is the time, in microseconds, that it takes to destroy a single
 watcher.
 
 =head2 Results
