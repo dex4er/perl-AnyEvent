@@ -972,10 +972,10 @@ adds very little overhead in itself. Like any select-based backend its
 performance becomes really bad with lots of file descriptors (and few of
 them active), of course, but this was not subject of this benchmark.
 
-The C<Event> module has a relatively high setup and callback invocation cost,
-but overall scores on the third place.
+The C<Event> module has a relatively high setup and callback invocation
+cost, but overall scores in on the third place.
 
-C<Glib>'s memory usage is quite a bit bit higher, but it features a
+C<Glib>'s memory usage is quite a bit higher, but it features a
 faster callback invocation and overall ends up in the same class as
 C<Event>. However, Glib scales extremely badly, doubling the number of
 watchers increases the processing time by more than a factor of four,
@@ -1015,7 +1015,7 @@ performance with or without AnyEvent.
 the actual event loop, only with extremely fast event loops such as EV
 adds AnyEvent significant overhead.
 
-=item * You should simply avoid POE like the plague if you want performance or
+=item * You should avoid POE like the plague if you want performance or
 reasonable memory usage.
 
 =back
