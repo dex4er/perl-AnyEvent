@@ -86,6 +86,9 @@ POE offers child watchers - which is a laudable thing, few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
 watchers: they are not generic enough.
 
+Of course, if POE reaps an unrelated child it will also output a message
+for it. Very professional.
+
 Therefore, AnyEvent has to resort to it's own SIGCHLD management, which
 may interfere with POE.
 
