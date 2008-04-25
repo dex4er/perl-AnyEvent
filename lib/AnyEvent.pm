@@ -150,12 +150,16 @@ respectively. C<cb> is the callback to invoke each time the file handle
 becomes ready.
 
 The I/O watcher might use the underlying file descriptor or a copy of it.
-It is not allowed to close a file handle as long as any watcher is active
-on the underlying file descriptor.
+You must not close a file handle as long as any watcher is active on the
+underlying file descriptor.
 
 Some event loops issue spurious readyness notifications, so you should
 always use non-blocking calls when reading/writing from/to your file
 handles.
+
+Although the callback might get passed parameters, their value and
+presence is undefined and you cannot rely on them. Portable AnyEvent
+callbacks cannot use arguments passed to I/O watcher callbacks.
 
 Example:
 
@@ -178,6 +182,10 @@ case.
 The timer callback will be invoked at most once: if you want a repeating
 timer you have to create a new watcher (this is a limitation by both Tk
 and Glib).
+
+Although the callback might get passed parameters, their value and
+presence is undefined and you cannot rely on them. Portable AnyEvent
+callbacks cannot use arguments passed to time watcher callbacks.
 
 Example:
 
@@ -948,10 +956,9 @@ the same time, so select/poll-based implementations get an unnatural speed
 boost.
 
 C<EV> is the sole leader regarding speed and memory use, which are both
-maximal/minimal, respectively. Even when going through AnyEvent, there are
-only two event loops that use slightly less memory (the C<Event> module
-natively and the pure perl backend), and no faster event models, not even
-C<Event> natively.
+maximal/minimal, respectively. Even when going through AnyEvent, it uses
+far less memory than any other event loop and is still faster than Event
+natively.
 
 The pure perl implementation is hit in a few sweet spots (both the
 zero timeout and the use of a single fd hit optimisations in the perl
