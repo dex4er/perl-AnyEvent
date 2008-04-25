@@ -15,6 +15,8 @@ Revision history for Perl extension AnyEvent.
           enough, and darn slow).
         - support Wx and Prima through POE.
         - optimise perl backend a bit (less memory).
+        - roughly cut EV memory use in half and icrease its speed by 30%,
+          by removing undocumented functionality.
 
 3.2  Thu Apr 24 10:10:40 CEST 2008
 	- do not die when anyevent watchers are destroyed while running callbacks
