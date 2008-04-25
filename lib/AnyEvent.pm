@@ -966,12 +966,11 @@ far less memory than any other event loop and is still faster than Event
 natively.
 
 The pure perl implementation is hit in a few sweet spots (both the
-zero timeout and the use of a single fd hit optimisations in the perl
-interpreter and the backend itself, and all watchers become ready at the
-same time). Nevertheless this shows that it adds very little overhead in
-itself. Like any select-based backend its performance becomes really bad
-with lots of file descriptors (and few of them active), of course, but
-this was not subject of this benchmark.
+constant timeout and the use of a single fd hit optimisations in the perl
+interpreter and the backend itself). Nevertheless this shows that it
+adds very little overhead in itself. Like any select-based backend its
+performance becomes really bad with lots of file descriptors (and few of
+them active), of course, but this was not subject of this benchmark.
 
 The C<Event> module has a relatively high setup and callback invocation cost,
 but overall scores on the third place.
@@ -992,7 +991,7 @@ employed by some adaptors is not a big performance issue (it does incur a
 hidden memory cost inside the kernel, though, that is not reflected in the
 figures above).
 
-C<POE>, regardless of underlying event loop (wether using its pure perl
+C<POE>, regardless of underlying event loop (whether using its pure perl
 select-based backend or the Event module) shows abysmal performance and
 memory usage: Watchers use almost 30 times as much memory as EV watchers,
 and 10 times as much memory as both Event or EV via AnyEvent. Watcher
