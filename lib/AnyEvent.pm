@@ -1014,7 +1014,7 @@ event loops have acceptable performance with or without AnyEvent.
 the actual event loop, only with extremely fast event loops such as the EV
 adds AnyEvent significant overhead.
 
-=item * And you should simply avoid POE like the plague if you want performance or
+=item * You should simply avoid POE like the plague if you want performance or
 reasonable memory usage.
 
 =back
