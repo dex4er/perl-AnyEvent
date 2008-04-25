@@ -158,8 +158,8 @@ consistency.
 
 =back
 
-On the good side, AnyEvent allows you to write your modules in a 99%
-POE-compatible way (conflicting child watchers), without forcing your
+On the good side, AnyEvent allows you to write your modules in a 100%
+POE-compatible way (bug-for-bug compatible even), without forcing your
 module to use POE - it is still open to better event models, of which
 there are plenty.
 
