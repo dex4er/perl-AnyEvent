@@ -138,7 +138,7 @@ Note that C<my $w; $w => combination. This is necessary because in Perl,
 my variables are only visible after the statement in which they are
 declared.
 
-=head2 IO WATCHERS
+=head2 I/O WATCHERS
 
 You can create an I/O watcher by calling the C<< AnyEvent->io >> method
 with the following mandatory key-value pairs as arguments:
@@ -708,7 +708,7 @@ could start your program like this:
 
 =head1 EXAMPLE PROGRAM
 
-The following program uses an IO watcher to read data from STDIN, a timer
+The following program uses an I/O watcher to read data from STDIN, a timer
 to display a message once per second, and a condition variable to quit the
 program when the user enters quit:
 
@@ -869,12 +869,12 @@ To give you an idea of the performance and overheads that AnyEvent adds
 over the event loops themselves (and to give you an impression of the
 speed of various event loops), here is a benchmark of various supported
 event models natively and with anyevent. The benchmark creates a lot of
-timers (with a zero timeout) and io watchers (watching STDOUT, a pty, to
+timers (with a zero timeout) and I/O watchers (watching STDOUT, a pty, to
 become writable, which it is), lets them fire exactly once and destroys
 them again.
 
 Rewriting the benchmark to use many different sockets instead of using
-the same filehandle for all io watchers results in a much longer runtime
+the same filehandle for all I/O watchers results in a much longer runtime
 (socket creation is expensive), but qualitatively the same figures, so it
 was not used.
 
