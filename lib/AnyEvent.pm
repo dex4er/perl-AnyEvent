@@ -82,9 +82,9 @@ module.
 During the first call of any watcher-creation method, the module tries
 to detect the currently loaded event loop by probing whether one of the
 following modules is already loaded: L<Coro::EV>, L<Coro::Event>, L<EV>,
-L<Event>, L<Glib>, L<Tk>, L<AnyEvent::Impl::Perl>, L<Event::Lib>, L<Qt>,
+L<Event>, L<Glib>, L<AnyEvent::Impl::Perl>, L<Tk>, L<Event::Lib>, L<Qt>,
 L<POE>. The first one found is used. If none are found, the module tries
-to load these modules (excluding Event::Lib, Qt and POE as the pure perl
+to load these modules (excluding Tk, Event::Lib, Qt and POE as the pure perl
 adaptor should always succeed) in the order given. The first one that can
 be successfully loaded will be used. If, after this, still none could be
 found, AnyEvent will fall back to a pure-perl event loop, which is not
@@ -361,8 +361,8 @@ The known classes so far are:
    AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
    AnyEvent::Impl::Event     based on Event, second best choice.
    AnyEvent::Impl::Glib      based on Glib, third-best choice.
-   AnyEvent::Impl::Tk        based on Tk, very bad choice.
    AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
+   AnyEvent::Impl::Tk        based on Tk, very bad choice.
    AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
    AnyEvent::Impl::POE       based on POE, not generic enough for full support.
