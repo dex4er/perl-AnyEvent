@@ -937,10 +937,15 @@ but this was not subjetc of this benchmark.
 The C<Event> module has a relatively high setup and callback invocation cost,
 but overall scores on the third place.
 
-C<Glib>'s memory usage is quite a bit bit higher, features a faster
-callback invocation and overall lands in the same class as C<Event>.
+C<Glib>'s memory usage is quite a bit bit higher, but it features a
+faster callback invocation and overall ends up in the same class as
+C<Event>. However, Glib scales extremely badly, doubling the number of
+watchers increases the processing time by more than a factor of four,
+making it completely unusable when using larger numbers of watchers
+(note that only a single file descriptor was used in the benchmark, so
+inefficiencies of C<poll> do not account for this).
 
-The C<Tk> adaptor works relatively well, the fact that it crashes with
+The C<Tk> adaptor works relatively well. The fact that it crashes with
 more than 2000 watchers is a big setback, however, as correctness takes
 precedence over speed. Nevertheless, its performance is surprising, as the
 file descriptor is dup()ed for each watcher. This shows that the dup()
@@ -964,7 +969,7 @@ event loops have acceptable performance with or without AnyEvent.
 
 The overhead AnyEvent adds is usually much smaller than the overhead of
 the actual event loop, only with extremely fast event loops such as the EV
-adds Anyevent significant overhead.
+adds AnyEvent significant overhead.
 
 And you should simply avoid POE like the plague if you want performance or
 reasonable memory usage.
