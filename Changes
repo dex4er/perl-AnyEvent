@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- make Qt and Event::Lib support non-experimental.
+        - support POE as "backend" (with some caveats, POE is not generic
+          enough).
+        - support Wx and Prima through POE.
+
 3.2  Thu Apr 24 10:10:40 CEST 2008
 	- do not die when anyevent watchers are destroyed while running callbacks
           in the pureperl backend (could only happen when two watchers are registered
