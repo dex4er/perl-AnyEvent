@@ -371,8 +371,11 @@ There is no support for WxWidgets, as WxWidgets has no support for
 watching file handles. However, you can use WxWidgets through the
 POE Adaptor, as POE has a Wx backend that simply polls 20 times per
 second, which was considered to be too horrible to even consider for
-AnyEvent. Likewise, other POE backends can be used by Anyevent by using
+AnyEvent. Likewise, other POE backends can be used by AnyEvent by using
 it's adaptor.
+
+AnyEvent knows about L<Prima> and L<Wx> and will try to use L<POE> when
+autodetecting them.
 
 =item AnyEvent::detect
 
@@ -450,6 +453,8 @@ my @models = (
    [Event::                => AnyEvent::Impl::Event::],
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
+   [Wx::                   => AnyEvent::Impl::POE::],
+   [Prima::                => AnyEvent::Impl::POE::],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
    # everything below here will not be autoprobed as the pureperl backend should work everywhere
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
