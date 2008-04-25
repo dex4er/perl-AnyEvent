@@ -988,14 +988,16 @@ more than 2000 watchers is a big setback, however, as correctness takes
 precedence over speed. Nevertheless, its performance is surprising, as the
 file descriptor is dup()ed for each watcher. This shows that the dup()
 employed by some adaptors is not a big performance issue (it does incur a
-hidden memory cost inside the kernel, though, that is not reflected in the
-figures above).
+hidden memory cost inside the kernel which is not reflected in the figures
+above).
 
-C<POE>, regardless of underlying event loop (whether using its pure perl
-select-based backend or the Event module) shows abysmal performance and
-memory usage: Watchers use almost 30 times as much memory as EV watchers,
-and 10 times as much memory as both Event or EV via AnyEvent. Watcher
-invocation is almost 900 times slower than with AnyEvent's pure perl
+C<POE>, regardless of underlying event loop (whether using its pure
+perl select-based backend or the Event module, the POE-EV backend
+couldn't be tested because it wasn't working) shows abysmal performance
+and memory usage: Watchers use almost 30 times as much memory as
+EV watchers, and 10 times as much memory as Event (the high memory
+requirements are caused by requiring a session for each watcher). Watcher
+invocation speed is almost 900 times slower than with AnyEvent's pure perl
 implementation. The design of the POE adaptor class in AnyEvent can not
 really account for this, as session creation overhead is small compared
 to execution of the state machine, which is coded pretty optimally within
@@ -1003,15 +1005,19 @@ L<AnyEvent::Impl::POE>. POE simply seems to be abysmally slow.
 
 =head2 Summary
 
-Using EV through AnyEvent is faster than any other event loop, but most
+=over 4
+
+=item * Using EV through AnyEvent is faster than any other event loop, but most
 event loops have acceptable performance with or without AnyEvent.
 
-The overhead AnyEvent adds is usually much smaller than the overhead of
+=item * The overhead AnyEvent adds is usually much smaller than the overhead of
 the actual event loop, only with extremely fast event loops such as the EV
 adds AnyEvent significant overhead.
 
-And you should simply avoid POE like the plague if you want performance or
+=item * And you should simply avoid POE like the plague if you want performance or
 reasonable memory usage.
+
+=back
 
 
 =head1 FORK
