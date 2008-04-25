@@ -36,10 +36,8 @@ sub io {
 
    EV::io
       fileno $arg{fh},
-      ($arg{poll} =~ /r/ ? EV::READ : 0) | ($arg{poll} =~ /w/ ? EV::WRITE : 0),
-      sub {
-         $cb->( ($_[1] & EV::READ ? "r" : "") . ($_[1] & EV::WRITE ? "w" : "") );
-      }
+      $arg{poll} eq "r" ? EV::READ : EV::WRITE,
+      $cb
 }
 
 sub signal {
@@ -63,7 +61,7 @@ sub condvar {
 }
 
 sub broadcast {
-   ${$_[0]}++;
+   ++${$_[0]};
 }
 
 sub wait {

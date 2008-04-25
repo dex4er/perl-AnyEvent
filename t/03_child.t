@@ -17,6 +17,8 @@ EOF
 
 print "ok 1\n";
 
+AnyEvent::detect; # force-load event model
+
 my $pid = fork;
 
 defined $pid or die "unable to fork";

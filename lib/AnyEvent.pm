@@ -149,9 +149,7 @@ creates a watcher waiting for "r"eadable or "w"ritable events,
 respectively. C<cb> is the callback to invoke each time the file handle
 becomes ready.
 
-As long as the I/O watcher exists it will keep the file descriptor or a
-copy of it alive/open.
-
+The I/O watcher might use the underlying file descriptor or a copy of it.
 It is not allowed to close a file handle as long as any watcher is active
 on the underlying file descriptor.
 
@@ -255,15 +253,37 @@ as status change for the child are received. This works by installing a
 signal handler for C<SIGCHLD>. The callback will be called with the pid
 and exit status (as returned by waitpid).
 
-Example: wait for pid 1333
+There is a slight catch to child watchers, however: you usually start them
+I<after> the child process was created, and this means the process could
+have exited already (and no SIGCHLD will be sent anymore).
+
+Not all event models handle this correctly (POE doesn't), but even for
+event models that I<do> handle this correctly, they usually need to be
+loaded before the process exits (i.e. before you fork in the first place).
+
+This means you cannot create a child watcher as the very first thing in an
+AnyEvent program, you I<have> to create at least one watcher before you
+C<fork> the child (alternatively, you can call C<AnyEvent::detect>).
+
+Example: fork a process and wait for it
+
+  my $done = AnyEvent->condvar;
+
+  AnyEvent::detect; # force event module to be initialised
+
+  my $pid = fork or exit 5;
 
   my $w = AnyEvent->child (
-     pid => 1333,
+     pid => $pid,
      cb  => sub {
         my ($pid, $status) = @_;
         warn "pid $pid exited with status $status";
+        $done->broadcast;
      },
   );
+
+  # do something else, then wait for process exit
+  $done->wait;
 
 =head2 CONDITION VARIABLES
 

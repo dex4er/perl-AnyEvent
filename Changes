@@ -4,7 +4,13 @@ Revision history for Perl extension AnyEvent.
           when multiple watchers were registered for the same fh/poll combo.
 	- add a benchmark section showing AnyEvent overhead and comparing
           the different event loops with each other.
-	- make Qt and Event::Lib support non-experimental.
+        - prefer pure perl over tk when autoprobing, as it's about as fast,
+          but doesn't crash with many watchers.
+	- make Qt support non-experimental.
+        - clarify the confusing section about the file descriptor being
+          kept alive.
+        - document the race between loading of an event module and
+          child processes exiting.
         - support POE as "backend" (with some caveats, POE is not generic
           enough, and darn slow).
         - support Wx and Prima through POE.
