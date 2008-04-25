@@ -873,6 +873,11 @@ timers (with a zero timeout) and io watchers (watching STDOUT, a pty, to
 become writable, which it is), lets them fire exactly once and destroys
 them again.
 
+Rewriting the benchmark to use many different sockets instead of using
+the same filehandle for all io watchers results in a much longer runtime
+(socket creation is expensive), but qualitatively the same figures, so it
+was not used.
+
 =head2 Explanation of the columns
 
 I<watcher> is the number of event watchers created/destroyed. Since
@@ -930,10 +935,11 @@ C<Event> natively.
 
 The pure perl implementation is hit in a few sweet spots (both the
 zero timeout and the use of a single fd hit optimisations in the perl
-interpreter and the backend itself). Nevertheless tis shows that it
-adds very little overhead in itself. Like any select-based backend its
-performance becomes really bad with lots of file descriptors, of course,
-but this was not subject of this benchmark.
+interpreter and the backend itself, and all watchers become ready at the
+same time). Nevertheless this shows that it adds very little overhead in
+itself. Like any select-based backend its performance becomes really bad
+with lots of file descriptors (and few of them active), of course, but
+this was not subject of this benchmark.
 
 The C<Event> module has a relatively high setup and callback invocation cost,
 but overall scores on the third place.
