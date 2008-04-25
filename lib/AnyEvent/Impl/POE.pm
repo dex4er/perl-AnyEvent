@@ -143,7 +143,7 @@ and when not.
 
 One could go on endlessly - ten years, no usable docs.
 
-It is likely that difefrences between documentation, or the one or two
+It is likely that differences between documentation, or the one or two
 things I had to guess, cause unanticipated problems with the backend.
 
 =item Bad API
