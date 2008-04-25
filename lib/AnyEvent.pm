@@ -2,7 +2,7 @@
 
 AnyEvent - provide framework for multiple event loops
 
-EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt - various supported event loops
+EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
 
 =head1 SYNOPSIS
 
@@ -80,11 +80,12 @@ The interface itself is vaguely similar, but not identical to the L<Event>
 module.
 
 During the first call of any watcher-creation method, the module tries
-to detect the currently loaded event loop by probing whether one of
-the following modules is already loaded: L<Coro::EV>, L<Coro::Event>,
-L<EV>, L<Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>. The first one
-found is used. If none are found, the module tries to load these modules
-(excluding Event::Lib and Qt) in the order given. The first one that can
+to detect the currently loaded event loop by probing whether one of the
+following modules is already loaded: L<Coro::EV>, L<Coro::Event>, L<EV>,
+L<Event>, L<Glib>, L<Tk>, L<AnyEvent::Impl::Perl>, L<Event::Lib>, L<Qt>,
+L<POE>. The first one found is used. If none are found, the module tries
+to load these modules (excluding Event::Lib, Qt and POE as the pure perl
+adaptor should always succeed) in the order given. The first one that can
 be successfully loaded will be used. If, after this, still none could be
 found, AnyEvent will fall back to a pure-perl event loop, which is not
 very efficient, but should work everywhere.
@@ -364,6 +365,14 @@ The known classes so far are:
    AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
    AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
+   AnyEvent::Impl::POE       based on POE, not generic enough for full support.
+
+There is no support for WxWidgets, as WxWidgets has no support for
+watching file handles. However, you can use WxWidgets through the
+POE Adaptor, as POE has a Wx backend that simply polls 20 times per
+second, which was considered to be too horrible to even consider for
+AnyEvent. Likewise, other POE backends can be used by Anyevent by using
+it's adaptor.
 
 =item AnyEvent::detect
 
@@ -442,10 +451,10 @@ my @models = (
    [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
-);
-my @models_detect = (
-   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   # everything below here will not be autoprobed as the pureperl backend should work everywhere
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
+   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
 );
 
 our %method = map +($_ => 1), qw(io timer signal child condvar broadcast wait one_event DESTROY);
@@ -466,7 +475,7 @@ sub detect() {
 
       # check for already loaded models
       unless ($MODEL) {
-         for (@REGISTRY, @models, @models_detect) {
+         for (@REGISTRY, @models) {
             my ($package, $model) = @$_;
             if (${"$package\::VERSION"} > 0) {
                if (eval "require $model") {
@@ -876,12 +885,12 @@ before the first watcher gets created, e.g. with a C<BEGIN> block:
 
 Event modules: L<Coro::EV>, L<EV>, L<EV::Glib>, L<Glib::EV>,
 L<Coro::Event>, L<Event>, L<Glib::Event>, L<Glib>, L<Coro>, L<Tk>,
-L<Event::Lib>, L<Qt>.
+L<Event::Lib>, L<Qt>, L<POE>.
 
 Implementations: L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::EV>,
 L<AnyEvent::Impl::CoroEvent>, L<AnyEvent::Impl::Event>, L<AnyEvent::Impl::Glib>,
 L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>, L<AnyEvent::Impl::EventLib>,
-L<AnyEvent::Impl::Qt>.
+L<AnyEvent::Impl::Qt>, L<AnyEvent::Impl::POE>.
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
 

@@ -36,7 +36,7 @@ The message is correct, the question is why POE prints it in the first
 place in a correct program (this is not a singular case though).
 
 The only way I found to work around this bug was to call C<<
-->run >> at anyevent loading time and stop the kernel imemdiately
+->run >> at AnyEvent loading time and stop the kernel immediately
 again. Unfortunately, due to another design bug in POE, this cannot be
 done (by documented means at least) without throwing away events in the
 event queue.
