@@ -109,11 +109,14 @@ years of development escapes me.
 
 At the time of this writing, POE was in its tenth year. Still, its
 documentation is extremely lacking, making it impossible to implement
-stuff as trivial as AnyEvent watchers without havign to resort to
+stuff as trivial as AnyEvent watchers without having to resort to
 undocumented behaviour or features.
 
 For example, the POE::Kernel manpage has nice occurances of the word TODO
-with an explanation of whats missing. Some other gems:
+with an explanation of whats missing. In general, the POE manpages are
+littered with comments like "section not yet written".
+
+Some other gems:
 
    This allows many object methods to also be package methods.
 
@@ -121,30 +124,33 @@ This is nice, but since it doesn't document I<which> methods these are,
 this is utterly useless information.
 
    Terminal signals will kill sessions if they are not handled by a
-   "sig_handled"() call.  The OS signals that usually kill or dump a
-   process are con‐ sidered terminal in POE, but they never trigger a
+   "sig_handled"() call. The OS signals that usually kill or dump a
+   process are considered terminal in POE, but they never trigger a
    coredump. These are: HUP, INT, QUIT and TERM.
 
-Although AnyEvent calls sig_handled, removing it has no apparent effects
-on POE handling SIGINT.
+Although AnyEvent calls C<sig_handled>, removing it has no apparent
+effects on POE handling SIGINT.
 
    Furthermore, since the Kernel keeps track of everything sessions do, it
    knows when a session has run out of tasks to perform.
 
 This is impossible - how does the kernel now that a session is no longer
 watching for some (external) event (e.g. by some other session)? It
-cannot, and therefore this is wrong.
+cannot, and therefore this is wrong - but you would be hard pressed to
+find out how to work around this and tell the kernel manually about such
+events.
 
 It gets worse, though - the notion of "task" or "resource", although used
 throughout the documentation, is not defined in a usable way. For example,
 waiting for a timeout is considered to be a task, waiting for a signal is
-not. The user is left guessing when waiting for an event counts as task
-and when not.
+not (a session that only waits for a signal is considered finished and
+gets removed). The user is left guessing when waiting for an event counts
+as task and when not.
 
-One could go on endlessly - ten years, no usable docs.
+One could go on endlessly - ten years, no usable documentation.
 
 It is likely that differences between documentation, or the one or two
-things I had to guess, cause unanticipated problems with the backend.
+things I had to guess, cause unanticipated problems with this adaptor.
 
 =item Bad API
 
@@ -152,9 +158,13 @@ The POE API is extremely inconsistent - sometimes you have to pass a
 session argument, sometimes it gets ignored, sometimes a session-specific
 method must not use a session argument.
 
-Sometimes registering a handler uses "eventname, parameter" (timeouts),
-sometimes it is "parameter, eventname" (signals). There is little
-consistency.
+Error handling is sub-standard as well: even for programming mistakes,
+POE does not C<croak> but, in most cases, just sets C<$!> or simply does
+nothing at all, leading to fragile programs.
+
+Sometimes registering a handler uses the "eventname, parameter" ordering
+(timeouts), sometimes it is "parameter, eventname" (signals). There is
+little consistency overall.
 
 =back
 
