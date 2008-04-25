@@ -923,9 +923,9 @@ watcher.
 The benchmark does I<not> measure scalability of the event loop very
 well. For example, a select-based event loop (such as the pure perl one)
 can never compete with an event loop that uses epoll when the number of
-file descriptors grows high. In this benchmark, only a single filehandle
-is used (although some of the AnyEvent adaptors dup() its file descriptor
-to worka round bugs).
+file descriptors grows high. In this benchmark, all events become ready at
+the same time, so select/poll-based implementations get an unnatural speed
+boost.
 
 C<EV> is the sole leader regarding speed and memory use, which are both
 maximal/minimal, respectively. Even when going through AnyEvent, there are
