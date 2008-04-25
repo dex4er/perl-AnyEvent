@@ -73,10 +73,13 @@ used.
 
 In addition, most timer functions in POE want an absoltue timestamp, which
 is hard to create if all you have is a relative time and no function to
-return the "current time".
+return the "current time". And of course POE doesn't handle time jumps at
+all (not even when using an event loop that happens to do that, such as
+L<EV>, as it does it's own unoptimised timer management).
 
-AnyEvent works around this by using relative timer fucntions, in the hope
-that POE gets it right at least internally.
+AnyEvent works around the unavailability of the current time using
+relative timers exclusively, in the hope that POE gets it right at least
+internally.
 
 =item Event Non-Ordering
 
