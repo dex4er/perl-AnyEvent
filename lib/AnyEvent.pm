@@ -964,7 +964,7 @@ C<POE>, regardless of underlying event loop (wether using its pure perl
 select-based backend or the Event module) shows abysmal performance and
 memory usage: Watchers use almost 30 times as much memory as EV watchers,
 and 10 times as much memory as both Event or EV via AnyEvent. Watcher
-invocation is almost 700 times slower than with AnyEvent's pure perl
+invocation is almost 900 times slower than with AnyEvent's pure perl
 implementation. The design of the POE adaptor class in AnyEvent can not
 really account for this, as session creation overhead is small compared
 to execution of the state machine, which is coded pretty optimally within
