@@ -1007,11 +1007,12 @@ L<AnyEvent::Impl::POE>. POE simply seems to be abysmally slow.
 
 =over 4
 
-=item * Using EV through AnyEvent is faster than any other event loop, but most
-event loops have acceptable performance with or without AnyEvent.
+=item * Using EV through AnyEvent is faster than any other event loop
+(even when used without AnyEvent), but most event loops have acceptable
+performance with or without AnyEvent.
 
 =item * The overhead AnyEvent adds is usually much smaller than the overhead of
-the actual event loop, only with extremely fast event loops such as the EV
+the actual event loop, only with extremely fast event loops such as EV
 adds AnyEvent significant overhead.
 
 =item * You should simply avoid POE like the plague if you want performance or

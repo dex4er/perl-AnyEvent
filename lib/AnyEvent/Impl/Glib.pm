@@ -77,7 +77,6 @@ sub DESTROY {
    remove Glib::Source delete $self->{source} if $self->{source};
    # need to undef $cb because we hold references to it
    $self->{cb} = undef;
-   %$self = ();
 }
 
 sub one_event {
