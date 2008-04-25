@@ -862,6 +862,79 @@ anything about events.
 
    $quit->wait;
 
+
+=head1 BENCHMARK
+
+To give you an idea of the performance an doverheads that AnyEvent adds
+over the backends, here is a benchmark of various supported backends. The
+benchmark creates a lot of timers (with zero timeout) and io events
+(watching STDOUT, a pty, to become writable).
+
+Explanation of the fields:
+
+I<watcher> is the number of event watchers created/destroyed. Sicne
+different event models have vastly different performance each backend was
+handed a number of watchers so that overall runtime is acceptable and
+similar to all backends (and keep them from crashing).
+
+I<bytes> is the number of bytes (as measured by resident set size) used by
+each watcher.
+
+I<create> is the time, in microseconds, to create a single watcher.
+
+I<invoke> is the time, in microseconds, used to invoke a simple callback
+that simply counts down.
+
+I<destroy> is the time, in microseconds, to destroy a single watcher.
+
+          name watcher bytes create invoke destroy comment
+         EV/EV  400000   244   0.56   0.46    0.31 EV native interface
+        EV/Any  100000   610   3.52   0.91    0.75 
+    CoroEV/Any  100000   610   3.49   0.92    0.75 coroutines + Coro::Signal
+      Perl/Any   10000   654   4.64   1.22    0.77 pure perl implementation
+   Event/Event   10000   523  28.05  21.38    5.22 Event native interface
+     Event/Any   10000   943  34.43  20.48    1.39
+      Glib/Any   16000  1357  96.99  12.55   55.51 quadratic behaviour
+        Tk/Any    2000  1855  27.01  66.61   14.03 SEGV with >> 2000 watchers
+    POE/Select    2000  6343  94.69 807.65  562.69 POE::Loop::Select
+     POE/Event    2000  6644 108.15 768.19   14.33 POE::Loop::Event
+
+Discussion: The benchmark does I<not> bench scalability of the
+backend. For example a select-based backend (such as the pureperl one) can
+never compete with a backend using epoll. In this benchmark, only a single
+filehandle is used.
+
+EV is the sole leader regarding speed and memory use, which are both
+maximal/minimal. Even when going through AnyEvent, there is only one event
+loop that uses less memory (the Event module natively), and no faster
+event model.
+
+The pure perl implementation is hit in a few sweet spots (both the
+zero timeout and the use of a single fd hit optimisations in the perl
+interpreter and the backend itself), but it shows that it adds very little
+overhead in itself. Like any select-based backend it's performance becomes
+really bad with lots of file descriptors.
+
+The Event module has a relatively high setup and callback invocation cost,
+but overall scores on the third place.
+
+Glib has a little higher memory cost, a bit fster callback invocation and
+has a similar speed as Event.
+
+The Tk backend works relatively well, the fact that it crashes with
+more than 2000 watchers is a big setback, however, as correctness takes
+precedence over speed.
+
+POE, regardless of backend (wether it's pure perl select backend or the
+Event backend) shows abysmal performance and memory usage: Watchers use
+almost 30 times as much memory as EV watchers, and 10 times as much memory
+as both Event or EV via AnyEvent.
+
+Summary: using EV through AnyEvent is faster than any other event
+loop. The overhead AnyEvent adds can be very small, and you should avoid
+POE like the plague if you want performance or reasonable memory usage.
+
+
 =head1 FORK
 
 Most event libraries are not fork-safe. The ones who are usually are
@@ -869,6 +942,7 @@ because they are so inefficient. Only L<EV> is fully fork-aware.
 
 If you have to fork, you must either do so I<before> creating your first
 watcher OR you must not use AnyEvent at all in the child.
+
 
 =head1 SECURITY CONSIDERATIONS
 
@@ -886,6 +960,7 @@ before the first watcher gets created, e.g. with a C<BEGIN> block:
 
   use AnyEvent;
 
+
 =head1 SEE ALSO
 
 Event modules: L<Coro::EV>, L<EV>, L<EV::Glib>, L<Glib::EV>,
@@ -898,6 +973,7 @@ L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>, L<AnyEvent::Impl::EventLib>,
 L<AnyEvent::Impl::Qt>, L<AnyEvent::Impl::POE>.
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
+
 
 =head1 AUTHOR
 
