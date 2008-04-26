@@ -1037,7 +1037,7 @@ most timeouts work (and puts extra pressure on the event loops).
 
 In this benchmark, we use 10000 socketpairs (20000 sockets), of which 100
 (1%) are active. This mirrors the activity of large servers with many
-connections, most of which are idle during at any one point in time.
+connections, most of which are idle at any one point in time.
 
 Source code for this benchmark is found as F<eg/bench2> in the AnyEvent
 distribution.
