@@ -18,7 +18,7 @@ Revision history for Perl extension AnyEvent.
           2-3 times faster in the common case of sparsely-active file
           descriptors. It can now compete with select/poll-based C event
           loops in most cases (it is usually faster than Event and Glib :).
-        - roughly cut EV memory use in half and icrease its speed by 30%,
+        - roughly cut EV memory use in half and increase its speed by 30%,
           by removing undocumented functionality.
 
 3.2  Thu Apr 24 10:10:40 CEST 2008

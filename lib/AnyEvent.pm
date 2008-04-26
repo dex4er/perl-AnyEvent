@@ -1052,8 +1052,8 @@ nontrivial) and two watchers: an I/O watcher and a timeout watcher.
 
 I<request>, the most important value, is the time it takes to handle a
 single "request", that is, reading the token from the pipe and forwarding
-it to another server. This includes deleteing the old timeout and creating
-a new one with a later timeout.
+it to another server. This includes deleting the old timeout and creating
+a new one that moves the timeout into the future.
 
 =head3 Results
 
