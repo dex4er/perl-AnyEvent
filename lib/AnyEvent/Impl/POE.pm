@@ -250,7 +250,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    my $after = delete $arg{after};
-   my $cb   = delete $arg{cb};
+   my $cb    = delete $arg{cb};
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {

@@ -961,6 +961,11 @@ file descriptors grows high. In this benchmark, all events become ready at
 the same time, so select/poll-based implementations get an unnatural speed
 boost.
 
+Also, note that the number of watchers usually has a nonlinear effect on
+overall speed, that is, creating twice as many watchers doesn't take twice
+the time - usually it takes longer. This puts event loops tested with a
+higher number of watchers at a disadvantage.
+
 C<EV> is the sole leader regarding speed and memory use, which are both
 maximal/minimal, respectively. Even when going through AnyEvent, it uses
 far less memory than any other event loop and is still faster than Event
