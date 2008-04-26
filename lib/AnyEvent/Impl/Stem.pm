@@ -29,42 +29,49 @@ use Stem::Class; #???
 sub timer {
    my ($class, %arg) = @_;
 
-   #TODO: when the returned object goes out of scope the timer needs to be canceled
-   new Stem::Event::Timer
+   my $stem = new Stem::Event::Timer
       object => (bless \\$arg{cb}),
       method => "timeout",
-      delay  => $arg{after},
+      delay  => $arg{after};
+
+   bless \\$stem
 }
 
 sub io {
    my ($class, %arg) = @_;
 
-   # likewise here, likely we must wrap and bless and call stop in DESTROY
-   if ($arg{poll} eq "r") {
-      new Stem::Event::Read
+   my $stem = $arg{poll} eq "r"
+      ? new Stem::Event::Read
          object => (bless \\$arg{cb}),
          method => "invoke",
          fh     => $arg{fh},
-   } else {
-      new Stem::Event::Write
+      : new Stem::Event::Write
          object => (bless \\$arg{cb}),
          method => "invoke",
-         fh     => $arg{fh},
-   }
+         fh     => $arg{fh};
+
+   bless \\$stem
 }
 
 sub signal {
    my ($class, %arg) = @_;
 
-   # liekwise here, no clue how to cancel this
-   new Stem::Event::Signal
+   my $stem = new Stem::Event::Signal
          object => (bless \\$arg{cb}),
          method => "invoke",
-         signal => $arg{signal},
+         signal => $arg{signal};
+
+   bless \\$stem
+}
+
+sub DESTROY {
+   warn "xcandel <@_>\n";#d#
+   ${${$_[0]}}->cancel;
 }
 
 sub invoke {
-   ${${$_[0]}}();
+   warn "invoke <@_>\n";#d#
+   ${${$_[0]}}->();
 }
 
 sub child {
@@ -86,13 +93,25 @@ sub broadcast {
    ++${$_[0]};
 }
 
-sub wait {
-   one_event
-      while !${$_[0]};
+sub stopbusywaiting {
+   Stem::Event::stop_loop;
 }
 
 sub one_event {
+   # busy waiting... good design...
+   my $stopper = new Stem::Event::Timer
+      object => __PACKAGE__,
+      method => "stopbusywaiting",
+      delay  => 0.05;
+
    Stem::Event::start_loop;
+   
+   $stopper->cancel;
+}
+
+sub wait {
+   one_event
+      while !${$_[0]};
 }
 
 1;
