@@ -1045,7 +1045,7 @@ distribution.
 =head3 Explanation of the columns
 
 I<sockets> is the number of sockets, and twice the number of "servers" (as
-eahc server has a read and write socket end).
+each server has a read and write socket end).
 
 I<create> is the time it takes to create a socketpair (which is
 nontrivial) and two watchers: an I/O watcher and a timeout watcher.
