@@ -34,7 +34,9 @@ sub timer {
       method => "timeout",
       delay  => $arg{after};
 
-   bless \\$stem
+      warn "new imer $arg{after}\n";#d#
+
+   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
 
 sub io {
@@ -50,7 +52,7 @@ sub io {
          method => "invoke",
          fh     => $arg{fh};
 
-   bless \\$stem
+   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
 
 sub signal {
@@ -61,10 +63,11 @@ sub signal {
          method => "invoke",
          signal => $arg{signal};
 
-   bless \\$stem
+   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
 
-sub DESTROY {
+sub AnyEvent::Impl::Stem::Wrap::DESTROY {
+   Carp::cluck "cluck\n";#d#
    warn "xcandel <@_>\n";#d#
    ${${$_[0]}}->cancel;
 }
@@ -104,6 +107,7 @@ sub one_event {
       method => "stopbusywaiting",
       delay  => 0.05;
 
+   Stem::Event::init_loop;
    Stem::Event::start_loop;
    
    $stopper->cancel;
