@@ -36,20 +36,21 @@ sub timer {
       delay  => $arg{after},
 }
 
-sub timeout {
-   ${${$_[0]}}();
-}
-
 sub io {
    my ($class, %arg) = @_;
 
-   my $cb = $arg{cb};
-
-   # likewise here, liekly we must wrap and bless and call stop in DESTROY
-   EV::io
-      fileno $arg{fh},
-      $arg{poll} eq "r" ? EV::READ : EV::WRITE,
-      $cb
+   # likewise here, likely we must wrap and bless and call stop in DESTROY
+   if ($arg{poll} eq "r") {
+      new Stem::Event::Read
+         object => (bless \\$arg{cb}),
+         method => "invoke",
+         fh     => $arg{fh},
+   } else {
+      new Stem::Event::Write
+         object => (bless \\$arg{cb}),
+         method => "invoke",
+         fh     => $arg{fh},
+   }
 }
 
 sub signal {
@@ -57,22 +58,28 @@ sub signal {
 
    # liekwise here, no clue how to cancel this
    new Stem::Event::Signal
-      ....
+         object => (bless \\$arg{cb}),
+         method => "invoke",
+         signal => $arg{signal},
+}
+
+sub invoke {
+   ${${$_[0]}}();
 }
 
 sub child {
    my ($class, %arg) = @_;
 
-   my $cb = $arg{cb};
+   die;
 
-   # seems there is special sigchld support in stem, this needs to be used
-   EV::child $arg{pid}, 0, sub {
-      $cb->($_[0]->rpid, $_[0]->rstatus);
-   }
+#   # seems there is special sigchld support in stem, this needs to be used
+#   EV::child $arg{pid}, 0, sub {
+#      $cb->($_[0]->rpid, $_[0]->rstatus);
+#   }
 }
 
 sub condvar {
-   bless \my $flag, "AnyEvent::Impl::EV"
+   bless \my $flag, AnyEvent::Impl::Stem::
 }
 
 sub broadcast {
@@ -85,8 +92,7 @@ sub wait {
 }
 
 sub one_event {
-   Stem::Event->
-   EV::loop EV::LOOP_ONESHOT;
+   Stem::Event::start_loop;
 }
 
 1;
