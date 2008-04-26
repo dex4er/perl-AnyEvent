@@ -21,15 +21,23 @@ package AnyEvent::Impl::Stem;
 
 use strict;
 
+BEGIN { $Stem::Vars::Env{ 'event_loop' } = "xxx" } #d#
+
 use Stem::Event;
+use Stem::Class; #???
 
 sub timer {
    my ($class, %arg) = @_;
 
-   #TODO: when the returned objetc goes out of scope the timer needs to be canceled
+   #TODO: when the returned object goes out of scope the timer needs to be canceled
    new Stem::Event::Timer
-      delay => $arg{after},
+      object => (bless \\$arg{cb}),
+      method => "timeout",
+      delay  => $arg{after},
+}
 
+sub timeout {
+   ${${$_[0]}}();
 }
 
 sub io {
