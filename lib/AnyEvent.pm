@@ -966,6 +966,11 @@ overall speed, that is, creating twice as many watchers doesn't take twice
 the time - usually it takes longer. This puts event loops tested with a
 higher number of watchers at a disadvantage.
 
+To put the range of results into perspective, consider that on the
+benchmark machine, handling an event takes roughly 1600 CPU cycles with
+EV, 3100 CPU cycles with AnyEvent's pure perl loop and almost 3000000 CPU
+cycles with POE.
+
 C<EV> is the sole leader regarding speed and memory use, which are both
 maximal/minimal, respectively. Even when going through AnyEvent, it uses
 far less memory than any other event loop and is still faster than Event
