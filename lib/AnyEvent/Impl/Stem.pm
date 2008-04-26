@@ -21,8 +21,6 @@ package AnyEvent::Impl::Stem;
 
 use strict;
 
-BEGIN { $Stem::Vars::Env{'event_loop'} = "perl" } #d#
-
 use Stem::Event;
 use Stem::Class; #???
 
