@@ -21,20 +21,23 @@ package AnyEvent::Impl::Stem;
 
 use strict;
 
-BEGIN { $Stem::Vars::Env{ 'event_loop' } = "xxx" } #d#
+BEGIN { $Stem::Vars::Env{'event_loop'} = "perl" } #d#
 
 use Stem::Event;
 use Stem::Class; #???
+
+my $dummy = bless []; # *sigh*
 
 sub timer {
    my ($class, %arg) = @_;
 
    my $stem = new Stem::Event::Timer
-      object => (bless \\$arg{cb}),
-      method => "timeout",
-      delay  => $arg{after};
+      object   => (bless \\$arg{cb}),
+      method   => "invoke",
+      delay    => $arg{after},
+      interval => 1; # work around bug in stem, it works with one-shot timeouts only
 
-      warn "new imer $arg{after}\n";#d#
+   $stem->start;
 
    bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
@@ -52,6 +55,8 @@ sub io {
          method => "invoke",
          fh     => $arg{fh};
 
+   $stem->start;
+
    bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
 
@@ -63,17 +68,16 @@ sub signal {
          method => "invoke",
          signal => $arg{signal};
 
+   $stem->start;
+
    bless \\$stem, AnyEvent::Impl::Stem::Wrap::
 }
 
 sub AnyEvent::Impl::Stem::Wrap::DESTROY {
-   Carp::cluck "cluck\n";#d#
-   warn "xcandel <@_>\n";#d#
    ${${$_[0]}}->cancel;
 }
 
 sub invoke {
-   warn "invoke <@_>\n";#d#
    ${${$_[0]}}->();
 }
 
@@ -94,28 +98,17 @@ sub condvar {
 
 sub broadcast {
    ++${$_[0]};
+   Stem::Event::stop_loop;
 }
 
 sub stopbusywaiting {
    Stem::Event::stop_loop;
 }
 
-sub one_event {
-   # busy waiting... good design...
-   my $stopper = new Stem::Event::Timer
-      object => __PACKAGE__,
-      method => "stopbusywaiting",
-      delay  => 0.05;
-
-   Stem::Event::init_loop;
-   Stem::Event::start_loop;
-   
-   $stopper->cancel;
-}
-
 sub wait {
-   one_event
-      while !${$_[0]};
+   while (!${$_[0]}) {
+      Stem::Event::start_loop;
+   }
 }
 
 1;
