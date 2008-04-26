@@ -896,22 +896,23 @@ anything about events.
    $quit->wait;
 
 
-=head1 BENCHMARK
+=head1 BENCHMARKS
 
 To give you an idea of the performance and overheads that AnyEvent adds
-over the event loops themselves (and to give you an impression of the
-speed of various event loops), here is a benchmark of various supported
-event models natively and with anyevent. The benchmark creates a lot of
-timers (with a zero timeout) and I/O watchers (watching STDOUT, a pty, to
-become writable, which it is), lets them fire exactly once and destroys
-them again.
+over the event loops themselves and to give you an impression of the speed
+of various event loops I prepared some benchmarks.
 
-Rewriting the benchmark to use many different sockets instead of using
-the same filehandle for all I/O watchers results in a much longer runtime
-(socket creation is expensive), but qualitatively the same figures, so it
-was not used.
+=head2 BENCHMARKING ANYEVENT OVERHEAD
 
-=head2 Explanation of the columns
+Here is a benchmark of various supported event models used natively and
+through anyevent. The benchmark creates a lot of timers (with a zero
+timeout) and I/O watchers (watching STDOUT, a pty, to become writable,
+which it is), lets them fire exactly once and destroys them again.
+
+Source code for this benchmark is found as F<eg/bench> in the AnyEvent
+distribution.
+
+=head3 Explanation of the columns
 
 I<watcher> is the number of event watchers created/destroyed. Since
 different event models feature vastly different performances, each event
@@ -937,7 +938,7 @@ signal the end of this phase.
 I<destroy> is the time, in microseconds, that it takes to destroy a single
 watcher.
 
-=head2 Results
+=head3 Results
 
           name watchers bytes create invoke destroy comment
          EV/EV   400000   244   0.56   0.46    0.31 EV native interface
@@ -951,7 +952,7 @@ watcher.
      POE/Event     2000  6644 108.64 736.02   14.73 via POE::Loop::Event
     POE/Select     2000  6343  94.13 809.12  565.96 via POE::Loop::Select
 
-=head2 Discussion
+=head3 Discussion
 
 The benchmark does I<not> measure scalability of the event loop very
 well. For example, a select-based event loop (such as the pure perl one)
@@ -1003,7 +1004,7 @@ really account for this, as session creation overhead is small compared
 to execution of the state machine, which is coded pretty optimally within
 L<AnyEvent::Impl::POE>. POE simply seems to be abysmally slow.
 
-=head2 Summary
+=head3 Summary
 
 =over 4
 
@@ -1017,6 +1018,133 @@ adds AnyEvent significant overhead.
 
 =item * You should avoid POE like the plague if you want performance or
 reasonable memory usage.
+
+=back
+
+=head2 BENCHMARKING THE LARGE SERVER CASE
+
+This benchmark atcually benchmarks the event loop itself. It works by
+creating a number of "servers": each server consists of a socketpair, a
+timeout watcher that gets reset on activity (but never fires), and an I/O
+watcher waiting for input on one side of the socket. Each time the socket
+watcher reads a byte it will write that byte to a random other "server".
+
+The effect is that there will be a lot of I/O watchers, only part of which
+are active at any one point (so there is a constant number of active
+fds for each loop iterstaion, but which fds these are is random). The
+timeout is reset each time something is read because that reflects how
+most timeouts work (and puts extra pressure on the event loops).
+
+In this benchmark, we use 10000 socketpairs (20000 sockets), of which 100
+(1%) are active. This mirrors the activity of large servers with many
+connections, most of which are idle during at any one point in time.
+
+Source code for this benchmark is found as F<eg/bench2> in the AnyEvent
+distribution.
+
+=head3 Explanation of the columns
+
+I<sockets> is the number of sockets, and twice the number of "servers" (as
+eahc server has a read and write socket end).
+
+I<create> is the time it takes to create a socketpair (which is
+nontrivial) and two watchers: an I/O watcher and a timeout watcher.
+
+I<request>, the most important value, is the time it takes to handle a
+single "request", that is, reading the token from the pipe and forwarding
+it to another server. This includes deleteing the old timeout and creating
+a new one with a later timeout.
+
+=head3 Results
+
+    name sockets create  request 
+      EV   20000  69.01    11.16 
+    Perl   20000  75.28   112.76 
+   Event   20000 212.62   257.32 
+    Glib   20000 651.16  1896.30 
+     POE   20000 349.67 12317.24 uses POE::Loop::Event
+
+=head3 Discussion
+
+This benchmark I<does> measure scalability and overall performance of the
+particular event loop.
+
+EV is again fastest. Since it is using epoll on my system, the setup time
+is relatively high, though.
+
+Perl surprisingly comes second. It is much faster than the C-based event
+loops Event and Glib.
+
+Event suffers from high setup time as well (look at its code and you will
+understand why). Callback invocation also has a high overhead compared to
+the C<< $_->() for .. >>-style loop that the Perl event loop uses. Event
+uses select or poll in basically all documented configurations.
+
+Glib is hit hard by its quadratic behaviour w.r.t. many watchers. It
+clearly fails to perform with many filehandles or in busy servers.
+
+POE is still completely out of the picture, taking over 1000 times as long
+as EV, and over 100 times as long as the Perl implementation, even though
+it uses a C-based event loop in this case.
+
+=head3 Summary
+
+=over 4
+
+=item * The pure perl implementation performs extremely well, considering
+that it uses select.
+
+=item * Avoid Glib or POE in large projects where performance matters.
+
+=back
+
+=head2 BENCHMARKING SMALL SERVERS
+
+While event loops should scale (and select-based ones do not...) even to
+large servers, most programs we (or I :) actually write have only a few
+I/O watchers.
+
+In this benchmark, I use the same benchmark program as in the large server
+case, but it uses only eight "servers", of which three are active at any
+one time. This should reflect performance for a small server relatively
+well.
+
+The columns are identical to the previous table.
+
+=head3 Results
+
+    name sockets create request 
+      EV      16  20.00    6.54 
+   Event      16  81.27   35.86 
+    Glib      16  32.63   15.48 
+    Perl      16  24.62  162.37 
+     POE      16 261.87  276.28 uses POE::Loop::Event
+
+=head3 Discussion
+
+The benchmark tries to test the performance of a typical small
+server. While knowing how various event loops perform is interesting, keep
+in mind that their overhead in this case is usually not as important, due
+to the small absolute number of watchers.
+
+EV is again fastest.
+
+The C-based event loops Event and Glib come in second this time, as the
+overhead of running an iteration is much smaller in C than in Perl (little
+code to execute in the inner loop, and perl's function calling overhead is
+high, and updating all the data structures is costly).
+
+The pure perl event loop is much slower, but still competitive.
+
+POE also performs much better in this case, but is is stillf ar behind the
+others.
+
+=head3 Summary
+
+=over 4
+
+=item * C-based event loops perform very well with small number of
+watchers, as the management overhead dominates.
 
 =back
 
