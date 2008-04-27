@@ -51,6 +51,14 @@ AnyEvent::Socket - Connecting sockets for non-blocking I/O
 
 =head1 DESCRIPTION
 
+L<AnyEvent::Socket> provides method to connect sockets and accept clients
+on listening sockets.
+
+=head1 EXAMPLES
+
+See the C<samples/> directory of the L<AnyEvent>
+distribution for examples and also the tests in C<t/handle/> can be helpful.
+
 =head1 METHODS
 
 =over 4
@@ -59,15 +67,47 @@ AnyEvent::Socket - Connecting sockets for non-blocking I/O
 
 The constructor gets the same arguments as the L<IO::Socket::INET> constructor.
 Except that blocking will always be disabled and the hostname lookup is done by
-L<AnyEvent::Util::inet_aton> before the L<IO::Socket::INET> instance is created.
+L<AnyEvent::Util::inet_aton> before the socket (currently a L<IO::Socket::INET> instance)
+is created.
 
-  AnyEvent::Socket->new (
-     PeerAddr   => "www.google.de:80",
-     on_connect => sub {
-        my ($aesock, $error) = @_;
-        if ($error) { die "couldn't connect: $!" }
-     }
-  );
+Additionally you can set the callbacks that can be set in the L<AnyEvent::Handle>
+constructor and these:
+
+=over 4
+
+=item on_connect => $cb
+
+Installs a connect callback, that will be called when the name was successfully
+resolved and the connection was successfully established or an error occured in
+the lookup or connect.
+
+The first argument to the callback C<$cb> will be the L<AnyEvent::Socket> itself
+and the second is either a true value in case an error occured or undef.
+The variable C<$!> will be set to one of these values:
+
+=over 4
+
+=item ENXIO
+
+When the DNS lookup failed.
+
+=item ETIMEDOUT
+
+When the connect timed out.
+
+=item *
+
+Or any other errno as set by L<IO::Socket::INET> when it's constructor
+failed or the connection couldn't be established for any other reason.
+
+=back
+
+=item on_accept
+
+This sets the C<on_accept> callback by calling the C<on_accept> method.
+See also below.
+
+=back
 
 =cut
 
@@ -121,6 +161,16 @@ sub _connect {
       Carp::croak "no PeerAddr or PeerHost provided!";
    }
 }
+
+=item B<on_accept ($cb)>
+
+When the socket is run in listening mode (the C<Listen> argument of the socket
+is set) this callback will be called when a new client connected.
+The first argument to the callback will be the L<AnyEvent::Socket> object itself,
+the second the L<AnyEvent::Handle> of the client socket and the third
+is the peer address (depending on what C<accept> of L<IO::Socket> gives you>).
+
+=cut
 
 sub on_accept {
    my ($self, $cb) = @_;
