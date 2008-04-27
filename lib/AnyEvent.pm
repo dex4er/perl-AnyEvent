@@ -1212,12 +1212,9 @@ them).
 
 EV is again fastest.
 
-The C-based event loops Event and Glib come in second this time, as the
-overhead of running an iteration is much smaller in C than in Perl (little
-code to execute in the inner loop, and perl's function calling overhead is
-high, and updating all the data structures is costly).
-
-The pure perl event loop is much slower, but still competitive.
+Perl again comes second. It is noticably faster than the C-based event
+loops Event and Glib, although the difference is too small to really
+matter.
 
 POE also performs much better in this case, but is is still far behind the
 others.
