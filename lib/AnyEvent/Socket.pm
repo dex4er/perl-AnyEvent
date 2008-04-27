@@ -56,8 +56,8 @@ on listening sockets.
 
 =head1 EXAMPLES
 
-See the C<samples/> directory of the L<AnyEvent>
-distribution for examples and also the tests in C<t/handle/> can be helpful.
+See the C<eg/> directory of the L<AnyEvent> distribution for examples and also
+the tests in C<t/handle/> can be helpful.
 
 =head1 METHODS
 
