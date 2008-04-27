@@ -20,7 +20,7 @@ my $rbytes;
 
 my $ae_sock =
    AnyEvent::Socket->new (
-      PeerAddr => "www.google.de:80",
+      PeerAddr => "www.google.com:80",
       on_eof   => sub { $cv->broadcast },
       on_error => sub {
          my ($ae_sock) = @_;

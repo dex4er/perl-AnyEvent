@@ -6,7 +6,7 @@ AnyEvent::Util - various utility functions.
 
  use AnyEvent::Util;
 
- inet_aton $name, $cb->($ipn || undef)
+ inet_aton $name, $cb->($ipn || undef);
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ use AnyEvent;
 use base 'Exporter';
 
 #our @EXPORT = qw(gethostbyname gethostbyaddr);
-our @EXPORT_OK = qw(inet_aton fork_eval);
+our @EXPORT_OK = qw(inet_aton);
 
 our $VERSION = '1.0';
 
@@ -106,12 +106,9 @@ sub inet_aton {
 
    if (&dotted_quad) {
       $cb->(Socket::inet_aton $name);
-   } elsif (has_ev_adns) {
-      my $current = $Coro::current;
-      my @a;
- 
-      EV::ADNS::submit ($_[0], &EV::ADNS::r_a, 0, sub {
-         (undef, undef, @a) = @_;
+   } elsif (&has_ev_adns) {
+      EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, sub {
+         my (undef, undef, @a) = @_;
          $cb->(@a ? Socket::inet_aton $a[0] : undef);
       });
    } else {
