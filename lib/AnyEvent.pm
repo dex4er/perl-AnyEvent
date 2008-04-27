@@ -1135,7 +1135,9 @@ The columns are identical to the previous table.
 The benchmark tries to test the performance of a typical small
 server. While knowing how various event loops perform is interesting, keep
 in mind that their overhead in this case is usually not as important, due
-to the small absolute number of watchers.
+to the small absolute number of watchers (that is, you need efficiency and
+speed most when you have lots of watchers, not when you only have a few of
+them).
 
 EV is again fastest.
 
@@ -1146,7 +1148,7 @@ high, and updating all the data structures is costly).
 
 The pure perl event loop is much slower, but still competitive.
 
-POE also performs much better in this case, but is is stillf ar behind the
+POE also performs much better in this case, but is is still far behind the
 others.
 
 =head3 Summary
