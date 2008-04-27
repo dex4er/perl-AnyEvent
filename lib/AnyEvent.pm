@@ -479,6 +479,28 @@ You can chose to use a rather inefficient pure-perl implementation by
 loading the C<AnyEvent::Impl::Perl> module, which gives you similar
 behaviour everywhere, but letting AnyEvent chose is generally better.
 
+=head1 OTHER MODULES
+
+L<AnyEvent> itself comes with useful utility modules:
+
+To make it easier to do non-blocking IO the modules L<AnyEvent::Handle>
+and L<AnyEvent::Socket> are provided. L<AnyEvent::Handle> provides
+read and write buffers and manages watchers for reads and writes. 
+L<AnyEvent::Socket> provides means to do non-blocking connects.
+
+Aside from those there are these modules that support AnyEvent (and use it
+for non-blocking IO):
+
+=over 4
+
+=item L<AnyEvent::FastPing>
+
+=item L<Net::IRC3>
+
+=item L<Net::XMPP2>
+
+=back
+
 =cut
 
 package AnyEvent;

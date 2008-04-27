@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+        - added AnyEvent::Handle and AnyEvent::Socket modules
         - fix a bug in the pure perl backend that kept watchers alive
           when multiple watchers were registered for the same fh/poll combo.
 	- add a benchmark section showing AnyEvent overhead and comparing

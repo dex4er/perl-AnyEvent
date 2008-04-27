@@ -1,8 +1,15 @@
 #!/opt/perl/bin/perl
 use strict;
-use Test::More tests => 2;
+use Test::More;
 use AnyEvent;
 use AnyEvent::Socket;
+
+unless ($ENV{PERL_ANYEVENT_NET_TESTS}) {
+   plan skip_all => "PERL_ANYEVENT_NET_TESTS environment variable not set";
+   exit 0;
+}
+
+plan tests => 2;
 
 my $cv = AnyEvent->condvar;
 
