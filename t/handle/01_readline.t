@@ -1,9 +1,10 @@
 #!perl
+
 use strict;
+use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
 use Test::More tests => 2;
 use Socket;
-
 
 {
    my $cv = AnyEvent->condvar;
@@ -28,7 +29,7 @@ use Socket;
 
    $cv->wait;
 
-   is ($concat, "ABCDEFG".("X"x113), 'lines were read correctly');
+   is ($concat, "ABCDEFG".("X" x 113), 'lines were read correctly');
 }
 
 {
@@ -57,5 +58,5 @@ use Socket;
 
    $cv->wait;
 
-   is ($concat, "ABCDEFG".("X"x113), 'second lines were read correctly');
+   is ($concat, "ABCDEFG".("X" x 113), 'second lines were read correctly');
 }
