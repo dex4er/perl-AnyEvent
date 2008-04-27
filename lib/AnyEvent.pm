@@ -1088,7 +1088,7 @@ a new one that moves the timeout into the future.
 
     name sockets create  request 
       EV   20000  69.01    11.16 
-    Perl   20000  75.28   112.76 
+    Perl   20000  73.32    35.87 
    Event   20000 212.62   257.32 
     Glib   20000 651.16  1896.30 
      POE   20000 349.67 12317.24 uses POE::Loop::Event
@@ -1144,9 +1144,9 @@ The columns are identical to the previous table.
 
     name sockets create request 
       EV      16  20.00    6.54 
+    Perl      16  25.75   12.62 
    Event      16  81.27   35.86 
     Glib      16  32.63   15.48 
-    Perl      16  24.62  162.37 
      POE      16 261.87  276.28 uses POE::Loop::Event
 
 =head3 Discussion

@@ -71,6 +71,8 @@ use Scalar::Util ();
 
 our $VERSION = 0.1;
 
+our $NOW = time;
+
 # fds[0] is for read, fds[1] is for write watchers
 # fds[poll]{v} is the bitmask for select
 # fds[poll]{w}[fd] contains a list of i/o watchers
@@ -79,18 +81,18 @@ our $VERSION = 0.1;
 # benchmark results in the synthetic "man watchers on one fd" benchmark.
 my @fds = ({}, {});
 
-my $need_sort; # wether the timer list has been changed and needs to be sorted again
+my $need_sort = 1e300; # when to re-sort timer list
 my @timer; # list of [ abs-timeout, Timer::[callback] ]
 
 # the pure perl mainloop
 sub one_event {
+   $NOW = time;
+
    # first sort timers if required (slow)
-   if ($need_sort) {
-      undef $need_sort;
+   if ($NOW >= $need_sort) {
+      $need_sort = 1e300;
       @timer = sort { $a->[0] <=> $b->[0] } @timer;
    }
-
-   my $NOW = time;
 
    # handle all pending timers
    if (@timer && $timer[0][0] <= $NOW) {
@@ -111,6 +113,8 @@ sub one_event {
             undef,
             @timer ? $timer[0][0] - $NOW  + 0.0009 : 3600
       ) {
+         $NOW = time;
+
          # prefer write watchers, because they usually reduce
          # memory pressure.
          for (1, 0) {
@@ -182,10 +186,11 @@ sub timer {
    my ($class, %arg) = @_;
    
    my $self = bless [$arg{cb}], AnyEvent::Impl::Perl::Timer::;
+   my $time = $NOW + $arg{after};
 
-   push @timer, [time + $arg{after}, $self];
+   push @timer, [$time, $self];
    Scalar::Util::weaken $timer[-1][1];
-   $need_sort = 1;
+   $need_sort = $time if $time < $need_sort;
 
    $self
 }

@@ -89,9 +89,9 @@ sub has_ev_adns {
    ($has_ev_adns ||= do {
       my $model = AnyEvent::detect;
       (($model eq "AnyEvent::Impl::CoroEV" or $model eq "AnyEvent::Impl::EV")
-       && eval { require EV::ADNS })
-         ? 2 : 1
-   }) - 1
+       && eval { local $SIG{__DIE__}; require EV::ADNS })
+         ? 2 : 1 # so that || always detects as true
+   }) - 1  # 2 => true, 1 => false
 }
 
 =item AnyEvent::Util::inet_aton $name_or_address, $cb->($binary_address_or_undef)
