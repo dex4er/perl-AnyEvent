@@ -28,14 +28,32 @@ our $VERSION = '0.01';
 
    my $ae_fh = AnyEvent::Handle->new (fh => \*STDIN);
 
+   $ae_fh->on_eof (sub { $cv->broadcast });
+
    $ae_fh->readlines (sub {
       my ($ae_fh, @lines) = @_;
       for (@lines) {
          chomp;
          print "Line: $_";
       }
-      $cv->broadcast;
    });
+
+   # or use the constructor to pass the callback:
+
+   my $ae_fh2 =
+      AnyEvent::Handle->new (
+         fh => \*STDIN,
+         on_eof => sub {
+            $cv->broadcast;
+         },
+         on_readline => sub {
+            my ($ae_fh, @lines) = @_;
+            for (@lines) {
+               chomp;
+               print "Line: $_";
+            }
+         }
+      );
 
    $cv->wait;
 
@@ -67,6 +85,19 @@ NOTE: The filehandle will be set to non-blocking.
 The default read block size use for reads via the C<on_read>
 method.
 
+=item on_read => $cb
+
+=item on_eof => $cb
+
+=item on_error => $cb
+
+These are shortcuts, that will call the corresponding method and set the callback to C<$cb>.
+
+=item on_readline => $cb
+
+The C<readlines> method is called with the default seperator and C<$cb> as callback
+for you.
+
 =back
 
 =cut
@@ -88,6 +119,12 @@ sub new {
 
    } elsif ($self->{on_readline}) {
       $self->readlines ($self->{on_readline});
+
+   } elsif ($self->{on_eof}) {
+      $self->on_eof ($self->{on_eof});
+
+   } elsif ($self->{on_error}) {
+      $self->on_eof ($self->{on_error});
    }
 
    return $self
@@ -135,7 +172,7 @@ sub on_read {
 
          if (not defined $l) {
             return if $! == EAGAIN || $! == EINTR;
-            $self->{on_error}->($self, $!) if $self->{on_error};
+            $self->{on_error}->($self) if $self->{on_error};
             delete $self->{on_read_w};
 
          } elsif ($l == 0) {
@@ -153,8 +190,8 @@ sub on_read {
 Whenever a read or write operation resulted in an error the C<$callback>
 will be called.
 
-The first argument of C<$callback> will be the L<AnyEvent::Handle> object itself
-and the second argument will be the value of C<$!>.
+The first argument of C<$callback> will be the L<AnyEvent::Handle> object itself.
+The error is given as errno in C<$!>.
 
 =cut
 
@@ -184,7 +221,9 @@ the read data to their callbacks.
 
 =cut
 
-sub rbuf : lvalue { $_[0]->{rbuf} }
+sub rbuf : lvalue {
+   $_[0]->{rbuf}
+}
 
 =item B<read ($len, $callback)>
 
@@ -298,8 +337,7 @@ sub _check_writer {
          if (not defined $l) {
             return if $! == EAGAIN || $! == EINTR;
             delete $self->{write_w};
-
-            $self->{on_error}->($self, $!) if $self->{on_error};
+            $self->{on_error}->($self) if $self->{on_error};
 
          } else {
             substr $self->{wbuf}, 0, $l, '';

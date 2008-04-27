@@ -1,31 +1,61 @@
 #!perl
 use strict;
 use AnyEvent::Handle;
-use Test::More tests => 1;
+use Test::More tests => 2;
 use Socket;
 
-my $cv = AnyEvent->condvar;
 
-socketpair my $rd, my $wr, AF_UNIX, SOCK_STREAM, PF_UNSPEC;
+{
+   my $cv = AnyEvent->condvar;
 
-my $rd_ae = AnyEvent::Handle->new (fh => $rd);
+   socketpair my $rd, my $wr, AF_UNIX, SOCK_STREAM, PF_UNSPEC;
 
-my $line_cnt = 3;
-my $concat;
+   my $rd_ae = AnyEvent::Handle->new (fh => $rd);
+   my $concat;
 
-$rd_ae->readlines (sub {
-   my ($rd_ae, @lines) = @_;
-   for (@lines) {
-      chomp;
-      $line_cnt--;
-      $concat .= $_;
-   }
-   if ($line_cnt <= 0) { $cv->broadcast }
-});
+   $rd_ae->on_eof (sub { $cv->broadcast });
+   $rd_ae->readlines (sub {
+      my ($rd_ae, @lines) = @_;
+      for (@lines) {
+         chomp;
+         $concat .= $_;
+      }
+   });
 
-$wr->syswrite ("A\nBC\nDEF\nG\n");
-$wr->syswrite (("X" x 113) . "\n");
+   $wr->syswrite ("A\nBC\nDEF\nG\n");
+   $wr->syswrite (("X" x 113) . "\n");
+   $wr->close;
 
-$cv->wait;
+   $cv->wait;
 
-is ($concat, "ABCDEFG".("X"x113), 'lines were read correctly');
+   is ($concat, "ABCDEFG".("X"x113), 'lines were read correctly');
+}
+
+{
+   my $cv = AnyEvent->condvar;
+
+   socketpair my $rd, my $wr, AF_UNIX, SOCK_STREAM, PF_UNSPEC;
+
+   my $concat;
+
+   my $rd_ae =
+      AnyEvent::Handle->new (
+         fh => $rd,
+         on_eof => sub { $cv->broadcast },
+         on_readline => sub {
+            my ($rd_ae, @lines) = @_;
+            for (@lines) {
+               chomp;
+               $concat .= $_;
+            }
+         }
+      );
+
+   $wr->syswrite ("A\nBC\nDEF\nG\n");
+   $wr->syswrite (("X" x 113) . "\n");
+   $wr->close;
+
+   $cv->wait;
+
+   is ($concat, "ABCDEFG".("X"x113), 'second lines were read correctly');
+}
