@@ -47,7 +47,7 @@ sub _schedule {
    ++$running;
    my ($cb, $sub, @args) = @{shift @queue};
 
-   if (eval { require POSIX }) {
+   if (eval { local $SIG{__DIE__}; require POSIX }) {
       my $pid = open my $fh, "-|";
 
       if (!defined $pid) {
