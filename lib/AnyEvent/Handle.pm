@@ -361,21 +361,6 @@ sub _check_writer {
 
 Robin Redeker, C<< <elmex at ta-sa.org> >>
 
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc AnyEvent::Handle
-
-You can also look for information at:
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008 Robin Redeker, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
 =cut
 
 1; # End of AnyEvent::Handle
