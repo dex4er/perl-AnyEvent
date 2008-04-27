@@ -14,10 +14,10 @@ Revision history for Perl extension AnyEvent.
         - support POE as "backend" (with some caveats, POE is not generic
           enough, and darn slow).
         - support Wx and Prima through POE.
-        - optimise perl backend to use 20% less memory and to be roughly
-          2-3 times faster in the common case of sparsely-active file
-          descriptors. It can now compete with select/poll-based C event
-          loops in most cases (it is usually faster than Event and Glib :).
+        - optimise perl backend to use 20% less memory and take advantage
+          of typical timeout behaviour.  It can now compete with
+          select/poll-based C event loops in most cases (it is usually
+          faster than Event and Glib :).
         - roughly cut EV memory use in half and increase its speed by 30%,
           by removing undocumented functionality.
 
