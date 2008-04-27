@@ -17,6 +17,7 @@ WriteMakefile(
 	            COMPRESS	=> 'gzip -9v',
 	            SUFFIX	=> '.gz',
 	           },
+    test         => { TESTS => "t/*.t t/handle/*.t" },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
 );
