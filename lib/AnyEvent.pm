@@ -68,26 +68,6 @@ Of course, if you want lots of policy (this can arguably be somewhat
 useful) and you want to force your users to use the one and only event
 model, you should I<not> use this module.
 
-#TODO#
-
-Net::IRC3
-AnyEvent::HTTPD
-AnyEvent::DNS
-IO::AnyEvent
-Net::FPing
-Net::XMPP2
-Coro
-
-AnyEvent::IRC
-AnyEvent::HTTPD
-AnyEvent::DNS
-AnyEvent::Handle
-AnyEvent::Socket
-AnyEvent::FPing
-AnyEvent::XMPP
-AnyEvent::SNMP
-Coro
-
 =head1 DESCRIPTION
 
 L<AnyEvent> provides an identical interface to multiple event loops. This
@@ -481,23 +461,73 @@ behaviour everywhere, but letting AnyEvent chose is generally better.
 
 =head1 OTHER MODULES
 
-L<AnyEvent> itself comes with useful utility modules:
-
-To make it easier to do non-blocking IO the modules L<AnyEvent::Handle>
-and L<AnyEvent::Socket> are provided. L<AnyEvent::Handle> provides
-read and write buffers and manages watchers for reads and writes. 
-L<AnyEvent::Socket> provides means to do non-blocking connects.
-
-Aside from those there are these modules that support AnyEvent (and use it
-for non-blocking IO):
+The following is a non-exhaustive list of additional modules that use
+AnyEvent and can therefore be mixed easily with other AnyEvent modules
+in the same program. Some of the modules come with AnyEvent, some are
+available via CPAN.
 
 =over 4
 
+=item L<AnyEvent::Util>
+
+Contains various utility functions that replace often-used but blocking
+functions such as C<inet_aton> by event-/callback-based versions.
+
+=item L<AnyEvent::Handle>
+
+Provide read and write buffers and manages watchers for reads and writes.
+
+=item L<AnyEvent::Socket>
+
+Provides a means to do non-blocking connects, accepts etc.
+
+=item L<AnyEvent::HTTPD>
+
+Provides a simple web application server framework.
+
+=item L<AnyEvent::DNS>
+
+Provides asynchronous DNS resolver capabilities, beyond what
+L<AnyEvent::Util> offers.
+
 =item L<AnyEvent::FastPing>
+
+The fastest ping in the west.
 
 =item L<Net::IRC3>
 
+AnyEvent based IRC client module family.
+
 =item L<Net::XMPP2>
+
+AnyEvent based XMPP (Jabber protocol) module family.
+
+=item L<Net::FCP>
+
+AnyEvent-based implementation of the Freenet Client Protocol, birthplace
+of AnyEvent.
+
+=item L<Event::ExecFlow>
+
+High level API for event-based execution flow control.
+
+=item L<Coro>
+
+Has special support for AnyEvent.
+
+=item L<IO::Lambda>
+
+The lambda approach to I/O - don't ask, look there. Can use AnyEvent.
+
+=item L<IO::AIO>
+
+Truly asynchronous I/O, should be in the toolbox of every event
+programmer. Can be trivially made to use AnyEvent.
+
+=item L<BDB>
+
+Truly asynchronous Berkeley DB access. Can be trivially made to use
+AnyEvent.
 
 =back
 

@@ -1,6 +1,8 @@
 #!/opt/perl/bin/perl
+
 use strict;
 use Test::More;
+use AnyEvent::Impl::Perl;
 use AnyEvent;
 use AnyEvent::Socket;
 
