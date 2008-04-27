@@ -107,7 +107,7 @@ sub inet_aton {
    if (&dotted_quad) {
       $cb->(Socket::inet_aton $name);
    } elsif (&has_ev_adns) {
-      EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, sub {
+      EV::ADNS::submit ($name, &EV::ADNS::r_addr, 0, sub {
          my (undef, undef, @a) = @_;
          $cb->(@a ? Socket::inet_aton $a[0] : undef);
       });
