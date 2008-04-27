@@ -29,7 +29,7 @@ my $ae_sock =
       },
       on_connect => sub {
          my ($ae_sock, $error) = @_;
-         if ($error) { diag ("connect error: $!"); return }
+         if ($error) { diag ("connect error: $!"); $cv->broadcast; return }
 
          $ae_sock->read (10, sub {
             my ($ae_sock, $data) = @_;
