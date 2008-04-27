@@ -68,6 +68,25 @@ Of course, if you want lots of policy (this can arguably be somewhat
 useful) and you want to force your users to use the one and only event
 model, you should I<not> use this module.
 
+#TODO#
+
+Net::IRC3
+AnyEvent::HTTPD
+AnyEvent::DNS
+IO::AnyEvent
+Net::FPing
+Net::XMPP2
+Coro
+
+AnyEvent::IRC
+AnyEvent::HTTPD
+AnyEvent::DNS
+AnyEvent::Handle
+AnyEvent::Socket
+AnyEvent::FPing
+AnyEvent::XMPP
+AnyEvent::SNMP
+Coro
 
 =head1 DESCRIPTION
 
@@ -946,7 +965,7 @@ watcher.
     CoroEV/Any   100000   244   2.49   0.44    0.29 coroutines + Coro::Signal
       Perl/Any   100000   513   4.92   0.87    1.12 pure perl implementation
    Event/Event    16000   516  31.88  31.30    0.85 Event native interface
-     Event/Any    16000   936  39.17  33.63    1.43 Event + AnyEvent watchers
+     Event/Any    16000   590  35.75  31.42    1.08 Event + AnyEvent watchers
       Glib/Any    16000  1357  98.22  12.41   54.00 quadratic behaviour
         Tk/Any     2000  1860  26.97  67.98   14.00 SEGV with >> 2000 watchers
      POE/Event     2000  6644 108.64 736.02   14.73 via POE::Loop::Event

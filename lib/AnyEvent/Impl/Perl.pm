@@ -69,8 +69,6 @@ use strict;
 use Time::HiRes qw(time);
 use Scalar::Util ();
 
-# 122.87, 124.34
-
 our $VERSION = 0.1;
 
 # fds[0] is for read, fds[1] is for write watchers
@@ -167,7 +165,7 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
    my $fd = fileno $self->[0];
 
    if (@{ $fds->{w}[$fd] } == 1) {
-      delete $fds->{w}{$fd};
+      delete $fds->{w}[$fd];
       (vec $fds->{v}, $fd, 1) = 0;
    } else {
       my $q = $fds->{w}[$fd];

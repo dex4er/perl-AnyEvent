@@ -4,6 +4,7 @@ Changes
 README
 Makefile.PL
 lib/AnyEvent.pm
+lib/AnyEvent/Util.pm
 lib/AnyEvent/Impl/EV.pm
 lib/AnyEvent/Impl/Event.pm
 lib/AnyEvent/Impl/EventLib.pm

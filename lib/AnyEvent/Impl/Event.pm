@@ -32,19 +32,12 @@ sub io {
 
 sub timer {
    my ($class, %arg) = @_;
-   my $cb = delete $arg{cb};
-   bless \(Event->timer (
-      %arg,
-      cb => sub {
-         $_[0]->w->cancel;
-         $cb->();
-      },
-   )), $class
+   bless \Event->timer (%arg), $class
 }
 
 sub signal {
    my ($class, %arg) = @_;
-   bless \(Event->signal (%arg)), $class
+   bless \Event->signal (%arg), $class
 }
 
 sub DESTROY {
