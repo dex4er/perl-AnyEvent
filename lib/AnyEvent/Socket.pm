@@ -1,6 +1,6 @@
 package AnyEvent::Socket;
 
-use warnings;
+no warnings;
 use strict;
 
 use Carp;

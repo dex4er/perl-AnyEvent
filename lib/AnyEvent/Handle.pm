@@ -1,6 +1,6 @@
 package AnyEvent::Handle;
 
-use warnings;
+no warnings;
 use strict;
 
 use AnyEvent;
