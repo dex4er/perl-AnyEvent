@@ -53,7 +53,8 @@ AnyEvent has to create one POE::Session per event watcher, which is
 immensely slow and makes watchers very large. The reason for this is
 lacking lifetime management (mostly undocumented, too). Without one
 session/watcher it is not possible to easily keep the kernel from running
-endlessly.
+endlessly. This is not just a problem with the way Anyevent has to
+interact with POE, but is a principal issue with POEs lifetime management.
 
 =item One watcher per fd/event combo
 
@@ -177,7 +178,9 @@ throughout the documentation, is not defined in a usable way. For example,
 waiting for a timeout is considered to be a task, waiting for a signal is
 not (a session that only waits for a signal is considered finished and
 gets removed). The user is left guessing when waiting for an event counts
-as task and when not.
+as task and when not (in fact, the issue with signals is mentioned in
+passing in a section about child watchers and directly contradicts earlier
+parts in that document).
 
 One could go on endlessly - ten years, no usable documentation.
 

@@ -1,13 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
-        - added AnyEvent::Handle and AnyEvent::Socket modules
+3.3  Mon Apr 28 09:51:06 CEST 2008
+        - added AnyEvent::Handle, AnyEvent::Socket and AnyEvent::Util modules.
         - fix a bug in the pure perl backend that kept watchers alive
           when multiple watchers were registered for the same fh/poll combo.
 	- add a benchmark section showing AnyEvent overhead and comparing
           the different event loops with each other.
         - prefer pure perl over tk when autoprobing, as it's about as fast,
           but doesn't crash with many watchers.
-	- make Qt support non-experimental.
+	- declare Qt support non-experimental.
         - clarify the confusing section about the file descriptor being
           kept alive.
         - document the race between loading of an event module and
@@ -16,11 +17,12 @@ Revision history for Perl extension AnyEvent.
           enough, and darn slow).
         - support Wx and Prima through POE.
         - optimise perl backend to use 20% less memory and take advantage
-          of typical timeout behaviour.  It can now compete with
+          of typical timeout behaviour. It can now compete with
           select/poll-based C event loops in most cases (it is usually
           faster than Event and Glib :).
         - roughly cut EV memory use in half and increase its speed by 30%,
-          by removing undocumented functionality.
+          by removing undocumented functionality. Did something similar
+          to other event loops where possible.
 
 3.2  Thu Apr 24 10:10:40 CEST 2008
 	- do not die when anyevent watchers are destroyed while running callbacks
