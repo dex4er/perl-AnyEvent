@@ -258,8 +258,7 @@ sub read {
 =item B<readlines ($sep, $callback)>
 
 This method will read lines from the filehandle, seperated by C<$sep> or C<"\n">
-if C<$sep> is not provided. C<$sep> will be used as part of a regex, so it can be
-a regex itself and won't be quoted!
+if C<$sep> is not provided. C<$sep> will be used as "line" seperator.
 
 The C<$callback> will be called when at least one
 line could be read. The first argument to the C<$callback> will be the L<AnyEvent::Handle>
@@ -270,18 +269,27 @@ NOTE: This method will override any callbacks installed via the C<on_read> metho
 =cut
 
 sub readlines {
-   my ($self, $NL, $cb) = @_;
+   my ($self, $sep, $cb) = @_;
 
-   if (ref $NL) {
-      $cb = $NL;
-      $NL = "\n";
+   if (ref $sep) {
+      $cb = $sep;
+      $sep = "\n";
+
+   } elsif (not defined $sep) {
+      $sep = "\n";
    }
+
+   my $sep_len = length $sep;
 
    $self->{on_readline} = $cb;
 
    $self->on_read (sub {
       my @lines;
-      push @lines, $1 while $_[0]->{rbuf} =~ s/(.*)$NL//;
+      my $rb = \$_[0]->{rbuf};
+      my $pos;
+      while (($pos = index ($$rb, $sep)) >= 0) {
+         push @lines, substr $$rb, 0, $pos + $sep_len, '';
+      }
       $self->{on_readline}->($_[0], @lines);
    });
 }
