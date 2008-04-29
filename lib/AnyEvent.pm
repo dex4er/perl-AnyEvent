@@ -1073,17 +1073,22 @@ employed by some adaptors is not a big performance issue (it does incur a
 hidden memory cost inside the kernel which is not reflected in the figures
 above).
 
-C<POE>, regardless of underlying event loop (whether using its pure
-perl select-based backend or the Event module, the POE-EV backend
-couldn't be tested because it wasn't working) shows abysmal performance
-and memory usage: Watchers use almost 30 times as much memory as
-EV watchers, and 10 times as much memory as Event (the high memory
+C<POE>, regardless of underlying event loop (whether using its pure perl
+select-based backend or the Event module, the POE-EV backend couldn't
+be tested because it wasn't working) shows abysmal performance and
+memory usage with AnyEvent: Watchers use almost 30 times as much memory
+as EV watchers, and 10 times as much memory as Event (the high memory
 requirements are caused by requiring a session for each watcher). Watcher
 invocation speed is almost 900 times slower than with AnyEvent's pure perl
-implementation. The design of the POE adaptor class in AnyEvent can not
-really account for this, as session creation overhead is small compared
-to execution of the state machine, which is coded pretty optimally within
-L<AnyEvent::Impl::POE>. POE simply seems to be abysmally slow.
+implementation.
+
+The design of the POE adaptor class in AnyEvent can not really account
+for the performance issues, though, as session creation overhead is
+small compared to execution of the state machine, which is coded pretty
+optimally within L<AnyEvent::Impl::POE> (and while everybody agrees that
+using multiple sessions is not a good approach, especially regarding
+memory usage, even the author of POE could not come up with a faster
+design).
 
 =head3 Summary
 
@@ -1172,8 +1177,7 @@ it uses a C-based event loop in this case.
 
 =over 4
 
-=item * The pure perl implementation performs extremely well, considering
-that it uses select.
+=item * The pure perl implementation performs extremely well.
 
 =item * Avoid Glib or POE in large projects where performance matters.
 
