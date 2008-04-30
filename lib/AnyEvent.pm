@@ -392,8 +392,8 @@ The known classes so far are:
    AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
    AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
    AnyEvent::Impl::Event     based on Event, second best choice.
+   AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
    AnyEvent::Impl::Glib      based on Glib, third-best choice.
-   AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
    AnyEvent::Impl::Tk        based on Tk, very bad choice.
    AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
@@ -555,12 +555,12 @@ my @models = (
    [Coro::Event::          => AnyEvent::Impl::CoroEvent::],
    [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],
-   [Glib::                 => AnyEvent::Impl::Glib::],
    [Tk::                   => AnyEvent::Impl::Tk::],
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
    # everything below here will not be autoprobed as the pureperl backend should work everywhere
+   [Glib::                 => AnyEvent::Impl::Glib::],
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
@@ -1236,7 +1236,8 @@ watchers, as the management overhead dominates.
 =head1 FORK
 
 Most event libraries are not fork-safe. The ones who are usually are
-because they are so inefficient. Only L<EV> is fully fork-aware.
+because they rely on inefficient but fork-safe C<select> or C<poll>
+calls. Only L<EV> is fully fork-aware.
 
 If you have to fork, you must either do so I<before> creating your first
 watcher OR you must not use AnyEvent at all in the child.
