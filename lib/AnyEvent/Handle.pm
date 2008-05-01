@@ -95,7 +95,7 @@ These are shortcuts, that will call the corresponding method and set the callbac
 
 =item on_readline => $cb
 
-The C<readlines> method is called with the default seperator and C<$cb> as callback
+The C<readlines> method is called with the default separated and C<$cb> as callback
 for you.
 
 =back
@@ -257,8 +257,8 @@ sub read {
 
 =item B<readlines ($sep, $callback)>
 
-This method will read lines from the filehandle, seperated by C<$sep> or C<"\n">
-if C<$sep> is not provided. C<$sep> will be used as "line" seperator.
+This method will read lines from the filehandle, separated by C<$sep> or C<"\n">
+if C<$sep> is not provided. C<$sep> will be used as "line" separated.
 
 The C<$callback> will be called when at least one
 line could be read. The first argument to the C<$callback> will be the L<AnyEvent::Handle>
