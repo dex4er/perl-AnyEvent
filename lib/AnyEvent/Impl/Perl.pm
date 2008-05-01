@@ -28,10 +28,17 @@ This event loop has been optimised for the following cases:
 
 =over 4
 
-=item no time jumps
+=item monotonic clock is available
 
-This module does not handle time jumps in any sensible way. Use the L<EV>
-module and its backend for that.
+This module will use the POSIX monotonic clock option if it can be
+detected at runtime, in which case it will not suffer adversely from time
+jumps.
+
+If no monotonic clock is available, this module will not attempt to
+correct for time jumps in any way.
+
+The clock chosen will be reported if the environment variable
+C<$PERL_ANYEVENT_VERBOSE> is set to 8 or higher.
 
 =item lots of watchers on one fd
 
@@ -66,12 +73,24 @@ package AnyEvent::Impl::Perl;
 no warnings;
 use strict;
 
-use Time::HiRes qw(time);
+use Time::HiRes ();
 use Scalar::Util ();
+
+use AnyEvent ();
+
+BEGIN {
+   if (0 <= eval "Time::HiRes::clock_gettime &Time::HiRes::CLOCK_MONOTONIC") {
+      *clock = sub { Time::HiRes::clock_gettime &Time::HiRes::CLOCK_MONOTONIC };
+      warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
+   } else {
+      *clock = \&Time::HiRes::time;
+      warn "AnyEvent::Impl::Perl using default (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
+   }
+}
 
 our $VERSION = 0.1;
 
-our $NOW = time;
+our $NOW = clock;
 
 # fds[0] is for read, fds[1] is for write watchers
 # fds[poll]{v} is the bitmask for select
@@ -86,7 +105,7 @@ my @timer; # list of [ abs-timeout, Timer::[callback] ]
 
 # the pure perl mainloop
 sub one_event {
-   $NOW = time;
+   $NOW = clock;
 
    # first sort timers if required (slow)
    if ($NOW >= $need_sort) {
@@ -113,7 +132,7 @@ sub one_event {
             undef,
             @timer ? $timer[0][0] - $NOW  + 0.0009 : 3600
       ) {
-         $NOW = time;
+         $NOW = clock;
 
          # prefer write watchers, because they usually reduce
          # memory pressure.
