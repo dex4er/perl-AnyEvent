@@ -43,6 +43,9 @@ again. Unfortunately, due to another design bug in POE, this cannot be
 done (by documented means at least) without throwing away events in the
 event queue.
 
+The author of POE verified that this is indeed true, and has no plans to
+change this.
+
 This means that you will either have to live with lost events or you have
 to make sure to load AnyEvent early enough (this is usually not that
 difficult in a main program, but hard in a module).
@@ -53,8 +56,17 @@ AnyEvent has to create one POE::Session per event watcher, which is
 immensely slow and makes watchers very large. The reason for this is
 lacking lifetime management (mostly undocumented, too). Without one
 session/watcher it is not possible to easily keep the kernel from running
-endlessly. This is not just a problem with the way Anyevent has to
-interact with POE, but is a principal issue with POEs lifetime management.
+endlessly.
+
+This is not just a problem with the way AnyEvent has to interact with
+POE, but is a principal issue with POEs lifetime management (namely
+that stopping the kernel stops sessions, but AnyEvent has no control
+over who and when the kernel starts or stops w.r.t. AnyEvent watcher
+creation/destruction).
+
+From benchmark data it is not clear that session creation is that costly,
+though - the real inefficiencies with POE seem to come from other sources,
+such as event handling.
 
 =item One watcher per fd/event combo
 
@@ -67,6 +79,9 @@ certainly not nice to your resources.
 Of course, without the workaround, POE also prints ugly messages again
 that say the program *might* be buggy.
 
+While this is not good to performance, at least regarding speed, with a
+modern Linux kernel, the overhead is actually quite small.
+
 =item Timing Deficiencies
 
 POE manages to not have a function that returns the current time. This is
@@ -76,9 +91,11 @@ used.
 
 In addition, most timer functions in POE want an absoltue timestamp, which
 is hard to create if all you have is a relative time and no function to
-return the "current time". And of course POE doesn't handle time jumps at
-all (not even when using an event loop that happens to do that, such as
-L<EV>, as it does it's own unoptimised timer management).
+return the "current time".
+
+And of course POE doesn't handle time jumps at all (not even when using
+an event loop that happens to do that, such as L<EV>, as it does its own
+unoptimised timer management).
 
 AnyEvent works around the unavailability of the current time using
 relative timers exclusively, in the hope that POE gets it right at least
@@ -88,7 +105,8 @@ internally.
 
 POE cannot guarentee the order of callback invocation for timers, and
 usually gets it wrong. That is, if you have two timers, one timing out
-after another, the callbacks might be called in reverse order.
+after another (all els ebeing equal), the callbacks might be called in
+reverse order.
 
 How one manages to even implement stuff that way escapes me.
 
@@ -108,11 +126,11 @@ As a workaround, AnyEvent::Impl::POE will take advantage of undocumented
 behaviour in POE::Kernel to catch the status of all child processes.
 
 Unfortunately, POE's child handling is racy: if the child exits before the
-handler is created (which is impossible to guarantee...), one has to wait
-for another event to occur, which can take an indefinite time (apparently
-POE does a busy-waiting loop every second, but this is not guarenteed
-or documented, so in practise child status events can be delayed for a
-second).
+handler is created (which is impossible to avoid in general), one has to
+wait for another event to occur, which can take an indefinite amount of
+time (apparently POE does a busy-waiting loop every second, but this is
+not guarenteed or documented, so in practise child status events can be
+delayed for up to a second "only" at least in the current version).
 
 How one manages to have such a glaring bug in an event loop after ten
 years of development escapes me.
@@ -124,7 +142,7 @@ documentation is extremely lacking, making it impossible to implement
 stuff as trivial as AnyEvent watchers without having to resort to
 undocumented behaviour or features.
 
-For example, the POE::Kernel manpage has nice occurances of the word TODO
+For example, the POE::Kernel manpage has nine occurances of the word TODO
 with an explanation of whats missing. In general, the POE manpages are
 littered with comments like "section not yet written".
 
@@ -147,7 +165,8 @@ effects on POE handling SIGINT.
 
 Nowhere is explained which COUNTER_NAMEs are valid and which aren't - not
 all scalars (or even strings) are valid counter names. Take your guess,
-failure is of course completely silent.
+failure is of course completely silent. I found this out the hard way, as
+the first name I came up with was silently ignored.
 
    get_next_event_time() returns the time the next event is due, in a form
    compatible with the UNIX time() function.
@@ -187,7 +206,7 @@ One could go on endlessly - ten years, no usable documentation.
 It is likely that differences between documentation, or the one or two
 things I had to guess, cause unanticipated problems with this adaptor.
 
-=item Bad API
+=item Fragile and inconsistent API
 
 The POE API is extremely inconsistent - sometimes you have to pass a
 session argument, sometimes it gets ignored, sometimes a session-specific
