@@ -299,39 +299,175 @@ Example: fork a process and wait for it
 
 =head2 CONDITION VARIABLES
 
-Condition variables can be created by calling the C<< AnyEvent->condvar >>
-method without any arguments.
+If you are familiar with some event loops you will know that all of them
+require you to run some blocking "loop", "run" or similar function that
+will actively watch for new events and call your callbacks.
 
-A condition variable waits for a condition - precisely that the C<<
-->broadcast >> method has been called.
+AnyEvent is different, it expects somebody else to run the event loop and
+will only block when necessary (usually when told by the user).
 
-They are very useful to signal that a condition has been fulfilled, for
-example, if you write a module that does asynchronous http requests,
+The instrument to do that is called a "condition variable", so called
+because they represent a condition that must become true.
+
+Condition variables can be created by calling the C<< AnyEvent->condvar
+>> method, usually without arguments. The only argument pair allowed is
+C<cb>, which specifies a callback to be called when the condition variable
+becomes true.
+
+After creation, the conditon variable is "false" until it becomes "true"
+by calling the C<broadcast> method.
+
+Condition variables are similar to callbacks, except that you can
+optionally wait for them. They can also be called merge points - points
+in time where multiple outstandign events have been processed. And yet
+another way to call them is transations - each condition variable can be
+used to represent a transaction, which finishes at some point and delivers
+a result.
+
+Condition variables are very useful to signal that something has finished,
+for example, if you write a module that does asynchronous http requests,
 then a condition variable would be the ideal candidate to signal the
-availability of results.
+availability of results. The user can either act when the callback is
+called or can synchronously C<< ->wait >> for the results.
 
-You can also use condition variables to block your main program until
-an event occurs - for example, you could C<< ->wait >> in your main
-program until the user clicks the Quit button in your app, which would C<<
-->broadcast >> the "quit" event.
+You can also use them to simulate traditional event loops - for example,
+you can block your main program until an event occurs - for example, you
+could C<< ->wait >> in your main program until the user clicks the Quit
+button of your app, which would C<< ->broadcast >> the "quit" event.
 
 Note that condition variables recurse into the event loop - if you have
-two pirces of code that call C<< ->wait >> in a round-robbin fashion, you
+two pieces of code that call C<< ->wait >> in a round-robbin fashion, you
 lose. Therefore, condition variables are good to export to your caller, but
 you should avoid making a blocking wait yourself, at least in callbacks,
 as this asks for trouble.
 
-This object has two methods:
+Condition variables are represented by hash refs in perl, and the keys
+used by AnyEvent itself are all named C<_ae_XXX> to make subclassing
+easy (it is often useful to build your own transaction class on top of
+AnyEvent). To subclass, use C<AnyEvent::CondVar> as base class and call
+it's C<new> method in your own C<new> method.
+
+There are two "sides" to a condition variable - the "producer side" which
+eventually calls C<< -> broadcast >>, and the "consumer side", which waits
+for the broadcast to occur.
+
+Example:
+
+   # wait till the result is ready
+   my $result_ready = AnyEvent->condvar;
+
+   # do something such as adding a timer
+   # or socket watcher the calls $result_ready->broadcast
+   # when the "result" is ready.
+   # in this case, we simply use a timer:
+   my $w = AnyEvent->timer (
+      after => 1,
+      cb    => sub { $result_ready->broadcast },
+   );
+
+   # this "blocks" (while handling events) till the callback
+   # calls broadcast
+   $result_ready->wait;
+
+=head3 METHODS FOR PRODUCERS
+
+These methods should only be used by the producing side, i.e. the
+code/module that eventually broadcasts the signal. Note that it is also
+the producer side which creates the condvar in most cases, but it isn't
+uncommon for the consumer to create it as well.
 
 =over 4
 
+=item $cv->broadcast (...)
+
+Flag the condition as ready - a running C<< ->wait >> and all further
+calls to C<wait> will (eventually) return after this method has been
+called. If nobody is waiting the broadcast will be remembered.
+
+If a callback has been set on the condition variable, it is called
+immediately from within broadcast.
+
+Any arguments passed to the C<broadcast> call will be returned by all
+future C<< ->wait >> calls.
+
+=item $cv->croak ($error)
+
+Similar to broadcast, but causes all call's wait C<< ->wait >> to invoke
+C<Carp::croak> with the given error message/object/scalar.
+
+This can be used to signal any errors to the condition variable
+user/consumer.
+
+=item $cv->begin ([group callback])
+
+=item $cv->end
+
+These two methods can be used to combine many transactions/events into
+one. For example, a function that pings many hosts in parallel might want
+to use a condition variable for the whole process.
+
+Every call to C<< ->begin >> will increment a counter, and every call to
+C<< ->end >> will decrement it.  If the counter reaches C<0> in C<< ->end
+>>, the (last) callback passed to C<begin> will be executed. That callback
+is I<supposed> to call C<< ->broadcast >>, but that is not required. If no
+callback was set, C<broadcast> will be called without any arguments.
+
+Let's clarify this with the ping example:
+
+   my $cv = AnyEvent->condvar;
+
+   my %result;
+   $cv->begin (sub { $cv->broadcast (\%result) });
+
+   for my $host (@list_of_hosts) {
+      $cv->begin;
+      ping_host_then_call_callback $host, sub {
+         $result{$host} = ...;
+         $cv->end;
+      };
+   }
+
+   $cv->end;
+
+This code fragment supposedly pings a number of hosts and calls
+C<broadcast> after results for all then have have been gathered - in any
+order. To achieve this, the code issues a call to C<begin> when it starts
+each ping request and calls C<end> when it has received some result for
+it. Since C<begin> and C<end> only maintain a counter, the order in which
+results arrive is not relevant.
+
+There is an additional bracketing call to C<begin> and C<end> outside the
+loop, which serves two important purposes: first, it sets the callback
+to be called once the counter reaches C<0>, and second, it ensures that
+broadcast is called even when C<no> hosts are being pinged (the loop
+doesn't execute once).
+
+This is the general pattern when you "fan out" into multiple subrequests:
+use an outer C<begin>/C<end> pair to set the callback and ensure C<end>
+is called at least once, and then, for each subrequest you start, call
+C<begin> and for eahc subrequest you finish, call C<end>.
+
+=back
+
+=head3 METHODS FOR CONSUMERS
+
+These methods should only be used by the consuming side, i.e. the
+code awaits the condition.
+
 =item $cv->wait
 
-Wait (blocking if necessary) until the C<< ->broadcast >> method has been
-called on c<$cv>, while servicing other watchers normally.
+Wait (blocking if necessary) until the C<< ->broadcast >> or C<< ->croak
+>> methods have been called on c<$cv>, while servicing other watchers
+normally.
 
-You can only wait once on a condition - additional calls will return
-immediately.
+You can only wait once on a condition - additional calls are valid but
+will return immediately.
+
+If an error condition has been set by calling C<< ->croak >>, then this
+function will call C<croak>.
+
+In list context, all parameters passed to C<broadcast> will be returned,
+in scalar context only the first one will be returned.
 
 Not all event models support a blocking wait - some die in that case
 (programs might want to do that to stay interactive), so I<if you are
@@ -348,31 +484,12 @@ can supply (the coroutine-aware backends L<AnyEvent::Impl::CoroEV> and
 L<AnyEvent::Impl::CoroEvent> explicitly support concurrent C<< ->wait >>'s
 from different coroutines, however).
 
-=item $cv->broadcast
-
-Flag the condition as ready - a running C<< ->wait >> and all further
-calls to C<wait> will (eventually) return after this method has been
-called. If nobody is waiting the broadcast will be remembered..
+You can ensure that C<< -wait >> never blocks by setting a callback and
+only calling C<< ->wait >> from within that callback (or at a later
+time). This will work even when the event loop does not support blocking
+waits otherwise.
 
 =back
-
-Example:
-
-   # wait till the result is ready
-   my $result_ready = AnyEvent->condvar;
-
-   # do something such as adding a timer
-   # or socket watcher the calls $result_ready->broadcast
-   # when the "result" is ready.
-   # in this case, we simply use a timer:
-   my $w = AnyEvent->timer (
-      after => 1,
-      cb    => sub { $result_ready->broadcast },
-   );
-
-   # this "blocks" (while handling events) till the watcher
-   # calls broadcast
-   $result_ready->wait;
 
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 
