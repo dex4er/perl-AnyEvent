@@ -3,21 +3,20 @@ package AnyEvent::Handle;
 no warnings;
 use strict;
 
-use AnyEvent;
-use IO::Handle;
+use AnyEvent ();
+use AnyEvent::Util ();
+use Scalar::Util ();
+use Carp ();
+use Fcntl ();
 use Errno qw/EAGAIN EINTR/;
 
 =head1 NAME
 
 AnyEvent::Handle - non-blocking I/O on filehandles via AnyEvent
 
-=head1 VERSION
-
-Version 0.01
-
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -28,15 +27,7 @@ our $VERSION = '0.01';
 
    my $ae_fh = AnyEvent::Handle->new (fh => \*STDIN);
 
-   $ae_fh->on_eof (sub { $cv->broadcast });
-
-   $ae_fh->readlines (sub {
-      my ($ae_fh, @lines) = @_;
-      for (@lines) {
-         chomp;
-         print "Line: $_";
-      }
-   });
+   #TODO
 
    # or use the constructor to pass the callback:
 
@@ -46,23 +37,23 @@ our $VERSION = '0.01';
          on_eof => sub {
             $cv->broadcast;
          },
-         on_readline => sub {
-            my ($ae_fh, @lines) = @_;
-            for (@lines) {
-               chomp;
-               print "Line: $_";
-            }
-         }
+         #TODO
       );
 
    $cv->wait;
 
 =head1 DESCRIPTION
 
-This module is a helper module to make it easier to do non-blocking I/O
-on filehandles (and sockets, see L<AnyEvent::Socket>).
+This module is a helper module to make it easier to do event-based I/O on
+filehandles (and sockets, see L<AnyEvent::Socket> for an easy way to make
+non-blocking resolves and connects).
 
-The event loop is provided by L<AnyEvent>.
+In the following, when the documentation refers to of "bytes" then this
+means characters. As sysread and syswrite are used for all I/O, their
+treatment of characters applies to this module as well.
+
+All callbacks will be invoked with the handle object as their first
+argument.
 
 =head1 METHODS
 
@@ -70,67 +61,120 @@ The event loop is provided by L<AnyEvent>.
 
 =item B<new (%args)>
 
-The constructor has these arguments:
+The constructor supports these arguments (all as key => value pairs).
 
 =over 4
 
-=item fh => $filehandle
+=item fh => $filehandle [MANDATORY]
 
 The filehandle this L<AnyEvent::Handle> object will operate on.
 
-NOTE: The filehandle will be set to non-blocking.
+NOTE: The filehandle will be set to non-blocking (using
+AnyEvent::Util::fh_nonblocking).
 
-=item read_block_size => $size
+=item on_error => $cb->($self) [MANDATORY]
 
-The default read block size use for reads via the C<on_read>
-method.
+This is the fatal error callback, that is called when a fatal error ocurs,
+such as not being able to resolve the hostname, failure to connect or a
+read error.
 
-=item on_read => $cb
+The object will not be in a usable state when this callback has been
+called.
 
-=item on_eof => $cb
+On callback entrance, the value of C<$!> contains the opertaing system
+error (or C<ENOSPC> or C<EPIPE>).
 
-=item on_error => $cb
+=item on_eof => $cb->($self) [MANDATORY]
 
-These are shortcuts, that will call the corresponding method and set the callback to C<$cb>.
+Set the callback to be called on EOF.
 
-=item on_readline => $cb
+=item on_read => $cb->($self)
 
-The C<readlines> method is called with the default separated and C<$cb> as callback
-for you.
+This sets the default read callback, which is called when data arrives
+and no read request is in the queue.  If the read callback is C<undef>
+or has never been set, than AnyEvent::Handle will cease reading from the
+filehandle.
+
+To access (and remove data from) the read buffer, use the C<< ->rbuf >>
+method or acces sthe C<$self->{rbuf}> member directly.
+
+When an EOF condition is detected then AnyEvent::Handle will first try to
+feed all the remaining data to the queued callbacks and C<on_read> before
+calling the C<on_eof> callback. If no progress can be made, then a fatal
+error will be raised (with C<$!> set to C<EPIPE>).
+
+=item on_drain => $cb->()
+
+This sets the callback that is called when the write buffer becomes empty
+(or when the callback is set and the buffer is empty already).
+
+To append to the write buffer, use the C<< ->push_write >> method.
+
+=item rbuf_max => <bytes>
+
+If defined, then a fatal error will be raised (with C<$!> set to C<ENOSPC>)
+when the read buffer ever (strictly) exceeds this size. This is useful to
+avoid denial-of-service attacks.
+
+For example, a server accepting connections from untrusted sources should
+be configured to accept only so-and-so much data that it cannot act on
+(for example, when expecting a line, an attacker could send an unlimited
+amount of data without a callback ever being called as long as the line
+isn't finished).
+
+=item read_size => <bytes>
+
+The default read block size (the amount of bytes this module will try to read
+on each [loop iteration). Default: C<4096>.
+
+=item low_water_mark => <bytes>
+
+Sets the amount of bytes (default: C<0>) that make up an "empty" write
+buffer: If the write reaches this size or gets even samller it is
+considered empty.
 
 =back
 
 =cut
 
 sub new {
-   my $this  = shift;
-   my $class = ref($this) || $this;
-   my $self  = {
-      read_block_size => 4096,
-      rbuf            => '',
-      @_
-   };
-   bless $self, $class;
+   my $class = shift;
 
-   $self->{fh}->blocking (0) if $self->{fh};
+   my $self = bless { @_ }, $class;
 
-   if ($self->{on_read}) {
-      $self->on_read ($self->{on_read});
+   $self->{fh} or Carp::croak "mandatory argument fh is missing";
 
-   } elsif ($self->{on_readline}) {
-      $self->readlines ($self->{on_readline});
+   AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   } elsif ($self->{on_eof}) {
-      $self->on_eof ($self->{on_eof});
+   $self->on_error ((delete $self->{on_error}) or Carp::croak "mandatory argument on_error is missing");
+   $self->on_eof   ((delete $self->{on_eof}  ) or Carp::croak "mandatory argument on_eof is missing");
 
-   } elsif ($self->{on_error}) {
-      $self->on_eof ($self->{on_error});
-   }
+   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
+   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
 
-   return $self
+   $self
 }
 
-=item B<fh>
+sub _shutdown {
+   my ($self) = @_;
+
+   delete $self->{rw};
+   delete $self->{ww};
+   delete $self->{fh};
+}
+
+sub error {
+   my ($self) = @_;
+
+   {
+      local $!;
+      $self->_shutdown;
+   }
+
+   $self->{on_error}($self);
+}
+
+=item $fh = $handle->fh
 
 This method returns the filehandle of the L<AnyEvent::Handle> object.
 
@@ -138,236 +182,311 @@ This method returns the filehandle of the L<AnyEvent::Handle> object.
 
 sub fh { $_[0]->{fh} }
 
-=item B<on_read ($callback)>
+=item $handle->on_error ($cb)
 
-This method installs a C<$callback> that will be called
-when new data arrived. You can access the read buffer via the C<rbuf>
-method (see below).
+Replace the current C<on_error> callback (see the C<on_error> constructor argument).
 
-The first argument of the C<$callback> will be the L<AnyEvent::Handle> object.
+=cut
+
+sub on_error {
+   $_[0]{on_error} = $_[1];
+}
+
+=item $handle->on_eof ($cb)
+
+Replace the current C<on_eof> callback (see the C<on_eof> constructor argument).
+
+=cut
+
+#############################################################################
+
+sub on_eof {
+   $_[0]{on_eof} = $_[1];
+}
+
+=item $handle->on_drain ($cb)
+
+Sets the C<on_drain> callback or clears it (see the description of
+C<on_drain> in the constructor).
+
+=cut
+
+sub on_drain {
+   my ($self, $cb) = @_;
+
+   $self->{on_drain} = $cb;
+
+   $cb->($self)
+      if $cb && $self->{low_water_mark} >= length $self->{wbuf};
+}
+
+=item $handle->push_write ($data)
+
+Queues the given scalar to be written. You can push as much data as you
+want (only limited by the available memory), as C<AnyEvent::Handle>
+buffers it independently of the kernel.
+
+=cut
+
+sub push_write {
+   my ($self, $data) = @_;
+
+   $self->{wbuf} .= $data;
+
+   unless ($self->{ww}) {
+      Scalar::Util::weaken $self;
+      my $cb = sub {
+         my $len = syswrite $self->{fh}, $self->{wbuf};
+
+         if ($len > 0) {
+            substr $self->{wbuf}, 0, $len, "";
+
+
+            $self->{on_drain}($self)
+               if $self->{low_water_mark} >= length $self->{wbuf}
+                  && $self->{on_drain};
+
+            delete $self->{ww} unless length $self->{wbuf};
+         } elsif ($! != EAGAIN && $! != EINTR) {
+            $self->error;
+         }
+      };
+
+      $self->{ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb);
+
+      $cb->($self);
+   };
+}
+
+#############################################################################
+
+sub _drain_rbuf {
+   my ($self) = @_;
+
+   return if exists $self->{in_drain};
+   local $self->{in_drain} = 1;
+
+   while (my $len = length $self->{rbuf}) {
+      no strict 'refs';
+      if (@{ $self->{queue} }) {
+         if ($self->{queue}[0]($self)) {
+            shift @{ $self->{queue} };
+         } elsif ($self->{eof}) {
+            # no progress can be made (not enough data and no data forthcoming)
+            $! = &Errno::EPIPE; return $self->error;
+         } else {
+            return;
+         }
+      } elsif ($self->{on_read}) {
+         $self->{on_read}($self);
+
+         if (
+            $self->{eof}                    # if no further data will arrive
+            && $len == length $self->{rbuf} # and no data has been consumed
+            && !@{ $self->{queue} }         # and the queue is still empty
+            && $self->{on_read}             # and we still want to read data
+         ) {
+            # then no progress can be made
+            $! = &Errno::EPIPE; return $self->error;
+         }
+      } else {
+         # read side becomes idle
+         delete $self->{rw};
+         return;
+      }
+   }
+
+   if ($self->{eof}) {
+      $self->_shutdown;
+      $self->{on_eof}($self);
+   }
+}
+
+=item $handle->on_read ($cb)
+
+This replaces the currently set C<on_read> callback, or clears it (when
+the new callback is C<undef>). See the description of C<on_read> in the
+constructor.
 
 =cut
 
 sub on_read {
    my ($self, $cb) = @_;
+
    $self->{on_read} = $cb;
 
-   unless (defined $self->{on_read}) {
-      delete $self->{on_read_w};
-      return;
-   }
-  
-   $self->{on_read_w} =
-      AnyEvent->io (poll => 'r', fh => $self->{fh}, cb => sub {
-         #d# warn "READ:[$self->{read_size}] $self->{read_block_size} : ".length ($self->{rbuf})."\n";
-         my $rbuf_len = length $self->{rbuf};
-         my $l;
-         if (defined $self->{read_size}) {
-            $l = sysread $self->{fh}, $self->{rbuf},
-                         ($self->{read_size} - $rbuf_len), $rbuf_len;
-         } else {
-            $l = sysread $self->{fh}, $self->{rbuf}, $self->{read_block_size}, $rbuf_len;
+   unless ($self->{rw} || $self->{eof}) {
+      Scalar::Util::weaken $self;
+
+      $self->{rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
+         my $len = sysread $self->{fh}, $self->{rbuf}, $self->{read_size} || 8192, length $self->{rbuf};
+
+         if ($len > 0) {
+            if (exists $self->{rbuf_max}) {
+               if ($self->{rbuf_max} < length $self->{rbuf}) {
+                  $! = &Errno::ENOSPC; return $self->error;
+               }
+            }
+
+         } elsif (defined $len) {
+            $self->{eof} = 1;
+            delete $self->{rw};
+
+         } elsif ($! != EAGAIN && $! != EINTR) {
+            return $self->error;
          }
-         #d# warn "READL $l [$self->{rbuf}]\n";
 
-         if (not defined $l) {
-            return if $! == EAGAIN || $! == EINTR;
-            $self->{on_error}->($self) if $self->{on_error};
-            delete $self->{on_read_w};
-
-         } elsif ($l == 0) {
-            $self->{on_eof}->($self) if $self->{on_eof};
-            delete $self->{on_read_w};
-
-         } else {
-            $self->{on_read}->($self);
-         }
+         $self->_drain_rbuf;
       });
+   }
 }
 
-=item B<on_error ($callback)>
+=item $handle->rbuf
 
-Whenever a read or write operation resulted in an error the C<$callback>
-will be called.
+Returns the read buffer (as a modifiable lvalue).
 
-The first argument of C<$callback> will be the L<AnyEvent::Handle> object itself.
-The error is given as errno in C<$!>.
+You can access the read buffer directly as the C<< ->{rbuf} >> member, if
+you want.
 
-=cut
-
-sub on_error {
-   $_[0]->{on_error} = $_[1];
-}
-
-=item B<on_eof ($callback)>
-
-Installs the C<$callback> that will be called when the end of file is
-encountered in a read operation this C<$callback> will be called. The first
-argument will be the L<AnyEvent::Handle> object itself.
-
-=cut
-
-sub on_eof {
-   $_[0]->{on_eof} = $_[1];
-}
-
-=item B<rbuf>
-
-Returns a reference to the read buffer.
-
-NOTE: The read buffer should only be used or modified if the C<on_read>
-method is used directly. The C<read> and C<readlines> methods will provide
-the read data to their callbacks.
+NOTE: The read buffer should only be used or modified if the C<on_read>,
+C<push_read> or C<unshift_read> methods are used. The other read methods
+automatically manage the read buffer.
 
 =cut
 
 sub rbuf : lvalue {
-   $_[0]->{rbuf}
+   $_[0]{rbuf}
 }
 
-=item B<read ($len, $callback)>
+=item $handle->push_read ($cb)
 
-Will read exactly C<$len> bytes from the filehandle and call the C<$callback>
-if done so. The first argument to the C<$callback> will be the L<AnyEvent::Handle>
-object itself and the second argument the read data.
+=item $handle->unshift_read ($cb)
 
-NOTE: This method will override any callbacks installed via the C<on_read> method.
+Append the given callback to the end of the queue (C<push_read>) or
+prepend it (C<unshift_read>).
+
+The callback is called each time some additional read data arrives.
+
+It must check wether enough data is in the read buffer already.
+
+If not enough data is available, it must return the empty list or a false
+value, in which case it will be called repeatedly until enough data is
+available (or an error condition is detected).
+
+If enough data was available, then the callback must remove all data it is
+interested in (which can be none at all) and return a true value. After returning
+true, it will be removed from the queue.
 
 =cut
 
-sub read {
+sub push_read {
+   my ($self, $cb) = @_;
+
+   push @{ $self->{queue} }, $cb;
+   $self->_drain_rbuf;
+}
+
+sub unshift_read {
+   my ($self, $cb) = @_;
+
+   push @{ $self->{queue} }, $cb;
+   $self->_drain_rbuf;
+}
+
+=item $handle->push_read_chunk ($len, $cb->($self, $data))
+
+=item $handle->unshift_read_chunk ($len, $cb->($self, $data))
+
+Append the given callback to the end of the queue (C<push_read_chunk>) or
+prepend it (C<unshift_read_chunk>).
+
+The callback will be called only once C<$len> bytes have been read, and
+these C<$len> bytes will be passed to the callback.
+
+=cut
+
+sub _read_chunk($$) {
+   my ($len, $cb) = @_;
+
+   sub {
+      $len <= length $_[0]{rbuf} or return;
+      $cb->($_[0], substr $_[0]{rbuf}, 0, $len, "");
+      1
+   }
+}
+
+sub push_read_chunk {
    my ($self, $len, $cb) = @_;
 
-   $self->{read_cb} = $cb;
-   my $old_blk_size = $self->{read_block_size};
-   $self->{read_block_size} = $len;
-
-   $self->on_read (sub {
-      #d# warn "OFOFO $len || ".length($_[0]->{rbuf})."||\n";
-
-      if ($len == length $_[0]->{rbuf}) {
-         $_[0]->{read_block_size} = $old_blk_size;
-         $_[0]->on_read (undef);
-         $_[0]->{read_cb}->($_[0], (substr $self->{rbuf}, 0, $len, ''));
-      }
-   });
+   $self->push_read (_read_chunk $len, $cb);
 }
 
-=item B<readlines ($callback)>
 
-=item B<readlines ($sep, $callback)>
+sub unshift_read_chunk {
+   my ($self, $len, $cb) = @_;
 
-This method will read lines from the filehandle, separated by C<$sep> or C<"\n">
-if C<$sep> is not provided. C<$sep> will be used as "line" separated.
+   $self->unshift_read (_read_chunk $len, $cb);
+}
 
-The C<$callback> will be called when at least one
-line could be read. The first argument to the C<$callback> will be the L<AnyEvent::Handle>
-object itself and the rest of the arguments will be the read lines.
+=item $handle->push_read_line ([$eol, ]$cb->($self, $line, $eol))
 
-NOTE: This method will override any callbacks installed via the C<on_read> method.
+=item $handle->unshift_read_line ([$eol, ]$cb->($self, $line, $eol))
+
+Append the given callback to the end of the queue (C<push_read_line>) or
+prepend it (C<unshift_read_line>).
+
+The callback will be called only once a full line (including the end of
+line marker, C<$eol>) has been read. This line (excluding the end of line
+marker) will be passed to the callback as second argument (C<$line>), and
+the end of line marker as the third argument (C<$eol>).
+
+The end of line marker, C<$eol>, can be either a string, in which case it
+will be interpreted as a fixed record end marker, or it can be a regex
+object (e.g. created by C<qr>), in which case it is interpreted as a
+regular expression.
+
+The end of line marker argument C<$eol> is optional, if it is missing (NOT
+undef), then C<qr|\015?\012|> is used (which is good for most internet
+protocols).
+
+Partial lines at the end of the stream will never be returned, as they are
+not marked by the end of line marker.
 
 =cut
 
-sub readlines {
-   my ($self, $sep, $cb) = @_;
+sub _read_line($$) {
+   my $cb = pop;
+   my $eol = @_ ? shift : qr|(\015?\012)|;
+   my $pos;
 
-   if (ref $sep) {
-      $cb = $sep;
-      $sep = "\n";
+   $eol = qr|(\Q$eol\E)| unless ref $eol;
+   $eol = qr|^(.*?)($eol)|;
 
-   } elsif (not defined $sep) {
-      $sep = "\n";
+   sub {
+      $_[0]{rbuf} =~ s/$eol// or return;
+
+      $cb->($1, $2);
+      1
    }
-
-   my $sep_len = length $sep;
-
-   $self->{on_readline} = $cb;
-
-   $self->on_read (sub {
-      my @lines;
-      my $rb = \$_[0]->{rbuf};
-      my $pos;
-      while (($pos = index ($$rb, $sep)) >= 0) {
-         push @lines, substr $$rb, 0, $pos + $sep_len, '';
-      }
-      $self->{on_readline}->($_[0], @lines);
-   });
 }
 
-=item B<write ($data)>
+sub push_read_line {
+   my $self = shift;
 
-=item B<write ($callback)>
-
-=item B<write ($data, $callback)>
-
-This method will write C<$data> to the filehandle and call the C<$callback>
-afterwards. If only C<$callback> is provided it will be called when the
-write buffer becomes empty the next time (or immediately if it already is empty).
-
-=cut
-
-sub write {
-   my ($self, $data, $cb) = @_;
-   if (ref $data) { $cb = $data; undef $data }
-   push @{$self->{write_bufs}}, [$data, $cb];
-   $self->_check_writer;
+   $self->push_read (&_read_line);
 }
 
-sub _check_writer {
-   my ($self) = @_;
+sub unshift_read_line {
+   my $self = shift;
 
-   if ($self->{write_w}) {
-      unless ($self->{write_cb}) {
-         while (@{$self->{write_bufs}} && not defined $self->{write_bufs}->[0]->[1]) {
-            my $wba = shift @{$self->{write_bufs}};
-            $self->{wbuf} .= $wba->[0];
-         }
-      }
-      return;
-   }
-
-   my $wba = shift @{$self->{write_bufs}}
-      or return;
-
-   unless (defined $wba->[0]) {
-      $wba->[1]->($self) if $wba->[1];
-      $self->_check_writer;
-      return;
-   }
-
-   $self->{wbuf}     = $wba->[0];
-   $self->{write_cb} = $wba->[1];
-
-   $self->{write_w} =
-      AnyEvent->io (poll => 'w', fh => $self->{fh}, cb => sub {
-         my $l = syswrite $self->{fh}, $self->{wbuf}, length $self->{wbuf};
-
-         if (not defined $l) {
-            return if $! == EAGAIN || $! == EINTR;
-            delete $self->{write_w};
-            $self->{on_error}->($self) if $self->{on_error};
-
-         } else {
-            substr $self->{wbuf}, 0, $l, '';
-
-            if (length ($self->{wbuf}) == 0) {
-               $self->{write_cb}->($self) if $self->{write_cb};
-
-               delete $self->{write_w};
-               delete $self->{wbuf};
-               delete $self->{write_cb};
-
-               $self->_check_writer;
-            }
-         }
-      });
+   $self->unshift_read (&_read_line);
 }
 
 =back
 
 =head1 AUTHOR
 
-Robin Redeker, C<< <elmex at ta-sa.org> >>
+Robin Redeker C<< <elmex at ta-sa.org> >>, Marc Lehmann <schmorp@schmorp.de>.
 
 =cut
 

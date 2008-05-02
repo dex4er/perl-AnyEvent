@@ -106,6 +106,8 @@ sub inet_aton {
 
    if (&dotted_quad) {
       $cb->(Socket::inet_aton $name);
+   } elsif ($name eq "localhost") { # rfc2606 et al.
+      $cb->(v127.0.0.1);
    } elsif (&has_ev_adns) {
       EV::ADNS::submit ($name, &EV::ADNS::r_addr, 0, sub {
          my (undef, undef, @a) = @_;
@@ -113,6 +115,27 @@ sub inet_aton {
       });
    } else {
       _do_asy $cb, sub { Socket::inet_aton $_[0] }, @_;
+   }
+}
+
+=item AnyEvent::Util::fh_nonblocking $fh, $nonblocking
+
+Sets the blocking state of the given filehandle (true == nonblocking,
+false == blocking). Uses fcntl on anything sensible and ioctl FIONBIO on
+broken (i.e. windows) platforms.
+
+=cut
+
+sub fh_nonblocking($$) {
+   my ($fh, $nb) = @_;
+
+   require Fcntl;
+
+   if ($^O eq "MSWin32") {
+      $nb = (! ! $nb) + 0;
+      ioctl $fh, 0x8004667e, \$nb; # FIONBIO
+   } else {
+      fcntl $fh, &Fcntl::F_SETFL, $nb ? &Fcntl::O_NONBLOCK : 0;
    }
 }
 
