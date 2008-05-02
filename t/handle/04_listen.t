@@ -14,13 +14,27 @@ my $cv = AnyEvent->condvar;
 my $lsock =
    AnyEvent::Socket->new (
       Listen => 1,
-      LocalPort => 32391,
       ReuseAddr => 1,
    );
 
+$lsock->on_accept (sub {
+   my ($lsock, $cl, $paddr) = @_;
+
+   unless (defined $cl) {
+      diag "accept failed: $!";
+      return;
+   }
+
+   $cl->read (6, sub {
+      my ($cl, $data) = @_;
+      $lbytes = $data;
+      $cl->write ("BLABLABLA\015\012");
+   });
+});
+
 my $ae_sock =
    AnyEvent::Socket->new (
-      PeerAddr => "127.0.0.1:32391",
+      PeerAddr => "127.0.0.1:" . $lsock->fh->sockport,
       on_connect => sub {
          my ($ae_sock, $error) = @_;
          if ($error) { diag "connection failed: $!"; $cv->broadcast; return }
@@ -37,21 +51,6 @@ my $ae_sock =
    );
 
 $ae_sock->on_eof (sub { $cv->broadcast });
-
-$lsock->on_accept (sub {
-   my ($lsock, $cl, $paddr) = @_;
-
-   unless (defined $cl) {
-      diag "accept failed: $!";
-      return;
-   }
-
-   $cl->read (6, sub {
-      my ($cl, $data) = @_;
-      $lbytes = $data;
-      $cl->write ("BLABLABLA\015\012");
-   });
-});
 
 $cv->wait;
 
