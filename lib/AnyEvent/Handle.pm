@@ -198,11 +198,26 @@ Replace the current C<on_eof> callback (see the C<on_eof> constructor argument).
 
 =cut
 
-#############################################################################
-
 sub on_eof {
    $_[0]{on_eof} = $_[1];
 }
+
+#############################################################################
+
+=back
+
+=head2 WRITE QUEUE
+
+AnyEvent::Handle manages two queues per handle, one for writing and one
+for reading.
+
+The write queue is very simple: you can add data to its end, and
+AnyEvent::Handle will automatically try to get rid of it for you.
+
+When data could be writtena nd the write buffer is shorter then the low
+water mark, the C<on_drain> callback will be invoked.
+
+=over 4
 
 =item $handle->on_drain ($cb)
 
@@ -259,6 +274,82 @@ sub push_write {
 }
 
 #############################################################################
+
+=back
+
+=head2 READ QUEUE
+
+AnyEvent::Handle manages two queues per handle, one for writing and one
+for reading.
+
+The read queue is more complex than the write queue. It can be used in two
+ways, the "simple" way, using only C<on_read> and the "complex" way, using
+a queue.
+
+In the simple case, you just install an C<on_read> callback and whenever
+new data arrives, it will be called. You can then remove some data (if
+enough is there) from the read buffer (C<< $handle->rbuf >>) if you want
+or not.
+
+In the more complex case, you want to queue multiple callbacks. In this
+case, AnyEvent::Handle will call the first queued callback each time new
+data arrives and removes it when it has done its job (see C<push_read>,
+below).
+
+This way you can, for example, push three line-reads, followed by reading
+a chunk of data, and AnyEvent::Handle will execute them in order.
+
+Example 1: EPP protocol parser. EPP sends 4 byte length info, followed by
+the specified number of bytes which give an XML datagram.
+
+   # in the default state, expect some header bytes
+   $handle->on_read (sub {
+      # some data is here, now queue the length-header-read (4 octets)
+      shift->unshift_read_chunk (4, sub {
+         # header arrived, decode
+         my $len = unpack "N", $_[1];
+
+         # now read the payload
+         shift->unshift_read_chunk ($len, sub {
+            my $xml = $_[1];
+            # handle xml
+         });
+      });
+   });
+
+Example 2: Implement a client for a protocol that replies either with
+"OK" and another line or "ERROR" for one request, and 64 bytes for the
+second request. Due tot he availability of a full queue, we can just
+pipeline sending both requests and manipulate the queue as necessary in
+the callbacks:
+
+   # request one
+   $handle->push_write ("request 1\015\012");
+
+   # we expect "ERROR" or "OK" as response, so push a line read
+   $handle->push_read_line (sub {
+      # if we got an "OK", we have to _prepend_ another line,
+      # so it will be read before the second request reads its 64 bytes
+      # which are already in the queue when this callback is called
+      # we don't do this in case we got an error
+      if ($_[1] eq "OK") {
+         $_[0]->unshift_read_line (sub {
+            my $response = $_[1];
+            ...
+         });
+      }
+   });
+
+   # request two
+   $handle->push_write ("request 2\015\012");
+
+   # simply read 64 bytes, always
+   $handle->push_read_chunk (64, sub {
+      my $response = $_[1];
+      ...
+   });
+
+=over 4
 
 sub _drain_rbuf {
    my ($self) = @_;
