@@ -17,6 +17,7 @@ my $lsock =
       LocalPort => 32391,
       ReuseAddr => 1,
    );
+
 my $ae_sock =
    AnyEvent::Socket->new (
       PeerAddr => "127.0.0.1:32391",
