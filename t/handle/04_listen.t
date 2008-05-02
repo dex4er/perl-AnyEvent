@@ -19,7 +19,7 @@ my $lsock =
    );
 my $ae_sock =
    AnyEvent::Socket->new (
-      PeerAddr => "localhost:32391",
+      PeerAddr => "127.0.0.1:32391",
       on_connect => sub {
          my ($ae_sock, $error) = @_;
          if ($error) { diag "connection failed: $!"; $cv->broadcast; return }
