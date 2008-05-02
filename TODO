@@ -1,0 +1,131 @@
+- 
+   02 10:21:00 <schmorp> ich wüsste nicht, wie man es anders machen kann
+   02 10:21:11 <schmorp> ach ja
+   02 10:21:23 <schmorp> man muss auch nen "custom"-read prependen/appenden können
+   02 10:21:33 <schmorp> außerdem wäre ein resource-limit nicht dumm
+   02 10:21:34 <schmorp> also
+   02 10:21:38 <schmorp> "maximal 16mb zeilen lesen"
+   02 10:21:41 <schmorp> oder allgemein
+   02 10:21:47 <schmorp> "rbuf darf nie > 16mb werden"
+   02 10:22:01 <elmex> ja, das waehre praktisch
+   02 10:22:06 <schmorp> praktisch nicht
+   02 10:22:08 <schmorp> aber wichtig :)
+   02 10:22:11 <elmex> jo
+   02 10:22:19 <schmorp> für die sicherheit
+   02 10:22:23 <schmorp> prkatisch ists eher im wege
+   02 10:22:25 <elmex> wenn rbuf > 16mb dann liest er nicht mehr? oder was soll dann passieren?
+   02 10:23:00 <elmex> nicht mehr lesen waehre schwierig, da muesste man den watcher entfernen und wieder reinstallieren wenn der
+                        buffer leerer is
+   02 10:23:20 <schmorp> wozu?
+   02 10:23:33 <schmorp> leerer(?)
+   02 10:23:39 <schmorp> wie kann er dnen leerer werden?
+   02 10:23:42 <elmex> eben :)
+   02 10:23:53 <elmex> wenn die daten verarbeitet wurden und jemand den buffer leere gemacht hat
+   02 10:23:57 <schmorp> ah, das ist ein verständnisproblem
+   02 10:24:01 <schmorp> es geht um harte fehler
+   02 10:24:04 <schmorp> sicherheit!
+   02 10:24:06 <schmorp> denial-of-service
+   02 10:24:14 <schmorp> nicht um speicherersparnis
+   02 10:24:21 <schmorp> wenn du sagst, der rbug darf nie >16mb werden
+   02 10:24:29 <schmorp> dann ist es ein harter fehler/verbindungssbbaruch
+   02 10:24:31 <schmorp> wenbne r größer wird
+   02 10:24:33 <schmorp> dananch ist ende
+   02 10:24:38 <elmex> hmmm, also waehre das beste ein extra callback fuer den fall? und das default evrhalten is ein error und d
+                       ann ->close ?
+   02 10:24:46 <schmorp> ich würde sagen on_error
+   02 10:24:48 <schmorp> wie alles andere
+   02 10:24:50 <elmex> hm, ok
+   02 10:24:57 <schmorp> ein fehler ist fatal
+   02 10:24:58 <elmex> sie koennen das limit ja einstellen
+   02 10:25:03 <schmorp> kannst $! auf ENOSPC setzen
+   02 10:25:06 <elmex> ok
+   02 10:25:11 <schmorp> ja, es kann ja per default aus sein von mir aus
+
+- und ganz wichtig: generell die api fixen
+
+-
+   02 10:27:36 <schmorp> reply 1
+   02 10:27:38 <schmorp> reply 1, zweiter teil
+   02 10:27:39 <schmorp> reply 2
+   02 10:27:42 <elmex> ahja
+   02 10:27:46 <elmex> genau
+   02 10:27:48 <schmorp> dazu musst du den read vor den reply 2 quetschen
+   02 10:27:54 <elmex> also prependen
+   02 10:27:56 <schmorp> ja
+   02 10:28:02 <elmex> ja, ich dachte halt an den fall:
+   02 10:28:03 <schmorp> eventuell kann man shift/push nehmen als namen
+   02 10:28:19 <schmorp> ausserdem muss es noch einen generic-callback geben
+   02 10:28:28 <schmorp> die frage ist, wie man "progress" feststellt
+   02 10:28:31 <elmex> reply 1, reply 2, und bei reply 1 wird ein zweiter request gemacht wo reply 3 kommt, und der read-cb fuer
+   reply 3 muss halt hinter reply 2
+   02 10:28:37 <schmorp> man könnte z.b. die länge des rbufs vor und anch dme callback checken
+   02 10:28:38 <elmex> in dem fall will man appenden
+   02 10:28:42 <schmorp> wenn sie sich ändert, mach weiter
+   02 10:28:54 <schmorp> elmex: genau
+   02 10:29:07 <schmorp> elmex: deshalb gehen auch keien schemata wie "im callback prependen, ausserhalb appenden"
+   02 10:29:18 <elmex> jo
+   02 10:29:23 <elmex> das is halt protokollabhaengig
+   02 10:29:34 <schmorp> igentlich nicht so
+   02 10:29:42 <schmorp> es hängt davon ab, was dein programm macht
+   02 10:29:45 <schmorp> vom protkoll weniger
+   02 10:29:46 <elmex> was meinst du mit einem generic callback?
+   02 10:29:48 <elmex> ja, stimmt
+   02 10:29:49 <schmorp> denn das ist hier immer tcp
+   02 10:29:57 <schmorp> sprich, reioehenfolge bleibt reihenfolge
+   02 10:30:21 <schmorp> vielleicht wäre es auch nett, einen default-read-callback zu haben
+   02 10:30:28 <schmorp> aber ich denke, das kann on_read erledigen
+   02 10:30:33 <schmorp> d.gh. die queue hat vorrang vor on_read
+   02 10:30:40 <schmorp> aber wenn die queu leer ist, wird on_read aufgerufen
+   02 10:30:44 <elmex> jo
+   02 10:30:45 <schmorp> undd as kannd ann z.b. nichts tun
+   02 10:30:48 <schmorp> außer ein realine pushen
+   02 10:30:54 <schmorp> bzw. prependen :/
+   02 10:31:04 <elmex> hmm
+   02 10:31:08 <schmorp> alsowas, prepend/append doer shift/push
+   02 10:31:21 <schmorp> unshift/push natürlich
+   02 10:31:31 <elmex> was soll der default callback machen?
+   02 10:31:40 <elmex> ich meine, bisher tut on_read einfach in rbuf lesen
+   02 10:31:41 <schmorp> welcher default-callback?
+   02 10:31:49 <elmex> default-read-callback
+   02 10:31:56 <schmorp> es kann keinen geben?
+   02 10:31:57 <elmex> ich kann dir im mom nich ganz forlgen :)
+   02 10:31:59 <schmorp> was kann der auch tun?
+   02 10:32:04 <schmorp> du hats ne socket
+   02 10:32:06 <schmorp> auf der kommen daten
+   02 10:32:10 <schmorp> aber niemand verarbeiotet sie
+   02 10:32:14 <schmorp> trottzdem pufferst du sie
+   02 10:32:16 <schmorp> das macht keinen sinn
+   02 10:32:22 + Muttley joined #schmorp (JOIN, #schmorp)
+   02 10:32:23 <elmex> hmm, das tu ich auch net
+   02 10:32:24 <schmorp> es _muss_ immer einen callback geben für lesedaten
+   02 10:32:25 <schmorp> ODER
+   02 10:32:29 <Muttley> Morning
+   02 10:32:30 <schmorp> er darf nicht lesen
+   02 10:32:34 <schmorp> Muttley: hi pauk
+   02 10:32:40 <schmorp> Muttley: didn't we want a firmware today?
+   02 10:32:44 <schmorp> (sometime)
+   02 10:32:54 <Muttley> If you would be so kind, that would be great  :)
+   02 10:32:56 <elmex> schmorp: bisher machts ::Handle halt so, das er nicht liest wenn niemand einen callback fuers lesen instal liert hat. ich dachte das sollte ruhig weiter so sein
+   02 10:33:00 <schmorp> Muttley: right now?
+   02 10:33:13 <schmorp> elmex: ja, das ist gut
+   02 10:33:19 <schmorp> elmex: aber dann gibts auch keinen default-fall
+
+- on_eof erst nachdem rbuf leer is aufrufen
+  => wenn kein progress mehr gemacht werden kann
+  - sysread eof nur flag setzen und watcher disablen
+- unshift/push als prep/append
+- readlines soll weichen, readline reicht
+
+02 11:43:38 <schmorp> $socket->push_read_line ([$sep, ]$cb)
+02 11:43:49 <schmorp> oder read-handler müsste dann "nur" folgendes machen:
+02 11:43:51 <schmorp> sysread
+02 11:43:58 <schmorp> if (!queue) on_read
+02 11:44:00 <schmorp> else
+02 11:44:07 <schmorp>   while()
+02 11:44:14 <schmorp>    queu[0]->callback
+02 11:44:22 <schmorp>     if (!progress)
+02 11:44:30 <schmorp>      if (eof-föag) on_eof;
+02 11:44:32 <schmorp>      last
+02 11:44:45 <schmorp>       shift queue
+02 11:44:52 <schmorp> scheiss python-whitespace-indenting
+
