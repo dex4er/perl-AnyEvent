@@ -72,28 +72,30 @@ The filehandle this L<AnyEvent::Handle> object will operate on.
 NOTE: The filehandle will be set to non-blocking (using
 AnyEvent::Util::fh_nonblocking).
 
-=item on_error => $cb->($self) [MANDATORY]
-
-This is the fatal error callback, that is called when a fatal error ocurs,
-such as not being able to resolve the hostname, failure to connect or a
-read error.
-
-The object will not be in a usable state when this callback has been
-called.
-
-On callback entrance, the value of C<$!> contains the opertaing system
-error (or C<ENOSPC> or C<EPIPE>).
-
 =item on_eof => $cb->($self) [MANDATORY]
 
 Set the callback to be called on EOF.
 
+=item on_error => $cb->($self)
+
+This is the fatal error callback, that is called when, well, a fatal error
+ocurs, such as not being able to resolve the hostname, failure to connect
+or a read error.
+
+The object will not be in a usable state when this callback has been
+called.
+
+On callback entrance, the value of C<$!> contains the operating system
+error (or C<ENOSPC> or C<EPIPE>).
+
+While not mandatory, it is I<highly> recommended to set this callback, as
+you will not be notified of errors otherwise. The default simply calls
+die.
+
 =item on_read => $cb->($self)
 
 This sets the default read callback, which is called when data arrives
-and no read request is in the queue.  If the read callback is C<undef>
-or has never been set, than AnyEvent::Handle will cease reading from the
-filehandle.
+and no read request is in the queue.
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
 method or acces sthe C<$self->{rbuf}> member directly.
@@ -146,11 +148,13 @@ sub new {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   $self->on_error ((delete $self->{on_error}) or Carp::croak "mandatory argument on_error is missing");
    $self->on_eof   ((delete $self->{on_eof}  ) or Carp::croak "mandatory argument on_eof is missing");
 
+   $self->on_error (delete $self->{on_error}) if $self->{on_error};
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
    $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
+
+   $self->start_read;
 
    $self
 }
@@ -171,7 +175,11 @@ sub error {
       $self->_shutdown;
    }
 
-   $self->{on_error}($self);
+   if ($self->{on_error}) {
+      $self->{on_error}($self);
+   } else {
+      die "AnyEvent::Handle uncaught fatal error: $!";
+   }
 }
 
 =item $fh = $handle->fh
@@ -351,6 +359,8 @@ the callbacks:
 
 =over 4
 
+=cut
+
 sub _drain_rbuf {
    my ($self) = @_;
 
@@ -359,13 +369,14 @@ sub _drain_rbuf {
 
    while (my $len = length $self->{rbuf}) {
       no strict 'refs';
-      if (@{ $self->{queue} }) {
-         if ($self->{queue}[0]($self)) {
-            shift @{ $self->{queue} };
-         } elsif ($self->{eof}) {
-            # no progress can be made (not enough data and no data forthcoming)
-            $! = &Errno::EPIPE; return $self->error;
-         } else {
+      if (my $cb = shift @{ $self->{queue} }) {
+         if (!$cb->($self)) {
+            if ($self->{eof}) {
+               # no progress can be made (not enough data and no data forthcoming)
+               $! = &Errno::EPIPE; return $self->error;
+            }
+
+            unshift @{ $self->{queue} }, $cb;
             return;
          }
       } elsif ($self->{on_read}) {
@@ -405,31 +416,6 @@ sub on_read {
    my ($self, $cb) = @_;
 
    $self->{on_read} = $cb;
-
-   unless ($self->{rw} || $self->{eof}) {
-      Scalar::Util::weaken $self;
-
-      $self->{rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
-         my $len = sysread $self->{fh}, $self->{rbuf}, $self->{read_size} || 8192, length $self->{rbuf};
-
-         if ($len > 0) {
-            if (exists $self->{rbuf_max}) {
-               if ($self->{rbuf_max} < length $self->{rbuf}) {
-                  $! = &Errno::ENOSPC; return $self->error;
-               }
-            }
-
-         } elsif (defined $len) {
-            $self->{eof} = 1;
-            delete $self->{rw};
-
-         } elsif ($! != EAGAIN && $! != EINTR) {
-            return $self->error;
-         }
-
-         $self->_drain_rbuf;
-      });
-   }
 }
 
 =item $handle->rbuf
@@ -497,26 +483,22 @@ these C<$len> bytes will be passed to the callback.
 =cut
 
 sub _read_chunk($$) {
-   my ($len, $cb) = @_;
+   my ($self, $len, $cb) = @_;
 
    sub {
       $len <= length $_[0]{rbuf} or return;
-      $cb->($_[0], substr $_[0]{rbuf}, 0, $len, "");
+      $cb->($self, $_[0], substr $_[0]{rbuf}, 0, $len, "");
       1
    }
 }
 
 sub push_read_chunk {
-   my ($self, $len, $cb) = @_;
-
-   $self->push_read (_read_chunk $len, $cb);
+   $_[0]->push_read (&_read_chunk);
 }
 
 
 sub unshift_read_chunk {
-   my ($self, $len, $cb) = @_;
-
-   $self->unshift_read (_read_chunk $len, $cb);
+   $_[0]->unshift_read (&_read_chunk);
 }
 
 =item $handle->push_read_line ([$eol, ]$cb->($self, $line, $eol))
@@ -546,6 +528,7 @@ not marked by the end of line marker.
 =cut
 
 sub _read_line($$) {
+   my $self = shift;
    my $cb = pop;
    my $eol = @_ ? shift : qr|(\015?\012)|;
    my $pos;
@@ -556,21 +539,63 @@ sub _read_line($$) {
    sub {
       $_[0]{rbuf} =~ s/$eol// or return;
 
-      $cb->($1, $2);
+      $cb->($self, $1, $2);
       1
    }
 }
 
 sub push_read_line {
-   my $self = shift;
-
-   $self->push_read (&_read_line);
+   $_[0]->push_read (&_read_line);
 }
 
 sub unshift_read_line {
-   my $self = shift;
+   $_[0]->unshift_read (&_read_line);
+}
 
-   $self->unshift_read (&_read_line);
+=item $handle->stop_read
+
+=item $handle->start_read
+
+In rare cases you actually do not want to read anything form the
+socket. In this case you can call C<stop_read>. Neither C<on_read> no
+any queued callbacks will be executed then. To start readign again, call
+C<start_read>.
+
+=cut
+
+sub stop_read {
+   my ($self) = @_;
+
+   delete $self->{rw};
+}
+
+sub start_read {
+   my ($self) = @_;
+
+   unless ($self->{rw} || $self->{eof}) {
+      Scalar::Util::weaken $self;
+
+      $self->{rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
+         my $len = sysread $self->{fh}, $self->{rbuf}, $self->{read_size} || 8192, length $self->{rbuf};
+
+         if ($len > 0) {
+            if (exists $self->{rbuf_max}) {
+               if ($self->{rbuf_max} < length $self->{rbuf}) {
+                  $! = &Errno::ENOSPC; return $self->error;
+               }
+            }
+
+         } elsif (defined $len) {
+            $self->{eof} = 1;
+            delete $self->{rw};
+
+         } elsif ($! != EAGAIN && $! != EINTR) {
+            return $self->error;
+         }
+
+         $self->_drain_rbuf;
+      });
+   }
 }
 
 =back
