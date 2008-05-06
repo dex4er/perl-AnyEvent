@@ -1392,6 +1392,10 @@ before the first watcher gets created, e.g. with a C<BEGIN> block:
 
   use AnyEvent;
 
+Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
+be used to probe what backend is used and gain other information (which is
+probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
+
 
 =head1 SEE ALSO
 
