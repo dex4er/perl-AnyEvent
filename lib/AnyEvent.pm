@@ -551,10 +551,13 @@ if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
 runtime.
 
-=item AnyEvent::on_detect { BLOCK }
+=item $guard = AnyEvent::on_detect { BLOCK }
 
 Arranges for the code block to be executed as soon as the event model is
 autodetected (or immediately if this has already happened).
+
+If called in scalar or list context, then it creates and returns an object
+that automatically removes the callback again when it is destroyed.
 
 =item @AnyEvent::on_detect
 
@@ -721,11 +724,23 @@ our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY
 our @on_detect;
 
 sub on_detect(&) {
+   my ($cb) = @_;
+
    if ($MODEL) {
-      $_[0]->();
+      $cb->();
+
+      1
    } else {
-      push @on_detect, $_[0];
+      push @on_detect, $cb;
+
+      defined wantarray
+         ? bless \$cb, "AnyEvent::Util::Guard"
+         : ()
    }
+}
+
+sub AnyEvent::Util::Guard::DESTROY {
+   @on_detect = grep $_ != ${$_[0]}, @on_detect;
 }
 
 sub detect() {
