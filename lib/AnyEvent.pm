@@ -2,7 +2,7 @@
 
 AnyEvent - provide framework for multiple event loops
 
-EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
+EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
 
 =head1 SYNOPSIS
 
@@ -80,7 +80,7 @@ module.
 
 During the first call of any watcher-creation method, the module tries
 to detect the currently loaded event loop by probing whether one of the
-following modules is already loaded: L<Coro::EV>, L<Coro::Event>, L<EV>,
+following modules is already loaded: L<EV>,
 L<Event>, L<Glib>, L<AnyEvent::Impl::Perl>, L<Tk>, L<Event::Lib>, L<Qt>,
 L<POE>. The first one found is used. If none are found, the module tries
 to load these modules (excluding Tk, Event::Lib, Qt and POE as the pure perl
@@ -482,9 +482,13 @@ while still suppporting blocking waits if the caller so desires).
 Another reason I<never> to C<< ->wait >> in a module is that you cannot
 sensibly have two C<< ->wait >>'s in parallel, as that would require
 multiple interpreters or coroutines/threads, none of which C<AnyEvent>
-can supply (the coroutine-aware backends L<AnyEvent::Impl::CoroEV> and
-L<AnyEvent::Impl::CoroEvent> explicitly support concurrent C<< ->wait >>'s
-from different coroutines, however).
+can supply.
+
+The L<Coro> module, however, I<can> and I<does> supply coroutines and, in
+fact, L<Coro::AnyEvent> replaces AnyEvent's condvars by coroutine-safe
+versions and also integrates coroutines into AnyEvent, making blocking
+C<< ->wait >> calls perfectly safe as long as they are done from another
+coroutine (one that doesn't run the event loop).
 
 You can ensure that C<< -wait >> never blocks by setting a callback and
 only calling C<< ->wait >> from within that callback (or at a later
@@ -521,8 +525,6 @@ AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
 
 The known classes so far are:
 
-   AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
-   AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
    AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
    AnyEvent::Impl::Event     based on Event, second best choice.
    AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
@@ -548,6 +550,16 @@ Returns C<$AnyEvent::MODEL>, forcing autodetection of the event model
 if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
 runtime.
+
+=item @AnyEvent::detect
+
+If there are any code references in this array (you can C<push> to it
+before or after loading AnyEvent), then they will called directly after
+the event loop has been chosen.
+
+You should check C<$AnyEvent::MODEL> before adding to this array, though:
+if it contains a true value then the event loop has already been detected,
+and the array will be ignored.
 
 =back
 
@@ -646,7 +658,7 @@ High level API for event-based execution flow control.
 
 =item L<Coro>
 
-Has special support for AnyEvent.
+Has special support for AnyEvent via L<Coro::AnyEvent>.
 
 =item L<IO::Lambda>
 
@@ -673,7 +685,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '3.3';
+our $VERSION = '3.4';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -684,8 +696,6 @@ our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 our @REGISTRY;
 
 my @models = (
-   [Coro::EV::             => AnyEvent::Impl::CoroEV::],
-   [Coro::Event::          => AnyEvent::Impl::CoroEvent::],
    [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],
    [Tk::                   => AnyEvent::Impl::Tk::],
@@ -700,6 +710,8 @@ my @models = (
 );
 
 our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY);
+
+our @detect;
 
 sub detect() {
    unless ($MODEL) {
@@ -743,12 +755,14 @@ sub detect() {
             }
 
             $MODEL
-              or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV (or Coro+EV), Event (or Coro+Event) or Glib.";
+              or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.";
          }
       }
 
       unshift @ISA, $MODEL;
       push @{"$MODEL\::ISA"}, "AnyEvent::Base";
+
+      (shift @detect)->() while @detect;
    }
 
    $MODEL
@@ -1399,14 +1413,15 @@ probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
 
 =head1 SEE ALSO
 
-Event modules: L<Coro::EV>, L<EV>, L<EV::Glib>, L<Glib::EV>,
-L<Coro::Event>, L<Event>, L<Glib::Event>, L<Glib>, L<Coro>, L<Tk>,
-L<Event::Lib>, L<Qt>, L<POE>.
+Event modules: L<EV>, L<EV::Glib>, L<Glib::EV>, L<Event>, L<Glib::Event>,
+L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
 
-Implementations: L<AnyEvent::Impl::CoroEV>, L<AnyEvent::Impl::EV>,
-L<AnyEvent::Impl::CoroEvent>, L<AnyEvent::Impl::Event>, L<AnyEvent::Impl::Glib>,
-L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>, L<AnyEvent::Impl::EventLib>,
-L<AnyEvent::Impl::Qt>, L<AnyEvent::Impl::POE>.
+Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
+L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
+L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
+L<AnyEvent::Impl::POE>.
+
+Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>, L<Coro::Event>,
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
 
