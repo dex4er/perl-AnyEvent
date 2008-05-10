@@ -1,8 +1,8 @@
 NAME
     AnyEvent - provide framework for multiple event loops
 
-    EV, Event, Coro::EV, Coro::Event, Glib, Tk, Perl, Event::Lib, Qt, POE -
-    various supported event loops
+    EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event
+    loops
 
 SYNOPSIS
        use AnyEvent;
@@ -16,8 +16,8 @@ SYNOPSIS
        });
 
        my $w = AnyEvent->condvar; # stores whether a condition was flagged
-       $w->wait; # enters "main loop" till $condvar gets ->broadcast
-       $w->broadcast; # wake up current and all future wait's
+       $w->send; # wake up current and all future recv's
+       $w->recv; # enters "main loop" till $condvar gets ->send
 
 WHY YOU SHOULD USE THIS MODULE (OR NOT)
     Glib, POE, IO::Async, Event... CPAN offers event models by the dozen
@@ -77,9 +77,9 @@ DESCRIPTION
 
     During the first call of any watcher-creation method, the module tries
     to detect the currently loaded event loop by probing whether one of the
-    following modules is already loaded: Coro::EV, Coro::Event, EV, Event,
-    Glib, AnyEvent::Impl::Perl, Tk, Event::Lib, Qt, POE. The first one found
-    is used. If none are found, the module tries to load these modules
+    following modules is already loaded: EV, Event, Glib,
+    AnyEvent::Impl::Perl, Tk, Event::Lib, Qt, POE. The first one found is
+    used. If none are found, the module tries to load these modules
     (excluding Tk, Event::Lib, Qt and POE as the pure perl adaptor should
     always succeed) in the order given. The first one that can be
     successfully loaded will be used. If, after this, still none could be
@@ -273,8 +273,6 @@ WATCHERS
 
       my $done = AnyEvent->condvar;
 
-      AnyEvent::detect; # force event module to be initialised
-
       my $pid = fork or exit 5;
 
       my $w = AnyEvent->child (
@@ -282,44 +280,174 @@ WATCHERS
          cb  => sub {
             my ($pid, $status) = @_;
             warn "pid $pid exited with status $status";
-            $done->broadcast;
+            $done->send;
          },
       );
 
       # do something else, then wait for process exit
-      $done->wait;
+      $done->recv;
 
   CONDITION VARIABLES
+    If you are familiar with some event loops you will know that all of them
+    require you to run some blocking "loop", "run" or similar function that
+    will actively watch for new events and call your callbacks.
+
+    AnyEvent is different, it expects somebody else to run the event loop
+    and will only block when necessary (usually when told by the user).
+
+    The instrument to do that is called a "condition variable", so called
+    because they represent a condition that must become true.
+
     Condition variables can be created by calling the "AnyEvent->condvar"
-    method without any arguments.
+    method, usually without arguments. The only argument pair allowed is
+    "cb", which specifies a callback to be called when the condition
+    variable becomes true.
 
-    A condition variable waits for a condition - precisely that the
-    "->broadcast" method has been called.
+    After creation, the conditon variable is "false" until it becomes "true"
+    by calling the "send" method.
 
-    They are very useful to signal that a condition has been fulfilled, for
-    example, if you write a module that does asynchronous http requests,
-    then a condition variable would be the ideal candidate to signal the
-    availability of results.
+    Condition variables are similar to callbacks, except that you can
+    optionally wait for them. They can also be called merge points - points
+    in time where multiple outstandign events have been processed. And yet
+    another way to call them is transations - each condition variable can be
+    used to represent a transaction, which finishes at some point and
+    delivers a result.
 
-    You can also use condition variables to block your main program until an
-    event occurs - for example, you could "->wait" in your main program
-    until the user clicks the Quit button in your app, which would
-    "->broadcast" the "quit" event.
+    Condition variables are very useful to signal that something has
+    finished, for example, if you write a module that does asynchronous http
+    requests, then a condition variable would be the ideal candidate to
+    signal the availability of results. The user can either act when the
+    callback is called or can synchronously "->recv" for the results.
+
+    You can also use them to simulate traditional event loops - for example,
+    you can block your main program until an event occurs - for example, you
+    could "->recv" in your main program until the user clicks the Quit
+    button of your app, which would "->send" the "quit" event.
 
     Note that condition variables recurse into the event loop - if you have
-    two pirces of code that call "->wait" in a round-robbin fashion, you
+    two pieces of code that call "->recv" in a round-robbin fashion, you
     lose. Therefore, condition variables are good to export to your caller,
     but you should avoid making a blocking wait yourself, at least in
     callbacks, as this asks for trouble.
 
-    This object has two methods:
+    Condition variables are represented by hash refs in perl, and the keys
+    used by AnyEvent itself are all named "_ae_XXX" to make subclassing easy
+    (it is often useful to build your own transaction class on top of
+    AnyEvent). To subclass, use "AnyEvent::CondVar" as base class and call
+    it's "new" method in your own "new" method.
 
-    $cv->wait
-        Wait (blocking if necessary) until the "->broadcast" method has been
-        called on c<$cv>, while servicing other watchers normally.
+    There are two "sides" to a condition variable - the "producer side"
+    which eventually calls "-> send", and the "consumer side", which waits
+    for the send to occur.
 
-        You can only wait once on a condition - additional calls will return
-        immediately.
+    Example:
+
+       # wait till the result is ready
+       my $result_ready = AnyEvent->condvar;
+
+       # do something such as adding a timer
+       # or socket watcher the calls $result_ready->send
+       # when the "result" is ready.
+       # in this case, we simply use a timer:
+       my $w = AnyEvent->timer (
+          after => 1,
+          cb    => sub { $result_ready->send },
+       );
+
+       # this "blocks" (while handling events) till the callback
+       # calls send
+       $result_ready->recv;
+
+   METHODS FOR PRODUCERS
+    These methods should only be used by the producing side, i.e. the
+    code/module that eventually sends the signal. Note that it is also the
+    producer side which creates the condvar in most cases, but it isn't
+    uncommon for the consumer to create it as well.
+
+    $cv->send (...)
+        Flag the condition as ready - a running "->recv" and all further
+        calls to "recv" will (eventually) return after this method has been
+        called. If nobody is waiting the send will be remembered.
+
+        If a callback has been set on the condition variable, it is called
+        immediately from within send.
+
+        Any arguments passed to the "send" call will be returned by all
+        future "->recv" calls.
+
+    $cv->croak ($error)
+        Similar to send, but causes all call's to "->recv" to invoke
+        "Carp::croak" with the given error message/object/scalar.
+
+        This can be used to signal any errors to the condition variable
+        user/consumer.
+
+    $cv->begin ([group callback])
+    $cv->end
+        These two methods are EXPERIMENTAL and MIGHT CHANGE.
+
+        These two methods can be used to combine many transactions/events
+        into one. For example, a function that pings many hosts in parallel
+        might want to use a condition variable for the whole process.
+
+        Every call to "->begin" will increment a counter, and every call to
+        "->end" will decrement it. If the counter reaches 0 in "->end", the
+        (last) callback passed to "begin" will be executed. That callback is
+        *supposed* to call "->send", but that is not required. If no
+        callback was set, "send" will be called without any arguments.
+
+        Let's clarify this with the ping example:
+
+           my $cv = AnyEvent->condvar;
+
+           my %result;
+           $cv->begin (sub { $cv->send (\%result) });
+
+           for my $host (@list_of_hosts) {
+              $cv->begin;
+              ping_host_then_call_callback $host, sub {
+                 $result{$host} = ...;
+                 $cv->end;
+              };
+           }
+
+           $cv->end;
+
+        This code fragment supposedly pings a number of hosts and calls
+        "send" after results for all then have have been gathered - in any
+        order. To achieve this, the code issues a call to "begin" when it
+        starts each ping request and calls "end" when it has received some
+        result for it. Since "begin" and "end" only maintain a counter, the
+        order in which results arrive is not relevant.
+
+        There is an additional bracketing call to "begin" and "end" outside
+        the loop, which serves two important purposes: first, it sets the
+        callback to be called once the counter reaches 0, and second, it
+        ensures that "send" is called even when "no" hosts are being pinged
+        (the loop doesn't execute once).
+
+        This is the general pattern when you "fan out" into multiple
+        subrequests: use an outer "begin"/"end" pair to set the callback and
+        ensure "end" is called at least once, and then, for each subrequest
+        you start, call "begin" and for eahc subrequest you finish, call
+        "end".
+
+   METHODS FOR CONSUMERS
+    These methods should only be used by the consuming side, i.e. the code
+    awaits the condition.
+
+    $cv->recv
+        Wait (blocking if necessary) until the "->send" or "->croak" methods
+        have been called on c<$cv>, while servicing other watchers normally.
+
+        You can only wait once on a condition - additional calls are valid
+        but will return immediately.
+
+        If an error condition has been set by calling "->croak", then this
+        function will call "croak".
+
+        In list context, all parameters passed to "send" will be returned,
+        in scalar context only the first one will be returned.
 
         Not all event models support a blocking wait - some die in that case
         (programs might want to do that to stay interactive), so *if you are
@@ -330,35 +458,33 @@ WATCHERS
         will not block, while still suppporting blocking waits if the caller
         so desires).
 
-        Another reason *never* to "->wait" in a module is that you cannot
-        sensibly have two "->wait"'s in parallel, as that would require
+        Another reason *never* to "->recv" in a module is that you cannot
+        sensibly have two "->recv"'s in parallel, as that would require
         multiple interpreters or coroutines/threads, none of which
-        "AnyEvent" can supply (the coroutine-aware backends
-        AnyEvent::Impl::CoroEV and AnyEvent::Impl::CoroEvent explicitly
-        support concurrent "->wait"'s from different coroutines, however).
+        "AnyEvent" can supply.
 
-    $cv->broadcast
-        Flag the condition as ready - a running "->wait" and all further
-        calls to "wait" will (eventually) return after this method has been
-        called. If nobody is waiting the broadcast will be remembered..
+        The Coro module, however, *can* and *does* supply coroutines and, in
+        fact, Coro::AnyEvent replaces AnyEvent's condvars by coroutine-safe
+        versions and also integrates coroutines into AnyEvent, making
+        blocking "->recv" calls perfectly safe as long as they are done from
+        another coroutine (one that doesn't run the event loop).
 
-    Example:
+        You can ensure that "-recv" never blocks by setting a callback and
+        only calling "->recv" from within that callback (or at a later
+        time). This will work even when the event loop does not support
+        blocking waits otherwise.
 
-       # wait till the result is ready
-       my $result_ready = AnyEvent->condvar;
+    $bool = $cv->ready
+        Returns true when the condition is "true", i.e. whether "send" or
+        "croak" have been called.
 
-       # do something such as adding a timer
-       # or socket watcher the calls $result_ready->broadcast
-       # when the "result" is ready.
-       # in this case, we simply use a timer:
-       my $w = AnyEvent->timer (
-          after => 1,
-          cb    => sub { $result_ready->broadcast },
-       );
+    $cb = $cv->cb ([new callback])
+        This is a mutator function that returns the callback set and
+        optionally replaces it before doing so.
 
-       # this "blocks" (while handling events) till the watcher
-       # calls broadcast
-       $result_ready->wait;
+        The callback will be called when the condition becomes "true", i.e.
+        when "send" or "croak" are called. Calling "recv" inside the
+        callback or at any later time is guaranteed not to block.
 
 GLOBAL VARIABLES AND FUNCTIONS
     $AnyEvent::MODEL
@@ -370,12 +496,10 @@ GLOBAL VARIABLES AND FUNCTIONS
 
         The known classes so far are:
 
-           AnyEvent::Impl::CoroEV    based on Coro::EV, best choice.
-           AnyEvent::Impl::CoroEvent based on Coro::Event, second best choice.
            AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
            AnyEvent::Impl::Event     based on Event, second best choice.
+           AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
            AnyEvent::Impl::Glib      based on Glib, third-best choice.
-           AnyEvent::Impl::Perl      pure-perl implementation, inefficient but portable.
            AnyEvent::Impl::Tk        based on Tk, very bad choice.
            AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
            AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
@@ -397,6 +521,25 @@ GLOBAL VARIABLES AND FUNCTIONS
         would have created an AnyEvent watcher anyway, that is, as late as
         possible at runtime.
 
+    $guard = AnyEvent::post_detect { BLOCK }
+        Arranges for the code block to be executed as soon as the event
+        model is autodetected (or immediately if this has already happened).
+
+        If called in scalar or list context, then it creates and returns an
+        object that automatically removes the callback again when it is
+        destroyed. See Coro::BDB for a case where this is useful.
+
+    @AnyEvent::post_detect
+        If there are any code references in this array (you can "push" to it
+        before or after loading AnyEvent), then they will called directly
+        after the event loop has been chosen.
+
+        You should check $AnyEvent::MODEL before adding to this array,
+        though: if it contains a true value then the event loop has already
+        been detected, and the array will be ignored.
+
+        Best use "AnyEvent::post_detect { BLOCK }" instead.
+
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods
     freely, but you should not load a specific event module or rely on it.
@@ -406,14 +549,14 @@ WHAT TO DO IN A MODULE
     so by calling AnyEvent in your module body you force the user of your
     module to load the event module first.
 
-    Never call "->wait" on a condition variable unless you *know* that the
-    "->broadcast" method has been called on it already. This is because it
-    will stall the whole program, and the whole point of using events is to
-    stay interactive.
+    Never call "->recv" on a condition variable unless you *know* that the
+    "->send" method has been called on it already. This is because it will
+    stall the whole program, and the whole point of using events is to stay
+    interactive.
 
-    It is fine, however, to call "->wait" when the user of your module
+    It is fine, however, to call "->recv" when the user of your module
     requests it (i.e. if you create a http request object ad have a method
-    called "results" that returns the results, it should call "->wait"
+    called "results" that returns the results, it should call "->recv"
     freely, as the user of your module knows what she is doing. always).
 
 WHAT TO DO IN THE MAIN PROGRAM
@@ -453,9 +596,6 @@ OTHER MODULES
         Provide read and write buffers and manages watchers for reads and
         writes.
 
-    AnyEvent::Socket
-        Provides a means to do non-blocking connects, accepts etc.
-
     AnyEvent::HTTPD
         Provides a simple web application server framework.
 
@@ -480,17 +620,19 @@ OTHER MODULES
         High level API for event-based execution flow control.
 
     Coro
-        Has special support for AnyEvent.
+        Has special support for AnyEvent via Coro::AnyEvent.
+
+    AnyEvent::AIO, IO::AIO
+        Truly asynchronous I/O, should be in the toolbox of every event
+        programmer. AnyEvent::AIO transparently fuses IO::AIO and AnyEvent
+        together.
+
+    AnyEvent::BDB, BDB
+        Truly asynchronous Berkeley DB access. AnyEvent::AIO transparently
+        fuses IO::AIO and AnyEvent together.
 
     IO::Lambda
         The lambda approach to I/O - don't ask, look there. Can use
-        AnyEvent.
-
-    IO::AIO
-        Truly asynchronous I/O, should be in the toolbox of every event
-        programmer. Can be trivially made to use AnyEvent.
-
-    BDB Truly asynchronous Berkeley DB access. Can be trivially made to use
         AnyEvent.
 
 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
@@ -825,14 +967,19 @@ BENCHMARKS
     "POE", regardless of underlying event loop (whether using its pure perl
     select-based backend or the Event module, the POE-EV backend couldn't be
     tested because it wasn't working) shows abysmal performance and memory
-    usage: Watchers use almost 30 times as much memory as EV watchers, and
-    10 times as much memory as Event (the high memory requirements are
-    caused by requiring a session for each watcher). Watcher invocation
-    speed is almost 900 times slower than with AnyEvent's pure perl
-    implementation. The design of the POE adaptor class in AnyEvent can not
-    really account for this, as session creation overhead is small compared
-    to execution of the state machine, which is coded pretty optimally
-    within AnyEvent::Impl::POE. POE simply seems to be abysmally slow.
+    usage with AnyEvent: Watchers use almost 30 times as much memory as EV
+    watchers, and 10 times as much memory as Event (the high memory
+    requirements are caused by requiring a session for each watcher).
+    Watcher invocation speed is almost 900 times slower than with AnyEvent's
+    pure perl implementation.
+
+    The design of the POE adaptor class in AnyEvent can not really account
+    for the performance issues, though, as session creation overhead is
+    small compared to execution of the state machine, which is coded pretty
+    optimally within AnyEvent::Impl::POE (and while everybody agrees that
+    using multiple sessions is not a good approach, especially regarding
+    memory usage, even the author of POE could not come up with a faster
+    design).
 
    Summary
     *   Using EV through AnyEvent is faster than any other event loop (even
@@ -911,8 +1058,7 @@ BENCHMARKS
     though it uses a C-based event loop in this case.
 
    Summary
-    *   The pure perl implementation performs extremely well, considering
-        that it uses select.
+    *   The pure perl implementation performs extremely well.
 
     *   Avoid Glib or POE in large projects where performance matters.
 
@@ -959,7 +1105,8 @@ BENCHMARKS
 
 FORK
     Most event libraries are not fork-safe. The ones who are usually are
-    because they are so inefficient. Only EV is fully fork-aware.
+    because they rely on inefficient but fork-safe "select" or "poll" calls.
+    Only EV is fully fork-aware.
 
     If you have to fork, you must either do so *before* creating your first
     watcher OR you must not use AnyEvent at all in the child.
@@ -979,14 +1126,19 @@ SECURITY CONSIDERATIONS
 
       use AnyEvent;
 
-SEE ALSO
-    Event modules: Coro::EV, EV, EV::Glib, Glib::EV, Coro::Event, Event,
-    Glib::Event, Glib, Coro, Tk, Event::Lib, Qt, POE.
+    Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
+    be used to probe what backend is used and gain other information (which
+    is probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
 
-    Implementations: AnyEvent::Impl::CoroEV, AnyEvent::Impl::EV,
-    AnyEvent::Impl::CoroEvent, AnyEvent::Impl::Event, AnyEvent::Impl::Glib,
-    AnyEvent::Impl::Tk, AnyEvent::Impl::Perl, AnyEvent::Impl::EventLib,
-    AnyEvent::Impl::Qt, AnyEvent::Impl::POE.
+SEE ALSO
+    Event modules: EV, EV::Glib, Glib::EV, Event, Glib::Event, Glib, Tk,
+    Event::Lib, Qt, POE.
+
+    Implementations: AnyEvent::Impl::EV, AnyEvent::Impl::Event,
+    AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,
+    AnyEvent::Impl::EventLib, AnyEvent::Impl::Qt, AnyEvent::Impl::POE.
+
+    Coroutine support: Coro, Coro::AnyEvent, Coro::EV, Coro::Event,
 
     Nontrivial usage examples: Net::FCP, Net::XMPP2.
 

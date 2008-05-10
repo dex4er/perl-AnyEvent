@@ -88,8 +88,7 @@ my $has_ev_adns;
 sub has_ev_adns {
    ($has_ev_adns ||= do {
       my $model = AnyEvent::detect;
-      (($model eq "AnyEvent::Impl::CoroEV" or $model eq "AnyEvent::Impl::EV")
-       && eval { local $SIG{__DIE__}; require EV::ADNS })
+      ($model eq "AnyEvent::Impl::EV" && eval { local $SIG{__DIE__}; require EV::ADNS })
          ? 2 : 1 # so that || always detects as true
    }) - 1  # 2 => true, 1 => false
 }

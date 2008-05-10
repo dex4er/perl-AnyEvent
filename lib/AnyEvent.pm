@@ -813,7 +813,7 @@ package AnyEvent::Base;
 # default implementation for ->condvar
 
 sub condvar {
-   bless {}, "AnyEvent::Base::CondVar"
+   bless {}, AnyEvent::CondVar::
 }
 
 # default implementation for ->signal
@@ -897,16 +897,20 @@ sub AnyEvent::Base::Child::DESTROY {
    undef $CHLD_W unless keys %PID_CB;
 }
 
-package AnyEvent::Base::CondVar;
+package AnyEvent::CondVar;
 
-# wake up the waiter
+our @ISA = AnyEvent::CondVar::Base::;
+
+package AnyEvent::CondVar::Base;
+
 sub _send {
-   &{ delete $_[0]{_ae_cb} } if $_[0]{_ae_cb};
+   # nop
 }
 
 sub send {
    my $cv = shift;
    $cv->{_ae_sent} = [@_];
+   (delete $cv->{_ae_cb})->($cv) if $cv->{_ae_cb};
    $cv->_send;
 }
 
@@ -919,8 +923,12 @@ sub ready {
    $_[0]{_ae_sent}
 }
 
-sub recv {
+sub _wait {
    AnyEvent->one_event while !$_[0]{_ae_sent};
+}
+
+sub recv {
+   $_[0]->_wait;
 
    Carp::croak $_[0]{_ae_croak} if $_[0]{_ae_croak};
    wantarray ? @{ $_[0]{_ae_sent} } : $_[0]{_ae_sent}[0]
@@ -943,7 +951,7 @@ sub end {
 
 # undocumented/compatibility with pre-3.4
 *broadcast = \&send;
-*wait      = \&recv;
+*wait      = \&_wait;
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
 

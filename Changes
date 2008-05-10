@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: implement condvars...
+3.4  Sun May 11 00:29:25 CEST 2008
+	- complete re-implementation of condvars with a hopefully much mroe useful
+          API (backward compatible functions exist but are undocumented).
 	- AnyEvent::Handle fully rewritten with a hopefully more powerful API
           (still subject to change).
 	- take advantage of CLOCK_MONOTONIC, if available, in AnyEvent::Impl::Perl.
