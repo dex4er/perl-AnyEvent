@@ -56,19 +56,6 @@ sub child {
    }
 }
 
-sub condvar {
-   bless \my $flag, "AnyEvent::Impl::EV"
-}
-
-sub broadcast {
-   ++${$_[0]};
-}
-
-sub wait {
-   EV::loop EV::LOOP_ONESHOT
-      while !${$_[0]};
-}
-
 sub one_event {
    EV::loop EV::LOOP_ONESHOT;
 }

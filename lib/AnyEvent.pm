@@ -17,8 +17,8 @@ EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
    });
 
    my $w = AnyEvent->condvar; # stores whether a condition was flagged
-   $w->wait; # enters "main loop" till $condvar gets ->send
-   $w->send; # wake up current and all future wait's
+   $w->send; # wake up current and all future recv's
+   $w->recv; # enters "main loop" till $condvar gets ->send
 
 =head1 WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
@@ -281,8 +281,6 @@ Example: fork a process and wait for it
 
   my $done = AnyEvent->condvar;
 
-  AnyEvent::detect; # force event module to be initialised
-
   my $pid = fork or exit 5;
 
   my $w = AnyEvent->child (
@@ -295,7 +293,7 @@ Example: fork a process and wait for it
   );
 
   # do something else, then wait for process exit
-  $done->wait;
+  $done->recv;
 
 =head2 CONDITION VARIABLES
 
@@ -328,15 +326,15 @@ Condition variables are very useful to signal that something has finished,
 for example, if you write a module that does asynchronous http requests,
 then a condition variable would be the ideal candidate to signal the
 availability of results. The user can either act when the callback is
-called or can synchronously C<< ->wait >> for the results.
+called or can synchronously C<< ->recv >> for the results.
 
 You can also use them to simulate traditional event loops - for example,
 you can block your main program until an event occurs - for example, you
-could C<< ->wait >> in your main program until the user clicks the Quit
+could C<< ->recv >> in your main program until the user clicks the Quit
 button of your app, which would C<< ->send >> the "quit" event.
 
 Note that condition variables recurse into the event loop - if you have
-two pieces of code that call C<< ->wait >> in a round-robbin fashion, you
+two pieces of code that call C<< ->recv >> in a round-robbin fashion, you
 lose. Therefore, condition variables are good to export to your caller, but
 you should avoid making a blocking wait yourself, at least in callbacks,
 as this asks for trouble.
@@ -367,7 +365,7 @@ Example:
 
    # this "blocks" (while handling events) till the callback
    # calls send
-   $result_ready->wait;
+   $result_ready->recv;
 
 =head3 METHODS FOR PRODUCERS
 
@@ -380,19 +378,19 @@ uncommon for the consumer to create it as well.
 
 =item $cv->send (...)
 
-Flag the condition as ready - a running C<< ->wait >> and all further
-calls to C<wait> will (eventually) return after this method has been
+Flag the condition as ready - a running C<< ->recv >> and all further
+calls to C<recv> will (eventually) return after this method has been
 called. If nobody is waiting the send will be remembered.
 
 If a callback has been set on the condition variable, it is called
 immediately from within send.
 
 Any arguments passed to the C<send> call will be returned by all
-future C<< ->wait >> calls.
+future C<< ->recv >> calls.
 
 =item $cv->croak ($error)
 
-Similar to send, but causes all call's wait C<< ->wait >> to invoke
+Similar to send, but causes all call's to C<< ->recv >> to invoke
 C<Carp::croak> with the given error message/object/scalar.
 
 This can be used to signal any errors to the condition variable
@@ -401,6 +399,8 @@ user/consumer.
 =item $cv->begin ([group callback])
 
 =item $cv->end
+
+These two methods are EXPERIMENTAL and MIGHT CHANGE.
 
 These two methods can be used to combine many transactions/events into
 one. For example, a function that pings many hosts in parallel might want
@@ -456,7 +456,7 @@ code awaits the condition.
 
 =over 4
 
-=item $cv->wait
+=item $cv->recv
 
 Wait (blocking if necessary) until the C<< ->send >> or C<< ->croak
 >> methods have been called on c<$cv>, while servicing other watchers
@@ -479,19 +479,19 @@ condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
 while still suppporting blocking waits if the caller so desires).
 
-Another reason I<never> to C<< ->wait >> in a module is that you cannot
-sensibly have two C<< ->wait >>'s in parallel, as that would require
+Another reason I<never> to C<< ->recv >> in a module is that you cannot
+sensibly have two C<< ->recv >>'s in parallel, as that would require
 multiple interpreters or coroutines/threads, none of which C<AnyEvent>
 can supply.
 
 The L<Coro> module, however, I<can> and I<does> supply coroutines and, in
 fact, L<Coro::AnyEvent> replaces AnyEvent's condvars by coroutine-safe
 versions and also integrates coroutines into AnyEvent, making blocking
-C<< ->wait >> calls perfectly safe as long as they are done from another
+C<< ->recv >> calls perfectly safe as long as they are done from another
 coroutine (one that doesn't run the event loop).
 
-You can ensure that C<< -wait >> never blocks by setting a callback and
-only calling C<< ->wait >> from within that callback (or at a later
+You can ensure that C<< -recv >> never blocks by setting a callback and
+only calling C<< ->recv >> from within that callback (or at a later
 time). This will work even when the event loop does not support blocking
 waits otherwise.
 
@@ -506,7 +506,7 @@ This is a mutator function that returns the callback set and optionally
 replaces it before doing so.
 
 The callback will be called when the condition becomes "true", i.e. when
-C<send> or C<croak> are called. Calling C<wait> inside the callback
+C<send> or C<croak> are called. Calling C<recv> inside the callback
 or at any later time is guaranteed not to block.
 
 =back
@@ -584,14 +584,14 @@ decide which event module to use as soon as the first method is called, so
 by calling AnyEvent in your module body you force the user of your module
 to load the event module first.
 
-Never call C<< ->wait >> on a condition variable unless you I<know> that
+Never call C<< ->recv >> on a condition variable unless you I<know> that
 the C<< ->send >> method has been called on it already. This is
 because it will stall the whole program, and the whole point of using
 events is to stay interactive.
 
-It is fine, however, to call C<< ->wait >> when the user of your module
+It is fine, however, to call C<< ->recv >> when the user of your module
 requests it (i.e. if you create a http request object ad have a method
-called C<results> that returns the results, it should call C<< ->wait >>
+called C<results> that returns the results, it should call C<< ->recv >>
 freely, as the user of your module knows what she is doing. always).
 
 =head1 WHAT TO DO IN THE MAIN PROGRAM
@@ -810,18 +810,10 @@ sub AUTOLOAD {
 
 package AnyEvent::Base;
 
-# default implementation for ->condvar, ->wait, ->broadcast
+# default implementation for ->condvar
 
 sub condvar {
-   bless \my $flag, "AnyEvent::Base::CondVar"
-}
-
-sub AnyEvent::Base::CondVar::broadcast {
-   ${$_[0]}++;
-}
-
-sub AnyEvent::Base::CondVar::wait {
-   AnyEvent->one_event while !${$_[0]};
+   bless {}, "AnyEvent::Base::CondVar"
 }
 
 # default implementation for ->signal
@@ -904,6 +896,53 @@ sub AnyEvent::Base::Child::DESTROY {
 
    undef $CHLD_W unless keys %PID_CB;
 }
+
+package AnyEvent::Base::CondVar;
+
+# wake up the waiter
+sub _send {
+   &{ $_[0]{_ae_cb} } if $_[0]{_ae_cb};
+}
+
+sub send {
+   $_[0]{_ae_sent} = [@_];
+   $_[0]->_send;
+}
+
+sub croak {
+   $_[0]{_ae_croak} = $_[0];
+   $_[0]->send;
+}
+
+sub ready {
+   $_[0]{_ae_sent}
+}
+
+sub recv {
+   AnyEvent->one_event while !$_[0]{_ae_sent};
+
+   Carp::croak $_[0]{_ae_croak} if $_[0]{_ae_croak};
+   wantarray ? @{ $_[0]{_ae_sent} } : $_[0]{_ae_sent}[0]
+}
+
+sub cb {
+   $_[0]{_ae_cb} = $_[1] if @_ > 1;
+   $_[0]{_ae_cb}
+}
+
+sub begin {
+   ++$_[0]{_ae_counter};
+   $_[0]{_ae_end_cb} = $_[1] if @_ > 1;
+}
+
+sub end {
+   return if --$_[0]{_ae_counter};
+   &{ $_[0]{_ae_end_cb} } if $_[0]{_ae_end_cb};
+}
+
+# undocumented/compatibility with pre-3.4
+*broadcast = \&send;
+*wait      = \&recv;
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
 

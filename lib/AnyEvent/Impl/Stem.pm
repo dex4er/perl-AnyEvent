@@ -91,6 +91,7 @@ sub child {
 }
 
 sub condvar {
+   die;
    bless \my $flag, AnyEvent::Impl::Stem::
 }
 
