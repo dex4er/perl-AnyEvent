@@ -551,7 +551,7 @@ if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
 runtime.
 
-=item $guard = AnyEvent::on_detect { BLOCK }
+=item $guard = AnyEvent::post_detect { BLOCK }
 
 Arranges for the code block to be executed as soon as the event model is
 autodetected (or immediately if this has already happened).
@@ -559,7 +559,7 @@ autodetected (or immediately if this has already happened).
 If called in scalar or list context, then it creates and returns an object
 that automatically removes the callback again when it is destroyed.
 
-=item @AnyEvent::on_detect
+=item @AnyEvent::post_detect
 
 If there are any code references in this array (you can C<push> to it
 before or after loading AnyEvent), then they will called directly after
@@ -569,7 +569,7 @@ You should check C<$AnyEvent::MODEL> before adding to this array, though:
 if it contains a true value then the event loop has already been detected,
 and the array will be ignored.
 
-Best use C<AnyEvent::on_detect { BLOCK }> instead.
+Best use C<AnyEvent::post_detect { BLOCK }> instead.
 
 =back
 
@@ -721,9 +721,9 @@ my @models = (
 
 our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY);
 
-our @on_detect;
+our @post_detect;
 
-sub on_detect(&) {
+sub post_detect(&) {
    my ($cb) = @_;
 
    if ($MODEL) {
@@ -731,7 +731,7 @@ sub on_detect(&) {
 
       1
    } else {
-      push @on_detect, $cb;
+      push @post_detect, $cb;
 
       defined wantarray
          ? bless \$cb, "AnyEvent::Util::Guard"
@@ -740,7 +740,7 @@ sub on_detect(&) {
 }
 
 sub AnyEvent::Util::Guard::DESTROY {
-   @on_detect = grep $_ != ${$_[0]}, @on_detect;
+   @post_detect = grep $_ != ${$_[0]}, @post_detect;
 }
 
 sub detect() {
@@ -792,7 +792,7 @@ sub detect() {
       unshift @ISA, $MODEL;
       push @{"$MODEL\::ISA"}, "AnyEvent::Base";
 
-      (shift @on_detect)->() while @on_detect;
+      (shift @post_detect)->() while @post_detect;
    }
 
    $MODEL
