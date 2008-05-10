@@ -551,7 +551,12 @@ if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
 runtime.
 
-=item @AnyEvent::detect
+=item AnyEvent::on_detect { BLOCK }
+
+Arranges for the code block to be executed as soon as the event model is
+autodetected (or immediately if this has already happened).
+
+=item @AnyEvent::on_detect
 
 If there are any code references in this array (you can C<push> to it
 before or after loading AnyEvent), then they will called directly after
@@ -560,6 +565,8 @@ the event loop has been chosen.
 You should check C<$AnyEvent::MODEL> before adding to this array, though:
 if it contains a true value then the event loop has already been detected,
 and the array will be ignored.
+
+Best use C<AnyEvent::on_detect { BLOCK }> instead.
 
 =back
 
@@ -711,7 +718,15 @@ my @models = (
 
 our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY);
 
-our @detect;
+our @on_detect;
+
+sub on_detect(&) {
+   if ($MODEL) {
+      $_[0]->();
+   } else {
+      push @on_detect, $_[0];
+   }
+}
 
 sub detect() {
    unless ($MODEL) {
@@ -762,7 +777,7 @@ sub detect() {
       unshift @ISA, $MODEL;
       push @{"$MODEL\::ISA"}, "AnyEvent::Base";
 
-      (shift @detect)->() while @detect;
+      (shift @on_detect)->() while @on_detect;
    }
 
    $MODEL
