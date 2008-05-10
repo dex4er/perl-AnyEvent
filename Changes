@@ -3,6 +3,8 @@ Revision history for Perl extension AnyEvent.
 TODO: implement condvars...
 	- take advantage of CLOCK_MONOTONIC, if available, in AnyEvent::Impl::Perl.
         - provide @AnyEvent::detect.
+        - remove coro backends: Coro now provides generic support for AnyEvent
+          via Coro::AnyEvent.
 
 3.3  Mon Apr 28 09:51:06 CEST 2008
         - added AnyEvent::Handle, AnyEvent::Socket and AnyEvent::Util modules.
