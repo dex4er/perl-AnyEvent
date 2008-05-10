@@ -901,16 +901,17 @@ package AnyEvent::Base::CondVar;
 
 # wake up the waiter
 sub _send {
-   &{ $_[0]{_ae_cb} } if $_[0]{_ae_cb};
+   &{ delete $_[0]{_ae_cb} } if $_[0]{_ae_cb};
 }
 
 sub send {
-   $_[0]{_ae_sent} = [@_];
-   $_[0]->_send;
+   my $cv = shift;
+   $cv->{_ae_sent} = [@_];
+   $cv->_send;
 }
 
 sub croak {
-   $_[0]{_ae_croak} = $_[0];
+   $_[0]{_ae_croak} = $_[1];
    $_[0]->send;
 }
 
