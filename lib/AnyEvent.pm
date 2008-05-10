@@ -557,7 +557,8 @@ Arranges for the code block to be executed as soon as the event model is
 autodetected (or immediately if this has already happened).
 
 If called in scalar or list context, then it creates and returns an object
-that automatically removes the callback again when it is destroyed.
+that automatically removes the callback again when it is destroyed. See
+L<Coro::BDB> for a case where this is useful.
 
 =item @AnyEvent::post_detect
 
