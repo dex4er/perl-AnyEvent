@@ -633,10 +633,6 @@ functions such as C<inet_aton> by event-/callback-based versions.
 
 Provide read and write buffers and manages watchers for reads and writes.
 
-=item L<AnyEvent::Socket>
-
-Provides a means to do non-blocking connects, accepts etc.
-
 =item L<AnyEvent::HTTPD>
 
 Provides a simple web application server framework.
@@ -671,19 +667,20 @@ High level API for event-based execution flow control.
 
 Has special support for AnyEvent via L<Coro::AnyEvent>.
 
+=item L<AnyEvent::AIO>, L<IO::AIO>
+
+Truly asynchronous I/O, should be in the toolbox of every event
+programmer. AnyEvent::AIO transparently fuses IO::AIO and AnyEvent
+together.
+
+=item L<AnyEvent::BDB>, L<BDB>
+
+Truly asynchronous Berkeley DB access. AnyEvent::AIO transparently fuses
+IO::AIO and AnyEvent together.
+
 =item L<IO::Lambda>
 
 The lambda approach to I/O - don't ask, look there. Can use AnyEvent.
-
-=item L<IO::AIO>
-
-Truly asynchronous I/O, should be in the toolbox of every event
-programmer. Can be trivially made to use AnyEvent.
-
-=item L<BDB>
-
-Truly asynchronous Berkeley DB access. Can be trivially made to use
-AnyEvent.
 
 =back
 

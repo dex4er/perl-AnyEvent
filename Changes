@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: implement condvars...
+	- AnyEvent::Handle fully rewritten with a hopefully more powerful API
+          (still subject to change).
 	- take advantage of CLOCK_MONOTONIC, if available, in AnyEvent::Impl::Perl.
         - provide AnyEvent::post_detect and @AnyEvent::post_detect, which
           allows module authors to avoid forcing event loop detection.
