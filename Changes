@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+3.41 Sun May 11 19:53:13 CEST 2008
+	- work around a bug in perl 5.8.8's local. Reported by Yi Ma Mao.
+
 3.4  Sun May 11 00:29:25 CEST 2008
 	- complete re-implementation of condvars with a hopefully much mroe useful
           API (backward compatible functions exist but are undocumented).

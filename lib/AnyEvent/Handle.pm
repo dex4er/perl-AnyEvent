@@ -364,7 +364,7 @@ the callbacks:
 sub _drain_rbuf {
    my ($self) = @_;
 
-   return if exists $self->{in_drain};
+   return if $self->{in_drain};
    local $self->{in_drain} = 1;
 
    while (my $len = length $self->{rbuf}) {
@@ -579,7 +579,7 @@ sub start_read {
          my $len = sysread $self->{fh}, $self->{rbuf}, $self->{read_size} || 8192, length $self->{rbuf};
 
          if ($len > 0) {
-            if (exists $self->{rbuf_max}) {
+            if (defined $self->{rbuf_max}) {
                if ($self->{rbuf_max} < length $self->{rbuf}) {
                   $! = &Errno::ENOSPC; return $self->error;
                }
