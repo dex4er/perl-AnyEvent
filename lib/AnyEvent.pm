@@ -1050,7 +1050,7 @@ program when the user enters quit:
          warn "io event <$_[0]>\n";   # will always output <r>
          chomp (my $input = <STDIN>); # read a line
          warn "read: $input\n";       # output what has been read
-         $cv->broadcast if $input =~ /^q/i; # quit program if /^q/i
+         $cv->send if $input =~ /^q/i; # quit program if /^q/i
       },
    );
 
@@ -1065,7 +1065,7 @@ program when the user enters quit:
 
    new_timer; # create first timer
 
-   $cv->wait; # wait until user enters /^q/i
+   $cv->recv; # wait until user enters /^q/i
 
 =head1 REAL-WORLD EXAMPLE
 
@@ -1131,7 +1131,7 @@ result and signals any possible waiters that the request ahs finished:
 
    if (end-of-file or data complete) {
      $txn->{result} = $txn->{buf};
-     $txn->{finished}->broadcast;
+     $txn->{finished}->send;
      $txb->{cb}->($txn) of $txn->{cb}; # also call callback
    }
 
@@ -1139,7 +1139,7 @@ The C<result> method, finally, just waits for the finished signal (if the
 request was already finished, it doesn't wait, of course, and returns the
 data:
 
-   $txn->{finished}->wait;
+   $txn->{finished}->recv;
    return $txn->{result};
 
 The actual code goes further and collects all errors (C<die>s, exceptions)
@@ -1184,10 +1184,10 @@ anything about events.
 
    $fcp->txn_client_get ($url)->cb (sub {
       ...
-      $quit->broadcast;
+      $quit->send;
    });
 
-   $quit->wait;
+   $quit->recv;
 
 
 =head1 BENCHMARKS
@@ -1226,7 +1226,7 @@ and memory usage is not included in the figures.
 
 I<invoke> is the time, in microseconds, used to invoke a simple
 callback. The callback simply counts down a Perl variable and after it was
-invoked "watcher" times, it would C<< ->broadcast >> a condvar once to
+invoked "watcher" times, it would C<< ->send >> a condvar once to
 signal the end of this phase.
 
 I<destroy> is the time, in microseconds, that it takes to destroy a single
