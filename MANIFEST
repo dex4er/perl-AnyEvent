@@ -29,4 +29,5 @@ eg/bench
 eg/runbench
 eg/bench2
 eg/runbench2
+eg/handle
 META.yml                                 Module meta-data (added by MakeMaker)

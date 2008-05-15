@@ -110,12 +110,6 @@
    02 10:33:13 <schmorp> elmex: ja, das ist gut
    02 10:33:19 <schmorp> elmex: aber dann gibts auch keinen default-fall
 
-- on_eof erst nachdem rbuf leer is aufrufen
-  => wenn kein progress mehr gemacht werden kann
-  - sysread eof nur flag setzen und watcher disablen
-- unshift/push als prep/append
-- readlines soll weichen, readline reicht
-
 02 11:43:38 <schmorp> $socket->push_read_line ([$sep, ]$cb)
 02 11:43:49 <schmorp> oder read-handler müsste dann "nur" folgendes machen:
 02 11:43:51 <schmorp> sysread
