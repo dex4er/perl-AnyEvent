@@ -23,7 +23,9 @@ use strict;
 
 no warnings "uninitialized";
 
+use Errno qw/ENXIO/;
 use Socket ();
+use IO::Socket::INET ();
 
 use AnyEvent;
 
@@ -212,6 +214,92 @@ sub connect {
    $o
 }
 
+=item AnyEvent::Util::tcp_connect ($host, $port, $connect_cb->($socket), $error_cb->()[, $timeout])
+
+This is a shortcut function which behaves similar to the C<connect> function
+described above, except that it does a C<AnyEvent::Util::inet_aton> on C<$host>
+and creates a L<IO::Socket::INET> TCP connection for you, which will be
+passed as C<$socket> argument to the C<$connect_cb> callback above.
+
+In case the hostname couldn't be resolved C<$error_cb> will be called and C<$!>
+will be set to C<ENXIO>.
+
+For more details about the return value and the arguments see the C<connect>
+function above.
+
+Here is a short example:
+
+
+   my $hdl;
+   my $watchobj = AnyEvent::Util::tcp_connect ("www.google.com", 80, sub {
+      my ($sock) = @_;
+
+      $hdl =
+         AnyEvent::Handle->new (
+            fh => $sock,
+            on_eof => sub {
+               print "received eof\n";
+               undef $hdl
+            }
+         );
+
+      $hdl->push_write ("GET / HTTP/1.0\015\012\015\012");
+
+      $hdl->push_read_line (sub {
+         my ($hdl, $line) = @_;
+         print "Yay, got line: $line\n";
+      });
+
+   }, sub {
+      warn "Got error on connect: $!\n";
+   }, 10);
+
+=cut
+
+sub tcp_connect {
+   my ($host, $port, $c_cb, $e_cb, $tout, %sockargs) = @_;
+
+   my $o = AnyEvent::Util::SocketHandle->new (
+      connect_cb => $c_cb,
+      error_cb   => $e_cb,
+      timeout    => $tout,
+   );
+
+   $o->start_timeout;
+
+   AnyEvent::Util::inet_aton ($host, sub {
+      my ($addr) = @_;
+
+      return if $o->{timed_out};
+
+      if ($addr) {
+         my $sock =
+            IO::Socket::INET->new (
+               PeerHost => Socket::inet_ntoa ($addr),
+               PeerPort => $port,
+               Blocking => 0,
+               %sockargs
+            );
+
+         unless ($sock) {
+            $o->error;
+         }
+
+         fh_nonblocking ($sock, 1);
+
+         $o->{fh} = $sock;
+
+         $o->connect;
+
+      } else {
+         $! = ENXIO;
+         $o->error;
+      }
+   });
+
+   $o
+}
+
 =item AnyEvent::Util::listen ($socket, $client_cb->($new_socket, $peer_ad), $error_cb->())
 
 This will listen and accept new connections on the C<$socket> in a non-blocking
@@ -306,18 +394,26 @@ sub listen {
       });
 }
 
+sub start_timeout {
+   my ($self) = @_;
+
+   if (defined $self->{timeout}) {
+      $self->{tmout} =
+         AnyEvent->timer (after => $self->{timeout}, cb => sub {
+            delete $self->{tmout};
+            $! = ETIMEDOUT;
+            $self->error;
+            $self->{timed_out} = 1;
+         });
+   }
+}
+
 sub connect {
    my ($self) = @_;
 
    weaken $self;
 
-   if (defined $self->{timeout}) {
-      $self->{tmout} =
-         AnyEvent->timer (after => $self->{timeout}, cb => sub {
-            $! = ETIMEDOUT;
-            $self->error;
-         });
-   }
+   $self->start_timeout;
 
    $self->{con_w} =
       AnyEvent->io (poll => 'w', fh => $self->{fh}, cb => sub {

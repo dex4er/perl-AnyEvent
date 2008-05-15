@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+	- added AnyEvent::Util::tcp_connect helper function
 	- added AnyEvent::Util::listen (and an example eg/listen)
 	- fixed a bug in *_read_chunk, where the callback was called with $self as
           first and second argument.

@@ -39,15 +39,8 @@ my $w = AnyEvent::Util::listen ($sock, sub {
    $cv->broadcast;
 });
 
-my $clsock =
-   IO::Socket::INET->new (
-      PeerHost => $sock->sockhost,
-      PeerPort => $sock->sockport,
-      Blocking => 0,
-   );
-
 my $clhdl;
-my $wc = AnyEvent::Util::connect ($clsock, sub {
+my $wc = AnyEvent::Util::tcp_connect ($sock->sockhost, $sock->sockport, sub {
    my ($clsock) = @_;
    $clhdl = AnyEvent::Handle->new (fh => $clsock, on_eof => sub { $cv->broadcast });
 
