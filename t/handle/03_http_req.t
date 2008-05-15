@@ -1,51 +1,64 @@
 #!/opt/perl/bin/perl
-
 use strict;
-use Test::More;
 use AnyEvent::Impl::Perl;
 use AnyEvent;
 use AnyEvent::Socket;
 
 unless ($ENV{PERL_ANYEVENT_NET_TESTS}) {
-   plan skip_all => "PERL_ANYEVENT_NET_TESTS environment variable not set";
+   print "1..0 # Skip PERL_ANYEVENT_NET_TESTS environment variable not set\n";
    exit 0;
 }
 
-plan tests => 2;
+print "1..2\n";
 
 my $cv = AnyEvent->condvar;
 
-my $fbytes;
 my $rbytes;
 
-my $ae_sock =
-   AnyEvent::Socket->new (
-      PeerAddr => "www.google.com:80",
-      on_eof   => sub { $cv->broadcast },
-      on_error => sub {
-         my ($ae_sock) = @_;
-         diag "error: $!";
-         $cv->broadcast
-      },
-      on_connect => sub {
-         my ($ae_sock, $error) = @_;
-         if ($error) { diag ("connect error: $!"); $cv->broadcast; return }
+my $hdl;
+my $wo = AnyEvent::Util::tcp_connect ('www.google.com', 80, sub {
+   my ($sock) = @_;
+   $hdl =
+      AnyEvent::Handle->new (
+         fh => $sock,
+         on_error => sub {
+            warn "socket error: $!";
+            $cv->broadcast;
+         },
+         on_eof => sub {
+            my ($hdl) = @_;
 
-         $ae_sock->read (10, sub {
-            my ($ae_sock, $data) = @_;
-            $fbytes = $data;
+            if ($rbytes !~ /<\/html>/i) {
+               print "not ";
+            }
 
-            $ae_sock->on_read (sub {
-               my ($ae_sock) = @_;
-               $rbytes = $ae_sock->rbuf;
-            });
-         });
+            print "ok 2 - received HTML page\n";
 
-         $ae_sock->write ("GET http://www.google.de/ HTTP/1.0\015\012\015\012");
+            $cv->broadcast
+         }
+      );
+
+   $hdl->push_read_chunk (10, sub {
+      my ($hdl, $data) = @_;
+
+      unless (substr ($data, 0, 4) eq 'HTTP') {
+         print "not ";
       }
-   );
+
+      print "ok 1 - received 'HTTP'\n";
+
+      $hdl->on_read (sub {
+         my ($hdl) = @_;
+         $rbytes .= $hdl->rbuf;
+         $hdl->rbuf = '';
+         return 1;
+      });
+   });
+
+   $hdl->push_write ("GET http://www.google.com/ HTTP/1.0\015\012\015\012");
+
+}, sub {
+   warn "error on connect: $!";
+}, 10);
 
 $cv->wait;
-
-is (substr ($fbytes, 0, 4), 'HTTP', 'first bytes began with HTTP');
-ok ($rbytes =~ /google.*<\/html>\s*$/i, 'content was retrieved successfully');
