@@ -138,7 +138,7 @@ sub fh_nonblocking($$) {
    }
 }
 
-=item AnyEvent::Util::connect ($socket, $connect_cb, $error_cb[, $timeout])
+=item AnyEvent::Util::connect ($socket, $connect_cb->($socket), $error_cb->()[, $timeout])
 
 Connects the socket C<$socket> non-blocking. C<$connect_cb> will be
 called when the socket was successfully connected and became writable,
@@ -212,6 +212,60 @@ sub connect {
    $o
 }
 
+=item AnyEvent::Util::listen ($socket, $client_cb->($new_socket, $peer_ad), $error_cb->())
+
+This will listen and accept new connections on the C<$socket> in a non-blocking
+way. The callback C<$client_cb> will be called when a new client connection
+was accepted and the callback C<$error_cb> will be called in case of an error.
+C<$!> will be set to an approriate error number.
+
+The blocking state of C<$socket> will be set to nonblocking via C<fh_nonblocking> (see
+above).
+
+The first argument to C<$client_cb> will be the socket of the accepted client
+and the second argument the peer address.
+
+The return value is a guard object that you have to keep referenced as long as you
+want to accept new connections.
+
+Here is an example usage:
+
+   my $sock = IO::Socket::INET->new (
+       Listen => 5
+   ) or die "Couldn't make socket: $!\n";
+
+   my $watchobj = AnyEvent::Util::listen ($sock, sub {
+      my ($cl_sock, $cl_addr) = @_;
+
+      my ($port, $addr) = sockaddr_in ($cl_addr);
+      $addr = inet_ntoa ($addr);
+      print "Client connected: $addr:$port\n";
+
+      # ...
+
+   }, sub {
+      warn "Error on accept: $!"
+   });
+
+=cut
+
+sub listen {
+   my ($socket, $c_cb, $e_cb) = @_;
+
+   fh_nonblocking ($socket, 1);
+
+   my $o =
+      AnyEvent::Util::SocketHandle->new (
+         fh => $socket,
+         client_cb => $c_cb,
+         error_cb => $e_cb
+      );
+
+   $o->listen;
+
+   $o
+}
+
 package AnyEvent::Util::SocketHandle;
 use Errno qw/ETIMEDOUT/;
 use Socket;
@@ -229,8 +283,27 @@ sub new {
 sub error {
    my ($self) = @_;
    delete $self->{con_w};
+   delete $self->{list_w};
    delete $self->{tmout};
    $self->{error_cb}->();
+}
+
+sub listen {
+   my ($self) = @_;
+
+   weaken $self;
+
+   $self->{list_w} =
+      AnyEvent->io (poll => 'r', fh => $self->{fh}, cb => sub {
+         my ($new_sock, $paddr) = $self->{fh}->accept ();
+
+         unless (defined $new_sock) {
+            $self->error;
+            return;
+         }
+
+         $self->{client_cb}->($new_sock, $paddr);
+      });
 }
 
 sub connect {

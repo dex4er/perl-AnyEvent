@@ -1,59 +1,71 @@
 #!/opt/perl/bin/perl
-
 use strict;
-use Test::More tests => 2;
 use AnyEvent::Impl::Perl;
-use AnyEvent;
-use AnyEvent::Socket;
+use AnyEvent::Handle;
+use AnyEvent::Util;
+use IO::Socket::INET;
 
 my $lbytes;
 my $rbytes;
 
+print "1..2\n";
+
 my $cv = AnyEvent->condvar;
 
-my $lsock =
-   AnyEvent::Socket->new (
-      Listen => 1,
-      ReuseAddr => 1,
-   );
+my $sock = IO::Socket::INET->new (
+    Listen => 5, ReuseAddr => 1, LocalAddr => 'localhost',
+) or die "Couldn't make socket: $!\n";
 
-$lsock->on_accept (sub {
-   my ($lsock, $cl, $paddr) = @_;
+my $hdl;
 
-   unless (defined $cl) {
-      diag "accept failed: $!";
-      return;
-   }
+my $w = AnyEvent::Util::listen ($sock, sub {
+   my ($cl, $claddr) = @_;
+   $hdl = AnyEvent::Handle->new (fh => $cl, on_eof => sub { $cv->broadcast });
 
-   $cl->read (6, sub {
-      my ($cl, $data) = @_;
-      $lbytes = $data;
-      $cl->write ("BLABLABLA\015\012");
+   $hdl->push_read_chunk (6, sub {
+      my ($hdl, $data) = @_;
+
+      if ($data eq "TEST\015\012") {
+         print "ok 1 - server received client data\n";
+      } else {
+         print "not ok 1 - server received bad client data\n";
+      }
+
+      $hdl->push_write ("BLABLABLA\015\012");
    });
+
+}, sub {
+   warn "error on accept: $!";
+   $cv->broadcast;
 });
 
-my $ae_sock =
-   AnyEvent::Socket->new (
-      PeerAddr => "127.0.0.1:" . $lsock->fh->sockport,
-      on_connect => sub {
-         my ($ae_sock, $error) = @_;
-         if ($error) { diag "connection failed: $!"; $cv->broadcast; return }
-
-         print "connected to ".$ae_sock->fh->peerhost.":".$ae_sock->fh->peerport."\n";
-
-         $ae_sock->on_read (sub {
-            my ($ae_sock) = @_;
-            $rbytes = $ae_sock->rbuf;
-         });
-
-         $ae_sock->write ("TEST\015\012");
-      }
+my $clsock =
+   IO::Socket::INET->new (
+      PeerHost => $sock->sockhost,
+      PeerPort => $sock->sockport,
+      Blocking => 0,
    );
 
-$ae_sock->on_eof (sub { $cv->broadcast });
+my $clhdl;
+my $wc = AnyEvent::Util::connect ($clsock, sub {
+   my ($clsock) = @_;
+   $clhdl = AnyEvent::Handle->new (fh => $clsock, on_eof => sub { $cv->broadcast });
+
+   $clhdl->push_write ("TEST\015\012");
+   $clhdl->push_read_line (sub {
+      my ($clhdl, $line) = @_;
+
+      if ($line eq 'BLABLABLA') {
+         print "ok 2 - client received response\n";
+      } else {
+         print "not ok 2 - client received bad response\n";
+      }
+
+      $cv->broadcast;
+   });
+}, sub {
+   warn "couldn't connect: $!";
+   $cv->broadcast;
+}, 10);
 
 $cv->wait;
-
-is ($lbytes, "TEST\015\012", 'listening end received data');
-is ($rbytes, "BLABLABLA\015\012", 'connecting received response');
-

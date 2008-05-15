@@ -45,8 +45,8 @@ our $VERSION = '0.02';
 =head1 DESCRIPTION
 
 This module is a helper module to make it easier to do event-based I/O on
-filehandles (and sockets, see L<AnyEvent::Socket> for an easy way to make
-non-blocking resolves and connects).
+filehandles. For utility functions for doing non-blocking connects and accepts
+on sockets see L<AnyEvent::Util>.
 
 In the following, when the documentation refers to of "bytes" then this
 means characters. As sysread and syswrite are used for all I/O, their

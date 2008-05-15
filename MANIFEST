@@ -23,8 +23,8 @@ t/04_condvar.t
 t/handle/00_load.t
 t/handle/01_readline.t
 t/handle/02_write.t
+t/handle/04_listen.t
 #	t/handle/03_http_req.t
-#	t/handle/04_listen.t
 eg/bench
 eg/runbench
 eg/bench2
