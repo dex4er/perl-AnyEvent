@@ -487,7 +487,7 @@ sub _read_chunk($$) {
 
    sub {
       $len <= length $_[0]{rbuf} or return;
-      $cb->($self, $_[0], substr $_[0]{rbuf}, 0, $len, "");
+      $cb->($_[0], substr $_[0]{rbuf}, 0, $len, "");
       1
    }
 }
@@ -539,7 +539,7 @@ sub _read_line($$) {
    sub {
       $_[0]{rbuf} =~ s/$eol// or return;
 
-      $cb->($self, $1, $2);
+      $cb->($_[0], $1, $2);
       1
    }
 }

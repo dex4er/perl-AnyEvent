@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- fixed a bug in *_read_chunk, where the callback was called with $self as
+          first and second argument.
 	- added AnyEvent::Util::connect and some examples (eg/connect, eg/handle).
 	- fix manpage condvars examples to use new syntax.
 
