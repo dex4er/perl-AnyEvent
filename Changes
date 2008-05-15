@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+	- added AnyEvent::Util::connect and some examples (eg/connect, eg/handle).
 	- fix manpage condvars examples to use new syntax.
 
 3.41 Sun May 11 19:53:13 CEST 2008

@@ -138,6 +138,128 @@ sub fh_nonblocking($$) {
    }
 }
 
+=item AnyEvent::Util::connect ($socket, $connect_cb, $error_cb[, $timeout])
+
+Connects the socket C<$socket> non-blocking. C<$connect_cb> will be
+called when the socket was successfully connected and became writable,
+the first argument to the C<$connect_cb> callback will be the C<$socket>
+itself.
+
+The blocking state of C<$socket> will be set to nonblocking via C<fh_nonblocking> (see
+above).
+
+C<$error_cb> will be called when any error happened while connecting
+the socket. C<$!> will be set to an appropriate error number.
+
+If C<$timeout> is given a timeout will be installed for the connect. If the
+timeout was reached the C<$error_cb> callback will be called and C<$!> is set to
+C<ETIMEDOUT>.
+
+The return value of C<connect> will be a guard object that you have to keep
+referenced until you are done with the connect or received an error.
+If you let the object's reference drop to zero the internal connect and timeout
+watchers will be removed.
+
+Here is a short example, which creates a socket and does a blocking DNS lookup via
+L<IO::Socket::INET>:
+
+   my $sock = IO::Socket::INET->new (
+       PeerAddr => "www.google.com:80",
+       Blocking => 0,
+   ) or die "Couldn't make socket: $!\n";
+
+   my $hdl;
+
+   my $watchobj = AnyEvent::Util::connect ($sock, sub {
+      my ($sock) = @_;
+
+      $hdl =
+         AnyEvent::Handle->new (
+            fh => $sock,
+            on_eof => sub {
+               print "received eof\n";
+               undef $hdl
+            }
+         );
+
+      $hdl->push_write ("GET / HTTP/1.0\015\012\015\012");
+
+      $hdl->push_read_line (sub {
+         my ($hdl, $line) = @_;
+         print "Yay, got line: $line\n";
+      });
+
+   }, sub {
+      warn "Got error on connect: $!\n";
+   }, 10);
+
+=cut
+
+sub connect {
+   my ($socket, $c_cb, $e_cb, $tout) = @_;
+
+   fh_nonblocking ($socket, 1);
+
+   my $o = AnyEvent::Util::SocketHandle->new (
+      fh         => $socket,
+      connect_cb => $c_cb,
+      error_cb   => $e_cb,
+      timeout    => $tout,
+   );
+
+   $o->connect;
+
+   $o
+}
+
+package AnyEvent::Util::SocketHandle;
+use Errno qw/ETIMEDOUT/;
+use Socket;
+use Scalar::Util qw/weaken/;
+
+sub new {
+   my $this  = shift;
+   my $class = ref($this) || $this;
+   my $self  = { @_ };
+   bless $self, $class;
+
+   return $self
+}
+
+sub error {
+   my ($self) = @_;
+   delete $self->{con_w};
+   delete $self->{tmout};
+   $self->{error_cb}->();
+}
+
+sub connect {
+   my ($self) = @_;
+
+   weaken $self;
+
+   if (defined $self->{timeout}) {
+      $self->{tmout} =
+         AnyEvent->timer (after => $self->{timeout}, cb => sub {
+            $! = ETIMEDOUT;
+            $self->error;
+         });
+   }
+
+   $self->{con_w} =
+      AnyEvent->io (poll => 'w', fh => $self->{fh}, cb => sub {
+         delete $self->{con_w};
+         delete $self->{tmout};
+
+         if ($! = $self->{fh}->sockopt (SO_ERROR)) {
+            $self->error;
+
+         } else {
+            $self->{connect_cb}->($self->{fh});
+         }
+      });
+}
+
 1;
 
 =back

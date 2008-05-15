@@ -13,7 +13,6 @@ my $ae_fh =
 
 $ae_fh->push_read_line (sub {
    my ($ae_fh, $line) = @_;
-   chomp $line;
    print "Got line [$line]\n";
 
    $ae_fh->push_read (sub {
