@@ -1,8 +1,10 @@
 #!/opt/perl/bin/perl
+
 use strict;
+
 use AnyEvent::Impl::Perl;
 use AnyEvent;
-use AnyEvent::Socket;
+use AnyEvent::Handle;
 
 unless ($ENV{PERL_ANYEVENT_NET_TESTS}) {
    print "1..0 # Skip PERL_ANYEVENT_NET_TESTS environment variable not set\n";
@@ -16,7 +18,7 @@ my $cv = AnyEvent->condvar;
 my $rbytes;
 
 my $hdl;
-my $wo = AnyEvent::Util::tcp_connect ('www.google.com', 80, sub {
+my $wo = AnyEvent::Util::tcp_connect 'www.google.com', 80, sub {
    my ($sock) = @_;
    $hdl =
       AnyEvent::Handle->new (
@@ -57,8 +59,6 @@ my $wo = AnyEvent::Util::tcp_connect ('www.google.com', 80, sub {
 
    $hdl->push_write ("GET http://www.google.com/ HTTP/1.0\015\012\015\012");
 
-}, sub {
-   warn "error on connect: $!";
-}, 10);
+};
 
 $cv->wait;

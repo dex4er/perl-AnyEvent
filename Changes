@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- gracefully deal with systems not defining CLOCK_MONOTONIC
+          (as opposed to not supporting the clock itself, which worked in 3.41).
 	- added AnyEvent::Util::tcp_connect and AnyEvent::Util::tcp_server
           helpers, to replace the ill-designed AnyEvent::Socket class.
 	- added some examples (eg/connect, eg/handle).

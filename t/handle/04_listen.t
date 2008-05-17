@@ -1,9 +1,10 @@
 #!/opt/perl/bin/perl
+
 use strict;
+
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
 use AnyEvent::Util;
-use IO::Socket::INET;
 
 my $lbytes;
 my $rbytes;
@@ -12,37 +13,38 @@ print "1..2\n";
 
 my $cv = AnyEvent->condvar;
 
-my $sock = IO::Socket::INET->new (
-    Listen => 5, ReuseAddr => 1, LocalAddr => 'localhost',
-) or die "Couldn't make socket: $!\n";
-
 my $hdl;
+my $port;
 
-my $w = AnyEvent::Util::listen ($sock, sub {
-   my ($cl, $claddr) = @_;
-   $hdl = AnyEvent::Handle->new (fh => $cl, on_eof => sub { $cv->broadcast });
+my $w = AnyEvent::Util::tcp_server undef, undef,
+   sub {
+      my ($fh, $host, $port) = @_;
 
-   $hdl->push_read_chunk (6, sub {
-      my ($hdl, $data) = @_;
+      $hdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
 
-      if ($data eq "TEST\015\012") {
-         print "ok 1 - server received client data\n";
-      } else {
-         print "not ok 1 - server received bad client data\n";
-      }
+      $hdl->push_read_chunk (6, sub {
+         my ($hdl, $data) = @_;
 
-      $hdl->push_write ("BLABLABLA\015\012");
-   });
+         if ($data eq "TEST\015\012") {
+            print "ok 1 - server received client data\n";
+         } else {
+            print "not ok 1 - server received bad client data\n";
+         }
 
-}, sub {
-   warn "error on accept: $!";
-   $cv->broadcast;
-});
+         $hdl->push_write ("BLABLABLA\015\012");
+      });
+   }, sub {
+      ($port) = Socket::unpack_sockaddr_in getsockname $_[0];
+
+      0
+   };
+
 
 my $clhdl;
-my $wc = AnyEvent::Util::tcp_connect ($sock->sockhost, $sock->sockport, sub {
-   my ($clsock) = @_;
-   $clhdl = AnyEvent::Handle->new (fh => $clsock, on_eof => sub { $cv->broadcast });
+my $wc = AnyEvent::Util::tcp_connect localhost => $port, sub {
+   my ($fh) = @_;
+
+   $clhdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
 
    $clhdl->push_write ("TEST\015\012");
    $clhdl->push_read_line (sub {
@@ -56,9 +58,6 @@ my $wc = AnyEvent::Util::tcp_connect ($sock->sockhost, $sock->sockport, sub {
 
       $cv->broadcast;
    });
-}, sub {
-   warn "couldn't connect: $!";
-   $cv->broadcast;
-}, 10);
+};
 
 $cv->wait;
