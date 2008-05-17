@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- only make a dummy read for error detection when getpeername
+          returns ENOTCONN.
+
 3.5  Sat May 17 23:17:14 CEST 2008
 	- gracefully deal with systems not defining CLOCK_MONOTONIC
           (as opposed to not supporting the clock itself, which worked in 3.41).

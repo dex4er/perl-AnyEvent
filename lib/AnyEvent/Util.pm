@@ -332,7 +332,7 @@ sub tcp_connect($$$;$) {
             $connect->($fh, (Socket::inet_ntoa $host), $port);
          } else {
             # dummy read to fetch real error code
-            sysread $fh, my $buf, 1;
+            sysread $fh, my $buf, 1 if $! == &Errno::ENOTCONN;
             $connect->();
          }
       };
