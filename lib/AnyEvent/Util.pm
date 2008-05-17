@@ -237,7 +237,6 @@ to 15 seconds.
          15
       };
 
-
 =cut
 
 sub tcp_connect($$$;$) {
@@ -245,34 +244,34 @@ sub tcp_connect($$$;$) {
 
    # see http://cr.yp.to/docs/connect.html for some background
 
-   my $state = {};
+   my %state = ( fh => undef );
 
    # name resolution
    inet_aton $host, sub {
-      return unless $state;
+      return unless exists $state{fh};
 
       my $ipn = shift
          or do {
-            undef $state;
+            %state = ();
             $! = &Errno::ENXIO;
             return $connect->();
          };
 
       # socket creation
-      socket $state->{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+      socket $state{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
          or do {
-            undef $state;
+            %state = ();
             return $connect->();
          };
 
-      fh_nonblocking $state->{fh}, 1;
+      fh_nonblocking $state{fh}, 1;
       
       # prepare and optional timeout
       if ($prepare) {
-         my $timeout = $prepare->($state->{fh});
+         my $timeout = $prepare->($state{fh});
 
-         $state->{to} = AnyEvent->timer (after => $timeout, cb => sub {
-            undef $state;
+         $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
+            %state = ();
             $! = &Errno::ETIMEDOUT;
             $connect->();
          }) if $timeout;
@@ -281,8 +280,8 @@ sub tcp_connect($$$;$) {
       # called when the connect was successful, which,
       # in theory, could be the case immediately (but never is in practise)
       my $connected = sub {
-         my $fh = delete $state->{fh};
-         undef $state;
+         my $fh = delete $state{fh};
+         %state = ();
 
          # we are connected, or maybe there was an error
          if (my $sin = getpeername $fh) {
@@ -296,150 +295,89 @@ sub tcp_connect($$$;$) {
       };
 
       # now connect       
-      if (connect $state->{fh}, Socket::pack_sockaddr_in $port, $ipn) {
+      if (connect $state{fh}, Socket::pack_sockaddr_in $port, $ipn) {
          $connected->();
       } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
-         $state->{ww} = AnyEvent->io (fh => $state->{fh}, poll => 'w', cb => $connected);
+         $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
       } else {
-         undef $state;
+         %state = ();
          $connect->();
       }
    };
 
    defined wantarray
-      ? guard { undef $state }
+      ? guard { %state = () }
       : ()
 }
 
-=item AnyEvent::Util::tcp_server $host, $port, $accept_cb[, $prepare_cb]
+=item $guard = AnyEvent::Util::tcp_server $host, $port, $accept_cb[, $prepare_cb]
 
-#TODO#
+Create and bind a tcp socket to the given host (any IPv4 host if undef,
+otherwise it must be an IPv4 or IPv6 address) and port (or an ephemeral
+port if given as zero or undef), set the SO_REUSEADDR flag and call
+C<listen>.
 
-This will listen and accept new connections on the C<$socket> in a non-blocking
-way. The callback C<$client_cb> will be called when a new client connection
-was accepted and the callback C<$error_cb> will be called in case of an error.
-C<$!> will be set to an approriate error number.
+For each new connection that could be C<accept>ed, call the C<$accept_cb>
+with the filehandle (in non-blocking mode) as first and the peer host and
+port as second and third arguments (see C<tcp_connect> for details).
 
-The blocking state of C<$socket> will be set to nonblocking via C<fh_nonblocking> (see
-above).
+Croaks on any errors.
 
-The first argument to C<$client_cb> will be the socket of the accepted client
-and the second argument the peer address.
+If called in non-void context, then this function returns a guard object
+whose lifetime it tied to the tcp server: If the object gets destroyed,
+the server will be stopped (but existing accepted connections will
+continue).
 
-The return value is a guard object that you have to keep referenced as long as you
-want to accept new connections.
+If you need more control over the listening socket, you can provide a
+C<$prepare_cb>, which is called just before the C<listen ()> call, with
+the listen file handle as first argument.
 
-Here is an example usage:
+It should return the length of the listen queue (or C<0> for the default).
 
-   my $sock = IO::Socket::INET->new (
-       Listen => 5
-   ) or die "Couldn't make socket: $!\n";
+Example: bind on tcp port 8888 on the local machine and tell each client
+to go away.
 
-   my $watchobj = AnyEvent::Util::listen ($sock, sub {
-      my ($cl_sock, $cl_addr) = @_;
+   AnyEvent::Util::tcp_server undef, 8888, sub {
+      my ($fh, $host, $port) = @_;
 
-      my ($port, $addr) = sockaddr_in ($cl_addr);
-      $addr = inet_ntoa ($addr);
-      print "Client connected: $addr:$port\n";
-
-      # ...
-
-   }, sub {
-      warn "Error on accept: $!"
-   });
+      syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
+   };
 
 =cut
 
-sub listen {
-   my ($socket, $c_cb, $e_cb) = @_;
+sub tcp_server($$$;$) {
+   my ($host, $port, $accept, $prepare) = @_;
 
-   fh_nonblocking ($socket, 1);
+   my %state;
 
-   my $o =
-      AnyEvent::Util::SocketHandle->new (
-         fh => $socket,
-         client_cb => $c_cb,
-         error_cb => $e_cb
-      );
+   socket $state{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+      or Carp::croak "socket: $!";
 
-   $o->listen;
+   setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
+      or Carp::croak "so_reuseaddr: $!";
 
-   $o
-}
+   bind $state{fh}, Socket::pack_sockaddr_in $port, Socket::inet_aton ($host || "0.0.0.0")
+      or Carp::croak "bind: $!";
 
-package AnyEvent::Util::SocketHandle;
-use Errno qw/ETIMEDOUT/;
-use Socket;
-use Scalar::Util qw/weaken/;
+   fh_nonblocking $state{fh}, 1;
 
-sub new {
-   my $this  = shift;
-   my $class = ref($this) || $this;
-   my $self  = { @_ };
-   bless $self, $class;
+   my $len = ($prepare && $prepare->($state{fh})) || 128;
 
-   return $self
-}
+   listen $state{fh}, $len
+      or Carp::croak "listen: $!";
 
-sub error {
-   my ($self) = @_;
-   delete $self->{con_w};
-   delete $self->{list_w};
-   delete $self->{tmout};
-   $self->{error_cb}->();
-}
+   $state{aw} = AnyEvent->io (fh => $state{fh}, poll => 'r', cb => sub {
+      # this closure keeps $state alive
+      while (my $peer = accept my $fh, $state{fh}) {
+         fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
+         my ($port, $host) = Socket::unpack_sockaddr_in $peer;
+         $accept->($fh, (Socket::inet_ntoa $host), $port);
+      }
+   });
 
-sub listen {
-   my ($self) = @_;
-
-   weaken $self;
-
-   $self->{list_w} =
-      AnyEvent->io (poll => 'r', fh => $self->{fh}, cb => sub {
-         my ($new_sock, $paddr) = $self->{fh}->accept ();
-
-         unless (defined $new_sock) {
-            $self->error;
-            return;
-         }
-
-         $self->{client_cb}->($new_sock, $paddr);
-      });
-}
-
-sub start_timeout {
-   my ($self) = @_;
-
-   if (defined $self->{timeout}) {
-      $self->{tmout} =
-         AnyEvent->timer (after => $self->{timeout}, cb => sub {
-            delete $self->{tmout};
-            $! = ETIMEDOUT;
-            $self->error;
-            $self->{timed_out} = 1;
-         });
-   }
-}
-
-sub connect {
-   my ($self) = @_;
-
-   weaken $self;
-
-   $self->start_timeout;
-
-   $self->{con_w} =
-      AnyEvent->io (poll => 'w', fh => $self->{fh}, cb => sub {
-         delete $self->{con_w};
-         delete $self->{tmout};
-
-         if ($! = $self->{fh}->sockopt (SO_ERROR)) {
-            $self->error;
-
-         } else {
-            $self->{connect_cb}->($self->{fh});
-         }
-      });
+   defined wantarray
+      ? guard { %state = () }
+      : ()
 }
 
 1;
