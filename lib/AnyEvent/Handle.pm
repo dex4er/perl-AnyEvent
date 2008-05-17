@@ -533,8 +533,8 @@ sub _read_line($$) {
    my $eol = @_ ? shift : qr|(\015?\012)|;
    my $pos;
 
-   $eol = qr|(\Q$eol\E)| unless ref $eol;
-   $eol = qr|^(.*?)($eol)|;
+   $eol = quotemeta $eol unless ref $eol;
+   $eol = qr|^(.*?)($eol)|s;
 
    sub {
       $_[0]{rbuf} =~ s/$eol// or return;

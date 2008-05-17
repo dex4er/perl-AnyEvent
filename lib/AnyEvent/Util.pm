@@ -23,7 +23,7 @@ use strict;
 
 no warnings "uninitialized";
 
-use Errno qw/ENXIO/;
+use Errno;
 use Socket ();
 use IO::Socket::INET ();
 
@@ -140,167 +140,180 @@ sub fh_nonblocking($$) {
    }
 }
 
-=item AnyEvent::Util::connect ($socket, $connect_cb->($socket), $error_cb->()[, $timeout])
-
-Connects the socket C<$socket> non-blocking. C<$connect_cb> will be
-called when the socket was successfully connected and became writable,
-the first argument to the C<$connect_cb> callback will be the C<$socket>
-itself.
-
-The blocking state of C<$socket> will be set to nonblocking via C<fh_nonblocking> (see
-above).
-
-C<$error_cb> will be called when any error happened while connecting
-the socket. C<$!> will be set to an appropriate error number.
-
-If C<$timeout> is given a timeout will be installed for the connect. If the
-timeout was reached the C<$error_cb> callback will be called and C<$!> is set to
-C<ETIMEDOUT>.
-
-The return value of C<connect> will be a guard object that you have to keep
-referenced until you are done with the connect or received an error.
-If you let the object's reference drop to zero the internal connect and timeout
-watchers will be removed.
-
-Here is a short example, which creates a socket and does a blocking DNS lookup via
-L<IO::Socket::INET>:
-
-   my $sock = IO::Socket::INET->new (
-       PeerAddr => "www.google.com:80",
-       Blocking => 0,
-   ) or die "Couldn't make socket: $!\n";
-
-   my $hdl;
-
-   my $watchobj = AnyEvent::Util::connect ($sock, sub {
-      my ($sock) = @_;
-
-      $hdl =
-         AnyEvent::Handle->new (
-            fh => $sock,
-            on_eof => sub {
-               print "received eof\n";
-               undef $hdl
-            }
-         );
-
-      $hdl->push_write ("GET / HTTP/1.0\015\012\015\012");
-
-      $hdl->push_read_line (sub {
-         my ($hdl, $line) = @_;
-         print "Yay, got line: $line\n";
-      });
-
-   }, sub {
-      warn "Got error on connect: $!\n";
-   }, 10);
-
-=cut
-
-sub connect {
-   my ($socket, $c_cb, $e_cb, $tout) = @_;
-
-   fh_nonblocking ($socket, 1);
-
-   my $o = AnyEvent::Util::SocketHandle->new (
-      fh         => $socket,
-      connect_cb => $c_cb,
-      error_cb   => $e_cb,
-      timeout    => $tout,
-   );
-
-   $o->connect;
-
-   $o
+sub AnyEvent::Util::Guard::DESTROY {
+   ${$_[0]}->();
 }
 
-=item AnyEvent::Util::tcp_connect ($host, $port, $connect_cb->($socket), $error_cb->()[, $timeout])
+=item $guard = AnyEvent::Util::guard { CODE }
 
-This is a shortcut function which behaves similar to the C<connect> function
-described above, except that it does a C<AnyEvent::Util::inet_aton> on C<$host>
-and creates a L<IO::Socket::INET> TCP connection for you, which will be
-passed as C<$socket> argument to the C<$connect_cb> callback above.
+This function creates a special object that, when called, will execute the
+code block.
 
-In case the hostname couldn't be resolved C<$error_cb> will be called and C<$!>
-will be set to C<ENXIO>.
-
-For more details about the return value and the arguments see the C<connect>
-function above.
-
-Here is a short example:
-
-
-   my $hdl;
-   my $watchobj = AnyEvent::Util::tcp_connect ("www.google.com", 80, sub {
-      my ($sock) = @_;
-
-      $hdl =
-         AnyEvent::Handle->new (
-            fh => $sock,
-            on_eof => sub {
-               print "received eof\n";
-               undef $hdl
-            }
-         );
-
-      $hdl->push_write ("GET / HTTP/1.0\015\012\015\012");
-
-      $hdl->push_read_line (sub {
-         my ($hdl, $line) = @_;
-         print "Yay, got line: $line\n";
-      });
-
-   }, sub {
-      warn "Got error on connect: $!\n";
-   }, 10);
+This is often handy in continuation-passing style code to clean up some
+resource regardless of where you break out of a process.
 
 =cut
 
-sub tcp_connect {
-   my ($host, $port, $c_cb, $e_cb, $tout, %sockargs) = @_;
+sub guard(&) {
+   bless \(my $cb = shift), AnyEvent::Util::Guard::
+}
 
-   my $o = AnyEvent::Util::SocketHandle->new (
-      connect_cb => $c_cb,
-      error_cb   => $e_cb,
-      timeout    => $tout,
-   );
+=item my $guard = AnyEvent::Util::tcp_connect $host, $port, $connect_cb[, $prepare_cb]
 
-   $o->start_timeout;
+This is a convenience function that creates a tcp socket and makes a 100%
+non-blocking connect to the given C<$host> (which can be a hostname or a
+textual IP address) and C<$port>.
 
-   AnyEvent::Util::inet_aton ($host, sub {
-      my ($addr) = @_;
+Unless called in void context, it returns a guard object that will
+automatically abort connecting when it gets destroyed (it does not do
+anything to the socket after the conenct was successful).
 
-      return if $o->{timed_out};
+If the connect is successful, then the C<$connect_cb> will be invoked with
+the socket filehandle (in non-blocking mode) as first and the peer host
+(as a textual IP address) and peer port as second and third arguments,
+respectively.
 
-      if ($addr) {
-         my $sock =
-            IO::Socket::INET->new (
-               PeerHost => Socket::inet_ntoa ($addr),
-               PeerPort => $port,
-               Blocking => 0,
-               %sockargs
-            );
+If the connect is unsuccessful, then the C<$connect_cb> will be invoked
+without any arguments and C<$!> will be set appropriately (with C<ENXIO>
+indicating a dns resolution failure).
 
-         unless ($sock) {
-            $o->error;
-         }
+The filehandle is suitable to be plugged into L<AnyEvent::Handle>, but can
+be used as a normal perl file handle as well.
 
-         fh_nonblocking ($sock, 1);
+Sometimes you need to "prepare" the socket before connecting, for example,
+to C<bind> it to some port, or you want a specific connect timeout that
+is lower than your kernel's default timeout. In this case you can specify
+a second callback, C<$prepare_cb>. It will be called with the file handle
+in not-yet-connected state as only argument and must return the connection
+timeout value (or C<0>, C<undef> or the empty list to indicate the default
+timeout is to be used).
 
-         $o->{fh} = $sock;
+Note that the socket could be either a IPv4 TCP socket or an IPv6 tcp
+socket (although only IPv4 is currently supported by this module).
 
-         $o->connect;
+Simple Example: connect to localhost on port 22.
 
-      } else {
-         $! = ENXIO;
-         $o->error;
+  AnyEvent::Util::tcp_connect localhost => 22, sub {
+     my $fh = shift
+        or die "unable to connect: $!";
+     # do something
+  };
+
+Complex Example: connect to www.google.com on port 80 and make a simple
+GET request without much error handling. Also limit the connection timeout
+to 15 seconds.
+
+   AnyEvent::Util::tcp_connect "www.google.com", 80,
+      sub {
+         my ($fh) = @_
+            or die "unable to connect: $!";
+
+         my $handle; # avoid direct assignment so on_eof has it in scope.
+         $handle = new AnyEvent::Handle
+            fh     => $fh,
+            on_eof => sub {
+               undef $handle; # keep it alive till eof
+               warn "done.\n";
+            };
+
+         $handle->push_write ("GET / HTTP/1.0\015\012\015\012");
+
+         $handle->push_read_line ("\015\012\015\012", sub {
+            my ($handle, $line) = @_;
+
+            # print response header
+            print "HEADER\n$line\n\nBODY\n";
+
+            $handle->on_read (sub {
+               # print response body
+               print $_[0]->rbuf;
+               $_[0]->rbuf = "";
+            });
+         });
+      }, sub {
+         my ($fh) = @_;
+         # could call $fh->bind etc. here
+
+         15
+      };
+
+
+=cut
+
+sub tcp_connect($$$;$) {
+   my ($host, $port, $connect, $prepare) = @_;
+
+   # see http://cr.yp.to/docs/connect.html for some background
+
+   my $state = {};
+
+   # name resolution
+   inet_aton $host, sub {
+      return unless $state;
+
+      my $ipn = shift
+         or do {
+            undef $state;
+            $! = &Errno::ENXIO;
+            return $connect->();
+         };
+
+      # socket creation
+      socket $state->{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+         or do {
+            undef $state;
+            return $connect->();
+         };
+
+      fh_nonblocking $state->{fh}, 1;
+      
+      # prepare and optional timeout
+      if ($prepare) {
+         my $timeout = $prepare->($state->{fh});
+
+         $state->{to} = AnyEvent->timer (after => $timeout, cb => sub {
+            undef $state;
+            $! = &Errno::ETIMEDOUT;
+            $connect->();
+         }) if $timeout;
       }
-   });
 
-   $o
+      # called when the connect was successful, which,
+      # in theory, could be the case immediately (but never is in practise)
+      my $connected = sub {
+         my $fh = delete $state->{fh};
+         undef $state;
+
+         # we are connected, or maybe there was an error
+         if (my $sin = getpeername $fh) {
+            my ($port, $host) = Socket::unpack_sockaddr_in $sin;
+            $connect->($fh, (Socket::inet_ntoa $host), $port);
+         } else {
+            # dummy read to fetch real error code
+            sysread $fh, my $buf, 1;
+            $connect->();
+         }
+      };
+
+      # now connect       
+      if (connect $state->{fh}, Socket::pack_sockaddr_in $port, $ipn) {
+         $connected->();
+      } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
+         $state->{ww} = AnyEvent->io (fh => $state->{fh}, poll => 'w', cb => $connected);
+      } else {
+         undef $state;
+         $connect->();
+      }
+   };
+
+   defined wantarray
+      ? guard { undef $state }
+      : ()
 }
 
-=item AnyEvent::Util::listen ($socket, $client_cb->($new_socket, $peer_ad), $error_cb->())
+=item AnyEvent::Util::tcp_server $host, $port, $accept_cb[, $prepare_cb]
+
+#TODO#
 
 This will listen and accept new connections on the C<$socket> in a non-blocking
 way. The callback C<$client_cb> will be called when a new client connection

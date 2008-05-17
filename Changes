@@ -1,10 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
-	- added AnyEvent::Util::tcp_connect helper function
-	- added AnyEvent::Util::listen (and an example eg/listen)
+	- added AnyEvent::Util::tcp_connect and AnyEvent::Util::tcp_server
+          helpers, to replace the ill-designed AnyEvent::Socket class.
+	- added some examples (eg/connect, eg/handle).
+	- added AnyEvent::Util::guard.
+        - AnyEvent::Util now exports most of its functions.
 	- fixed a bug in *_read_chunk, where the callback was called with $self as
           first and second argument.
-	- added AnyEvent::Util::connect and some examples (eg/connect, eg/handle).
+        - simplified and fixed regex handling in AnyEvent::Handle::*_read_line.
 	- fix manpage condvars examples to use new syntax.
 
 3.41 Sun May 11 19:53:13 CEST 2008
