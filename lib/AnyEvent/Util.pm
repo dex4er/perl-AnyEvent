@@ -289,7 +289,9 @@ sub tcp_connect($$$;$) {
    inet_aton $host, sub {
       return unless exists $state{fh};
 
-      my $ipn = shift
+      my $ipn = shift;
+
+      4 == length $ipn
          or do {
             %state = ();
             $! = &Errno::ENXIO;
