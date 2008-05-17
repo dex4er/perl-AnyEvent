@@ -306,7 +306,7 @@ sub tcp_connect($$$;$) {
    };
 
    defined wantarray
-      ? guard { %state = () }
+      ? guard { %state = () } # break any circular dependencies and unregister watchers
       : ()
 }
 
@@ -376,7 +376,7 @@ sub tcp_server($$$;$) {
    });
 
    defined wantarray
-      ? guard { %state = () }
+      ? guard { %state = () } # clear fh and watcher, which breaks the circular dependency
       : ()
 }
 

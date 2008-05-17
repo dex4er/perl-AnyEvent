@@ -732,12 +732,12 @@ sub post_detect(&) {
       push @post_detect, $cb;
 
       defined wantarray
-         ? bless \$cb, "AnyEvent::Util::Guard"
+         ? bless \$cb, "AnyEvent::Util::PostDetect"
          : ()
    }
 }
 
-sub AnyEvent::Util::Guard::DESTROY {
+sub AnyEvent::Util::PostDetect::DESTROY {
    @post_detect = grep $_ != ${$_[0]}, @post_detect;
 }
 
