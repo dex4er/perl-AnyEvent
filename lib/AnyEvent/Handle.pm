@@ -14,9 +14,11 @@ use Errno qw/EAGAIN EINTR/;
 
 AnyEvent::Handle - non-blocking I/O on filehandles via AnyEvent
 
+This module is experimental.
+
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 

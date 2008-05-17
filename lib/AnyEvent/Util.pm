@@ -199,6 +199,8 @@ sub guard(&) {
 
 =item my $guard = AnyEvent::Util::tcp_connect $host, $port, $connect_cb[, $prepare_cb]
 
+This function is experimental.
+
 This is a convenience function that creates a tcp socket and makes a 100%
 non-blocking connect to the given C<$host> (which can be a hostname or a
 textual IP address) and C<$port>.
@@ -352,6 +354,8 @@ sub tcp_connect($$$;$) {
 }
 
 =item $guard = AnyEvent::Util::tcp_server $host, $port, $accept_cb[, $prepare_cb]
+
+This function is experimental.
 
 Create and bind a tcp socket to the given host (any IPv4 host if undef,
 otherwise it must be an IPv4 or IPv6 address) and port (or an ephemeral

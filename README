@@ -724,7 +724,7 @@ EXAMPLE PROGRAM
              warn "io event <$_[0]>\n";   # will always output <r>
              chomp (my $input = <STDIN>); # read a line
              warn "read: $input\n";       # output what has been read
-             $cv->broadcast if $input =~ /^q/i; # quit program if /^q/i
+             $cv->send if $input =~ /^q/i; # quit program if /^q/i
           },
        );
 
@@ -739,7 +739,7 @@ EXAMPLE PROGRAM
 
        new_timer; # create first timer
 
-       $cv->wait; # wait until user enters /^q/i
+       $cv->recv; # wait until user enters /^q/i
 
 REAL-WORLD EXAMPLE
     Consider the Net::FCP module. It features (among others) the following
@@ -804,7 +804,7 @@ REAL-WORLD EXAMPLE
 
        if (end-of-file or data complete) {
          $txn->{result} = $txn->{buf};
-         $txn->{finished}->broadcast;
+         $txn->{finished}->send;
          $txb->{cb}->($txn) of $txn->{cb}; # also call callback
        }
 
@@ -812,7 +812,7 @@ REAL-WORLD EXAMPLE
     request was already finished, it doesn't wait, of course, and returns
     the data:
 
-       $txn->{finished}->wait;
+       $txn->{finished}->recv;
        return $txn->{result};
 
     The actual code goes further and collects all errors ("die"s,
@@ -857,10 +857,10 @@ REAL-WORLD EXAMPLE
 
        $fcp->txn_client_get ($url)->cb (sub {
           ...
-          $quit->broadcast;
+          $quit->send;
        });
 
-       $quit->wait;
+       $quit->recv;
 
 BENCHMARKS
     To give you an idea of the performance and overheads that AnyEvent adds
@@ -895,8 +895,8 @@ BENCHMARKS
 
     *invoke* is the time, in microseconds, used to invoke a simple callback.
     The callback simply counts down a Perl variable and after it was invoked
-    "watcher" times, it would "->broadcast" a condvar once to signal the end
-    of this phase.
+    "watcher" times, it would "->send" a condvar once to signal the end of
+    this phase.
 
     *destroy* is the time, in microseconds, that it takes to destroy a
     single watcher.
