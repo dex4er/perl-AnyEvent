@@ -6,12 +6,13 @@ AnyEvent::Util - various utility functions.
 
  use AnyEvent::Util;
 
- inet_aton $name, $cb->($ipn || undef);
-
 =head1 DESCRIPTION
 
 This module implements various utility functions, mostly replacing
 well-known functions by event-ised counterparts.
+
+All functions documented without C<AnyEvent::Util::> prefix are exported
+by default.
 
 =over 4
 
@@ -31,8 +32,7 @@ use AnyEvent;
 
 use base 'Exporter';
 
-#our @EXPORT = qw(gethostbyname gethostbyaddr);
-our @EXPORT_OK = qw(inet_aton);
+our @EXPORT = qw(inet_aton fh_nonblocking guard tcp_server tcp_connect);
 
 our $VERSION = '1.0';
 
@@ -95,10 +95,15 @@ sub has_ev_adns {
    }) - 1  # 2 => true, 1 => false
 }
 
-=item AnyEvent::Util::inet_aton $name_or_address, $cb->($binary_address_or_undef)
+=item inet_aton $name_or_address, $cb->($binary_address_or_undef)
 
 Works almost exactly like its Socket counterpart, except that it uses a
-callback.
+callback. Also, if a host has only an IPv6 address, this might be passed
+to the callback instead (use the length to detetc this - 4 for IPv4, 16
+for IPv6).
+
+This function uses various shortcuts and will fall back to either
+L<EV::ADNS> or your systems C<inet_aton>.
 
 =cut
 
@@ -110,16 +115,50 @@ sub inet_aton {
    } elsif ($name eq "localhost") { # rfc2606 et al.
       $cb->(v127.0.0.1);
    } elsif (&has_ev_adns) {
-      EV::ADNS::submit ($name, &EV::ADNS::r_addr, 0, sub {
-         my (undef, undef, @a) = @_;
-         $cb->(@a ? Socket::inet_aton $a[0] : undef);
-      });
+      # work around some idiotic ands rfc readings
+      # rather hackish support for AAAA records (should
+      # wait for adns_getaddrinfo...)
+
+      my $loop = 10; # follow cname chains up to this length
+      my $qt;
+      my $acb; $acb = sub {
+         my ($status, undef, @a) = @_;
+
+         if ($status == &EV::ADNS::s_ok) {
+            if ($qt eq "a") {
+               return $cb->(Socket::inet_aton $a[0]);
+            } elsif ($qt eq "aaaa") {
+               return $cb->($a[0]);
+            } elsif ($qt eq "cname") {
+               $name = $a[0];
+               $qt = "a";
+               return EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, $acb);
+            }
+         } elsif ($status == &EV::ADNS::s_prohibitedcname) {
+            # follow cname chains
+            if ($loop--) {
+               $qt = "cname";
+               return EV::ADNS::submit ($name, &EV::ADNS::r_cname, 0, $acb);
+            }
+         } elsif ($status == &EV::ADNS::s_nodata) {
+            if ($qt eq "a") {
+               # ask for raw AAAA (might not be a good method, but adns is too broken...)
+               $qt = "aaaa";
+               return EV::ADNS::submit ($name, &EV::ADNS::r_unknown | 28, 0, $acb);
+            }
+         }
+
+         $cb->(undef);
+      };
+ 
+      $qt = "a";
+      EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, $acb);
    } else {
       _do_asy $cb, sub { Socket::inet_aton $_[0] }, @_;
    }
 }
 
-=item AnyEvent::Util::fh_nonblocking $fh, $nonblocking
+=item fh_nonblocking $fh, $nonblocking
 
 Sets the blocking state of the given filehandle (true == nonblocking,
 false == blocking). Uses fcntl on anything sensible and ioctl FIONBIO on
@@ -140,11 +179,7 @@ sub fh_nonblocking($$) {
    }
 }
 
-sub AnyEvent::Util::Guard::DESTROY {
-   ${$_[0]}->();
-}
-
-=item $guard = AnyEvent::Util::guard { CODE }
+=item $guard = guard { CODE }
 
 This function creates a special object that, when called, will execute the
 code block.
@@ -153,6 +188,10 @@ This is often handy in continuation-passing style code to clean up some
 resource regardless of where you break out of a process.
 
 =cut
+
+sub AnyEvent::Util::Guard::DESTROY {
+   ${$_[0]}->();
+}
 
 sub guard(&) {
    bless \(my $cb = shift), AnyEvent::Util::Guard::

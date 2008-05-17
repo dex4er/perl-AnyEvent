@@ -9,6 +9,9 @@ Revision history for Perl extension AnyEvent.
           first and second argument.
         - simplified and fixed regex handling in AnyEvent::Handle::*_read_line.
 	- fix manpage condvars examples to use new syntax.
+        - considerably improve inet_aton with EV::ADNS backend to support
+          cname chains (common dns configuration bug, e.g. with www.google.de)
+          and aaaa records if no a record could be found.
 
 3.41 Sun May 11 19:53:13 CEST 2008
 	- work around a bug in perl 5.8.8's local. Reported by Yi Ma Mao.
