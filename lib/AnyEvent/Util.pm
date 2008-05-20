@@ -24,6 +24,7 @@ use strict;
 
 no warnings "uninitialized";
 
+use Carp ();
 use Errno ();
 use Socket ();
 use IO::Socket::INET ();
@@ -207,17 +208,25 @@ sub guard(&) {
    bless \(my $cb = shift), AnyEvent::Util::Guard::
 }
 
+sub _tcp_port($) {
+   $_[0] =~ /^\d*$/ and return $1*1;
+
+   (getservbyname $_[0], "tcp")[2]
+      or Carp::croak "$_[0]: service unknown"
+}
+
 =item my $guard = AnyEvent::Util::tcp_connect $host, $port, $connect_cb[, $prepare_cb]
 
 This function is experimental.
 
 This is a convenience function that creates a tcp socket and makes a 100%
 non-blocking connect to the given C<$host> (which can be a hostname or a
-textual IP address) and C<$port>.
+textual IP address) and C<$port> (which can be a numeric port number or a
+service name).
 
 Unless called in void context, it returns a guard object that will
 automatically abort connecting when it gets destroyed (it does not do
-anything to the socket after the conenct was successful).
+anything to the socket after the connect was successful).
 
 If the connect is successful, then the C<$connect_cb> will be invoked with
 the socket filehandle (in non-blocking mode) as first and the peer host
@@ -254,7 +263,7 @@ Complex Example: connect to www.google.com on port 80 and make a simple
 GET request without much error handling. Also limit the connection timeout
 to 15 seconds.
 
-   AnyEvent::Util::tcp_connect "www.google.com", 80,
+   AnyEvent::Util::tcp_connect "www.google.com", "http",
       sub {
          my ($fh) = @_
             or die "unable to connect: $!";
@@ -348,7 +357,7 @@ sub tcp_connect($$$;$) {
       };
 
       # now connect       
-      if (connect $state{fh}, Socket::pack_sockaddr_in $port, $ipn) {
+      if (connect $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, $ipn) {
          $connected->();
       } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
          $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
@@ -368,8 +377,9 @@ sub tcp_connect($$$;$) {
 This function is experimental.
 
 Create and bind a tcp socket to the given host (any IPv4 host if undef,
-otherwise it must be an IPv4 or IPv6 address) and port (or an ephemeral
-port if given as zero or undef), set the SO_REUSEADDR flag and call
+otherwise it must be an IPv4 or IPv6 address) and port (service name or
+numeric port number, or an ephemeral port if given as zero or undef, so
+you cnanot bind to tcp port zero), set the SO_REUSEADDR flag and call
 C<listen>.
 
 For each new connection that could be C<accept>ed, call the C<$accept_cb>
@@ -411,7 +421,7 @@ sub tcp_server($$$;$) {
    setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
       or Carp::croak "so_reuseaddr: $!";
 
-   bind $state{fh}, Socket::pack_sockaddr_in $port, socket_inet_aton ($host || "0.0.0.0")
+   bind $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, socket_inet_aton ($host || "0.0.0.0")
       or Carp::croak "bind: $!";
 
    fh_nonblocking $state{fh}, 1;
