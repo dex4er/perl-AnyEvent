@@ -378,9 +378,8 @@ This function is experimental.
 
 Create and bind a tcp socket to the given host (any IPv4 host if undef,
 otherwise it must be an IPv4 or IPv6 address) and port (service name or
-numeric port number, or an ephemeral port if given as zero or undef, so
-you cnanot bind to tcp port zero), set the SO_REUSEADDR flag and call
-C<listen>.
+numeric port number, or an ephemeral port if given as zero or undef), set
+the SO_REUSEADDR flag and call C<listen>.
 
 For each new connection that could be C<accept>ed, call the C<$accept_cb>
 with the filehandle (in non-blocking mode) as first and the peer host and

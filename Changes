@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+3.51
+	- support service names in tcp_connect and tcp_server.
 	- only make a dummy read for error detection when getpeername
           returns ENOTCONN.
         - defend AnyEvent::Util::inet_aton against Coro::LWP brutal
