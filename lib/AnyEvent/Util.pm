@@ -24,13 +24,17 @@ use strict;
 
 no warnings "uninitialized";
 
-use Errno;
+use Errno ();
 use Socket ();
 use IO::Socket::INET ();
 
 use AnyEvent;
 
 use base 'Exporter';
+
+BEGIN {
+   *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
+}
 
 our @EXPORT = qw(inet_aton fh_nonblocking guard tcp_server tcp_connect);
 
@@ -95,15 +99,18 @@ sub has_ev_adns {
    }) - 1  # 2 => true, 1 => false
 }
 
-=item inet_aton $name_or_address, $cb->($binary_address_or_undef)
+=item inet_aton $name_or_address, $cb->(@addresses)
 
-Works almost exactly like its Socket counterpart, except that it uses a
+Works similarly to its Socket counterpart, except that it uses a
 callback. Also, if a host has only an IPv6 address, this might be passed
-to the callback instead (use the length to detetc this - 4 for IPv4, 16
+to the callback instead (use the length to detect this - 4 for IPv4, 16
 for IPv6).
 
 This function uses various shortcuts and will fall back to either
 L<EV::ADNS> or your systems C<inet_aton>.
+
+Unlike the L<Socket> function, you can get multiple IP addresses as result
+(currently only when EV::ADNS is being used).
 
 =cut
 
@@ -111,7 +118,7 @@ sub inet_aton {
    my ($name, $cb) = @_;
 
    if (&dotted_quad) {
-      $cb->(Socket::inet_aton $name);
+      $cb->(socket_inet_aton $name);
    } elsif ($name eq "localhost") { # rfc2606 et al.
       $cb->(v127.0.0.1);
    } elsif (&has_ev_adns) {
@@ -126,11 +133,11 @@ sub inet_aton {
 
          if ($status == &EV::ADNS::s_ok) {
             if ($qt eq "a") {
-               return $cb->(Socket::inet_aton $a[0]);
+               return $cb->(map +(socket_inet_aton $_), @a);
             } elsif ($qt eq "aaaa") {
-               return $cb->($a[0]);
+               return $cb->(@a);
             } elsif ($qt eq "cname") {
-               $name = $a[0];
+               $name = $a[0]; # there can only be one :)
                $qt = "a";
                return EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, $acb);
             }
@@ -148,13 +155,16 @@ sub inet_aton {
             }
          }
 
-         $cb->(undef);
+         $cb->();
       };
  
       $qt = "a";
       EV::ADNS::submit ($name, &EV::ADNS::r_a, 0, $acb);
    } else {
-      _do_asy $cb, sub { Socket::inet_aton $_[0] }, @_;
+      _do_asy $cb, sub {
+         my $ipn = socket_inet_aton $_[0];
+         $ipn ? ($ipn) : ()
+      }, @_;
    }
 }
 
@@ -401,7 +411,7 @@ sub tcp_server($$$;$) {
    setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
       or Carp::croak "so_reuseaddr: $!";
 
-   bind $state{fh}, Socket::pack_sockaddr_in $port, Socket::inet_aton ($host || "0.0.0.0")
+   bind $state{fh}, Socket::pack_sockaddr_in $port, socket_inet_aton ($host || "0.0.0.0")
       or Carp::croak "bind: $!";
 
    fh_nonblocking $state{fh}, 1;

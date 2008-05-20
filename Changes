@@ -2,6 +2,8 @@ Revision history for Perl extension AnyEvent.
 
 	- only make a dummy read for error detection when getpeername
           returns ENOTCONN.
+        - defend AnyEvent::Util::inet_aton against Coro::LWP brutal
+          override.
 
 3.5  Sat May 17 23:17:14 CEST 2008
 	- gracefully deal with systems not defining CLOCK_MONOTONIC

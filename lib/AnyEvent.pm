@@ -693,7 +693,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '3.5';
+our $VERSION = '3.51';
 our $MODEL;
 
 our $AUTOLOAD;
