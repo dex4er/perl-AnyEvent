@@ -36,17 +36,16 @@ $rd_ae->push_read_chunk (5132, sub {
    $dat .= substr $data, -5;
 
    print "ok 4 - first read chunk\n";
-
    $wr_ae->push_write ("A" x 5000);
    $wr_ae->on_drain (sub {
       my ($wr_ae) = @_;
       $wr_ae->on_drain;
-      print "ok 5 - fourth write\n"
-   });
+      print "ok 5 - fourth write\n";
 
-   $rd_ae->push_read_chunk (1, sub {
-      print "ok 6 - second read chunk\n";
-      $cv->broadcast
+      $rd_ae->push_read_chunk (1, sub {
+         print "ok 6 - second read chunk\n";
+         $cv->broadcast
+      });
    });
 });
 
