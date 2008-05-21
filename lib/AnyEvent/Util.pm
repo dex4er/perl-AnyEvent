@@ -20,9 +20,8 @@ by default.
 
 package AnyEvent::Util;
 
+no warnings;
 use strict;
-
-no warnings "uninitialized";
 
 use Carp ();
 use Errno ();
@@ -209,7 +208,7 @@ sub guard(&) {
 }
 
 sub _tcp_port($) {
-   $_[0] =~ /^\d*$/ and return $1*1;
+   $_[0] =~ /^(\d*)$/ and return $1*1;
 
    (getservbyname $_[0], "tcp")[2]
       or Carp::croak "$_[0]: service unknown"

@@ -5,6 +5,7 @@ use strict;
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
 use AnyEvent::Util;
+use AnyEvent;
 
 my $lbytes;
 my $rbytes;

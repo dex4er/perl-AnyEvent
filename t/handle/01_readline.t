@@ -1,6 +1,7 @@
 #!perl
 
 use strict;
+
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
 use Test::More tests => 3;
