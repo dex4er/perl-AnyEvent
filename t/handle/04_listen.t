@@ -42,7 +42,8 @@ my $w = AnyEvent::Util::tcp_server undef, undef,
 
 my $clhdl;
 my $wc = AnyEvent::Util::tcp_connect localhost => $port, sub {
-   my ($fh) = @_;
+   my ($fh) = @_
+      or die "connect: $!";
 
    $clhdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
 
