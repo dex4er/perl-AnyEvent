@@ -122,7 +122,7 @@ sub inet_aton {
    } elsif ($name eq "localhost") { # rfc2606 et al.
       $cb->(v127.0.0.1);
    } elsif (&has_ev_adns) {
-      # work around some idiotic ands rfc readings
+      # work around some idiotic adns rfc interpretations
       # rather hackish support for AAAA records (should
       # wait for adns_getaddrinfo...)
 
