@@ -318,7 +318,7 @@ sub dns_pack($) {
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
       (join "", map _enc_rr, @{ $req->{ar} || [] }),
 
-      # (pack "C nnNn", 0, 41, 4000, 0, 0) # EDNS0, 4k udp payload size
+      # (pack "C nnNn", 0, 41, 4096, 0, 0) # EDNS0, 4kiB udp payload size
 }
 
 our $ofs;
@@ -700,7 +700,7 @@ sub _feed {
 sub _recv {
    my ($self) = @_;
 
-   while (my $peer = recv $self->{fh}, my $res, 4000, 0) {
+   while (my $peer = recv $self->{fh}, my $res, 4096, 0) {
       my ($port, $host) = Socket::unpack_sockaddr_in $peer;
 
       return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
