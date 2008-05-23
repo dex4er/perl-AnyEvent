@@ -93,7 +93,6 @@ sub parse_ipv6($) {
    my @h = split /:/, $h;
    my @t = split /:/, $t;
 
-      warn "a <$h><$t> $t[-1]\n";#d#
    # check four ipv4 tail
    if (@t && $t[-1]=~ /\./) {
       return undef if $n > 6;
