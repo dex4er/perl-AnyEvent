@@ -86,7 +86,7 @@ sub parse_ipv6($) {
 
    my ($h, $t) = split /::/, $_[0], 2;
 
-   unless (length $t) {
+   unless (defined $t) {
       ($h, $t) = (undef, $h);
    }
 
@@ -104,7 +104,7 @@ sub parse_ipv6($) {
    }
 
    # no :: then we need to have exactly 8 components
-   return undef unless $h || @h + @t == 8;
+   return undef unless @h + @t == 8 || $_[0] =~ /::/;
 
    # now check all parts for validity
    return undef if grep !/^[0-9a-fA-F]{1,4}$/, @h, @t;
@@ -112,11 +112,46 @@ sub parse_ipv6($) {
    # now pad...
    push @h, 0 while @h + @t < 8;
 
-   warn "h ", join ":", @h;
-   warn "t ", join ":", @t;
-
    # and done
    pack "n*", map hex, @h, @t
+}
+
+=item $ipn = parse_ip $text
+
+Combines C<parse_ipv4> and C<parse_ipv6> in one function.
+
+=cut
+
+sub parse_ip($) {
+   &parse_ipv4 || &parse_ipv6
+}
+
+=item $text = format_ip $ipn
+
+Takes either an IPv4 address (4 octets) or and IPv6 address (16 octets)
+and converts it into textual form.
+
+=cut
+
+sub format_ip;
+sub format_ip($) {
+   if (4 == length $_[0]) {
+      return join ".", unpack "C4", $_[0]
+   } elsif (16 == length $_[0]) {
+      if (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
+         # v4mapped
+         return "::ffff:" . format_ip substr $_[0], 12;
+      } else {
+         my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
+
+         $ip =~ s/^0:(?:0:)*/::/
+            or $ip =~ s/(:0)+$/::/
+            or $ip =~ s/(:0)+/:/;
+         return $ip
+      }
+   } else {
+      return undef
+   }
 }
 
 =item inet_aton $name_or_address, $cb->(@addresses)
