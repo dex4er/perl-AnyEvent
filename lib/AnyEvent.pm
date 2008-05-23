@@ -1497,6 +1497,8 @@ L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
 L<AnyEvent::Impl::POE>.
 
+Asynchronous DNS: L<AnyEvent::DNS>.
+
 Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>, L<Coro::Event>,
 
 Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
