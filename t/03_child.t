@@ -1,19 +1,27 @@
 $|=1;
+
+BEGIN {
+   # check for broken perls
+   if ($^O =~ /mswin32/i) {
+      my $ok;
+      local $SIG{CHLD} = sub { $ok = 1 };
+      kill 'CHLD', 0;
+
+      unless ($ok) {
+         print <<EOF;
+1..0 # Your perl interpreter is badly BROKEN. Child watchers will not work, ever. Try upgrading to a newer perl or a working perl (cygwin's perl is known to work). If that is not an option, you should be able to use the remaining functionality of AnyEvent, but child watchers WILL NOT WORK.
+EOF
+         exit 0;
+      }
+   }
+}
+
 BEGIN {
    print "1..7\n"
 }
 
 use AnyEvent;
 use AnyEvent::Impl::Perl;
-
-print STDERR <<EOF;
-
-If the following test hangs for a long time you either found a bug in
-AnyEvent or, more likely, you have a defective perl (most windows perl
-distros are broken, cygwin perl works). If you do not rely on child
-handlers you can force the installation of this module and the rest will
-likely work. Otherwise upgrading to a working perl is recommended.
-EOF
 
 print "ok 1\n";
 

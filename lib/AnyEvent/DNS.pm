@@ -163,6 +163,8 @@ sub any($$) {
    resolver->resolve ($domain => "*", $cb);
 }
 
+=back
+
 =head2 LOW-LEVEL DNS EN-/DECODING FUNCTIONS
 
 =over 4

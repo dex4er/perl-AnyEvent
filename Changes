@@ -1,6 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
 3.51
+	- try very hard not to freeze on broken windows perls.
 	- added (experimental) AnyEvent::DNS module.
         - make on_eof optional in AnyEvent::Handle.
 	- support service names in tcp_connect and tcp_server.

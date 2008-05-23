@@ -6,16 +6,6 @@ BEGIN {
 use AnyEvent;
 use AnyEvent::Impl::Perl;
 
-print STDERR <<EOF;
-
-If the following test hangs for a long time or terminates with a signal
-you either found a bug in AnyEvent or, more likely, you have a defective
-perl (most windows perl distros are broken, cygwin perl works). If you do
-not rely on signal handlers you can force the installation of this module
-and the rest will likely work. Otherwise upgrading to a working perl is
-recommended.
-EOF
-
 print "ok 1\n";
 
 my $cv = AnyEvent->condvar;
