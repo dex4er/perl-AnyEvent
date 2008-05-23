@@ -23,6 +23,7 @@ no warnings;
 use strict;
 
 use AnyEvent::Util ();
+use AnyEvent::Handle ();
 
 =item AnyEvent::DNS::addr $node, $service, $family, $type, $cb->(@addrs)
 
@@ -524,8 +525,7 @@ sub resolver() {
 
 =item $resolver = new AnyEvent::DNS key => value...
 
-Creates and returns a new resolver. It only supports UDP, so make sure
-your answer sections fit into a DNS packet.
+Creates and returns a new resolver.
 
 The following options are supported:
 
@@ -681,6 +681,20 @@ sub _compile {
    $self->{retry} = \@retry;
 }
 
+sub _feed {
+   my ($self, $res) = @_;
+
+   $res = dns_unpack $res
+      or return;
+
+   my $id = $self->{id}{$res->{id}};
+
+   return unless ref $id;
+
+   $NOW = time;
+   $id->[1]->($res);
+}
+
 sub _recv {
    my ($self) = @_;
 
@@ -689,15 +703,7 @@ sub _recv {
 
       return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
 
-      $res = dns_unpack $res
-         or return;
-
-      my $id = $self->{id}{$res->{id}};
-
-      return unless ref $id;
-
-      $NOW = time;
-      $id->[1]->($res);
+      $self->_feed ($res);
    }
 }
 
@@ -715,13 +721,38 @@ sub _exec {
       }), sub {
          my ($res) = @_;
 
-         # success
-         $self->{id}{$req->[2]} = 1;
-         push @{ $self->{reuse_q} }, [$NOW + $self->{reuse}, $req->[2]];
-         --$self->{outstanding};
-         $self->_scheduler;
+         if ($res->{tc}) {
+            # success, but truncated, so use tcp
+            AnyEvent::Util::tcp_connect +(Socket::inet_ntoa $server), 53, sub {
+               my ($fh) = @_
+                  or return $self->_exec ($req, $retry + 1);
 
-         $req->[1]->($res);
+               my $handle = new AnyEvent::Handle
+                  fh       => $fh,
+                  on_error => sub {
+                     # failure, try next
+                     $self->_exec ($req, $retry + 1);
+                  };
+
+               $handle->push_write (pack "n/a", $req->[0]);
+               $handle->push_read_chunk (2, sub {
+                  $handle->unshift_read_chunk ((unpack "n", $_[1]), sub {
+                     $self->_feed ($_[1]);
+                  });
+               });
+               shutdown $fh, 1;
+
+            }, sub { $timeout };
+
+         } else {
+            # success
+            $self->{id}{$req->[2]} = 1;
+            push @{ $self->{reuse_q} }, [$NOW + $self->{reuse}, $req->[2]];
+            --$self->{outstanding};
+            $self->_scheduler;
+
+            $req->[1]->($res);
+         }
       }];
 
       send $self->{fh}, $req->[0], 0, Socket::pack_sockaddr_in 53, $server;

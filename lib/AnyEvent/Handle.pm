@@ -74,9 +74,13 @@ The filehandle this L<AnyEvent::Handle> object will operate on.
 NOTE: The filehandle will be set to non-blocking (using
 AnyEvent::Util::fh_nonblocking).
 
-=item on_eof => $cb->($self) [MANDATORY]
+=item on_eof => $cb->($self)
 
 Set the callback to be called on EOF.
+
+While not mandatory, it is highly recommended to set an eof callback,
+otherwise you might end up with a closed socket while you are still
+waiting for data.
 
 =item on_error => $cb->($self)
 
@@ -150,8 +154,7 @@ sub new {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   $self->on_eof   ((delete $self->{on_eof}  ) or Carp::croak "mandatory argument on_eof is missing");
-
+   $self->on_eof   (delete $self->{on_eof}  ) if $self->{on_eof};
    $self->on_error (delete $self->{on_error}) if $self->{on_error};
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
    $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
@@ -402,7 +405,8 @@ sub _drain_rbuf {
 
    if ($self->{eof}) {
       $self->_shutdown;
-      $self->{on_eof}($self);
+      $self->{on_eof}($self)
+         if $self->{on_eof};
    }
 }
 
