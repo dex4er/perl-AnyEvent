@@ -26,7 +26,6 @@ package AnyEvent::DNS;
 no warnings;
 use strict;
 
-use AnyEvent::Socket ();
 use AnyEvent::Handle ();
 
 =item AnyEvent::DNS::addr $node, $service, $family, $type, $cb->(@addrs)
@@ -45,6 +44,10 @@ Example:
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 
 Tries to resolve the given domain to IPv4 address(es).
+
+=item AnyEvent::DNS::aaaa $domain, $cb->(@addrs)
+
+Tries to resolve the given domain to IPv6 address(es).
 
 =item AnyEvent::DNS::mx $domain, $cb->(@hostnames)
 
@@ -80,8 +83,6 @@ Example:
 Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
 into it's hostname(s).
 
-Requires the Socket6 module for IPv6 support.
-
 Example:
 
    AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
@@ -100,6 +101,14 @@ sub a($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "a", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
+
+sub aaaa($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "aaaa", sub {
       $cb->(map $_->[3], @_);
    });
 }
@@ -140,19 +149,16 @@ sub srv($$$$) {
 sub ptr($$) {
    my ($ip, $cb) = @_;
 
-   my $name;
+   $ip = AnyEvent::Socket::parse_ip ($ip)
+      or return $cb->();
 
-   if (AnyEvent::Util::dotted_quad $ip) {
-      $name = join ".", (reverse split /\./, $ip), "in-addr.arpa.";
+   if (4 == length $ip) {
+      $ip = join ".", (reverse split /\./, $ip), "in-addr.arpa.";
    } else {
-      require Socket6;
-      $name = join ".",
-                (reverse split //,
-                   unpack "H*", Socket6::inet_pton (Socket::AF_INET6, $ip)),
-                "ip6.arpa.";
+      $ip = join ".", (reverse split //, unpack "H*", $ip), "ip6.arpa.";
    }
 
-   resolver->resolve ($name => "ptr", sub {
+   resolver->resolve ($ip => "ptr", sub {
       $cb->(map $_->[3], @_);
    });
 }
@@ -371,7 +377,7 @@ sub _dec_qd {
 }
 
 our %dec_rr = (
-     1 => sub { Socket::inet_ntoa $_ }, # a
+     1 => sub { join ".", unpack "C4" }, # a
      2 => sub { local $ofs = $ofs - length; _dec_qname }, # ns
      5 => sub { local $ofs = $ofs - length; _dec_qname }, # cname
      6 => sub { 
@@ -380,12 +386,12 @@ our %dec_rr = (
              my $rname = _dec_qname;
              ($mname, $rname, unpack "NNNNN", substr $pkt, $ofs)
           }, # soa
-    11 => sub { ((Socket::inet_aton substr $_, 0, 4), unpack "C a*", substr $_, 4) }, # wks
+    11 => sub { ((join ".", unpack "C4"), unpack "C a*", substr $_, 4) }, # wks
     12 => sub { local $ofs = $ofs - length; _dec_qname }, # ptr
     13 => sub { unpack "C/a C/a", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_qname) }, # mx
     16 => sub { unpack "(C/a)*", $_ }, # txt
-    28 => sub { sprintf "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", unpack "n8" }, # aaaa
+    28 => sub { AnyEvent::Socket::format_ip ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_qname) }, # srv
     99 => sub { unpack "(C/a)*", $_ }, # spf
 );
@@ -778,7 +784,7 @@ sub _exec {
 
          if ($res->{tc}) {
             # success, but truncated, so use tcp
-            AnyEvent::Socket::tcp_connect +(Socket::inet_ntoa $server), 53, sub {
+            AnyEvent::Socket::tcp_connect ((Socket::inet_ntoa $server), 53, sub {
                my ($fh) = @_
                   or return $self->_exec ($req, $retry + 1);
 
@@ -797,7 +803,7 @@ sub _exec {
                });
                shutdown $fh, 1;
 
-            }, sub { $timeout };
+            }, sub { $timeout });
 
          } else {
             # success
@@ -1022,6 +1028,8 @@ sub resolve($%) {
 
    $do_search->();
 }
+
+use AnyEvent::Socket (); # circular dependency, so do not import anything and do it at the end
 
 1;
 
