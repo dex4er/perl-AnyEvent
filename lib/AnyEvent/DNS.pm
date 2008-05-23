@@ -311,14 +311,14 @@ sub dns_pack($) {
       scalar @{ $req->{qd} || [] },
       scalar @{ $req->{an} || [] },
       scalar @{ $req->{ns} || [] },
-      1 + scalar @{ $req->{ar} || [] }, # include EDNS0 option
+      scalar @{ $req->{ar} || [] }, # include EDNS0 option here
 
       (join "", map _enc_qd, @{ $req->{qd} || [] }),
       (join "", map _enc_rr, @{ $req->{an} || [] }),
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
       (join "", map _enc_rr, @{ $req->{ar} || [] }),
 
-      (pack "C nnNn", 0, 41, 4000, 0, 0) # EDNS0, 4k udp payload size
+      # (pack "C nnNn", 0, 41, 4000, 0, 0) # EDNS0, 4k udp payload size
 }
 
 our $ofs;
