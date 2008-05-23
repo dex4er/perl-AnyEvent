@@ -1,4 +1,4 @@
-=head1 NAME
+=head1 => NAME
 
 AnyEvent - provide framework for multiple event loops
 
@@ -813,7 +813,7 @@ package AnyEvent::Base;
 # default implementation for ->condvar
 
 sub condvar {
-   bless {}, AnyEvent::CondVar::
+   bless { @_ == 3 ? (_ae_cb => $_[2]) : () }, AnyEvent::CondVar::
 }
 
 # default implementation for ->signal
@@ -946,7 +946,7 @@ sub begin {
 
 sub end {
    return if --$_[0]{_ae_counter};
-   &{ $_[0]{_ae_end_cb} } if $_[0]{_ae_end_cb};
+   &{ $_[0]{_ae_end_cb} || sub { $_[0]->send } };
 }
 
 # undocumented/compatibility with pre-3.4

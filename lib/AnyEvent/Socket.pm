@@ -37,7 +37,7 @@ BEGIN {
    *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
 }
 
-our @EXPORT = qw(inet_aton tcp_server tcp_connect);
+our @EXPORT = qw(parse_ipv4 parse_ipv6 parse_ip format_ip inet_aton tcp_server tcp_connect);
 
 our $VERSION = '1.0';
 
