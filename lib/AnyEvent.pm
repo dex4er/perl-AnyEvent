@@ -708,6 +708,14 @@ our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 
 our @REGISTRY;
 
+our %PROTOCOL; # (ipv4|ipv6) => (1|2)
+
+{
+   my $idx;
+   $PROTOCOL{$_} = ++$idx
+      for split /\s*,\s*/, $ENV{PERL_ANYEVENT_PROTOCOLS} || "ipv4,ipv6";
+}
+
 my @models = (
    [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],

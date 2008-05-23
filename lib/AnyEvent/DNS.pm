@@ -30,8 +30,6 @@ use AnyEvent::Handle ();
 
 =item AnyEvent::DNS::addr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
 
-NOT YET IMPLEMENTED
-
 Tries to resolve the given nodename and service name into protocol families
 and sockaddr structures usable to connect to this node and service in a
 protocol-independent way. It works remotely similar to the getaddrinfo
@@ -49,7 +47,8 @@ C<$proto> must be a protocol name, currently C<tcp>, C<udp> or
 C<sctp>. The default is C<tcp>.
 
 C<$family> must be either C<0> (meaning any protocol is ok), C<4> (use
-only IPv4) or C<6> (use only IPv6).
+only IPv4) or C<6> (use only IPv6). This setting might be influenced by
+C<$ENV{PERL_ANYEVENT_PROTOCOLS}>.
 
 C<$type> must be C<SOCK_STREAM>, C<SOCK_DGRAM> or C<SOCK_SEQPACKET> (or
 C<undef> in which case it gets automatically chosen).
@@ -194,8 +193,6 @@ sub any($$) {
 
 #############################################################################
 
-#AnyEvent::DNS::addr $node, $service, $family, $type, $proto, $cb->([$family, $type, $protocol, $sockaddr], ...)
-
 # $port, $host
 sub pack_sockaddr_in6($$) {
    pack "nnN a16 N",
@@ -215,6 +212,12 @@ sub addr($$$$$$) {
 
       $family ||= 4;
    }
+
+   $cb->() if $family == 4 && !$AnyEvent::PROTOCOL{ipv4};
+   $cb->() if $family == 6 && !$AnyEvent::PROTOCOL{ipv6};
+
+   $family ||=4 unless $AnyEvent::PROTOCOL{ipv6};
+   $family ||=6 unless $AnyEvent::PROTOCOL{ipv4};
 
    $proto ||= "tcp";
    $type  ||= $proto eq "udp" ? Socket::SOCK_DGRAM : Socket::SOCK_STREAM;
