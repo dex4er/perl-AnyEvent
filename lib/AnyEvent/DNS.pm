@@ -82,6 +82,11 @@ Example:
    AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
    # => f.root-servers.net
 
+=item AnyEvent::DNS::any $domain, $cb->(@rrs)
+
+Tries to resolve the given domain and passes all resource records found to
+the callback.
+
 =cut
 
 sub resolver;
@@ -147,6 +152,12 @@ sub ptr($$) {
    });
 }
 
+sub any($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "*", $cb);
+}
+
 =head2 DNS EN-/DECODING FUNCTIONS
 
 =over 4
@@ -157,19 +168,33 @@ our %opcode_id = (
    query  => 0,
    iquery => 1,
    status => 2,
-   map +($_ => $_), 3..15
+   notify => 4,
+   update => 5,
+   map +($_ => $_), 3, 6..15
 );
 
 our %opcode_str = reverse %opcode_id;
 
 our %rcode_id = (
-   noerror  => 0,
-   formerr  => 1,
-   servfail => 2,
-   nxdomain => 3,
-   notimp   => 4,
-   refused  => 5,
-   map +($_ => $_), 6..15
+   noerror  =>  0,
+   formerr  =>  1,
+   servfail =>  2,
+   nxdomain =>  3,
+   notimp   =>  4,
+   refused  =>  5,
+   yxdomain =>  6, # Name Exists when it should not     [RFC 2136]
+   yxrrset  =>  7, # RR Set Exists when it should not   [RFC 2136]
+   nxrrset  =>  8, # RR Set that should exist does not  [RFC 2136]
+   notauth  =>  9, # Server Not Authoritative for zone  [RFC 2136]
+   notzone  => 10, # Name not contained in zone         [RFC 2136]
+# EDNS0  16    BADVERS   Bad OPT Version                    [RFC 2671]
+# EDNS0  16    BADSIG    TSIG Signature Failure             [RFC 2845]
+# EDNS0  17    BADKEY    Key not recognized                 [RFC 2845]
+# EDNS0  18    BADTIME   Signature out of time window       [RFC 2845]
+# EDNS0  19    BADMODE   Bad TKEY Mode                      [RFC 2930]
+# EDNS0  20    BADNAME   Duplicate key name                 [RFC 2930]
+# EDNS0  21    BADALG    Algorithm not supported            [RFC 2930]
+   map +($_ => $_), 11..15
 );
 
 our %rcode_str = reverse %rcode_id;
@@ -193,6 +218,11 @@ our %type_id = (
    txt   =>  16,
    aaaa  =>  28,
    srv   =>  33,
+   opt   =>  41,
+   spf   =>  99,
+   tkey  => 249,
+   tsig  => 250,
+   ixfr  => 251,
    axfr  => 252,
    mailb => 253,
    "*"   => 255,
@@ -201,10 +231,11 @@ our %type_id = (
 our %type_str = reverse %type_id;
 
 our %class_id = (
-   in  =>   1,
-   ch  =>   3,
-   hs  =>   4,
-   "*" => 255,
+   in   =>   1,
+   ch   =>   3,
+   hs   =>   4,
+   none => 254,
+   "*"  => 255,
 );
 
 our %class_str = reverse %class_id;
@@ -249,6 +280,8 @@ Examples:
      tc => 0,
      rd => 0,
      ra => 0,
+     ad => 0,
+     cd => 0,
 
      qd => [@rr], # query section
      an => [@rr], # answer section
@@ -270,6 +303,8 @@ sub dns_pack($) {
       + ! !$req->{tc} * 0x0200
       + ! !$req->{rd} * 0x0100
       + ! !$req->{ra} * 0x0080
+      + ! !$req->{ad} * 0x0020
+      + ! !$req->{cd} * 0x0010
       + $rcode_id{$req->{rc}} * 0x0001,
 
       scalar @{ $req->{qd} || [] },
@@ -330,11 +365,12 @@ our %dec_rr = (
           }, # soa
     11 => sub { ((Socket::inet_aton substr $_, 0, 4), unpack "C a*", substr $_, 4) }, # wks
     12 => sub { local $ofs = $ofs - length; _dec_qname }, # ptr
-    13 => sub { unpack "C/a C/a", $_ },
+    13 => sub { unpack "C/a C/a", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_qname) }, # mx
-    16 => sub { unpack "C/a", $_ }, # txt
+    16 => sub { unpack "(C/a)*", $_ }, # txt
     28 => sub { sprintf "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", unpack "n8" }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_qname) }, # srv
+    99 => sub { unpack "(C/a)*", $_ }, # spf
 );
 
 sub _dec_rr {
@@ -433,6 +469,8 @@ sub dns_unpack($) {
       tc => ! ! ($flags & 0x0200),
       rd => ! ! ($flags & 0x0100),
       ra => ! ! ($flags & 0x0080),
+      ad => ! ! ($flags & 0x0020),
+      cd => ! ! ($flags & 0x0010),
       op => $opcode_str{($flags & 0x001e) >> 11},
       rc => $rcode_str{($flags & 0x000f)},
 
