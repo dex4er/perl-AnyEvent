@@ -69,7 +69,7 @@ sub parse_ipv4($) {
              + ($_[2] <<  8);
 }
 
-=item $ipn = parse_ipv4 $dotted_quad
+=item $ipn = parse_ipv6 $textual_ipv6_address
 
 Tries to parse the given IPv6 address and return it in
 octet form (or undef when it isn't in a parsable format).
@@ -95,7 +95,7 @@ sub parse_ipv6($) {
    my @h = split /:/, $h;
    my @t = split /:/, $t;
 
-   # check four ipv4 tail
+   # check for ipv4 tail
    if (@t && $t[-1]=~ /\./) {
       return undef if $n > 6;
 

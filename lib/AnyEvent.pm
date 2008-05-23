@@ -633,14 +633,19 @@ functions such as C<inet_aton> by event-/callback-based versions.
 
 Provide read and write buffers and manages watchers for reads and writes.
 
+=item L<AnyEvent::Socket>
+
+Provides various utility functions for (internet protocol) sockets,
+addresses and name resolution. Also functions to create non-blocking tcp
+connections or tcp servers, with IPv6 and SRV record support and more.
+
 =item L<AnyEvent::HTTPD>
 
 Provides a simple web application server framework.
 
 =item L<AnyEvent::DNS>
 
-Provides asynchronous DNS resolver capabilities, beyond what
-L<AnyEvent::Util> offers.
+Provides rich asynchronous DNS resolver capabilities.
 
 =item L<AnyEvent::FastPing>
 
@@ -1030,6 +1035,23 @@ For example, to force the pure perl model (L<AnyEvent::Impl::Perl>) you
 could start your program like this:
 
   PERL_ANYEVENT_MODEL=Perl perl ...
+
+=item C<PERL_ANYEVENT_PROTOCOLS>
+
+Used by both L<AnyEvent::DNS> and L<AnyEvent::Socket> to determine preferences
+for IPv4 or IPv6. The default is unspecified (and might change, or be the result
+of autoprobing).
+
+Must be set to a comma-separated list of protocols or address families,
+current supported: C<ipv4> and C<ipv6>. Only protocols mentioned will be
+used, and preference will be given to protocols mentioned earlier in the
+list.
+
+Examples: C<PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6> - prefer IPv4 over IPv6,
+but support both and try to use both.  C<PERL_ANYEVENT_PROTOCOLS=ipv4>
+- only support IPv4, never try to resolve or contact IPv6
+addressses. C<PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4> support either IPv4 or
+IPv6, but prefer IPv6 over IPv4.
 
 =back
 
@@ -1489,6 +1511,8 @@ probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
 
 =head1 SEE ALSO
 
+Utility functions: L<AnyEvent::Util>.
+
 Event modules: L<EV>, L<EV::Glib>, L<Glib::EV>, L<Event>, L<Glib::Event>,
 L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
 
@@ -1497,11 +1521,14 @@ L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
 L<AnyEvent::Impl::POE>.
 
+Non-blocking file handles, sockets, TCP clients and
+servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>.
+
 Asynchronous DNS: L<AnyEvent::DNS>.
 
 Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>, L<Coro::Event>,
 
-Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>.
+Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>, L<AnyEvent::DNS>.
 
 
 =head1 AUTHOR

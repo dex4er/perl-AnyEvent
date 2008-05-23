@@ -212,6 +212,8 @@ sub addr($$$$$$) {
    unless (eval { &Socket::AF_INET6 }) {
       $family != 6
          or return $cb->();
+
+      $family ||= 4;
    }
 
    $proto ||= "tcp";
