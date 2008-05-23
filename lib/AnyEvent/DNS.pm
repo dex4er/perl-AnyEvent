@@ -341,9 +341,35 @@ use Socket ();
 
 our $NOW;
 
+=item AnyEvent::DNS::resolver
+
+This function creates and returns a resolver that is ready to use and
+should mimic the default resolver for your system as good as possible.
+
+It only ever creates one resolver and returns this one on subsequent
+calls.
+
+Unless you have special needs, prefer this function over creating your own
+resolver object.
+
+=cut
+
+our $RESOLVER;
+
+sub resolver() {
+   $RESOLVER || do {
+      $RESOLVER = new AnyEvent::DNS;
+      $RESOLVER->load_resolv_conf;
+      $RESOLVER
+   }
+}
+
 =item $resolver = new AnyEvent::DNS key => value...
 
-Creates and returns a new resolver. The following options are supported:
+Creates and returns a new resolver. It only supports UDP, so make sure
+your answer sections fit into a DNS packet.
+
+The following options are supported:
 
 =over 4
 
@@ -362,12 +388,12 @@ three retries with individual time-outs of 2, 5 and 5 seconds, use C<[2,
 
 The default search list of suffixes to append to a domain name (default: none).
 
-=item ndots => $n
+=item ndots => $integer
 
 The number of dots (default: C<1>) that a name must have so that the resolver
 tries to resolve the name without any suffixes first.
 
-=item max_outstanding => $n
+=item max_outstanding => $integer
 
 Most name servers do not handle many parallel requests very well. This option
 limits the numbe rof outstanding requests to C<$n> (default: C<10>), that means
@@ -613,7 +639,7 @@ The following options are supported:
 Use the given search list (which might be empty), by appending each one
 in turn to the C<$qname>. If this option is missing then the configured
 C<ndots> and C<search> define its value. If the C<$qname> ends in a dot,
-then this option is ignored completely.
+then the searchlist will be ignored.
 
 =item accept => [$type...]
 
@@ -624,7 +650,7 @@ else.
 =item class => "class"
 
 Specify the query class ("in" for internet, "ch" for chaosnet and "hs" for
-hesiod are the only ones making sense).
+hesiod are the only ones making sense). The default is "in", of course.
 
 =back
 
@@ -705,6 +731,7 @@ sub resolve($%) {
             my $cname;
 
             while () {
+               # results found?
                my @rr = grep $_->[0] eq $name && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
 
                return $cb->(@rr)
@@ -725,6 +752,7 @@ sub resolve($%) {
                   return $do_req->();
 
                } else {
+                  # no, not found anything
                   return $do_search->();
                }
              }
