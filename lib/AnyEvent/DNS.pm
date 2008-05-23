@@ -295,7 +295,7 @@ Examples:
 sub dns_pack($) {
    my ($req) = @_;
 
-   pack "nn nnnn a* a* a* a*",
+   pack "nn nnnn a* a* a* a* a*",
       $req->{id},
 
       ! !$req->{qr}   * 0x8000
@@ -311,12 +311,14 @@ sub dns_pack($) {
       scalar @{ $req->{qd} || [] },
       scalar @{ $req->{an} || [] },
       scalar @{ $req->{ns} || [] },
-      scalar @{ $req->{ar} || [] },
+      1 + scalar @{ $req->{ar} || [] }, # include EDNS0 option
 
       (join "", map _enc_qd, @{ $req->{qd} || [] }),
       (join "", map _enc_rr, @{ $req->{an} || [] }),
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
-      (join "", map _enc_rr, @{ $req->{ar} || [] });
+      (join "", map _enc_rr, @{ $req->{ar} || [] }),
+
+      (pack "C nnNn", 0, 41, 4000, 0, 0) # EDNS0, 4k udp payload size
 }
 
 our $ofs;
@@ -698,7 +700,7 @@ sub _feed {
 sub _recv {
    my ($self) = @_;
 
-   while (my $peer = recv $self->{fh}, my $res, 1024, 0) {
+   while (my $peer = recv $self->{fh}, my $res, 4000, 0) {
       my ($port, $host) = Socket::unpack_sockaddr_in $peer;
 
       return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
