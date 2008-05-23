@@ -41,11 +41,83 @@ our @EXPORT = qw(inet_aton tcp_server tcp_connect);
 
 our $VERSION = '1.0';
 
-sub dotted_quad($) {
-   $_[0] =~ /^(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9][0-9]?)
-            \.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9][0-9]?)
-            \.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9][0-9]?)
-            \.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9][0-9]?)$/x
+=item $ipn = parse_ipv4 $dotted_quad
+
+Tries to parse the given dotted quad IPv4 address and return it in
+octet form (or undef when it isn't in a parsable format). Supports all
+forms specified by POSIX (e.g. C<10.0.0.1>, C<10.1>, C<10.0x020304>,
+C<0x12345678> or C<0377.0377.0377.0377>).
+
+=cut
+
+sub parse_ipv4($) {
+   $_[0] =~ /^      (?: 0x[0-9a-fA-F]+ | 0[0-7]* | [1-9][0-9]* )
+              (?:\. (?: 0x[0-9a-fA-F]+ | 0[0-7]* | [1-9][0-9]* ) ){0,3}$/x
+      or return undef;
+
+   @_ = map /^0/ ? oct : $_, split /\./, $_[0];
+
+   # check leading parts against range
+   return undef if grep $_ >= 256, @_[0 .. @_ - 2];
+
+   # check trailing part against range
+   return undef if $_[-1] >= 1 << (8 * (4 - $#_));
+
+   pack "N", (pop)
+             + ($_[0] << 24)
+             + ($_[1] << 16)
+             + ($_[2] <<  8);
+}
+
+=item $ipn = parse_ipv4 $dotted_quad
+
+Tries to parse the given IPv6 address and return it in
+octet form (or undef when it isn't in a parsable format).
+
+Should support all forms specified by RFC 2373 (and additionally all IPv4
+formst supported by parse_ipv4).
+
+=cut
+
+sub parse_ipv6($) {
+   # quick test to avoid longer processing
+   my $n = $_[0] =~ y/://;
+   return undef if $n < 2 || $n > 8;
+
+   my ($h, $t) = split /::/, $_[0], 2;
+
+   unless (length $t) {
+      ($h, $t) = (undef, $h);
+   }
+
+   my @h = split /:/, $h;
+   my @t = split /:/, $t;
+
+      warn "a <$h><$t> $t[-1]\n";#d#
+   # check four ipv4 tail
+   if (@t && $t[-1]=~ /\./) {
+      return undef if $n > 6;
+
+      my $ipn = parse_ipv4 pop @t
+         or return undef;
+
+      push @t, map +(sprintf "%x", $_), unpack "nn", $ipn;
+   }
+
+   # no :: then we need to have exactly 8 components
+   return undef unless $h || @h + @t == 8;
+
+   # now check all parts for validity
+   return undef if grep !/^[0-9a-fA-F]{1,4}$/, @h, @t;
+
+   # now pad...
+   push @h, 0 while @h + @t < 8;
+
+   warn "h ", join ":", @h;
+   warn "t ", join ":", @t;
+
+   # and done
+   pack "n*", map hex, @h, @t
 }
 
 =item inet_aton $name_or_address, $cb->(@addresses)
@@ -63,17 +135,19 @@ and IPv6 addresses as result.
 sub inet_aton {
    my ($name, $cb) = @_;
 
-   if (&dotted_quad) {
-      $cb->(socket_inet_aton $name);
+   if (my $ipn = &parse_ipv4) {
+      $cb->($ipn);
+   } elsif (my $ipn = &parse_ipv6) {
+      $cb->($ipn);
    } elsif ($name eq "localhost") { # rfc2606 et al.
-      $cb->(v127.0.0.1);
+      $cb->(v127.0.0.1, v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1);
    } else {
       require AnyEvent::DNS;
 
       # simple, bad suboptimal algorithm
       AnyEvent::DNS::a ($name, sub {
          if (@_) {
-            $cb->(map +(socket_inet_aton $_), @_);
+            $cb->(map +(parse_ipv4 $_), @_);
          } else {
             $cb->();
             #AnyEvent::DNS::aaaa ($name, $cb); need inet_pton
