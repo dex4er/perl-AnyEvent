@@ -21,6 +21,7 @@ as a fully asynchronous and high-performance pure-perl stub resolver.
 
 package AnyEvent::DNS;
 
+no warnings;
 use strict;
 
 use AnyEvent::Util ();
@@ -531,7 +532,7 @@ sub _recv {
 
       return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
 
-      $res = AnyEvent::DNS::dns_unpack $res
+      $res = dns_unpack $res
          or return;
 
       my $id = $self->{id}{$res->{id}};
@@ -607,7 +608,7 @@ sub _scheduler {
 =item $resolver->request ($req, $cb->($res))
 
 Sends a single request (a hash-ref formated as specified for
-C<AnyEvent::DNS::dns_pack>) to the configured nameservers including
+C<dns_pack>) to the configured nameservers including
 retries. Calls the callback with the decoded response packet if a reply
 was received, or no arguments on timeout.
 
@@ -616,7 +617,7 @@ was received, or no arguments on timeout.
 sub request($$) {
    my ($self, $req, $cb) = @_;
 
-   push @{ $self->{queue} }, [(AnyEvent::DNS::dns_pack $req), $cb];
+   push @{ $self->{queue} }, [dns_pack $req, $cb];
    $self->_scheduler;
 }
 
@@ -629,6 +630,10 @@ The callback will be invoked with a list of matching result records or
 none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 8.
+
+Note that this resolver is just a stub resolver: it requires a nameserver
+supporting recursive queries, will not do any recursive queries itself and
+is not secure when used against an untrusted name server.
 
 The following options are supported:
 
