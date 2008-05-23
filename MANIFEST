@@ -4,6 +4,7 @@ Changes
 README
 Makefile.PL
 lib/AnyEvent.pm
+lib/AnyEvent/DNS.pm
 lib/AnyEvent/Util.pm
 lib/AnyEvent/Handle.pm
 lib/AnyEvent/Impl/EV.pm
