@@ -75,7 +75,9 @@ Tries to parse the given IPv6 address and return it in
 octet form (or undef when it isn't in a parsable format).
 
 Should support all forms specified by RFC 2373 (and additionally all IPv4
-formst supported by parse_ipv4).
+forms supported by parse_ipv4).
+
+This function works similarly to C<inet_pton AF_INET6, ...>.
 
 =cut
 
@@ -130,6 +132,9 @@ sub parse_ip($) {
 
 Takes either an IPv4 address (4 octets) or and IPv6 address (16 octets)
 and converts it into textual form.
+
+This function works similarly to C<inet_ntop AF_INET || AF_INET6, ...>,
+except it automatically detects the address type.
 
 =cut
 
