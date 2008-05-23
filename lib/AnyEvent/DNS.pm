@@ -26,7 +26,7 @@ package AnyEvent::DNS;
 no warnings;
 use strict;
 
-use AnyEvent::Util ();
+use AnyEvent::Socket ();
 use AnyEvent::Handle ();
 
 =item AnyEvent::DNS::addr $node, $service, $family, $type, $cb->(@addrs)
@@ -778,7 +778,7 @@ sub _exec {
 
          if ($res->{tc}) {
             # success, but truncated, so use tcp
-            AnyEvent::Util::tcp_connect +(Socket::inet_ntoa $server), 53, sub {
+            AnyEvent::Socket::tcp_connect +(Socket::inet_ntoa $server), 53, sub {
                my ($fh) = @_
                   or return $self->_exec ($req, $retry + 1);
 

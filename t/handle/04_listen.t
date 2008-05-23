@@ -4,7 +4,7 @@ use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
-use AnyEvent::Util;
+use AnyEvent::Socket;
 use AnyEvent;
 
 my $lbytes;
@@ -17,7 +17,7 @@ my $cv = AnyEvent->condvar;
 my $hdl;
 my $port;
 
-my $w = AnyEvent::Util::tcp_server undef, undef,
+my $w = tcp_server undef, undef,
    sub {
       my ($fh, $host, $port) = @_;
 
@@ -42,7 +42,7 @@ my $w = AnyEvent::Util::tcp_server undef, undef,
 
 
 my $clhdl;
-my $wc = AnyEvent::Util::tcp_connect localhost => $port, sub {
+my $wc = tcp_connect localhost => $port, sub {
    my ($fh) = @_
       or die "connect: $!";
 

@@ -20,10 +20,11 @@ my $rbytes;
 
 my $hdl;
 my $wo = tcp_connect 'www.google.com', 80, sub {
-   my ($sock) = @_;
+   my ($fh) = @_;
+
    $hdl =
       AnyEvent::Handle->new (
-         fh => $sock,
+         fh => $fh,
          on_error => sub {
             warn "socket error: $!";
             $cv->broadcast;

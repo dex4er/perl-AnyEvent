@@ -73,9 +73,10 @@ sub inet_aton {
       # simple, bad suboptimal algorithm
       AnyEvent::DNS::a ($name, sub {
          if (@_) {
-            &$cb;
+            $cb->(map +(socket_inet_aton $_), @_);
          } else {
-            AnyEvent::DNS::aaaa ($name, $cb);
+            $cb->();
+            #AnyEvent::DNS::aaaa ($name, $cb); need inet_pton
          }
       });
    }
@@ -94,6 +95,9 @@ This is a convenience function that creates a tcp socket and makes a 100%
 non-blocking connect to the given C<$host> (which can be a hostname or a
 textual IP address) and C<$port> (which can be a numeric port number or a
 service name).
+
+If both C<$host> and C<$port> are names, then this function will use SRV
+records to locate the real target in a future version.
 
 Unless called in void context, it returns a guard object that will
 automatically abort connecting when it gets destroyed (it does not do
@@ -124,7 +128,7 @@ socket (although only IPv4 is currently supported by this module).
 
 Simple Example: connect to localhost on port 22.
 
-  AnyEvent::Util::tcp_connect localhost => 22, sub {
+  tcp_connect localhost => 22, sub {
      my $fh = shift
         or die "unable to connect: $!";
      # do something

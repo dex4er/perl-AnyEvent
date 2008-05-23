@@ -7,6 +7,7 @@ lib/AnyEvent.pm
 lib/AnyEvent/DNS.pm
 lib/AnyEvent/Util.pm
 lib/AnyEvent/Handle.pm
+lib/AnyEvent/Socket.pm
 lib/AnyEvent/Impl/EV.pm
 lib/AnyEvent/Impl/Event.pm
 lib/AnyEvent/Impl/EventLib.pm

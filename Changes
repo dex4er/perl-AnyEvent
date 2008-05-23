@@ -1,8 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
 3.51
-	- try very hard not to freeze on broken windows perls.
 	- added (experimental) AnyEvent::DNS module.
+        - added (experimental) AnyEvent::Socket module.
+        - AnyEvent::Socket::inet_aton will use AnyEvent::DNS now and not fork anymore.
+	- try very hard not to freeze on broken windows perls.
         - make on_eof optional in AnyEvent::Handle.
 	- support service names in tcp_connect and tcp_server.
         - work around netbsd/openbsd bug causing unix sockets not to
