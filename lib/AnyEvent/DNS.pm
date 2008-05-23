@@ -163,13 +163,13 @@ sub any($$) {
    resolver->resolve ($domain => "*", $cb);
 }
 
-=head2 DNS EN-/DECODING FUNCTIONS
+=head2 LOW-LEVEL DNS EN-/DECODING FUNCTIONS
 
 =over 4
 
 =item $AnyEvent::DNS::EDNS0
 
-This variable decides wether dns_pack automatically enables EDNS0
+This variable decides whether dns_pack automatically enables EDNS0
 support. By default, this is disabled (C<0>), but when set to C<1>,
 AnyEvent::DNS will use EDNS0 in all requests.
 
@@ -408,7 +408,7 @@ Unpacks a DNS packet into a perl data structure.
 
 Examples:
 
-  # a non-successful reply
+  # an unsuccessful reply
   {
     'qd' => [
               [ 'ruth.plan9.de.mach.uni-karlsruhe.de', '*', 'in' ]
@@ -422,11 +422,7 @@ Examples:
                 'in',
                 'netserv.rz.uni-karlsruhe.de',
                 'hostmaster.rz.uni-karlsruhe.de',
-                2008052201,
-                10800,
-                1800,
-                2592000,
-                86400
+                2008052201, 10800, 1800, 2592000, 86400
               ]
             ],
     'tc' => '',
@@ -502,7 +498,7 @@ sub dns_unpack($) {
 
 =head2 THE AnyEvent::DNS RESOLVER CLASS
 
-This is the class which deos the actual protocol work.
+This is the class which does the actual protocol work.
 
 =over 4
 
@@ -547,7 +543,7 @@ The following options are supported:
 
 =item server => [...]
 
-A list of server addressses (default C<v127.0.0.1>) in network format (4
+A list of server addressses (default: C<v127.0.0.1>) in network format (4
 octets for IPv4, 16 octets for IPv6 - not yet supported).
 
 =item timeout => [...]
@@ -572,6 +568,13 @@ limits the numbe rof outstanding requests to C<$n> (default: C<10>), that means
 if you request more than this many requests, then the additional requests will be queued
 until some other requests have been resolved.
 
+=item reuse => $seconds
+
+The number of seconds (default: C<60>) that a query id cannot be re-used
+after a request. Since AnyEvent::DNS will only allocate up to 30000 ID's
+at the same time, the long-term maximum number of requests per second is
+C<30000 / $seconds> (and thus C<500> requests/s by default).
+
 =back
 
 =cut
@@ -590,7 +593,7 @@ sub new {
       search  => [],
       ndots   => 1,
       max_outstanding => 10,
-      reuse   => 300, # reuse id's after 5 minutes only, if possible
+      reuse   => 60, # reuse id's after 5 minutes only, if possible
       %arg,
       fh      => $fh,
       reuse_q => [],
@@ -788,9 +791,19 @@ sub _scheduler {
 
    # first clear id reuse queue
    delete $self->{id}{ (shift @{ $self->{reuse_q} })->[1] }
-      while @{ $self->{reuse_q} } && $self->{reuse_q}[0] <= $NOW;
+      while @{ $self->{reuse_q} } && $self->{reuse_q}[0][0] <= $NOW;
 
    while ($self->{outstanding} < $self->{max_outstanding}) {
+
+      if (@{ $self->{reuse_q} } >= 30000) {
+         # we ran out of ID's, wait a bit
+         $self->{reuse_to} ||= AnyEvent->timer (after => $self->{reuse_q}[0][0] - $NOW, cb => sub {
+            delete $self->{reuse_to};
+            $self->_scheduler;
+         });
+         last;
+      }
+
       my $req = shift @{ $self->{queue} }
          or last;
 
