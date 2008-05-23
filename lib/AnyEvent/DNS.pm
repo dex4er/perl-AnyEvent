@@ -165,6 +165,8 @@ sub any($$) {
 
 =cut
 
+sub EDNS0 () { 0 } # set to 1 to enable (partial) edns0
+
 our %opcode_id = (
    query  => 0,
    iquery => 1,
@@ -311,14 +313,14 @@ sub dns_pack($) {
       scalar @{ $req->{qd} || [] },
       scalar @{ $req->{an} || [] },
       scalar @{ $req->{ns} || [] },
-      scalar @{ $req->{ar} || [] }, # include EDNS0 option here
+      EDNS0 + scalar @{ $req->{ar} || [] }, # include EDNS0 option here
 
       (join "", map _enc_qd, @{ $req->{qd} || [] }),
       (join "", map _enc_rr, @{ $req->{an} || [] }),
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
       (join "", map _enc_rr, @{ $req->{ar} || [] }),
 
-      # (pack "C nnNn", 0, 41, 4096, 0, 0) # EDNS0, 4kiB udp payload size
+      (EDNS0 ? pack "C nnNn", 0, 41, 4096, 0, 0 : "") # EDNS0, 4kiB udp payload size
 }
 
 our $ofs;
