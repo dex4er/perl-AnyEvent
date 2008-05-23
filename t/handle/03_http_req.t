@@ -4,6 +4,7 @@ use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent;
+use AnyEvent::Socket;
 use AnyEvent::Handle;
 
 unless ($ENV{PERL_ANYEVENT_NET_TESTS}) {
@@ -18,7 +19,7 @@ my $cv = AnyEvent->condvar;
 my $rbytes;
 
 my $hdl;
-my $wo = AnyEvent::Util::tcp_connect 'www.google.com', 80, sub {
+my $wo = tcp_connect 'www.google.com', 80, sub {
    my ($sock) = @_;
    $hdl =
       AnyEvent::Handle->new (
