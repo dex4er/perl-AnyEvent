@@ -13,8 +13,6 @@ as a fully asynchronous and high-performance pure-perl stub resolver.
 
 =head2 CONVENIENCE FUNCTIONS
 
-# none yet
-
 =over 4
 
 =cut
@@ -26,7 +24,128 @@ use strict;
 
 use AnyEvent::Util ();
 
-=back
+=item AnyEvent::DNS::addr $node, $service, $family, $type, $cb->(@addrs)
+
+NOT YET IMPLEMENTED
+
+Tries to resolve the given nodename and service name into sockaddr
+structures usable to connect to this node and service in a
+protocol-independent way. It works similarly to the getaddrinfo posix
+function.
+
+Example:
+
+   AnyEvent::DNS::addr "google.com", "http", AF_UNSPEC, SOCK_STREAM, sub { ... };
+
+=item AnyEvent::DNS::a $domain, $cb->(@addrs)
+
+Tries to resolve the given domain to IPv4 address(es).
+
+=item AnyEvent::DNS::mx $domain, $cb->(@hostnames)
+
+Tries to resolve the given domain into a sorted (lower preference value
+first) list of domain names.
+
+=item AnyEvent::DNS::ns $domain, $cb->(@hostnames)
+
+Tries to resolve the given domain name into a list of name servers.
+
+=item AnyEvent::DNS::txt $domain, $cb->(@hostnames)
+
+Tries to resolve the given domain name into a list of text records.
+
+=item AnyEvent::DNS::srv $service, $proto, $domain, $cb->(@srv_rr)
+
+Tries to resolve the given service, protocol and domain name into a list
+of service records.
+
+Each srv_rr is an arrayref with the following contents: 
+C<[$priority, $weight, $transport, $target]>.
+
+They will be sorted with lowest priority, highest weight first (TODO:
+should use the rfc algorithm to reorder same-priority records for weight).
+
+Example:
+
+   AnyEvent::DNS::srv "sip", "udp", "schmorp.de", sub { ...
+   # @_ = ( [10, 10, 5060, "sip1.schmorp.de" ] )
+
+=item AnyEvent::DNS::ptr $ipv4_or_6, $cb->(@hostnames)
+
+Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
+into it's hostname(s).
+
+Requires the Socket6 module for IPv6 support.
+
+Example:
+
+   AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
+   # => f.root-servers.net
+
+=cut
+
+sub resolver;
+
+sub a($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "a", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
+
+sub mx($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "mx", sub {
+      $cb->(map $_->[4], sort { $a->[3] <=> $b->[3] } @_);
+   });
+}
+
+sub ns($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "ns", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
+
+sub txt($$) {
+   my ($domain, $cb) = @_;
+
+   resolver->resolve ($domain => "txt", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
+
+sub srv($$$$) {
+   my ($service, $proto, $domain, $cb) = @_;
+
+   # todo, ask for any and check glue records
+   resolver->resolve ("_$service._$proto.$domain" => "srv", sub {
+      $cb->(map [@$_[3,4,5,6]], sort { $a->[3] <=> $b->[3] || $b->[4] <=> $a->[4] } @_);
+   });
+}
+
+sub ptr($$) {
+   my ($ip, $cb) = @_;
+
+   my $name;
+
+   if (AnyEvent::Util::dotted_quad $ip) {
+      $name = join ".", (reverse split /\./, $ip), "in-addr.arpa.";
+   } else {
+      require Socket6;
+      $name = join ".",
+                (reverse split //,
+                   unpack "H*", Socket6::inet_pton (Socket::AF_INET6, $ip)),
+                "ip6.arpa.";
+   }
+
+   resolver->resolve ($name => "ptr", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
 
 =head2 DNS EN-/DECODING FUNCTIONS
 
@@ -44,7 +163,7 @@ our %opcode_id = (
 our %opcode_str = reverse %opcode_id;
 
 our %rcode_id = (
-   ok       => 0,
+   noerror  => 0,
    formerr  => 1,
    servfail => 2,
    nxdomain => 3,
@@ -721,7 +840,7 @@ sub resolve($%) {
       @search
          or return $cb->();
 
-      (my $name = "$qname." . shift @search) =~ s/\.$//;
+      (my $name = lc "$qname." . shift @search) =~ s/\.$//;
       my $depth = 2;
 
       # advance in cname-chain
@@ -737,13 +856,13 @@ sub resolve($%) {
 
             while () {
                # results found?
-               my @rr = grep $_->[0] eq $name && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
+               my @rr = grep $name eq lc $_->[0] && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
 
                return $cb->(@rr)
                   if @rr;
 
                # see if there is a cname we can follow
-               my @rr = grep $_->[0] eq $name && $_->[1] eq "cname", @{ $res->{an} };
+               my @rr = grep $name eq lc $_->[0] && $_->[1] eq "cname", @{ $res->{an} };
 
                if (@rr) {
                   $depth--
