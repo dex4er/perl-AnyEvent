@@ -20,6 +20,7 @@ t/01_basic.t
 t/02_signals.t
 t/03_child.t
 t/04_condvar.t
+t/05_dns.t
 t/handle/00_load.t
 t/handle/01_readline.t
 t/handle/02_write.t

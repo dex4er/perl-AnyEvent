@@ -528,7 +528,7 @@ our $RESOLVER;
 sub resolver() {
    $RESOLVER || do {
       $RESOLVER = new AnyEvent::DNS;
-      $RESOLVER->load_resolv_conf;
+      $RESOLVER->os_config;
       $RESOLVER
    }
 }
@@ -613,7 +613,7 @@ sub new {
 =item $resolver->parse_resolv_conv ($string)
 
 Parses the given string a sif it were a F<resolv.conf> file. The following
-directives are supported:
+directives are supported (but not neecssarily implemented).
 
 C<#>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
 C<options> (C<timeout>, C<attempts>, C<ndots>).
@@ -667,21 +667,57 @@ sub parse_resolv_conf {
    $self->_compile;
 }
 
-=item $resolver->load_resolv_conf
+=item $resolver->os_config
 
-Tries to load and parse F</etc/resolv.conf>. If there will ever be windows
-support, then this function will do the right thing under windows, too.
+Tries so load and parse F</etc/resolv.conf> on portable opertaing systems. Tries various
+egregious hacks on windows to force the dns servers and searchlist out of the config.
 
 =cut
 
-sub load_resolv_conf {
+sub os_config {
    my ($self) = @_;
 
-   open my $fh, "</etc/resolv.conf"
-      or return;
+   if ($^O =~ /mswin32|cygwin/i) {
+      # yeah, it suxx... lets hope DNS is DNS in all locales
 
-   local $/;
-   $self->parse_resolv_conf (<$fh>);
+      if (open my $fh, "ipconfig /all |") {
+         delete $self->{server};
+         delete $self->{search};
+
+         while (<$fh>) {
+            # first DNS.* is suffix list
+            if (/^\s*DNS/) {
+               while (/\s+([[:alnum:].\-]+)\s*$/) {
+                  push @{ $self->{search} }, $1;
+                  $_ = <$fh>;
+               }
+               last;
+            }
+         }
+
+         while (<$fh>) {
+            # second DNS.* is server address list
+            if (/^\s*DNS/) {
+               while (/\s+(\d+\.\d+\.\d+\.\d+)\s*$/) {
+                  my $ip = $1;
+                  push @{ $self->{server} }, AnyEvent::Util::socket_inet_aton $ip
+                     if AnyEvent::Util::dotted_quad $ip;
+                  $_ = <$fh>;
+               }
+               last;
+            }
+         }
+
+         $self->_compile;
+      }
+   } else {
+      # try resolv.conf everywhere
+
+      if (open my $fh, "</etc/resolv.conf") {
+         local $/;
+         $self->parse_resolv_conf (<$fh>);
+      }
+   }
 }
 
 sub _compile {
