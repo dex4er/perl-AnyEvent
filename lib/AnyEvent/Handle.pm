@@ -656,26 +656,23 @@ sub _dotls {
       $self->_drain_wbuf;
    }
 
-   while () {
-      if (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
-         $self->{rbuf} .= $buf;
-         $self->_drain_rbuf;
-      } elsif (
-         (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
-         != Net::SSLeay::ERROR_WANT_READ ()
-      ) {
-         if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
-            $self->error;
-         } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
-            $! = &Errno::EIO;
-            $self->error;
-         }
+   while (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
+      $self->{rbuf} .= $buf;
+      $self->_drain_rbuf;
+   }
 
-         last;
-         # all others are fine for our purposes
-      } else {
-         last;
+   if (
+      (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
+      != Net::SSLeay::ERROR_WANT_READ ()
+   ) {
+      if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
+         $self->error;
+      } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
+         $! = &Errno::EIO;
+         $self->error;
       }
+
+      # all others are fine for our purposes
    }
 }
 
