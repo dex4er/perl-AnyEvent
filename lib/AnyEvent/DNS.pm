@@ -40,13 +40,13 @@ either a service name (port name from F</etc/services>) or a numerical
 port number. If both C<$node> and C<$service> are names, then SRV records
 will be consulted to find the real service, otherwise they will be
 used as-is. If you know that the service name is not in your services
-database, then you cna specify the service in the format C<name=port>
+database, then you can specify the service in the format C<name=port>
 (e.g. C<http=80>).
 
 C<$proto> must be a protocol name, currently C<tcp>, C<udp> or
 C<sctp>. The default is C<tcp>.
 
-C<$family> must be either C<0> (meaning any protocol is ok), C<4> (use
+C<$family> must be either C<0> (meaning any protocol is OK), C<4> (use
 only IPv4) or C<6> (use only IPv6). This setting might be influenced by
 C<$ENV{PERL_ANYEVENT_PROTOCOLS}>.
 
@@ -89,11 +89,11 @@ Tries to resolve the given domain name into a list of text records.
 Tries to resolve the given service, protocol and domain name into a list
 of service records.
 
-Each srv_rr is an arrayref with the following contents: 
+Each srv_rr is an array reference with the following contents: 
 C<[$priority, $weight, $transport, $target]>.
 
 They will be sorted with lowest priority, highest weight first (TODO:
-should use the rfc algorithm to reorder same-priority records for weight).
+should use the RFC algorithm to reorder same-priority records for weight).
 
 Example:
 
@@ -285,7 +285,8 @@ sub addr($$$$$$) {
 
    # try srv records, if applicable
    if ($node eq "localhost") {
-      @target = ([v127.0.0.1, $port], [v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1, $port]);
+      @target = (["127.0.0.1", $port], ["::1", $port]);
+      &$resolve;
    } elsif (defined $service && !AnyEvent::Socket::parse_ip ($node)) {
       srv $service, $proto, $node, sub {
          my (@srv) = @_;
@@ -321,7 +322,7 @@ sub addr($$$$$$) {
 =item $AnyEvent::DNS::EDNS0
 
 This variable decides whether dns_pack automatically enables EDNS0
-support. By default, this is disabled (C<0>), unless overriden by
+support. By default, this is disabled (C<0>), unless overridden by
 C<$ENV{PERL_ANYEVENT_EDNS0>), but when set to C<1>, AnyEvent::DNS will use
 EDNS0 in all requests.
 
@@ -695,7 +696,7 @@ The following options are supported:
 
 =item server => [...]
 
-A list of server addressses (default: C<v127.0.0.1>) in network format (4
+A list of server addresses (default: C<v127.0.0.1>) in network format (4
 octets for IPv4, 16 octets for IPv6 - not yet supported).
 
 =item timeout => [...]
@@ -716,7 +717,7 @@ tries to resolve the name without any suffixes first.
 =item max_outstanding => $integer
 
 Most name servers do not handle many parallel requests very well. This option
-limits the numbe rof outstanding requests to C<$n> (default: C<10>), that means
+limits the number of outstanding requests to C<$n> (default: C<10>), that means
 if you request more than this many requests, then the additional requests will be queued
 until some other requests have been resolved.
 
@@ -763,8 +764,8 @@ sub new {
 
 =item $resolver->parse_resolv_conv ($string)
 
-Parses the given string a sif it were a F<resolv.conf> file. The following
-directives are supported (but not neecssarily implemented).
+Parses the given string as if it were a F<resolv.conf> file. The following
+directives are supported (but not necessarily implemented).
 
 C<#>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
 C<options> (C<timeout>, C<attempts>, C<ndots>).
@@ -820,8 +821,8 @@ sub parse_resolv_conf {
 
 =item $resolver->os_config
 
-Tries so load and parse F</etc/resolv.conf> on portable opertaing systems. Tries various
-egregious hacks on windows to force the dns servers and searchlist out of the config.
+Tries so load and parse F</etc/resolv.conf> on portable operating systems. Tries various
+egregious hacks on windows to force the DNS servers and searchlist out of the system.
 
 =cut
 
@@ -1050,7 +1051,7 @@ none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 8.
 
-Note that this resolver is just a stub resolver: it requires a nameserver
+Note that this resolver is just a stub resolver: it requires a name server
 supporting recursive queries, will not do any recursive queries itself and
 is not secure when used against an untrusted name server.
 

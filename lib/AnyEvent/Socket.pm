@@ -30,6 +30,7 @@ use Socket ();
 
 use AnyEvent ();
 use AnyEvent::Util qw(guard fh_nonblocking);
+use AnyEvent::DNS ();
 
 use base 'Exporter';
 
@@ -204,7 +205,7 @@ sub inet_aton {
 
 =item $sa = AnyEvent::Socket::pack_sockaddr $port, $host
 
-Pack the given port/hst combination into a binary sockaddr structure. Handles
+Pack the given port/host combination into a binary sockaddr structure. Handles
 both IPv4 and IPv6 host addresses.
 
 =cut
@@ -263,11 +264,11 @@ If both C<$host> and C<$port> are names, then this function will use SRV
 records to locate the real target(s).
 
 In either case, it will create a list of target hosts (e.g. for multihomed
-hosts or hosts with both IPv4 and IPV6 addrsesses) and try to connetc to
+hosts or hosts with both IPv4 and IPv6 addresses) and try to connect to
 each in turn.
 
 If the connect is successful, then the C<$connect_cb> will be invoked with
-the socket filehandle (in non-blocking mode) as first and the peer host
+the socket file handle (in non-blocking mode) as first and the peer host
 (as a textual IP address) and peer port as second and third arguments,
 respectively. The fourth argument is a code reference that you can call
 if, for some reason, you don't like this connection, which will cause
@@ -279,10 +280,10 @@ ignore this argument.
 
 If the connect is unsuccessful, then the C<$connect_cb> will be invoked
 without any arguments and C<$!> will be set appropriately (with C<ENXIO>
-indicating a dns resolution failure).
+indicating a DNS resolution failure).
 
-The filehandle is suitable to be plugged into L<AnyEvent::Handle>, but can
-be used as a normal perl file handle as well.
+The file handle is perfect for being plugged into L<AnyEvent::Handle>, but
+can be used as a normal perl file handle as well.
 
 Unless called in void context, C<tcp_connect> returns a guard object that
 will automatically abort connecting when it gets destroyed (it does not do
@@ -296,7 +297,7 @@ in not-yet-connected state as only argument and must return the connection
 timeout value (or C<0>, C<undef> or the empty list to indicate the default
 timeout is to be used).
 
-Note that the socket could be either a IPv4 TCP socket or an IPv6 tcp
+Note that the socket could be either a IPv4 TCP socket or an IPv6 TCP
 socket (although only IPv4 is currently supported by this module).
 
 Simple Example: connect to localhost on port 22.
@@ -430,19 +431,19 @@ sub tcp_connect($$$;$) {
 
 =item $guard = tcp_server $host, $port, $accept_cb[, $prepare_cb]
 
-Create and bind a tcp socket to the given host (any IPv4 host if undef,
+Create and bind a TCP socket to the given host (any IPv4 host if undef,
 otherwise it must be an IPv4 or IPv6 address) and port (service name or
 numeric port number, or an ephemeral port if given as zero or undef), set
 the SO_REUSEADDR flag and call C<listen>.
 
 For each new connection that could be C<accept>ed, call the C<$accept_cb>
-with the filehandle (in non-blocking mode) as first and the peer host and
+with the file handle (in non-blocking mode) as first and the peer host and
 port as second and third arguments (see C<tcp_connect> for details).
 
 Croaks on any errors.
 
 If called in non-void context, then this function returns a guard object
-whose lifetime it tied to the tcp server: If the object gets destroyed,
+whose lifetime it tied to the TCP server: If the object gets destroyed,
 the server will be stopped (but existing accepted connections will
 continue).
 
@@ -452,7 +453,7 @@ the listen file handle as first argument.
 
 It should return the length of the listen queue (or C<0> for the default).
 
-Example: bind on tcp port 8888 on the local machine and tell each client
+Example: bind on TCP port 8888 on the local machine and tell each client
 to go away.
 
    tcp_server undef, 8888, sub {

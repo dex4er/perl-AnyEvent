@@ -59,7 +59,7 @@ event loops to AnyEvent, too, so it is future-proof).
 
 In addition to being free of having to use I<the one and only true event
 model>, AnyEvent also is free of bloat and policy: with POE or similar
-modules, you get an enourmous amount of code and strict rules you have to
+modules, you get an enormous amount of code and strict rules you have to
 follow. AnyEvent, on the other hand, is lean and up to the point, by only
 offering the functionality that is necessary, in as thin as a wrapper as
 technically possible.
@@ -110,7 +110,7 @@ explicitly.
 
 AnyEvent has the central concept of a I<watcher>, which is an object that
 stores relevant data for each kind of event you are waiting for, such as
-the callback to call, the filehandle to watch, etc.
+the callback to call, the file handle to watch, etc.
 
 These watchers are normal Perl objects with normal Perl lifetime. After
 creating a watcher it will immediately "watch" for events and invoke the
@@ -1031,11 +1031,11 @@ model it chooses.
 =item C<PERL_ANYEVENT_MODEL>
 
 This can be used to specify the event model to be used by AnyEvent, before
-autodetection and -probing kicks in. It must be a string consisting
+auto detection and -probing kicks in. It must be a string consisting
 entirely of ASCII letters. The string C<AnyEvent::Impl::> gets prepended
 and the resulting module name is loaded and if the load was successful,
 used as event model. If it fails to load AnyEvent will proceed with
-autodetection and -probing.
+auto detection and -probing.
 
 This functionality might change in future versions.
 
@@ -1048,7 +1048,7 @@ could start your program like this:
 
 Used by both L<AnyEvent::DNS> and L<AnyEvent::Socket> to determine preferences
 for IPv4 or IPv6. The default is unspecified (and might change, or be the result
-of autoprobing).
+of auto probing).
 
 Must be set to a comma-separated list of protocols or address families,
 current supported: C<ipv4> and C<ipv6>. Only protocols mentioned will be
@@ -1062,12 +1062,12 @@ small, as the program has to handle connection errors already-
 Examples: C<PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6> - prefer IPv4 over IPv6,
 but support both and try to use both.  C<PERL_ANYEVENT_PROTOCOLS=ipv4>
 - only support IPv4, never try to resolve or contact IPv6
-addressses. C<PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4> support either IPv4 or
+addresses. C<PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4> support either IPv4 or
 IPv6, but prefer IPv6 over IPv4.
 
 =item C<PERL_ANYEVENT_EDNS0>
 
-Used by L<AnyEvent::DNS> to decide wether to use the EDNS0 extension
+Used by L<AnyEvent::DNS> to decide whether to use the EDNS0 extension
 for DNS. This extension is generally useful to reduce DNS traffic, but
 some (broken) firewalls drop such DNS packets, which is why it is off by
 default.
@@ -1169,7 +1169,7 @@ this example:
    $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'r', cb => sub { $txn->fh_ready_r });
 
 Again, C<fh_ready_r> waits till all data has arrived, and then stores the
-result and signals any possible waiters that the request ahs finished:
+result and signals any possible waiters that the request has finished:
 
    sysread $txn->{fh}, $txn->{buf}, length $txn->{$buf};
 
@@ -1187,7 +1187,7 @@ data:
    return $txn->{result};
 
 The actual code goes further and collects all errors (C<die>s, exceptions)
-that occured during request processing. The C<result> method detects
+that occurred during request processing. The C<result> method detects
 whether an exception as thrown (it is stored inside the $txn object)
 and just throws the exception, which means connection errors and other
 problems get reported tot he code that tries to use the result, not in a
@@ -1243,7 +1243,7 @@ of various event loops I prepared some benchmarks.
 =head2 BENCHMARKING ANYEVENT OVERHEAD
 
 Here is a benchmark of various supported event models used natively and
-through anyevent. The benchmark creates a lot of timers (with a zero
+through AnyEvent. The benchmark creates a lot of timers (with a zero
 timeout) and I/O watchers (watching STDOUT, a pty, to become writable,
 which it is), lets them fire exactly once and destroys them again.
 
@@ -1376,19 +1376,19 @@ reasonable memory usage.
 
 =head2 BENCHMARKING THE LARGE SERVER CASE
 
-This benchmark atcually benchmarks the event loop itself. It works by
-creating a number of "servers": each server consists of a socketpair, a
+This benchmark actually benchmarks the event loop itself. It works by
+creating a number of "servers": each server consists of a socket pair, a
 timeout watcher that gets reset on activity (but never fires), and an I/O
 watcher waiting for input on one side of the socket. Each time the socket
 watcher reads a byte it will write that byte to a random other "server".
 
 The effect is that there will be a lot of I/O watchers, only part of which
 are active at any one point (so there is a constant number of active
-fds for each loop iterstaion, but which fds these are is random). The
+fds for each loop iteration, but which fds these are is random). The
 timeout is reset each time something is read because that reflects how
 most timeouts work (and puts extra pressure on the event loops).
 
-In this benchmark, we use 10000 socketpairs (20000 sockets), of which 100
+In this benchmark, we use 10000 socket pairs (20000 sockets), of which 100
 (1%) are active. This mirrors the activity of large servers with many
 connections, most of which are idle at any one point in time.
 
@@ -1400,7 +1400,7 @@ distribution.
 I<sockets> is the number of sockets, and twice the number of "servers" (as
 each server has a read and write socket end).
 
-I<create> is the time it takes to create a socketpair (which is
+I<create> is the time it takes to create a socket pair (which is
 nontrivial) and two watchers: an I/O watcher and a timeout watcher.
 
 I<request>, the most important value, is the time it takes to handle a

@@ -40,7 +40,6 @@ my $w = tcp_server undef, undef,
       0
    };
 
-
 my $clhdl;
 my $wc = tcp_connect localhost => $port, sub {
    my ($fh) = @_
