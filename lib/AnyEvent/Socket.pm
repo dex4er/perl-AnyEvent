@@ -6,6 +6,13 @@ AnyEvent::Socket - useful IPv4 and IPv6 stuff.
 
  use AnyEvent::Socket;
 
+ tcp_connect "gameserver.deliantra.net", 13327, sub {
+    my ($fh) = @_
+       or die "gameserver.deliantra.net connect failed: $!";
+
+    # enjoy your filehandle
+ };
+
 =head1 DESCRIPTION
 
 This module implements various utility functions for handling internet
