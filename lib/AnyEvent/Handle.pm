@@ -675,9 +675,25 @@ sub _dotls {
    }
 }
 
+=item $handle->starttls ($tls[, $tls_ctx])
+
+Instead of starting TLS negotiation immediately when the AnyEvent::Handle
+object is created, you can also do that at a later time by calling
+C<starttls>.
+
+The first argument is the same as the C<tls> constructor argument (either
+C<"connect">, C<"accept"> or an existing Net::SSLeay object).
+
+The second argument is the optional C<Net::SSLeay::CTX> object that is
+used when AnyEvent::Handle has to create its own TLS connection object.
+
+=cut
+
 # TODO: maybe document...
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
+
+   $self->stoptls;
 
    if ($ssl eq "accept") {
       $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
@@ -712,10 +728,28 @@ sub starttls {
    };
 }
 
+=item $handle->stoptls
+
+Destroys the SSL connection, if any. Partial read or write data will be
+lost.
+
+=cut
+
+sub stoptls {
+   my ($self) = @_;
+
+   Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
+   delete $self->{tls_rbio};
+   delete $self->{tls_wbio};
+   delete $self->{tls_wbuf};
+   delete $self->{filter_r};
+   delete $self->{filter_w};
+}
+
 sub DESTROY {
    my $self = shift;
 
-   Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
+   $self->stoptls;
 }
 
 =item AnyEvent::Handle::TLS_CTX
