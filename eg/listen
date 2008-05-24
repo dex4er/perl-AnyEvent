@@ -24,7 +24,7 @@ AnyEvent::Socket::tcp_server undef, 34832, sub {
 
    $hdl->push_write ("Hello!\015\012");
 
-   $hdl->push_read_line (sub {
+   $hdl->push_read (line => sub {
       my (undef, $line) = @_;
       print "Yay, got line: $line\n";
       $hdl->push_write ("Bye\015\012");

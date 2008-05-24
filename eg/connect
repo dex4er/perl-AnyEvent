@@ -23,7 +23,7 @@ my $watchobj = AnyEvent::Socket::tcp_connect ("www.google.com", 80, sub {
 
    $hdl->push_write ("GET / HTTP/1.0\015\012\015\012");
 
-   $hdl->push_read_line (sub {
+   $hdl->push_read (line => sub {
       my ($hdl, $line) = @_;
       print "Yay, got line: $line\n";
       $cv->broadcast;

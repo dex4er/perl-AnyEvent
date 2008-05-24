@@ -1,4 +1,5 @@
 #!/opt/bin/perl
+
 # This small example script shows how to do non-blocking
 # reads from a file handle.
 
@@ -11,7 +12,7 @@ my $ae_fh =
        on_eof => sub { $cv->broadcast }
     );
 
-$ae_fh->push_read_line (sub {
+$ae_fh->push_read (line => sub {
    my ($ae_fh, $line) = @_;
    print "Got line [$line]\n";
 
