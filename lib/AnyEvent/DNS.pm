@@ -1000,7 +1000,6 @@ sub _scheduler {
    while ($self->{outstanding} < $self->{max_outstanding}) {
 
       if (@{ $self->{reuse_q} } >= 30000) {
-         warn "reusing id's, waiting ",$self->{reuse_q}[0][0] - $NOW;#d#
          # we ran out of ID's, wait a bit
          $self->{reuse_to} ||= AnyEvent->timer (after => $self->{reuse_q}[0][0] - $NOW, cb => sub {
             delete $self->{reuse_to};

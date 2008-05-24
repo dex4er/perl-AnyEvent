@@ -213,7 +213,7 @@ sub pack_sockaddr($$) {
    if (4 == length $_[1]) {
       Socket::pack_sockaddr_in $_[0], $_[1]
    } elsif (16 == length $_[1]) {
-      pack "SSL a16 L",
+      pack "SnL a16 L",
          Socket::AF_INET6,
          $_[0], # port
          0,     # flowinfo
@@ -239,7 +239,7 @@ sub unpack_sockaddr($) {
    if ($af == &Socket::AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
    } elsif ($af == AF_INET6) {
-      (unpack "SSL a16 L")[1, 3]
+      (unpack "SnL a16 L")[1, 3]
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
