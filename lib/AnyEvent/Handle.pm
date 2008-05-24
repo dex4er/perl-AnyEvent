@@ -661,10 +661,9 @@ sub _dotls {
       $self->_drain_rbuf;
    }
 
-   if (
-      (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
-      != Net::SSLeay::ERROR_WANT_READ ()
-   ) {
+   my $err = Net::SSLeay::get_error ($self->{tls}, -1);
+
+   if ($err!= Net::SSLeay::ERROR_WANT_READ ()) {
       if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
          $self->error;
       } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
