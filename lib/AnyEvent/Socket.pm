@@ -13,6 +13,13 @@ AnyEvent::Socket - useful IPv4 and IPv6 stuff.
     # enjoy your filehandle
  };
 
+ # a simple tcp server
+ tcp_server undef, 8888, sub {
+    my ($fh, $host, $port) = @_;
+
+    syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
+ };
+
 =head1 DESCRIPTION
 
 This module implements various utility functions for handling internet

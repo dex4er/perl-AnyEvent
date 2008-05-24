@@ -6,6 +6,11 @@ AnyEvent::DNS - fully asynchronous DNS resolution
 
  use AnyEvent::DNS;
 
+ my $cv = AnyEvent->condvar;
+ AnyEvent::DNS::a "www.google.de", sub { $cv->send (@_) };
+ # ... later
+ my @addrs = $cv->recv;
+
 =head1 DESCRIPTION
 
 This module offers both a number of DNS convenience functions as well
