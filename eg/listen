@@ -2,30 +2,24 @@
 use strict;
 use Socket;
 use IO::Socket::INET;
-use AnyEvent::Util;
+use AnyEvent::Socket;
 use AnyEvent::Handle;
 
 my $cv = AnyEvent->condvar;
 
-my $sock = IO::Socket::INET->new (
-    Listen => 5, ReuseAddr => 1, LocalPort => 124,
-) or die "Couldn't make socket: $!\n";
-
-print "Listening on addres: " . $sock->sockhost . ", port: " . $sock->sockport . "\n";
-
 my $hdl;
 
-my $watchobj = AnyEvent::Util::listen ($sock, sub {
-   my ($clsock, $paddr) = @_;
-   my ($port, $addr) = sockaddr_in ($paddr);
-   $addr = inet_ntoa ($addr);
-   print "Got new client connection: $addr:$port\n";
+warn "listening on port 34832...\n";
+
+AnyEvent::Socket::tcp_server undef, 34832, sub {
+   my ($clsock, $host, $port) = @_;
+   print "Got new client connection: $host:$port\n";
 
    $hdl =
       AnyEvent::Handle->new (
          fh => $clsock,
-         on_eof => sub { print "client connection $addr:$port: eof\n" },
-         on_error => sub { print "Client connection error: $addr:$port: $!\n" }
+         on_eof => sub { print "client connection $host:$port: eof\n" },
+         on_error => sub { print "Client connection error: $host:$port: $!\n" }
       );
 
    $hdl->push_write ("Hello!\015\012");
@@ -36,10 +30,6 @@ my $watchobj = AnyEvent::Util::listen ($sock, sub {
       $hdl->push_write ("Bye\015\012");
       $hdl->on_drain (sub { $hdl->fh->close; undef $hdl });
    });
-
-}, sub {
-   warn "Got error on connect: $!\n";
-   $cv->broadcast;
-}, 10);
+};
 
 $cv->wait;

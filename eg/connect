@@ -1,24 +1,19 @@
 #!/opt/perl/bin/perl
 use IO::Socket::INET;
-use AnyEvent::Util;
+use AnyEvent::Socket;
 use AnyEvent::Handle;
 
 my $cv = AnyEvent->condvar;
 
-# Warning: IO::Socket::INET is going to do a BLOCKING
-# DNS lookup. Please see AnyEvent::Util::inet_aton how to
-# do nonblocking lookups!
-my $sock = IO::Socket::INET->new (
-    PeerAddr => "www.google.com:80",
-    Blocking => 0,
-) or die "Couldn't make socket: $!\n";
-
 my $hdl;
 
-# The $watchobj is just a guard that you have to keep
-# referenced until you are done with the connect.
-my $watchobj = AnyEvent::Util::connect ($sock, sub {
+my $watchobj = AnyEvent::Socket::tcp_connect ("www.google.com", 80, sub {
    my ($sock) = @_;
+
+   unless ($sock) {
+      warn "couldn't connect: $!";
+      return;
+   }
 
    $hdl =
       AnyEvent::Handle->new (
@@ -35,8 +30,7 @@ my $watchobj = AnyEvent::Util::connect ($sock, sub {
    });
 
 }, sub {
-   warn "Got error on connect: $!\n";
-   $cv->broadcast;
-}, 10);
+   10 # the timeout
+});
 
 $cv->wait;
