@@ -1,4 +1,4 @@
-NAME
+=> NAME
     AnyEvent - provide framework for multiple event loops
 
     EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event
@@ -57,8 +57,8 @@ WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
     In addition to being free of having to use *the one and only true event
     model*, AnyEvent also is free of bloat and policy: with POE or similar
-    modules, you get an enourmous amount of code and strict rules you have
-    to follow. AnyEvent, on the other hand, is lean and up to the point, by
+    modules, you get an enormous amount of code and strict rules you have to
+    follow. AnyEvent, on the other hand, is lean and up to the point, by
     only offering the functionality that is necessary, in as thin as a
     wrapper as technically possible.
 
@@ -106,7 +106,7 @@ DESCRIPTION
 WATCHERS
     AnyEvent has the central concept of a *watcher*, which is an object that
     stores relevant data for each kind of event you are waiting for, such as
-    the callback to call, the filehandle to watch, etc.
+    the callback to call, the file handle to watch, etc.
 
     These watchers are normal Perl objects with normal Perl lifetime. After
     creating a watcher it will immediately "watch" for events and invoke the
@@ -231,10 +231,10 @@ WATCHERS
     presence is undefined and you cannot rely on them. Portable AnyEvent
     callbacks cannot use arguments passed to signal watcher callbacks.
 
-    Multiple signal occurances can be clumped together into one callback
-    invocation, and callback invocation will be synchronous. synchronous
+    Multiple signal occurrences can be clumped together into one callback
+    invocation, and callback invocation will be synchronous. Synchronous
     means that it might take a while until the signal gets handled by the
-    process, but it is guarenteed not to interrupt any other callbacks.
+    process, but it is guaranteed not to interrupt any other callbacks.
 
     The main advantage of using these watchers is that you can share a
     signal between multiple watchers.
@@ -303,14 +303,15 @@ WATCHERS
     "cb", which specifies a callback to be called when the condition
     variable becomes true.
 
-    After creation, the conditon variable is "false" until it becomes "true"
-    by calling the "send" method.
+    After creation, the condition variable is "false" until it becomes
+    "true" by calling the "send" method (or calling the condition variable
+    as if it were a callback).
 
     Condition variables are similar to callbacks, except that you can
     optionally wait for them. They can also be called merge points - points
-    in time where multiple outstandign events have been processed. And yet
-    another way to call them is transations - each condition variable can be
-    used to represent a transaction, which finishes at some point and
+    in time where multiple outstanding events have been processed. And yet
+    another way to call them is transactions - each condition variable can
+    be used to represent a transaction, which finishes at some point and
     delivers a result.
 
     Condition variables are very useful to signal that something has
@@ -325,7 +326,7 @@ WATCHERS
     button of your app, which would "->send" the "quit" event.
 
     Note that condition variables recurse into the event loop - if you have
-    two pieces of code that call "->recv" in a round-robbin fashion, you
+    two pieces of code that call "->recv" in a round-robin fashion, you
     lose. Therefore, condition variables are good to export to your caller,
     but you should avoid making a blocking wait yourself, at least in
     callbacks, as this asks for trouble.
@@ -340,7 +341,7 @@ WATCHERS
     which eventually calls "-> send", and the "consumer side", which waits
     for the send to occur.
 
-    Example:
+    Example: wait for a timer.
 
        # wait till the result is ready
        my $result_ready = AnyEvent->condvar;
@@ -358,6 +359,13 @@ WATCHERS
        # calls send
        $result_ready->recv;
 
+    Example: wait for a timer, but take advantage of the fact that condition
+    variables are also code references.
+
+       my $done = AnyEvent->condvar;
+       my $delay = AnyEvent->timer (after => 5, cb => $done);
+       $done->recv;
+
    METHODS FOR PRODUCERS
     These methods should only be used by the producing side, i.e. the
     code/module that eventually sends the signal. Note that it is also the
@@ -374,6 +382,10 @@ WATCHERS
 
         Any arguments passed to the "send" call will be returned by all
         future "->recv" calls.
+
+        Condition variables are overloaded so one can call them directly (as
+        a code reference). Calling them directly is the same as calling
+        "send".
 
     $cv->croak ($error)
         Similar to send, but causes all call's to "->recv" to invoke
@@ -429,7 +441,7 @@ WATCHERS
         This is the general pattern when you "fan out" into multiple
         subrequests: use an outer "begin"/"end" pair to set the callback and
         ensure "end" is called at least once, and then, for each subrequest
-        you start, call "begin" and for eahc subrequest you finish, call
+        you start, call "begin" and for each subrequest you finish, call
         "end".
 
    METHODS FOR CONSUMERS
@@ -455,7 +467,7 @@ WATCHERS
         the caller decide whether the call will block or not (for example,
         by coupling condition variables with some kind of request results
         and supporting callbacks so the caller knows that getting the result
-        will not block, while still suppporting blocking waits if the caller
+        will not block, while still supporting blocking waits if the caller
         so desires).
 
         Another reason *never* to "->recv" in a module is that you cannot
@@ -596,12 +608,17 @@ OTHER MODULES
         Provide read and write buffers and manages watchers for reads and
         writes.
 
+    AnyEvent::Socket
+        Provides various utility functions for (internet protocol) sockets,
+        addresses and name resolution. Also functions to create non-blocking
+        tcp connections or tcp servers, with IPv6 and SRV record support and
+        more.
+
     AnyEvent::HTTPD
         Provides a simple web application server framework.
 
     AnyEvent::DNS
-        Provides asynchronous DNS resolver capabilities, beyond what
-        AnyEvent::Util offers.
+        Provides rich asynchronous DNS resolver capabilities.
 
     AnyEvent::FastPing
         The fastest ping in the west.
@@ -695,11 +712,11 @@ ENVIRONMENT VARIABLES
 
     "PERL_ANYEVENT_MODEL"
         This can be used to specify the event model to be used by AnyEvent,
-        before autodetection and -probing kicks in. It must be a string
+        before auto detection and -probing kicks in. It must be a string
         consisting entirely of ASCII letters. The string "AnyEvent::Impl::"
         gets prepended and the resulting module name is loaded and if the
         load was successful, used as event model. If it fails to load
-        AnyEvent will proceed with autodetection and -probing.
+        AnyEvent will proceed with auto detection and -probing.
 
         This functionality might change in future versions.
 
@@ -707,6 +724,37 @@ ENVIRONMENT VARIABLES
         could start your program like this:
 
           PERL_ANYEVENT_MODEL=Perl perl ...
+
+    "PERL_ANYEVENT_PROTOCOLS"
+        Used by both AnyEvent::DNS and AnyEvent::Socket to determine
+        preferences for IPv4 or IPv6. The default is unspecified (and might
+        change, or be the result of auto probing).
+
+        Must be set to a comma-separated list of protocols or address
+        families, current supported: "ipv4" and "ipv6". Only protocols
+        mentioned will be used, and preference will be given to protocols
+        mentioned earlier in the list.
+
+        This variable can effectively be used for denial-of-service attacks
+        against local programs (e.g. when setuid), although the impact is
+        likely small, as the program has to handle connection errors
+        already-
+
+        Examples: "PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6" - prefer IPv4 over
+        IPv6, but support both and try to use both.
+        "PERL_ANYEVENT_PROTOCOLS=ipv4" - only support IPv4, never try to
+        resolve or contact IPv6 addresses.
+        "PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4" support either IPv4 or IPv6, but
+        prefer IPv6 over IPv4.
+
+    "PERL_ANYEVENT_EDNS0"
+        Used by AnyEvent::DNS to decide whether to use the EDNS0 extension
+        for DNS. This extension is generally useful to reduce DNS traffic,
+        but some (broken) firewalls drop such DNS packets, which is why it
+        is off by default.
+
+        Setting this variable to 1 will cause AnyEvent::DNS to announce
+        EDNS0 in its DNS requests.
 
 EXAMPLE PROGRAM
     The following program uses an I/O watcher to read data from STDIN, a
@@ -798,7 +846,7 @@ REAL-WORLD EXAMPLE
        $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'r', cb => sub { $txn->fh_ready_r });
 
     Again, "fh_ready_r" waits till all data has arrived, and then stores the
-    result and signals any possible waiters that the request ahs finished:
+    result and signals any possible waiters that the request has finished:
 
        sysread $txn->{fh}, $txn->{buf}, length $txn->{$buf};
 
@@ -816,7 +864,7 @@ REAL-WORLD EXAMPLE
        return $txn->{result};
 
     The actual code goes further and collects all errors ("die"s,
-    exceptions) that occured during request processing. The "result" method
+    exceptions) that occurred during request processing. The "result" method
     detects whether an exception as thrown (it is stored inside the $txn
     object) and just throws the exception, which means connection errors and
     other problems get reported tot he code that tries to use the result,
@@ -869,7 +917,7 @@ BENCHMARKS
 
   BENCHMARKING ANYEVENT OVERHEAD
     Here is a benchmark of various supported event models used natively and
-    through anyevent. The benchmark creates a lot of timers (with a zero
+    through AnyEvent. The benchmark creates a lot of timers (with a zero
     timeout) and I/O watchers (watching STDOUT, a pty, to become writable,
     which it is), lets them fire exactly once and destroys them again.
 
@@ -994,8 +1042,8 @@ BENCHMARKS
         reasonable memory usage.
 
   BENCHMARKING THE LARGE SERVER CASE
-    This benchmark atcually benchmarks the event loop itself. It works by
-    creating a number of "servers": each server consists of a socketpair, a
+    This benchmark actually benchmarks the event loop itself. It works by
+    creating a number of "servers": each server consists of a socket pair, a
     timeout watcher that gets reset on activity (but never fires), and an
     I/O watcher waiting for input on one side of the socket. Each time the
     socket watcher reads a byte it will write that byte to a random other
@@ -1003,11 +1051,11 @@ BENCHMARKS
 
     The effect is that there will be a lot of I/O watchers, only part of
     which are active at any one point (so there is a constant number of
-    active fds for each loop iterstaion, but which fds these are is random).
+    active fds for each loop iteration, but which fds these are is random).
     The timeout is reset each time something is read because that reflects
     how most timeouts work (and puts extra pressure on the event loops).
 
-    In this benchmark, we use 10000 socketpairs (20000 sockets), of which
+    In this benchmark, we use 10000 socket pairs (20000 sockets), of which
     100 (1%) are active. This mirrors the activity of large servers with
     many connections, most of which are idle at any one point in time.
 
@@ -1018,7 +1066,7 @@ BENCHMARKS
     *sockets* is the number of sockets, and twice the number of "servers"
     (as each server has a read and write socket end).
 
-    *create* is the time it takes to create a socketpair (which is
+    *create* is the time it takes to create a socket pair (which is
     nontrivial) and two watchers: an I/O watcher and a timeout watcher.
 
     *request*, the most important value, is the time it takes to handle a
@@ -1092,7 +1140,7 @@ BENCHMARKS
 
     EV is again fastest.
 
-    Perl again comes second. It is noticably faster than the C-based event
+    Perl again comes second. It is noticeably faster than the C-based event
     loops Event and Glib, although the difference is too small to really
     matter.
 
@@ -1131,6 +1179,8 @@ SECURITY CONSIDERATIONS
     is probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
 
 SEE ALSO
+    Utility functions: AnyEvent::Util.
+
     Event modules: EV, EV::Glib, Glib::EV, Event, Glib::Event, Glib, Tk,
     Event::Lib, Qt, POE.
 
@@ -1138,9 +1188,14 @@ SEE ALSO
     AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,
     AnyEvent::Impl::EventLib, AnyEvent::Impl::Qt, AnyEvent::Impl::POE.
 
+    Non-blocking file handles, sockets, TCP clients and servers:
+    AnyEvent::Handle, AnyEvent::Socket.
+
+    Asynchronous DNS: AnyEvent::DNS.
+
     Coroutine support: Coro, Coro::AnyEvent, Coro::EV, Coro::Event,
 
-    Nontrivial usage examples: Net::FCP, Net::XMPP2.
+    Nontrivial usage examples: Net::FCP, Net::XMPP2, AnyEvent::DNS.
 
 AUTHOR
      Marc Lehmann <schmorp@schmorp.de>
