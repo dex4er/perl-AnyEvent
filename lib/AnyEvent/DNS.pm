@@ -722,10 +722,9 @@ until some other requests have been resolved.
 
 =item reuse => $seconds
 
-The number of seconds (default: C<60>) that a query id cannot be re-used
-after a request. Since AnyEvent::DNS will only allocate up to 30000 ID's
-at the same time, the long-term maximum number of requests per second is
-C<30000 / $seconds> (and thus C<500> requests/s by default).
+The number of seconds (default: C<300>) that a query id cannot be re-used
+after a timeout. If there as no time-out then query id's can be reused
+immediately.
 
 =back
 
@@ -745,7 +744,7 @@ sub new {
       search  => [],
       ndots   => 1,
       max_outstanding => 10,
-      reuse   => 60, # reuse id's after 5 minutes only, if possible
+      reuse   => 300, # reuse id's after 5 minutes only, if possible
       %arg,
       fh      => $fh,
       reuse_q => [],
@@ -912,17 +911,44 @@ sub _recv {
    }
 }
 
-sub _exec {
-   my ($self, $req, $retry) = @_;
+sub _free_id {
+   my ($self, $id, $timeout) = @_;
 
-   if (my $retry_cfg = $self->{retry}[$retry]) {
+   if ($timeout) {
+      # we need to block the id for a while
+      $self->{id}{$id} = 1;
+      push @{ $self->{reuse_q} }, [$NOW + $self->{reuse}, $id];
+   } else {
+      # we can quickly recycle the id
+      delete $self->{id}{$id};
+   }
+
+   --$self->{outstanding};
+   $self->_scheduler;
+}
+
+# execute a single request, involves sending it with timeouts to multiple servers
+sub _exec {
+   my ($self, $req) = @_;
+
+   my $retry; # of retries
+   my $do_retry;
+
+   $do_retry = sub {
+      my $retry_cfg = $self->{retry}[$retry++]
+         or do {
+            # failure
+            $self->_free_id ($req->[2], $retry > 1);
+            undef $do_retry; return $req->[1]->();
+         };
+
       my ($server, $timeout) = @$retry_cfg;
       
       $self->{id}{$req->[2]} = [AnyEvent->timer (after => $timeout, cb => sub {
          $NOW = time;
 
          # timeout, try next
-         $self->_exec ($req, $retry + 1);
+         &$do_retry;
       }), sub {
          my ($res) = @_;
 
@@ -930,13 +956,13 @@ sub _exec {
             # success, but truncated, so use tcp
             AnyEvent::Socket::tcp_connect ((Socket::inet_ntoa $server), 53, sub {
                my ($fh) = @_
-                  or return $self->_exec ($req, $retry + 1);
+                  or return &$do_retry;
 
                my $handle = new AnyEvent::Handle
                   fh       => $fh,
                   on_error => sub {
                      # failure, try next
-                     $self->_exec ($req, $retry + 1);
+                     &$do_retry;
                   };
 
                $handle->push_write (pack "n/a", $req->[0]);
@@ -951,25 +977,15 @@ sub _exec {
 
          } else {
             # success
-            $self->{id}{$req->[2]} = 1;
-            push @{ $self->{reuse_q} }, [$NOW + $self->{reuse}, $req->[2]];
-            --$self->{outstanding};
-            $self->_scheduler;
-
-            $req->[1]->($res);
+            $self->_free_id ($req->[2], $retry > 1);
+            undef $do_retry; return $req->[1]->($res);
          }
       }];
 
       send $self->{fh}, $req->[0], 0, AnyEvent::Socket::pack_sockaddr (53, $server);
-   } else {
-      # failure
-      $self->{id}{$req->[2]} = 1;
-      push @{ $self->{reuse_q} }, [$NOW + $self->{reuse}, $req->[2]];
-      --$self->{outstanding};
-      $self->_scheduler;
+   };
 
-      $req->[1]->();
-   }
+   &$do_retry;
 }
 
 sub _scheduler {
@@ -984,6 +1000,7 @@ sub _scheduler {
    while ($self->{outstanding} < $self->{max_outstanding}) {
 
       if (@{ $self->{reuse_q} } >= 30000) {
+         warn "reusing id's, waiting ",$self->{reuse_q}[0][0] - $NOW;#d#
          # we ran out of ID's, wait a bit
          $self->{reuse_to} ||= AnyEvent->timer (after => $self->{reuse_q}[0][0] - $NOW, cb => sub {
             delete $self->{reuse_to};
@@ -1000,11 +1017,11 @@ sub _scheduler {
          last unless exists $self->{id}{$req->[2]};
       }
 
+      ++$self->{outstanding};
       $self->{id}{$req->[2]} = 1;
       substr $req->[0], 0, 2, pack "n", $req->[2];
 
-      ++$self->{outstanding};
-      $self->_exec ($req, 0);
+      $self->_exec ($req);
    }
 }
 
@@ -1120,15 +1137,17 @@ sub resolve($%) {
       : ($qtype => 1);
 
    # advance in searchlist
-   my $do_search; $do_search = sub {
+   my ($do_search, $do_req);
+   
+   $do_search = sub {
       @search
-         or return $cb->();
+         or (undef $do_search), (undef $do_req), return $cb->();
 
       (my $name = lc "$qname." . shift @search) =~ s/\.$//;
       my $depth = 2;
 
       # advance in cname-chain
-      my $do_req; $do_req = sub {
+      $do_req = sub {
          $self->request ({
             rd => 1,
             qd => [[$name, $qtype, $class]],
@@ -1142,7 +1161,7 @@ sub resolve($%) {
                # results found?
                my @rr = grep $name eq lc $_->[0] && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
 
-               return $cb->(@rr)
+               (undef $do_search), (undef $do_req), return $cb->(@rr)
                   if @rr;
 
                # see if there is a cname we can follow
