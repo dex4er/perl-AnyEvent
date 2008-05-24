@@ -256,10 +256,8 @@ buffers it independently of the kernel.
 
 =cut
 
-sub push_write {
-   my ($self, $data) = @_;
-
-   $self->{wbuf} .= $data;
+sub _drain_wbuf {
+   my ($self) = @_;
 
    unless ($self->{ww}) {
       Scalar::Util::weaken $self;
@@ -268,7 +266,6 @@ sub push_write {
 
          if ($len > 0) {
             substr $self->{wbuf}, 0, $len, "";
-
 
             $self->{on_drain}($self)
                if $self->{low_water_mark} >= length $self->{wbuf}
@@ -284,6 +281,17 @@ sub push_write {
 
       $cb->($self);
    };
+}
+
+sub push_write {
+   my $self = shift;
+
+   if ($self->{filter_w}) {
+      $self->{filter_w}->(\$_[0]);
+   } else {
+      $self->{wbuf} .= $_[0];
+      $self->_drain_wbuf;
+   }
 }
 
 #############################################################################
@@ -368,6 +376,13 @@ the callbacks:
 
 sub _drain_rbuf {
    my ($self) = @_;
+
+   if (
+      defined $self->{rbuf_max}
+      && $self->{rbuf_max} < length $self->{rbuf}
+   ) {
+      $! = &Errno::ENOSPC; return $self->error;
+   }
 
    return if $self->{in_drain};
    local $self->{in_drain} = 1;
@@ -582,24 +597,22 @@ sub start_read {
       Scalar::Util::weaken $self;
 
       $self->{rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
-         my $len = sysread $self->{fh}, $self->{rbuf}, $self->{read_size} || 8192, length $self->{rbuf};
+         my $rbuf = $self->{filter_r} ? \my $buf : \$self->{rbuf};
+         my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
-            if (defined $self->{rbuf_max}) {
-               if ($self->{rbuf_max} < length $self->{rbuf}) {
-                  $! = &Errno::ENOSPC; return $self->error;
-               }
-            }
+            $self->{filter_r}
+               ? $self->{filter_r}->($rbuf)
+               : $self->_drain_rbuf;
 
          } elsif (defined $len) {
-            $self->{eof} = 1;
             delete $self->{rw};
+            $self->{eof} = 1;
+            $self->_drain_rbuf;
 
          } elsif ($! != EAGAIN && $! != EINTR) {
             return $self->error;
          }
-
-         $self->_drain_rbuf;
       });
    }
 }
