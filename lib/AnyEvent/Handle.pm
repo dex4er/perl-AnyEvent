@@ -170,6 +170,16 @@ missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 
 =cut
 
+our (%RH, %WH);
+
+sub register_read_type($$) {
+   $RH{$_[0]} = $_[1];
+}
+
+sub register_write_type($$) {
+   $WH{$_[0]} = $_[1];
+}
+
 sub new {
    my $class = shift;
 
@@ -508,56 +518,82 @@ true, it will be removed from the queue.
 =cut
 
 sub push_read {
-   my ($self, $cb) = @_;
+   my $self = shift;
+   my $cb = pop;
+
+   if (@_) {
+      my $type = shift;
+
+      $cb = ($RH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::push_read")
+            ->($self, $cb, @_);
+   }
 
    push @{ $self->{queue} }, $cb;
    $self->_drain_rbuf;
 }
 
 sub unshift_read {
-   my ($self, $cb) = @_;
+   my $self = shift;
+   my $cb = pop;
 
-   push @{ $self->{queue} }, $cb;
+   if (@_) {
+      my $type = shift;
+
+      $cb = ($RH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::unshift_read")
+            ->($self, $cb, @_);
+   }
+
+
+   unshift @{ $self->{queue} }, $cb;
    $self->_drain_rbuf;
 }
 
-=item $handle->push_read_chunk ($len, $cb->($self, $data))
+=item $handle->push_read (type => @args, $cb)
 
-=item $handle->unshift_read_chunk ($len, $cb->($self, $data))
+=item $handle->unshift_read (type => @args, $cb)
 
-Append the given callback to the end of the queue (C<push_read_chunk>) or
-prepend it (C<unshift_read_chunk>).
+Instead of providing a callback that parses the data itself you can chose
+between a number of predefined parsing formats, for chunks of data, lines
+etc.
 
-The callback will be called only once C<$len> bytes have been read, and
-these C<$len> bytes will be passed to the callback.
+The types currently supported are:
+
+=over 4
+
+=item chunk => $octets, $cb->($self, $data)
+
+Invoke the callback only once C<$octets> bytes have been read. Pass the
+data read to the callback. The callback will never be called with less
+data.
+
+Example: read 2 bytes.
+
+   $handle->push_read (chunk => 2, sub {
+      warn "yay ", unpack "H*", $_[1];
+   });
 
 =cut
 
-sub _read_chunk($$) {
-   my ($self, $len, $cb) = @_;
+register_read_type chunk => sub {
+   my ($self, $cb, $len) = @_;
 
    sub {
       $len <= length $_[0]{rbuf} or return;
       $cb->($_[0], substr $_[0]{rbuf}, 0, $len, "");
       1
    }
-}
+};
 
+# compatibility with older API
 sub push_read_chunk {
-   $_[0]->push_read (&_read_chunk);
+   $_[0]->push_read (chunk => $_[1], $_[2]);
 }
-
 
 sub unshift_read_chunk {
-   $_[0]->unshift_read (&_read_chunk);
+   $_[0]->unshift_read (chunk => $_[1], $_[2]);
 }
 
-=item $handle->push_read_line ([$eol, ]$cb->($self, $line, $eol))
-
-=item $handle->unshift_read_line ([$eol, ]$cb->($self, $line, $eol))
-
-Append the given callback to the end of the queue (C<push_read_line>) or
-prepend it (C<unshift_read_line>).
+=item line => [$eol, ]$cb->($self, $line, $eol)
 
 The callback will be called only once a full line (including the end of
 line marker, C<$eol>) has been read. This line (excluding the end of line
@@ -578,12 +614,10 @@ not marked by the end of line marker.
 
 =cut
 
-sub _read_line($$) {
-   my $self = shift;
-   my $cb = pop;
-   my $eol = @_ ? shift : qr|(\015?\012)|;
-   my $pos;
+register_read_type line => sub {
+   my ($self, $cb, $eol) = @_;
 
+   $eol = qr|(\015?\012)| if @_ < 3;
    $eol = quotemeta $eol unless ref $eol;
    $eol = qr|^(.*?)($eol)|s;
 
@@ -593,15 +627,20 @@ sub _read_line($$) {
       $cb->($_[0], $1, $2);
       1
    }
-}
+};
 
+# compatibility with older API
 sub push_read_line {
-   $_[0]->push_read (&_read_line);
+   my $self = shift;
+   $self->push_read (line => @_);
 }
 
 sub unshift_read_line {
-   $_[0]->unshift_read (&_read_line);
+   my $self = shift;
+   $self->unshift_read (line => @_);
 }
+
+=back
 
 =item $handle->stop_read
 
