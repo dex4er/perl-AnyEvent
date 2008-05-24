@@ -239,10 +239,10 @@ Although the callback might get passed parameters, their value and
 presence is undefined and you cannot rely on them. Portable AnyEvent
 callbacks cannot use arguments passed to signal watcher callbacks.
 
-Multiple signal occurances can be clumped together into one callback
-invocation, and callback invocation will be synchronous. synchronous means
+Multiple signal occurrences can be clumped together into one callback
+invocation, and callback invocation will be synchronous. Synchronous means
 that it might take a while until the signal gets handled by the process,
-but it is guarenteed not to interrupt any other callbacks.
+but it is guaranteed not to interrupt any other callbacks.
 
 The main advantage of using these watchers is that you can share a signal
 between multiple watchers.
@@ -312,13 +312,13 @@ Condition variables can be created by calling the C<< AnyEvent->condvar
 C<cb>, which specifies a callback to be called when the condition variable
 becomes true.
 
-After creation, the conditon variable is "false" until it becomes "true"
+After creation, the condition variable is "false" until it becomes "true"
 by calling the C<send> method.
 
 Condition variables are similar to callbacks, except that you can
 optionally wait for them. They can also be called merge points - points
-in time where multiple outstandign events have been processed. And yet
-another way to call them is transations - each condition variable can be
+in time where multiple outstanding events have been processed. And yet
+another way to call them is transactions - each condition variable can be
 used to represent a transaction, which finishes at some point and delivers
 a result.
 
@@ -334,7 +334,7 @@ could C<< ->recv >> in your main program until the user clicks the Quit
 button of your app, which would C<< ->send >> the "quit" event.
 
 Note that condition variables recurse into the event loop - if you have
-two pieces of code that call C<< ->recv >> in a round-robbin fashion, you
+two pieces of code that call C<< ->recv >> in a round-robin fashion, you
 lose. Therefore, condition variables are good to export to your caller, but
 you should avoid making a blocking wait yourself, at least in callbacks,
 as this asks for trouble.
@@ -445,7 +445,7 @@ doesn't execute once).
 This is the general pattern when you "fan out" into multiple subrequests:
 use an outer C<begin>/C<end> pair to set the callback and ensure C<end>
 is called at least once, and then, for each subrequest you start, call
-C<begin> and for eahc subrequest you finish, call C<end>.
+C<begin> and for each subrequest you finish, call C<end>.
 
 =back
 
@@ -477,7 +477,7 @@ using this from a module, never require a blocking wait>, but let the
 caller decide whether the call will block or not (for example, by coupling
 condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
-while still suppporting blocking waits if the caller so desires).
+while still supporting blocking waits if the caller so desires).
 
 Another reason I<never> to C<< ->recv >> in a module is that you cannot
 sensibly have two C<< ->recv >>'s in parallel, as that would require
@@ -1483,7 +1483,7 @@ them).
 
 EV is again fastest.
 
-Perl again comes second. It is noticably faster than the C-based event
+Perl again comes second. It is noticeably faster than the C-based event
 loops Event and Glib, although the difference is too small to really
 matter.
 
