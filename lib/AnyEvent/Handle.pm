@@ -85,7 +85,7 @@ waiting for data.
 =item on_error => $cb->($self)
 
 This is the fatal error callback, that is called when, well, a fatal error
-ocurs, such as not being able to resolve the hostname, failure to connect
+occurs, such as not being able to resolve the hostname, failure to connect
 or a read error.
 
 The object will not be in a usable state when this callback has been
@@ -104,7 +104,7 @@ This sets the default read callback, which is called when data arrives
 and no read request is in the queue.
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
-method or acces sthe C<$self->{rbuf}> member directly.
+method or access the C<$self->{rbuf}> member directly.
 
 When an EOF condition is detected then AnyEvent::Handle will first try to
 feed all the remaining data to the queued callbacks and C<on_read> before
@@ -252,7 +252,7 @@ for reading.
 The write queue is very simple: you can add data to its end, and
 AnyEvent::Handle will automatically try to get rid of it for you.
 
-When data could be writtena nd the write buffer is shorter then the low
+When data could be written and the write buffer is shorter then the low
 water mark, the C<on_drain> callback will be invoked.
 
 =over 4
@@ -490,7 +490,7 @@ prepend it (C<unshift_read>).
 
 The callback is called each time some additional read data arrives.
 
-It must check wether enough data is in the read buffer already.
+It must check whether enough data is in the read buffer already.
 
 If not enough data is available, it must return the empty list or a false
 value, in which case it will be called repeatedly until enough data is
