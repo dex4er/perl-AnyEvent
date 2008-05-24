@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 	- fix AnyEvent::Handle::unshift_read to really unshift and not push.
+        - AnyEvent::Handle could sometimes stumble over 0-byte writes.
+        - croak, not die, in AnyEvent::Handle;
 
 4.0  Sat May 24 19:58:08 CEST 2008
 	- added (experimental) AnyEvent::DNS module.

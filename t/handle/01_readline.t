@@ -4,7 +4,7 @@ use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Socket;
 
 {
@@ -47,7 +47,7 @@ use Socket;
          fh      => $rd,
          on_eof  => sub { $cv->broadcast },
          on_read => sub {
-            $_[0]->push_read_line (sub {
+            $_[0]->push_read (line => sub {
                $concat .= "$_[1]:";
             });
          }
@@ -55,9 +55,14 @@ use Socket;
 
    my $wr_ae = new AnyEvent::Handle fh  => $wr, on_eof => sub { die };
 
+   $wr_ae->push_write (netstring => "0:xx,,");
    $wr_ae->push_write ("A\nBC\nDEF\nG\n" . ("X" x 113) . "\n");
    undef $wr;
    undef $wr_ae;
+
+   $rd_ae->push_read (netstring => sub {
+      is ($_[1], "0:xx,,");
+   });
 
    $cv->wait;
 
