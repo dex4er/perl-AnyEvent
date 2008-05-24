@@ -1,14 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: preferences, retry-callback, memleaks
-TODO: check tls in handle for bugs
-3.51
+4.0
 	- added (experimental) AnyEvent::DNS module.
         - added (experimental) AnyEvent::Socket module.
-        - added support for TLS/SSL in AnyEvent::Handle.
+        - added (experiemntal) support for TLS/SSL in AnyEvent::Handle.
         - make condvar->end call ->send as documented.
         - make condvar constructor support the documented cb => argument.
-        - support more of the POSIX forms instead of a pure dooted quad for
+        - support more of the POSIX forms instead of a pure dotted quad for
           verbatim ip addresses.
         - AnyEvent::Socket::inet_aton will use AnyEvent::DNS now and not fork anymore.
 	- try very hard not to freeze on broken windows perls.

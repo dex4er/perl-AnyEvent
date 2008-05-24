@@ -233,9 +233,9 @@ sub addr($$$$$$) {
       my @res;
       my $cv = AnyEvent->condvar (cb => sub {
          $cb->(
-            map $_->[1],
+            map $_->[2],
             sort {
-               $AnyEvent::PROTOCOL{$a->[1][0]} <=> $AnyEvent::PROTOCOL{$b->[1][0]}
+               $AnyEvent::PROTOCOL{$a->[1]} <=> $AnyEvent::PROTOCOL{$b->[1]}
                   or $a->[0] <=> $b->[0]
             }
             @res
@@ -248,12 +248,12 @@ sub addr($$$$$$) {
 
          if (my $noden = AnyEvent::Socket::parse_ip ($node)) {
             if (4 == length $noden && $family != 6) {
-               push @res, [$idx, [Socket::AF_INET, $type, $proton,
+               push @res, [$idx, "ipv4", [Socket::AF_INET, $type, $proton,
                            AnyEvent::Socket::pack_sockaddr ($port, $noden)]]
             }
 
             if (16 == length $noden && $family != 4) {
-               push @res, [$idx, [&AnyEvent::Socket::AF_INET6, $type, $proton,
+               push @res, [$idx, "ipv6", [&AnyEvent::Socket::AF_INET6, $type, $proton,
                            AnyEvent::Socket::pack_sockaddr ( $port, $noden)]]
             }
          } else {
@@ -261,7 +261,7 @@ sub addr($$$$$$) {
             if ($family != 6) {
                $cv->begin;
                a $node, sub {
-                  push @res, [$idx, [Socket::AF_INET, $type, $proton,
+                  push @res, [$idx, "ipv4", [Socket::AF_INET, $type, $proton,
                               AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv4 ($_))]]
                      for @_;
                   $cv->end;
@@ -272,7 +272,7 @@ sub addr($$$$$$) {
             if ($family != 4) {
                $cv->begin;
                aaaa $node, sub {
-                  push @res, [$idx, [&AnyEvent::Socket::AF_INET6, $type, $proton,
+                  push @res, [$idx, "ipv6", [&AnyEvent::Socket::AF_INET6, $type, $proton,
                               AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv6 ($_))]]
                      for @_;
                   $cv->end;
@@ -787,8 +787,8 @@ sub parse_resolv_conf {
          # comment
       } elsif (/^\s*nameserver\s+(\S+)\s*$/i) {
          my $ip = $1;
-         if (AnyEvent::Util::dotted_quad $ip) {
-            push @{ $self->{server} }, AnyEvent::Util::socket_inet_aton $ip;
+         if (my $ipn = AnyEvent::Socket::parse_ip ($ip)) {
+            push @{ $self->{server} }, $ipn;
          } else {
             warn "nameserver $ip invalid and ignored\n";
          }
@@ -851,9 +851,9 @@ sub os_config {
             # second DNS.* is server address list
             if (/^\s*DNS/) {
                while (/\s+(\d+\.\d+\.\d+\.\d+)\s*$/) {
-                  my $ip = $1;
-                  push @{ $self->{server} }, AnyEvent::Util::socket_inet_aton $ip
-                     if AnyEvent::Util::dotted_quad $ip;
+                  my $ipn = AnyEvent::Socket::parse_ip ("$1"); # "" is necessary here, apparently
+                  push @{ $self->{server} }, $ipn
+                     if $ipn;
                   $_ = <$fh>;
                }
                last;
