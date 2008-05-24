@@ -1,6 +1,6 @@
 $|=1;
 BEGIN {
-   print "1..18\n"
+   print "1..21\n"
 }
 
 use AnyEvent;
@@ -60,5 +60,16 @@ print "ok 1\n";
    my @x = eval { $cv->recv };
    print !@x ? "" : "not ", "ok 17 # @x\n";
    print $@ =~ /^kill / ? "" : "not ", "ok 18 # $@\n";
+}
+
+{
+   my $cv = AnyEvent->condvar;
+
+   print "ok 19\n";
+   my $t = AnyEvent->timer (after => 0, cb => $cv);
+
+   print "ok 20\n";
+   $cv->recv;
+   print "ok 21\n";
 }
 

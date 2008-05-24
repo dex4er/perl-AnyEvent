@@ -313,7 +313,8 @@ C<cb>, which specifies a callback to be called when the condition variable
 becomes true.
 
 After creation, the condition variable is "false" until it becomes "true"
-by calling the C<send> method.
+by calling the C<send> method (or calling the condition variable as if it
+were a callback).
 
 Condition variables are similar to callbacks, except that you can
 optionally wait for them. They can also be called merge points - points
@@ -349,7 +350,7 @@ There are two "sides" to a condition variable - the "producer side" which
 eventually calls C<< -> send >>, and the "consumer side", which waits
 for the send to occur.
 
-Example:
+Example: wait for a timer.
 
    # wait till the result is ready
    my $result_ready = AnyEvent->condvar;
@@ -366,6 +367,13 @@ Example:
    # this "blocks" (while handling events) till the callback
    # calls send
    $result_ready->recv;
+
+Example: wait for a timer, but take advantage of the fact that
+condition variables are also code references.
+
+   my $done = AnyEvent->condvar;
+   my $delay = AnyEvent->timer (after => 5, cb => $done);
+   $done->recv;
 
 =head3 METHODS FOR PRODUCERS
 
@@ -387,6 +395,9 @@ immediately from within send.
 
 Any arguments passed to the C<send> call will be returned by all
 future C<< ->recv >> calls.
+
+Condition variables are overloaded so one can call them directly (as a
+code reference). Calling them directly is the same as calling C<send>.
 
 =item $cv->croak ($error)
 
@@ -915,6 +926,10 @@ package AnyEvent::CondVar;
 our @ISA = AnyEvent::CondVar::Base::;
 
 package AnyEvent::CondVar::Base;
+
+use overload
+   '&{}'    => sub { my $self = shift; sub { $self->send (@_) } },
+   fallback => 1;
 
 sub _send {
    # nop
