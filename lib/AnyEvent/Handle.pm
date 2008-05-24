@@ -170,16 +170,6 @@ missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 
 =cut
 
-our (%RH, %WH);
-
-sub register_read_type($$) {
-   $RH{$_[0]} = $_[1];
-}
-
-sub register_write_type($$) {
-   $WH{$_[0]} = $_[1];
-}
-
 sub new {
    my $class = shift;
 
@@ -323,6 +313,12 @@ sub _drain_wbuf {
    };
 }
 
+our %WH;
+
+sub register_write_type($$) {
+   $WH{$_[0]} = $_[1];
+}
+
 sub push_write {
    my $self = shift;
 
@@ -348,7 +344,8 @@ sub push_write {
 Instead of formatting your data yourself, you can also let this module do
 the job by specifying a type and type-specific arguments.
 
-Predefined types are:
+Predefined types are (if you have ideas for additional types, feel free to
+drop by and tell us):
 
 =over 4
 
@@ -356,6 +353,8 @@ Predefined types are:
 
 Formats the given value as netstring
 (http://cr.yp.to/proto/netstrings.txt, this is not a recommendation to use them).
+
+=back
 
 =cut
 
@@ -365,11 +364,19 @@ register_write_type netstring => sub {
    sprintf "%d:%s,", (length $string), $string
 };
 
-=back
+=item AnyEvent::Handle::register_write_type type => $coderef->($self, @args)
+
+This function (not method) lets you add your own types to C<push_write>.
+Whenever the given C<type> is used, C<push_write> will invoke the code
+reference with the handle object and the remaining arguments.
+
+The code reference is supposed to return a single octet string that will
+be appended to the write buffer.
+
+Note that this is a function, and all types registered this way will be
+global, so try to use unique names.
 
 =cut
-
-
 
 #############################################################################
 
@@ -554,6 +561,12 @@ true, it will be removed from the queue.
 
 =cut
 
+our %RH;
+
+sub register_read_type($$) {
+   $RH{$_[0]} = $_[1];
+}
+
 sub push_read {
    my $self = shift;
    my $cb = pop;
@@ -593,7 +606,8 @@ Instead of providing a callback that parses the data itself you can chose
 between a number of predefined parsing formats, for chunks of data, lines
 etc.
 
-The types currently supported are:
+Predefined types are (if you have ideas for additional types, feel free to
+drop by and tell us):
 
 =over 4
 
@@ -716,6 +730,26 @@ register_read_type netstring => sub {
 };
 
 =back
+
+=item AnyEvent::Handle::register_read_type type => $coderef->($self, $cb, @args)
+
+This function (not method) lets you add your own types to C<push_read>.
+
+Whenever the given C<type> is used, C<push_read> will invoke the code
+reference with the handle object, the callback and the remaining
+arguments.
+
+The code reference is supposed to return a callback (usually a closure)
+that works as a plain read callback (see C<< ->push_read ($cb) >>).
+
+It should invoke the passed callback when it is done reading (remember to
+pass C<$self> as first argument as all other callbacks do that).
+
+Note that this is a function, and all types registered this way will be
+global, so try to use unique names.
+
+For examples, see the source of this module (F<perldoc -m AnyEvent::Handle>,
+search for C<register_read_type>)).
 
 =item $handle->stop_read
 
