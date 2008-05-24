@@ -32,7 +32,7 @@ my $wr_ae =
 
 my $dat = '';
 
-$rd_ae->push_read_chunk (5132, sub {
+$rd_ae->push_read (chunk => 5132, sub {
    my ($rd_ae, $data) = @_;
    $dat = substr $data, 0, 2;
    $dat .= substr $data, -5;
@@ -44,7 +44,7 @@ $rd_ae->push_read_chunk (5132, sub {
       $wr_ae->on_drain;
       print "ok 5 - fourth write\n";
 
-      $rd_ae->push_read_chunk (1, sub {
+      $rd_ae->push_read (chunk => 1, sub {
          print "ok 6 - second read chunk\n";
          $cv->broadcast
       });

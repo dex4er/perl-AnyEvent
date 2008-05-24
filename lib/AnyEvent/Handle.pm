@@ -92,7 +92,7 @@ The object will not be in a usable state when this callback has been
 called.
 
 On callback entrance, the value of C<$!> contains the operating system
-error (or C<ENOSPC> or C<EPIPE>).
+error (or C<ENOSPC>, C<EPIPE> or C<EBADMSG>).
 
 While not mandatory, it is I<highly> recommended to set this callback, as
 you will not be notified of errors otherwise. The default simply calls
@@ -223,7 +223,7 @@ sub error {
    if ($self->{on_error}) {
       $self->{on_error}($self);
    } else {
-      die "AnyEvent::Handle uncaught fatal error: $!";
+      Carp::croak "AnyEvent::Handle uncaught fatal error: $!";
    }
 }
 
@@ -299,12 +299,12 @@ buffers it independently of the kernel.
 sub _drain_wbuf {
    my ($self) = @_;
 
-   unless ($self->{ww}) {
+   if (!$self->{ww} && length $self->{wbuf}) {
       Scalar::Util::weaken $self;
       my $cb = sub {
          my $len = syswrite $self->{fh}, $self->{wbuf};
 
-         if ($len > 0) {
+         if ($len >= 0) {
             substr $self->{wbuf}, 0, $len, "";
 
             $self->{on_drain}($self)
@@ -326,6 +326,13 @@ sub _drain_wbuf {
 sub push_write {
    my $self = shift;
 
+   if (@_ > 1) {
+      my $type = shift;
+
+      @_ = ($WH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::push_write")
+           ->($self, @_);
+   }
+
    if ($self->{filter_w}) {
       $self->{filter_w}->($self, \$_[0]);
    } else {
@@ -333,6 +340,36 @@ sub push_write {
       $self->_drain_wbuf;
    }
 }
+
+=item $handle->push_write (type => @args)
+
+=item $handle->unshift_write (type => @args)
+
+Instead of formatting your data yourself, you can also let this module do
+the job by specifying a type and type-specific arguments.
+
+Predefined types are:
+
+=over 4
+
+=item netstring => $string
+
+Formats the given value as netstring
+(http://cr.yp.to/proto/netstrings.txt, this is not a recommendation to use them).
+
+=cut
+
+register_write_type netstring => sub {
+   my ($self, $string) = @_;
+
+   sprintf "%d:%s,", (length $string), $string
+};
+
+=back
+
+=cut
+
+
 
 #############################################################################
 
@@ -430,7 +467,7 @@ sub _drain_rbuf {
    while (my $len = length $self->{rbuf}) {
       no strict 'refs';
       if (my $cb = shift @{ $self->{queue} }) {
-         if (!$cb->($self)) {
+         unless ($cb->($self)) {
             if ($self->{eof}) {
                # no progress can be made (not enough data and no data forthcoming)
                $! = &Errno::EPIPE; return $self->error;
@@ -639,6 +676,44 @@ sub unshift_read_line {
    my $self = shift;
    $self->unshift_read (line => @_);
 }
+
+=item netstring => $cb->($string)
+
+A netstring (http://cr.yp.to/proto/netstrings.txt, this is not an endorsement).
+
+Throws an error with C<$!> set to EBADMSG on format violations.
+
+=cut
+
+register_read_type netstring => sub {
+   my ($self, $cb) = @_;
+
+   sub {
+      unless ($_[0]{rbuf} =~ s/^(0|[1-9][0-9]*)://) {
+         if ($_[0]{rbuf} =~ /[^0-9]/) {
+            $! = &Errno::EBADMSG;
+            $self->error;
+         }
+         return;
+      }
+
+      my $len = $1;
+
+      $self->unshift_read (chunk => $len, sub {
+         my $string = $_[1];
+         $_[0]->unshift_read (chunk => 1, sub {
+            if ($_[1] eq ",") {
+               $cb->($_[0], $string);
+            } else {
+               $! = &Errno::EBADMSG;
+               $self->error;
+            }
+         });
+      });
+
+      1
+   }
+};
 
 =back
 

@@ -42,7 +42,7 @@ my $wo = tcp_connect 'www.google.com', 80, sub {
          }
       );
 
-   $hdl->push_read_chunk (10, sub {
+   $hdl->push_read (chunk => 10, sub {
       my ($hdl, $data) = @_;
 
       unless (substr ($data, 0, 4) eq 'HTTP') {

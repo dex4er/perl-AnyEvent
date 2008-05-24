@@ -23,7 +23,7 @@ my $w = tcp_server undef, undef,
 
       $hdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
 
-      $hdl->push_read_chunk (6, sub {
+      $hdl->push_read (chunk => 6, sub {
          my ($hdl, $data) = @_;
 
          if ($data eq "TEST\015\012") {
@@ -48,7 +48,7 @@ my $wc = tcp_connect localhost => $port, sub {
    $clhdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
 
    $clhdl->push_write ("TEST\015\012");
-   $clhdl->push_read_line (sub {
+   $clhdl->push_read (line => sub {
       my ($clhdl, $line) = @_;
 
       if ($line eq 'BLABLABLA') {
