@@ -12,7 +12,7 @@ use Errno qw/EAGAIN EINTR/;
 
 =head1 NAME
 
-AnyEvent::Handle - non-blocking I/O on filehandles via AnyEvent
+AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 This module is experimental.
 
@@ -214,7 +214,7 @@ sub error {
 
 =item $fh = $handle->fh
 
-This method returns the filehandle of the L<AnyEvent::Handle> object.
+This method returns the file handle of the L<AnyEvent::Handle> object.
 
 =cut
 
@@ -604,7 +604,7 @@ sub unshift_read_line {
 
 In rare cases you actually do not want to read anything from the
 socket. In this case you can call C<stop_read>. Neither C<on_read> no
-any queued callbacks will be executed then. To start readign again, call
+any queued callbacks will be executed then. To start reading again, call
 C<start_read>.
 
 =cut
@@ -646,8 +646,9 @@ sub _dotls {
    my ($self) = @_;
 
    if (length $self->{tls_wbuf}) {
-      my $len = Net::SSLeay::write ($self->{tls}, $self->{tls_wbuf});
-      substr $self->{tls_wbuf}, 0, $len, "" if $len > 0;
+      while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{tls_wbuf})) > 0) {
+         substr $self->{tls_wbuf}, 0, $len, "";
+      }
    }
 
    if (defined (my $buf = Net::SSLeay::BIO_read ($self->{tls_wbio}))) {
@@ -655,21 +656,26 @@ sub _dotls {
       $self->_drain_wbuf;
    }
 
-   if (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
-      $self->{rbuf} .= $buf;
-      $self->_drain_rbuf;
-   } elsif (
-      (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
-      != Net::SSLeay::ERROR_WANT_READ ()
-   ) {
-      if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
-         $self->error;
-      } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
-         $! = &Errno::EIO;
-         $self->error;
-      }
+   while () {
+      if (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
+         $self->{rbuf} .= $buf;
+         $self->_drain_rbuf;
+      } elsif (
+         (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
+         != Net::SSLeay::ERROR_WANT_READ ()
+      ) {
+         if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
+            $self->error;
+         } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
+            $! = &Errno::EIO;
+            $self->error;
+         }
 
-      # all others are fine for our purposes
+         last;
+         # all others are fine for our purposes
+      } else {
+         last;
+      }
    }
 }
 
