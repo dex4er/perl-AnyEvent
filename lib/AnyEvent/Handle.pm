@@ -287,7 +287,7 @@ sub push_write {
    my $self = shift;
 
    if ($self->{filter_w}) {
-      $self->{filter_w}->(\$_[0]);
+      $self->{filter_w}->($self, \$_[0]);
    } else {
       $self->{wbuf} .= $_[0];
       $self->_drain_wbuf;
@@ -577,7 +577,7 @@ sub unshift_read_line {
 
 =item $handle->start_read
 
-In rare cases you actually do not want to read anything form the
+In rare cases you actually do not want to read anything from the
 socket. In this case you can call C<stop_read>. Neither C<on_read> no
 any queued callbacks will be executed then. To start readign again, call
 C<start_read>.
@@ -602,7 +602,7 @@ sub start_read {
 
          if ($len > 0) {
             $self->{filter_r}
-               ? $self->{filter_r}->($rbuf)
+               ? $self->{filter_r}->($self, $rbuf)
                : $self->_drain_rbuf;
 
          } elsif (defined $len) {
