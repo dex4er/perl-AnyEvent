@@ -1055,11 +1055,25 @@ current supported: C<ipv4> and C<ipv6>. Only protocols mentioned will be
 used, and preference will be given to protocols mentioned earlier in the
 list.
 
+This variable can effectively be used for denial-of-service attacks
+against local programs (e.g. when setuid), although the impact is likely
+small, as the program has to handle connection errors already-
+
 Examples: C<PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6> - prefer IPv4 over IPv6,
 but support both and try to use both.  C<PERL_ANYEVENT_PROTOCOLS=ipv4>
 - only support IPv4, never try to resolve or contact IPv6
 addressses. C<PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4> support either IPv4 or
 IPv6, but prefer IPv6 over IPv4.
+
+=item C<PERL_ANYEVENT_EDNS0>
+
+Used by L<AnyEvent::DNS> to decide wether to use the EDNS0 extension
+for DNS. This extension is generally useful to reduce DNS traffic, but
+some (broken) firewalls drop such DNS packets, which is why it is off by
+default.
+
+Setting this variable to C<1> will cause L<AnyEvent::DNS> to announce
+EDNS0 in its DNS requests.
 
 =back
 

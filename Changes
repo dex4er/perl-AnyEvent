@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: preferences, retry-callback, memleaks
 3.51
 	- added (experimental) AnyEvent::DNS module.
         - added (experimental) AnyEvent::Socket module.
@@ -17,6 +18,7 @@ Revision history for Perl extension AnyEvent.
           returns ENOTCONN.
         - defend AnyEvent::Util::inet_aton against Coro::LWP brutal
           override.
+        - new AnyEvent::Guard::cancel.
 
 3.5  Sat May 17 23:17:14 CEST 2008
 	- gracefully deal with systems not defining CLOCK_MONOTONIC

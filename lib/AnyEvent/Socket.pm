@@ -37,6 +37,13 @@ BEGIN {
    *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
 }
 
+BEGIN {
+   my $af_inet6 = eval { &Socket::AF_INET6 };
+   eval "sub AF_INET6() { $af_inet6 }"; die if $@;
+
+   delete $AnyEvent::PROTOCOL{ipv6} unless $af_inet6;
+}
+
 our @EXPORT = qw(parse_ipv4 parse_ipv6 parse_ip format_ip inet_aton tcp_server tcp_connect);
 
 our $VERSION = '1.0';
@@ -195,6 +202,49 @@ sub inet_aton {
    }
 }
 
+=item $sa = AnyEvent::Socket::pack_sockaddr $port, $host
+
+Pack the given port/hst combination into a binary sockaddr structure. Handles
+both IPv4 and IPv6 host addresses.
+
+=cut
+
+sub pack_sockaddr($$) {
+   if (4 == length $_[1]) {
+      Socket::pack_sockaddr_in $_[0], $_[1]
+   } elsif (16 == length $_[1]) {
+      pack "SSL a16 L",
+         Socket::AF_INET6,
+         $_[0], # port
+         0,     # flowinfo
+         $_[1], # addr
+         0      # scope id
+   } else {
+      Carp::croak "pack_sockaddr: invalid host";
+   }
+}
+
+=item ($port, $host) = AnyEvent::Socket::unpack_sockaddr $sa
+
+Unpack the given binary sockaddr structure (as used by bind, getpeername
+etc.) into a C<$port, $host> combination.
+
+Handles both IPv4 and IPv6 sockaddr structures.
+
+=cut
+
+sub unpack_sockaddr($) {
+   my $af = unpack "S", $_[0];
+
+   if ($af == &Socket::AF_INET) {
+      Socket::unpack_sockaddr_in $_[0]
+   } elsif ($af == AF_INET6) {
+      (unpack "SSL a16 L")[1, 3]
+   } else {
+      Carp::croak "unpack_sockaddr: unsupported protocol family $af";
+   }
+}
+
 sub _tcp_port($) {
    $_[0] =~ /^(\d*)$/ and return $1*1;
 
@@ -202,24 +252,30 @@ sub _tcp_port($) {
       or Carp::croak "$_[0]: service unknown"
 }
 
-=item $guard = tcp_connect $host, $port, $connect_cb[, $prepare_cb]
+=item $guard = tcp_connect $host, $service, $connect_cb[, $prepare_cb]
 
-This is a convenience function that creates a tcp socket and makes a 100%
+This is a convenience function that creates a TCP socket and makes a 100%
 non-blocking connect to the given C<$host> (which can be a hostname or a
-textual IP address) and C<$port> (which can be a numeric port number or a
-service name).
+textual IP address) and C<$service> (which can be a numeric port number or
+a service name, or a C<servicename=portnumber> string).
 
 If both C<$host> and C<$port> are names, then this function will use SRV
-records to locate the real target in a future version.
+records to locate the real target(s).
 
-Unless called in void context, it returns a guard object that will
-automatically abort connecting when it gets destroyed (it does not do
-anything to the socket after the connect was successful).
+In either case, it will create a list of target hosts (e.g. for multihomed
+hosts or hosts with both IPv4 and IPV6 addrsesses) and try to connetc to
+each in turn.
 
 If the connect is successful, then the C<$connect_cb> will be invoked with
 the socket filehandle (in non-blocking mode) as first and the peer host
 (as a textual IP address) and peer port as second and third arguments,
-respectively.
+respectively. The fourth argument is a code reference that you can call
+if, for some reason, you don't like this connection, which will cause
+C<tcp_connect> to try the next one (or call your callback without any
+arguments if there are no more connections). In most cases, you can simply
+ignore this argument.
+
+   $cb->($filehandle, $host, $port, $retry)
 
 If the connect is unsuccessful, then the C<$connect_cb> will be invoked
 without any arguments and C<$!> will be set appropriately (with C<ENXIO>
@@ -227,6 +283,10 @@ indicating a dns resolution failure).
 
 The filehandle is suitable to be plugged into L<AnyEvent::Handle>, but can
 be used as a normal perl file handle as well.
+
+Unless called in void context, C<tcp_connect> returns a guard object that
+will automatically abort connecting when it gets destroyed (it does not do
+anything to the socket after the connect was successful).
 
 Sometimes you need to "prepare" the socket before connecting, for example,
 to C<bind> it to some port, or you want a specific connect timeout that
@@ -295,69 +355,77 @@ sub tcp_connect($$$;$) {
    my %state = ( fh => undef );
 
    # name resolution
-   inet_aton $host, sub {
-      return unless exists $state{fh};
+   AnyEvent::DNS::addr $host, $port, 0, 0, 0, sub {
+      my @target = @_;
 
-      my $ipn = shift;
+      $state{next} = sub {
+         return unless exists $state{fh};
 
-      4 == length $ipn
-         or do {
-            %state = ();
-            $! = &Errno::ENXIO;
-            return $connect->();
+         my $target = shift @target
+            or do {
+               %state = ();
+               return $connect->();
+            };
+
+         my ($domain, $type, $proto, $sockaddr) = @$target;
+
+         # socket creation
+         socket $state{fh}, $domain, $type, $proto
+            or return $state{next}();
+
+         fh_nonblocking $state{fh}, 1;
+         
+         # prepare and optional timeout
+         if ($prepare) {
+            my $timeout = $prepare->($state{fh});
+
+            $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
+               $! = &Errno::ETIMEDOUT;
+               $state{next}();
+            }) if $timeout;
+         }
+
+         # called when the connect was successful, which,
+         # in theory, could be the case immediately (but never is in practise)
+         my $connected = sub {
+            delete $state{ww};
+            delete $state{to};
+
+            # we are connected, or maybe there was an error
+            if (my $sin = getpeername $state{fh}) {
+               my ($port, $host) = unpack_sockaddr $sin;
+
+               my $guard = guard {
+                  %state = ();
+               };
+
+               $connect->($state{fh}, format_ip $host, $port, sub {
+                  $guard->cancel;
+                  $state{next}();
+               });
+            } else {
+               # dummy read to fetch real error code
+               sysread $state{fh}, my $buf, 1 if $! == &Errno::ENOTCONN;
+               $state{next}();
+            }
          };
 
-      # socket creation
-      socket $state{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
-         or do {
-            %state = ();
-            return $connect->();
-         };
-
-      fh_nonblocking $state{fh}, 1;
-      
-      # prepare and optional timeout
-      if ($prepare) {
-         my $timeout = $prepare->($state{fh});
-
-         $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
-            %state = ();
-            $! = &Errno::ETIMEDOUT;
-            $connect->();
-         }) if $timeout;
-      }
-
-      # called when the connect was successful, which,
-      # in theory, could be the case immediately (but never is in practise)
-      my $connected = sub {
-         my $fh = delete $state{fh};
-         %state = ();
-
-         # we are connected, or maybe there was an error
-         if (my $sin = getpeername $fh) {
-            my ($port, $host) = Socket::unpack_sockaddr_in $sin;
-            $connect->($fh, (Socket::inet_ntoa $host), $port);
+         # now connect       
+         if (connect $state{fh}, $sockaddr) {
+            $connected->();
+         } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
+            $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
          } else {
-            # dummy read to fetch real error code
-            sysread $fh, my $buf, 1 if $! == &Errno::ENOTCONN;
+            %state = ();
             $connect->();
          }
       };
 
-      # now connect       
-      if (connect $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, $ipn) {
-         $connected->();
-      } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
-         $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
-      } else {
-         %state = ();
-         $connect->();
-      }
+      $! = &Errno::ENXIO;
+      $state{next}();
    };
 
-   defined wantarray
-      ? guard { %state = () } # break any circular dependencies and unregister watchers
-      : ()
+   defined wantarray && guard { %state = () }
 }
 
 =item $guard = tcp_server $host, $port, $accept_cb[, $prepare_cb]

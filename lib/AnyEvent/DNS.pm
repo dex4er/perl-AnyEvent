@@ -193,20 +193,10 @@ sub any($$) {
 
 #############################################################################
 
-# $port, $host
-sub pack_sockaddr_in6($$) {
-   pack "nnN a16 N",
-      Socket::AF_INET6,
-      $_[0], # port
-      0,     # flowinfo
-      $_[1], # addr
-      0      # scope id
-}
-
 sub addr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
 
-   unless (eval { &Socket::AF_INET6 }) {
+   unless (&AnyEvent::Socket::AF_INET6) {
       $family != 6
          or return $cb->();
 
@@ -242,7 +232,14 @@ sub addr($$$$$$) {
    my $resolve = sub {
       my @res;
       my $cv = AnyEvent->condvar (cb => sub {
-         $cb->(map $_->[1], sort { $a->[0] <=> $b->[0] } @res)
+         $cb->(
+            map $_->[1],
+            sort {
+               $AnyEvent::PROTOCOL{$a->[1][0]} <=> $AnyEvent::PROTOCOL{$b->[1][0]}
+                  or $a->[0] <=> $b->[0]
+            }
+            @res
+         )
       });
 
       $cv->begin;
@@ -252,12 +249,12 @@ sub addr($$$$$$) {
          if (my $noden = AnyEvent::Socket::parse_ip ($node)) {
             if (4 == length $noden && $family != 6) {
                push @res, [$idx, [Socket::AF_INET, $type, $proton,
-                           Socket::pack_sockaddr_in $port, $noden]]
+                           AnyEvent::Socket::pack_sockaddr ($port, $noden)]]
             }
 
             if (16 == length $noden && $family != 4) {
-               push @res, [$idx, [Socket::AF_INET6, $type, $proton,
-                           pack_sockaddr_in6 $port, $noden]]
+               push @res, [$idx, [&AnyEvent::Socket::AF_INET6, $type, $proton,
+                           AnyEvent::Socket::pack_sockaddr ( $port, $noden)]]
             }
          } else {
             # ipv4
@@ -265,20 +262,18 @@ sub addr($$$$$$) {
                $cv->begin;
                a $node, sub {
                   push @res, [$idx, [Socket::AF_INET, $type, $proton,
-                              Socket::pack_sockaddr_in $port, AnyEvent::Socket::parse_ipv4 ($_)]]
+                              AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv4 ($_))]]
                      for @_;
                   $cv->end;
                };
             }
 
-            my $idx = $idx + 0.5; # prefer ipv4 for now
-
             # ipv6
             if ($family != 4) {
                $cv->begin;
                aaaa $node, sub {
-                  push @res, [$idx, [Socket::AF_INET6, $type, $proton,
-                              pack_sockaddr_in6 $port, AnyEvent::Socket::parse_ipv6 ($_)]]
+                  push @res, [$idx, [&AnyEvent::Socket::AF_INET6, $type, $proton,
+                              AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv6 ($_))]]
                      for @_;
                   $cv->end;
                };
@@ -289,7 +284,9 @@ sub addr($$$$$$) {
    };
 
    # try srv records, if applicable
-   if (defined $service && !AnyEvent::Socket::parse_ip ($node)) {
+   if ($node eq "localhost") {
+      @target = ([v127.0.0.1, $port], [v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1, $port]);
+   } elsif (defined $service && !AnyEvent::Socket::parse_ip ($node)) {
       srv $service, $proto, $node, sub {
          my (@srv) = @_;
 
@@ -302,7 +299,7 @@ sub addr($$$$$$) {
             or return $cb->();
 
          # use srv records then
-         @target = map [$_->[3], $_->[2]],
+         @target = map ["$_->[3].", $_->[2]],
                       grep $_->[3] ne ".",
                          @srv;
 
@@ -324,12 +321,13 @@ sub addr($$$$$$) {
 =item $AnyEvent::DNS::EDNS0
 
 This variable decides whether dns_pack automatically enables EDNS0
-support. By default, this is disabled (C<0>), but when set to C<1>,
-AnyEvent::DNS will use EDNS0 in all requests.
+support. By default, this is disabled (C<0>), unless overriden by
+C<$ENV{PERL_ANYEVENT_EDNS0>), but when set to C<1>, AnyEvent::DNS will use
+EDNS0 in all requests.
 
 =cut
 
-our $EDNS0 = 0; # set to 1 to enable (partial) edns0
+our $EDNS0 = $ENV{PERL_ANYEVENT_EDNS0} * 1; # set to 1 to enable (partial) edns0
 
 our %opcode_id = (
    query  => 0,
@@ -906,7 +904,7 @@ sub _recv {
    my ($self) = @_;
 
    while (my $peer = recv $self->{fh}, my $res, 4096, 0) {
-      my ($port, $host) = Socket::unpack_sockaddr_in $peer;
+      my ($port, $host) = AnyEvent::Socket::unpack_sockaddr ($peer);
 
       return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
 
@@ -962,7 +960,7 @@ sub _exec {
          }
       }];
 
-      send $self->{fh}, $req->[0], 0, Socket::pack_sockaddr_in 53, $server;
+      send $self->{fh}, $req->[0], 0, AnyEvent::Socket::pack_sockaddr (53, $server);
    } else {
       # failure
       $self->{id}{$req->[2]} = 1;

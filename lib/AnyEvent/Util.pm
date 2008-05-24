@@ -125,10 +125,21 @@ code block.
 This is often handy in continuation-passing style code to clean up some
 resource regardless of where you break out of a process.
 
+You can call one method on the returned object:
+
+=item $guard->cancel
+
+This simply causes the code block not to be invoked: it "cancels" the
+guard.
+
 =cut
 
 sub AnyEvent::Util::Guard::DESTROY {
    ${$_[0]}->();
+}
+
+sub AnyEvent::Util::Guard::cancel($) {
+   ${$_[0]} = sub { };
 }
 
 sub guard(&) {
