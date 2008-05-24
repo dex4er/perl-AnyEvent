@@ -141,6 +141,26 @@ Sets the amount of bytes (default: C<0>) that make up an "empty" write
 buffer: If the write reaches this size or gets even samller it is
 considered empty.
 
+=item tls => "accept" | "connect" | Net::SSLeay::SSL object
+
+When this parameter is given, it enables TLS (SSL) mode, that means it
+will start making tls handshake and will transparently encrypt/decrypt
+data.
+
+For the TLS server side, use C<accept>, and for the TLS client side of a
+connection, use C<connect> mode.
+
+You can also provide your own TLS connection object, but you have
+to make sure that you call either C<Net::SSLeay::set_connect_state>
+or C<Net::SSLeay::set_accept_state> on it before you pass it to
+AnyEvent::Handle.
+
+=item tls_ctx => $ssl_ctx
+
+Use the given Net::SSLeay::CTX object to create the new TLS connection
+(unless a connection object was specified directly). If this parameter is
+missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
+
 =back
 
 =cut
@@ -153,6 +173,11 @@ sub new {
    $self->{fh} or Carp::croak "mandatory argument fh is missing";
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
+
+   if ($self->{tls}) {
+      require Net::SSLeay;
+      $self->starttls (delete $self->{tls}, delete $self->{tls_ctx});
+   }
 
    $self->on_eof   (delete $self->{on_eof}  ) if $self->{on_eof};
    $self->on_error (delete $self->{on_error}) if $self->{on_error};
@@ -614,6 +639,107 @@ sub start_read {
             return $self->error;
          }
       });
+   }
+}
+
+sub _dotls {
+   my ($self) = @_;
+
+   if (length $self->{tls_wbuf}) {
+      my $len = Net::SSLeay::write ($self->{tls}, $self->{tls_wbuf});
+      substr $self->{tls_wbuf}, 0, $len, "" if $len > 0;
+   }
+
+   if (defined (my $buf = Net::SSLeay::BIO_read ($self->{tls_wbio}))) {
+      $self->{wbuf} .= $buf;
+      $self->_drain_wbuf;
+   }
+
+   if (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
+      $self->{rbuf} .= $buf;
+      $self->_drain_rbuf;
+   } elsif (
+      (my $err = Net::SSLeay::get_error ($self->{tls}, -1))
+      != Net::SSLeay::ERROR_WANT_READ ()
+   ) {
+      if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
+         $self->error;
+      } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
+         $! = &Errno::EIO;
+         $self->error;
+      }
+
+      # all others are fine for our purposes
+   }
+}
+
+# TODO: maybe document...
+sub starttls {
+   my ($self, $ssl, $ctx) = @_;
+
+   if ($ssl eq "accept") {
+      $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
+      Net::SSLeay::set_accept_state ($ssl);
+   } elsif ($ssl eq "connect") {
+      $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
+      Net::SSLeay::set_connect_state ($ssl);
+   }
+
+   $self->{tls} = $ssl;
+
+   $self->{tls_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+   $self->{tls_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+
+   Net::SSLeay::set_bio ($ssl, $self->{tls_rbio}, $self->{tls_wbio});
+
+   $self->{filter_w} = sub {
+      $_[0]{tls_wbuf} .= ${$_[1]};
+      &_dotls;
+   };
+   $self->{filter_r} = sub {
+      Net::SSLeay::BIO_write ($_[0]{tls_rbio}, ${$_[1]});
+      &_dotls;
+   };
+}
+
+sub DESTROY {
+   my $self = shift;
+
+   Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
+}
+
+=item AnyEvent::Handle::TLS_CTX
+
+This function creates and returns the Net::SSLeay::CTX object used by
+default for TLS mode.
+
+The context is created like this:
+
+   Net::SSLeay::load_error_strings;
+   Net::SSLeay::SSLeay_add_ssl_algorithms;
+   Net::SSLeay::randomize;
+
+   my $CTX = Net::SSLeay::CTX_new;
+
+   Net::SSLeay::CTX_set_options $CTX, Net::SSLeay::OP_ALL
+
+=cut
+
+our $TLS_CTX;
+
+sub TLS_CTX() {
+   $TLS_CTX || do {
+      require Net::SSLeay;
+
+      Net::SSLeay::load_error_strings ();
+      Net::SSLeay::SSLeay_add_ssl_algorithms ();
+      Net::SSLeay::randomize ();
+
+      $TLS_CTX = Net::SSLeay::CTX_new ();
+
+      Net::SSLeay::CTX_set_options ($TLS_CTX, Net::SSLeay::OP_ALL ());
+
+      $TLS_CTX
    }
 }
 
