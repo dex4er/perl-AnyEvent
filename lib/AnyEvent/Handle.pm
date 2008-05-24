@@ -687,6 +687,14 @@ sub starttls {
 
    $self->{tls} = $ssl;
 
+   # basically, this is deep magic (because SSL_read should have the same issues)
+   # but the openssl maintainers basically said: "trust us, it just works".
+   # (unfortunately, we have to hardcode constants because the abysmally misdesigned
+   # and mismaintained ssleay-module doesn't even offer them).
+   Net::SSLeay::CTX_set_mode ($self->{tls},
+      (eval { Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
+      | (eval { Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
+
    $self->{tls_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
    $self->{tls_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
 
