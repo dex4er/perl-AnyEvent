@@ -468,13 +468,16 @@ arguments.
 
 It should return the length of the listen queue (or C<0> for the default).
 
-Example: bind on TCP port 8888 on the local machine and tell each client
+Example: bind on some TCP port on the local machine and tell each client
 to go away.
 
-   tcp_server undef, 8888, sub {
+   tcp_server undef, undef, sub {
       my ($fh, $host, $port) = @_;
 
       syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
+   }, sub {
+      my ($fh, $thishost, $thisport) = @_;
+      warn "bound to $thishost, port $thisport\n";
    };
 
 =cut

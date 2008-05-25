@@ -522,6 +522,24 @@ or at any later time is guaranteed not to block.
 
 =back
 
+=head3 MAINLOOP EMULATION
+
+Sometimes (often for short test scripts, or even standalone programs
+who only want to use AnyEvent), you I<do> want your program to block
+indefinitely in some event loop.
+
+In that case, you cna use a condition variable like this:
+
+   AnyEvent->condvar->recv;
+
+This has the effect of entering the event loop and looping forever.
+
+Note that usually your program has some exit condition, in which case
+it is better to use the "traditional" approach of storing a condition
+variable, waiting for it, and sending it when the program should exit
+cleanly.
+
+
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 
 =over 4
