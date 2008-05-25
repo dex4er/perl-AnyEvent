@@ -39,7 +39,7 @@ to choose any available event loop for him.
 
 Read more about this in the main documentation of the L<AnyEvent> module.
 
-=head2 Network programming
+=head2 Network programming and AnyEvent
 
 However, AnyEvent is not just a simple abstraction anymore. It comes with
 some very useful utility modules like L<AnyEvent::Handle>, L<AnyEvent::DNS>
@@ -70,3 +70,132 @@ write your programs with this module, you will be IPv6 ready.
 
 This module allows fully asynchronous DNS resolution, and is used for example
 by L<AnyEvent::Socket> to resolve hostnames and service ports.
+
+=head2 First experiments with AnyEvent::Handle
+
+Now lets start with something simple, a program that reads non-blocking
+from standard input:
+
+   #!/opt/perl/bin/perl
+   use AnyEvent;
+   use AnyEvent::Handle;
+
+   my $end_prog = AnyEvent->condvar;
+
+   my $handle =
+      AnyEvent::Handle->new (
+         fh => \*STDIN,
+         on_eof => sub {
+            print "received EOF, exiting...\n";
+            $end_prog->broadcast;
+         },
+         on_error => sub {
+            print "error while reading from STDIN: $!\n";
+            $end_prog->broadcast;
+         }
+      );
+
+   $handle->push_read (sub {
+      my ($handle) = @_;
+
+      if ($handle->rbuf =~ s/^.*?\bend\b.*$//s) {
+         print "got 'end', existing...\n";
+         $end_prog->broadcast;
+         return 1
+      }
+
+      0
+   });
+
+   $end_prog->wait;
+
+Lets go through it step by step:
+
+   #!/opt/perl/bin/perl
+   use AnyEvent;
+   use AnyEvent::Handle;
+
+Nothing new here, just load AnyEvent for the event loop and AnyEvent::Handle.
+
+   my $end_prog = AnyEvent->condvar;
+
+Here a 'condition variable' is created. It represents the condition when the
+program wants to terminate. We will later 'wait' for that condition, which
+will choose and create an event loop for us.
+
+   my $handle =
+      AnyEvent::Handle->new (
+         fh => \*STDIN,
+         on_eof => sub {
+            print "received EOF, exiting...\n";
+            $end_prog->broadcast;
+         },
+
+We create a handle which will read from the standard input filehandle.
+Setting the C<on_eof> callback is required for every filehandle, as that is a
+condition that we need to check always if we are working with filehandles,
+to prevent reading or writing to a closed filehandle.
+
+         on_error => sub {
+            print "error while reading from STDIN: $!\n";
+            $end_prog->broadcast;
+         }
+      );
+
+The C<on_error> callback is not required, but we set it here in case any
+error happens when we read from the filehandle. It's usually a good idea to
+set this callback also and at least print some diagnostics. Already in our
+small example an error can happen. More to this later...
+
+   $handle->push_read (sub {
+
+Here we push a general read callback on the read queue, that will wait until we
+received all the data we wanted to receive. L<AnyEvent::Handle> has two queues
+per filehandle, a read and a write queue. The write queue queues pending data
+that waits to be written to the filehandle. And the read queue queues reading
+callbacks. For more details see the documentation L<AnyEvent::Handle> about the
+READ QUEUE and WRITE QUEUE. 
+
+      my ($handle) = @_;
+
+      if ($handle->rbuf =~ s/^.*?\bend\b.*$//s) {
+         print "got 'end', existing...\n";
+         $end_prog->broadcast;
+         return 1
+      }
+
+      0
+   });
+
+This code waits until the word 'end' has been seen in the data received
+on standard input. Once we encounter the stop word 'end' we remove everything from
+the read buffer and call the condition variable we setup earlier, that signals
+our 'end of program' condition. And the callback returns with a true value,
+that signals we are done with reading all the data we were interested in (all data until
+the word 'end' has been seen).
+
+In all other cases, when the stop word has not been seen yet, we just return a false
+value, to indicate that we are not finished yet.
+
+The C<rbuf> method returns our read buffer, that we can directly modify as lvalue.
+Alternatively we also could have written:
+
+      if ($handle->{rbuf} =~ s/^.*?\bend\b.*$//s) {
+
+
+   $end_prog->wait;
+
+This last line will wait blocking for the condition that our program wants to
+exit. C<wait> will setup an event loop for us and wait for IO, timers or signals.
+
+The key points were:
+
+=over 4
+
+=item * Condition variables used to start an event loop.
+
+=item * Registering the basic callbacks on AnyEvent::Handles.
+
+=item * Processing data in the read buffer.
+
+=back
