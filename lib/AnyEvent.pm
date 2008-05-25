@@ -314,7 +314,8 @@ becomes true.
 
 After creation, the condition variable is "false" until it becomes "true"
 by calling the C<send> method (or calling the condition variable as if it
-were a callback).
+were a callback, read about the caveats in the description for the C<<
+->send >> method).
 
 Condition variables are similar to callbacks, except that you can
 optionally wait for them. They can also be called merge points - points
@@ -396,8 +397,14 @@ immediately from within send.
 Any arguments passed to the C<send> call will be returned by all
 future C<< ->recv >> calls.
 
-Condition variables are overloaded so one can call them directly (as a
-code reference). Calling them directly is the same as calling C<send>.
+Condition variables are overloaded so one can call them directly
+(as a code reference). Calling them directly is the same as calling
+C<send>. Note, however, that many C-based event loops do not handle
+overloading, so as tempting as it may be, passing a condition variable
+instead of a callback does not work. Both the pure perl and EV loops
+support overloading, however, as well as all functions that use perl to
+invoke a callback (as in L<AnyEvent::Socket> and L<AnyEvent::DNS> for
+example).
 
 =item $cv->croak ($error)
 
@@ -732,9 +739,9 @@ our $MODEL;
 our $AUTOLOAD;
 our @ISA;
 
-our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
-
 our @REGISTRY;
+
+our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 
 our %PROTOCOL; # (ipv4|ipv6) => (1|2)
 
@@ -747,15 +754,17 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2)
 my @models = (
    [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],
-   [Tk::                   => AnyEvent::Impl::Tk::],
-   [Wx::                   => AnyEvent::Impl::POE::],
-   [Prima::                => AnyEvent::Impl::POE::],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
-   # everything below here will not be autoprobed as the pureperl backend should work everywhere
-   [Glib::                 => AnyEvent::Impl::Glib::],
+   # everything below here will not be autoprobed
+   # as the pureperl backend should work everywhere
+   # and is usually faster
+   [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
+   [Glib::                 => AnyEvent::Impl::Glib::],     # becomes extremely slow with many watchers
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
+   [Wx::                   => AnyEvent::Impl::POE::],
+   [Prima::                => AnyEvent::Impl::POE::],
 );
 
 our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY);
