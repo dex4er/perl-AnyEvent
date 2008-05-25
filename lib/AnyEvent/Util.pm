@@ -45,14 +45,16 @@ BEGIN {
 BEGIN {
    # broken windows perls use undocumented error codes...
    if ($^O =~ /mswin32/i) {
-      eval "sub WSAEAGAIN() { 10035 }";
+      eval "sub WSAWOULDBLOCK()  { 10035 }";
+      eval "sub WSAEINPROGRESS() { 10036 }";
    } else {
-      eval "sub WSAEAGAIN() { -1e99 }"; # should never match any errno value
+      eval "sub WSAWOULDBLOCK()  { -1e99 }"; # should never match any errno value
+      eval "sub WSAEINPROGRESS() { -1e99 }"; # should never match any errno value
    }
 }
 
 our @EXPORT = qw(fh_nonblocking guard);
-our @EXPORT_OK = qw(AF_INET6 WSAEAGAIN);
+our @EXPORT_OK = qw(AF_INET6 WSAWOULDBLOCK WSAEINPROGRESS);
 
 our $VERSION = '1.0';
 

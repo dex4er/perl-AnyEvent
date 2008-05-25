@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-4.01
+4.03 Sun May 25 05:05:57 CEST 2008
 	- work around perl bugs on windows, where perl returns undocumented
           error codes for sysread, syswrite etc.
 	- fix AnyEvent::Handle::unshift_read to really unshift and not push.
