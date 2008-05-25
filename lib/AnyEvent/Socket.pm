@@ -40,7 +40,7 @@ use strict;
 
 use Carp ();
 use Errno ();
-use Socket ();
+use Socket qw(AF_INET SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
 use AnyEvent ();
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
@@ -240,7 +240,7 @@ Handles both IPv4 and IPv6 sockaddr structures.
 sub unpack_sockaddr($) {
    my $af = unpack "S", $_[0];
 
-   if ($af == Socket::AF_INET) {
+   if ($af == AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
    } elsif ($af == AF_INET6) {
       unpack "x2 n x4 a16", $_[0]
@@ -489,14 +489,14 @@ sub tcp_server($$$;$) {
    my $ipn = parse_ip $host
       or Carp::croak "AnyEvent::Socket::tcp_server: cannot parse '$host' as IPv4 or IPv6 address";
 
-   my $domain = 4 == length $ipn ? Socket::AF_INET : AF_INET6;
+   my $domain = 4 == length $ipn ? AF_INET : AF_INET6;
 
    my %state;
 
-   socket $state{fh}, $domain, &Socket::SOCK_STREAM, 0
+   socket $state{fh}, $domain, SOCK_STREAM, 0
       or Carp::croak "socket: $!";
 
-   setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
+   setsockopt $state{fh}, SOL_SOCKET, SO_REUSEADDR, 1
       or Carp::croak "so_reuseaddr: $!";
 
    bind $state{fh}, pack_sockaddr _tcp_port $port, $ipn
