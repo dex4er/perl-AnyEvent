@@ -37,6 +37,8 @@ BEGIN {
 
 BEGIN {
    my $af_inet6 = eval { &Socket::AF_INET6 };
+   $af_inet6 && socket my $ipv6_socket, $af_inet6, &Socket::SOCK_STREAM, 0 # check if they can be created
+      or $af_inet6 = 0;
    eval "sub AF_INET6() { $af_inet6 }"; die if $@;
 
    delete $AnyEvent::PROTOCOL{ipv6} unless $af_inet6;

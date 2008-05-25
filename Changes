@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- check wether IPv6 sockets can actually be created, otherwise, disable ipv6
+          support entirely.
+
 4.03 Sun May 25 05:05:57 CEST 2008
 	- work around perl bugs on windows, where perl returns undocumented
           error codes for sysread, syswrite etc.
