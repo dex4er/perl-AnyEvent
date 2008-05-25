@@ -522,24 +522,6 @@ or at any later time is guaranteed not to block.
 
 =back
 
-=head3 MAINLOOP EMULATION
-
-Sometimes (often for short test scripts, or even standalone programs
-who only want to use AnyEvent), you I<do> want your program to block
-indefinitely in some event loop.
-
-In that case, you cna use a condition variable like this:
-
-   AnyEvent->condvar->recv;
-
-This has the effect of entering the event loop and looping forever.
-
-Note that usually your program has some exit condition, in which case
-it is better to use the "traditional" approach of storing a condition
-variable, waiting for it, and sending it when the program should exit
-cleanly.
-
-
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 
 =over 4
@@ -632,17 +614,34 @@ If it doesn't care, it can just "use AnyEvent" and use it itself, or not
 do anything special (it does not need to be event-based) and let AnyEvent
 decide which implementation to chose if some module relies on it.
 
-If the main program relies on a specific event model. For example, in
-Gtk2 programs you have to rely on the Glib module. You should load the
+If the main program relies on a specific event model - for example, in
+Gtk2 programs you have to rely on the Glib module - you should load the
 event module before loading AnyEvent or any module that uses it: generally
 speaking, you should load it as early as possible. The reason is that
 modules might create watchers when they are loaded, and AnyEvent will
 decide on the event model to use as soon as it creates watchers, and it
 might chose the wrong one unless you load the correct one yourself.
 
-You can chose to use a rather inefficient pure-perl implementation by
-loading the C<AnyEvent::Impl::Perl> module, which gives you similar
-behaviour everywhere, but letting AnyEvent chose is generally better.
+You can chose to use a pure-perl implementation by loading the
+C<AnyEvent::Impl::Perl> module, which gives you similar behaviour
+everywhere, but letting AnyEvent chose the model is generally better.
+
+=head2 MAINLOOP EMULATION
+
+Sometimes (often for short test scripts, or even standalone programs who
+only want to use AnyEvent), you do not want to run a specific event loop.
+
+In that case, you can use a condition variable like this:
+
+   AnyEvent->condvar->recv;
+
+This has the effect of entering the event loop and looping forever.
+
+Note that usually your program has some exit condition, in which case
+it is better to use the "traditional" approach of storing a condition
+variable somewhere, waiting for it, and sending it when the program should
+exit cleanly.
+
 
 =head1 OTHER MODULES
 
@@ -668,13 +667,13 @@ Provides various utility functions for (internet protocol) sockets,
 addresses and name resolution. Also functions to create non-blocking tcp
 connections or tcp servers, with IPv6 and SRV record support and more.
 
-=item L<AnyEvent::HTTPD>
-
-Provides a simple web application server framework.
-
 =item L<AnyEvent::DNS>
 
 Provides rich asynchronous DNS resolver capabilities.
+
+=item L<AnyEvent::HTTPD>
+
+Provides a simple web application server framework.
 
 =item L<AnyEvent::FastPing>
 
