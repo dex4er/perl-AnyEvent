@@ -1,0 +1,72 @@
+=head1 Network Programming with AnyEvent
+
+This is a tutorial that will explain the usage of AnyEvent for
+Network programming.
+
+=head2 Introduction
+
+AnyEvent is first of all just a framework for multiple event loops.  It's a
+thin abstraction layer above all kinds of event loops. It's main purpose is to
+move the choice of the event loop (whether it should be Glib, Qt, EV or Event,
+or even something else, see also L<AnyEvent>) from the module author to the
+program author.
+
+The problem was usually that modules like L<Net::IRC> came with their own
+event loop, where the program author needed to start the event loop
+of L<Net::IRC>. That usually meant that he couldn't integrate it easily with
+a L<Gtk2> GUI for instance.
+
+Another example is L<LWP>, it provides no event interface at all. It's a pure
+blocking HTTP client library, which usually means that you either have to
+start a thread or have to fork for a HTTP request, or use L<Coro::LWP>.
+
+L<AnyEvent> now does B<not> force authors of modules, like L<Net::IRC>, to:
+
+=over 4
+
+=item 1. Write their own event loop.
+
+=item 2. Choose one fixed event loop.
+
+=back
+
+If the module author uses L<AnyEvent> for all his event needs (IO events, timers,
+signals, ...) all other modules can just use his module and don't have to choose
+an event loop or adapt to his event loop. The choice of the event loop is ultimately
+made by the program author who uses all the modules and writes the main
+program. And even there he doesn't have to choose, he can just ask L<AnyEvent>
+to choose any available event loop for him.
+
+Read more about this in the main documentation of the L<AnyEvent> module.
+
+=head2 Network programming
+
+However, AnyEvent is not just a simple abstraction anymore. It comes with
+some very useful utility modules like L<AnyEvent::Handle>, L<AnyEvent::DNS>
+and L<AnyEvent::Socket> that make your life as non-blocking network programmer
+a lot easier.
+
+Now an introduction into these three submodules:
+
+=head3 L<AnyEvent::Handle>
+
+This module handles non-blocking IO on filehandles in a event based
+manner. It provides a wrapper object around your filehandle that provides
+queueing and buffering of incoming and outgoing data for you.
+
+More about this later.
+
+=head3 L<AnyEvent::Socket>
+
+This module provides you with functions that handle internet socket creation
+and IP address magic. The two main functions are C<tcp_connect> and
+C<tcp_server>. The former will connect a (streaming) socket to an internet host
+for you and the later will make a server socket for you, to accept connections.
+
+This module also comes with transparent IPv6 support, this means: If you
+write your programs with this module, you will be IPv6 ready.
+
+=head3 L<AnyEvent::DNS>
+
+This module allows fully asynchronous DNS resolution, and is used for example
+by L<AnyEvent::Socket> to resolve hostnames and service ports.
