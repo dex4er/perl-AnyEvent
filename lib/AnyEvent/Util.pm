@@ -35,6 +35,22 @@ BEGIN {
    *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
 }
 
+BEGIN {
+   my $af_inet6 = eval { &Socket::AF_INET6 };
+   eval "sub AF_INET6() { $af_inet6 }"; die if $@;
+
+   delete $AnyEvent::PROTOCOL{ipv6} unless $af_inet6;
+}
+
+BEGIN {
+   # broken windows perls use undocumented error codes...
+   if ($^O =~ /mswin32/i) {
+      eval "sub WSAEAGAIN() { 10035 }";
+   } else {
+      eval "sub WSAEAGAIN() { -1e99 }"; # should never match any errno value
+   }
+}
+
 our @EXPORT = qw(fh_nonblocking guard);
 
 our $VERSION = '1.0';

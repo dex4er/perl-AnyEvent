@@ -1,11 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+	- work around perl bugs on windows, where perl returns undocumented
+          error codes for sysread, syswrite etc.
 	- fix AnyEvent::Handle::unshift_read to really unshift and not push.
         - AnyEvent::Handle could sometimes stumble over 0-byte writes.
-        - croak, not die, in AnyEvent::Handle;
+        - updated documentation.
         - implement a more flexible type system for both reads and writes
           in AnyEvent::Handle.
         - make types extendable in AnyEvent::Handle.
+        - croak, not die, in AnyEvent::Handle;
 
 4.0  Sat May 24 19:58:08 CEST 2008
 	- added (experimental) AnyEvent::DNS module.

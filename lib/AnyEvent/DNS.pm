@@ -201,7 +201,7 @@ sub any($$) {
 sub addr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
 
-   unless (&AnyEvent::Socket::AF_INET6) {
+   unless (&AnyEvent::Util::AF_INET6) {
       $family != 6
          or return $cb->();
 
@@ -258,7 +258,7 @@ sub addr($$$$$$) {
             }
 
             if (16 == length $noden && $family != 4) {
-               push @res, [$idx, "ipv6", [&AnyEvent::Socket::AF_INET6, $type, $proton,
+               push @res, [$idx, "ipv6", [&AnyEvent::Util::AF_INET6, $type, $proton,
                            AnyEvent::Socket::pack_sockaddr ( $port, $noden)]]
             }
          } else {

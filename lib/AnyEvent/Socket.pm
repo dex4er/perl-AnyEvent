@@ -48,17 +48,6 @@ use AnyEvent::DNS ();
 
 use base 'Exporter';
 
-BEGIN {
-   *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
-}
-
-BEGIN {
-   my $af_inet6 = eval { &Socket::AF_INET6 };
-   eval "sub AF_INET6() { $af_inet6 }"; die if $@;
-
-   delete $AnyEvent::PROTOCOL{ipv6} unless $af_inet6;
-}
-
 our @EXPORT = qw(parse_ipv4 parse_ipv6 parse_ip format_ip inet_aton tcp_server tcp_connect);
 
 our $VERSION = '1.0';
@@ -229,7 +218,7 @@ sub pack_sockaddr($$) {
       Socket::pack_sockaddr_in $_[0], $_[1]
    } elsif (16 == length $_[1]) {
       pack "SnL a16 L",
-         Socket::AF_INET6,
+         &AnyEvent::Util::AF_INET6,
          $_[0], # port
          0,     # flowinfo
          $_[1], # addr
@@ -253,7 +242,7 @@ sub unpack_sockaddr($) {
 
    if ($af == &Socket::AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
-   } elsif ($af == AF_INET6) {
+   } elsif ($af == &AnyEvent::Util::AF_INET6) {
       (unpack "SnL a16 L")[1, 3]
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
@@ -489,7 +478,7 @@ sub tcp_server($$$;$) {
    setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
       or Carp::croak "so_reuseaddr: $!";
 
-   bind $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, socket_inet_aton ($host || "0.0.0.0")
+   bind $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, parse_ip ($host || "0.0.0.0")
       or Carp::croak "bind: $!";
 
    fh_nonblocking $state{fh}, 1;
