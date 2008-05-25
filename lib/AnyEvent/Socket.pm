@@ -43,7 +43,7 @@ use Errno ();
 use Socket ();
 
 use AnyEvent ();
-use AnyEvent::Util qw(guard fh_nonblocking);
+use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
 use AnyEvent::DNS ();
 
 use base 'Exporter';
@@ -160,7 +160,7 @@ sub format_ip($) {
       } else {
          my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
 
-         $ip =~ s/^0:(?:0:)*/::/
+         $ip =~ s/^0:(?:0:)*(0$)?/::/
             or $ip =~ s/(:0)+$/::/
             or $ip =~ s/(:0)+/:/;
          return $ip
@@ -218,7 +218,7 @@ sub pack_sockaddr($$) {
       Socket::pack_sockaddr_in $_[0], $_[1]
    } elsif (16 == length $_[1]) {
       pack "SnL a16 L",
-         &AnyEvent::Util::AF_INET6,
+         AF_INET6,
          $_[0], # port
          0,     # flowinfo
          $_[1], # addr
@@ -240,10 +240,10 @@ Handles both IPv4 and IPv6 sockaddr structures.
 sub unpack_sockaddr($) {
    my $af = unpack "S", $_[0];
 
-   if ($af == &Socket::AF_INET) {
+   if ($af == Socket::AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
-   } elsif ($af == &AnyEvent::Util::AF_INET6) {
-      (unpack "SnL a16 L")[1, 3]
+   } elsif ($af == AF_INET6) {
+      unpack "x2 n x4 a16", $_[0]
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
@@ -434,16 +434,26 @@ sub tcp_connect($$$;$) {
 
 =item $guard = tcp_server $host, $port, $accept_cb[, $prepare_cb]
 
-Create and bind a TCP socket to the given host (any IPv4 host if undef,
-otherwise it must be an IPv4 or IPv6 address) and port (service name or
-numeric port number, or an ephemeral port if given as zero or undef), set
-the SO_REUSEADDR flag and call C<listen>.
+Create and bind a TCP socket to the given host, and port, set the
+SO_REUSEADDR flag and call C<listen>.
 
-For each new connection that could be C<accept>ed, call the C<$accept_cb>
-with the file handle (in non-blocking mode) as first and the peer host and
-port as second and third arguments (see C<tcp_connect> for details).
+C<$host> must be an IPv4 or IPv6 address (or C<undef>, in which case it
+binds either to C<0> or to C<::>, depending on whether IPv4 or IPv6 is the
+preferred protocol).
 
-Croaks on any errors.
+To bind to the IPv4 wildcard address, use C<0>, to bind to the IPv6
+wildcard address, use C<::>.
+
+The port is specified by C<$port>, which must be either a service name or
+a numeric port number (or C<0> or C<undef>, in which case an ephemeral
+port will be used).
+
+For each new connection that could be C<accept>ed, call the C<<
+$accept_cb->($fh, $host, $port) >> with the file handle (in non-blocking
+mode) as first and the peer host and port as second and third arguments
+(see C<tcp_connect> for details).
+
+Croaks on any errors it can detect before the listen.
 
 If called in non-void context, then this function returns a guard object
 whose lifetime it tied to the TCP server: If the object gets destroyed,
@@ -451,8 +461,10 @@ the server will be stopped (but existing accepted connections will
 continue).
 
 If you need more control over the listening socket, you can provide a
-C<$prepare_cb>, which is called just before the C<listen ()> call, with
-the listen file handle as first argument.
+C<< $prepare_cb->($fh, $host, $port) >>, which is called just before the
+C<listen ()> call, with the listen file handle as first argument, and IP
+address and port number of the local socket endpoint as second and third
+arguments.
 
 It should return the length of the listen queue (or C<0> for the default).
 
@@ -470,20 +482,36 @@ to go away.
 sub tcp_server($$$;$) {
    my ($host, $port, $accept, $prepare) = @_;
 
+   $host = $AnyEvent::PROTOCOL{ipv4} < $AnyEvent::PROTOCOL{ipv6}
+           ? "0" : "::"
+      unless defined $host;
+
+   my $ipn = parse_ip $host
+      or Carp::croak "AnyEvent::Socket::tcp_server: cannot parse '$host' as IPv4 or IPv6 address";
+
+   my $domain = 4 == length $ipn ? Socket::AF_INET : AF_INET6;
+
    my %state;
 
-   socket $state{fh}, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+   socket $state{fh}, $domain, &Socket::SOCK_STREAM, 0
       or Carp::croak "socket: $!";
 
    setsockopt $state{fh}, &Socket::SOL_SOCKET, &Socket::SO_REUSEADDR, 1
       or Carp::croak "so_reuseaddr: $!";
 
-   bind $state{fh}, Socket::pack_sockaddr_in _tcp_port $port, parse_ip ($host || "0.0.0.0")
+   bind $state{fh}, pack_sockaddr _tcp_port $port, $ipn
       or Carp::croak "bind: $!";
 
    fh_nonblocking $state{fh}, 1;
 
-   my $len = ($prepare && $prepare->($state{fh})) || 128;
+   my $len;
+
+   if ($prepare) {
+      my ($port, $host) = unpack_sockaddr getsockname $state{fh};
+      $len = $prepare && $prepare->($state{fh}, format_ip $host, $port);
+   }
+   
+   $len ||= 128;
 
    listen $state{fh}, $len
       or Carp::croak "listen: $!";
@@ -492,8 +520,8 @@ sub tcp_server($$$;$) {
       # this closure keeps $state alive
       while (my $peer = accept my $fh, $state{fh}) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
-         my ($port, $host) = Socket::unpack_sockaddr_in $peer;
-         $accept->($fh, (Socket::inet_ntoa $host), $port);
+         my ($port, $host) = unpack_sockaddr $peer;
+         $accept->($fh, format_ip $host, $port);
       }
    });
 

@@ -1,12 +1,16 @@
 Revision history for Perl extension AnyEvent.
 
+4.01
 	- work around perl bugs on windows, where perl returns undocumented
           error codes for sysread, syswrite etc.
 	- fix AnyEvent::Handle::unshift_read to really unshift and not push.
         - AnyEvent::Handle could sometimes stumble over 0-byte writes.
+        - fix unpack_sockaddr, now works for AF_INET6 sockaddr's.
         - updated documentation.
         - implement a more flexible type system for both reads and writes
           in AnyEvent::Handle.
+        - support IPv6 in tcp_server.
+        - pass local hostname and port to the prepare callback in tcp_server.
         - make types extendable in AnyEvent::Handle.
         - croak, not die, in AnyEvent::Handle;
 

@@ -35,7 +35,7 @@ my $w = tcp_server undef, undef,
          $hdl->push_write ("BLABLABLA\015\012");
       });
    }, sub {
-      ($port) = Socket::unpack_sockaddr_in getsockname $_[0];
+      $port = $_[2];
 
       0
    };
