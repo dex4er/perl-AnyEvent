@@ -31,6 +31,8 @@ package AnyEvent::DNS;
 no warnings;
 use strict;
 
+use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
+
 use AnyEvent::Handle ();
 
 =item AnyEvent::DNS::addr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
@@ -215,7 +217,7 @@ sub addr($$$$$$) {
    $family ||=6 unless $AnyEvent::PROTOCOL{ipv4};
 
    $proto ||= "tcp";
-   $type  ||= $proto eq "udp" ? Socket::SOCK_DGRAM : Socket::SOCK_STREAM;
+   $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
 
    my $proton = (getprotobyname $proto)[2]
       or Carp::croak "$proto: protocol unknown";
@@ -253,7 +255,7 @@ sub addr($$$$$$) {
 
          if (my $noden = AnyEvent::Socket::parse_ip ($node)) {
             if (4 == length $noden && $family != 6) {
-               push @res, [$idx, "ipv4", [Socket::AF_INET, $type, $proton,
+               push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
                            AnyEvent::Socket::pack_sockaddr ($port, $noden)]]
             }
 
@@ -266,7 +268,7 @@ sub addr($$$$$$) {
             if ($family != 6) {
                $cv->begin;
                a $node, sub {
-                  push @res, [$idx, "ipv4", [Socket::AF_INET, $type, $proton,
+                  push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
                               AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv4 ($_))]]
                      for @_;
                   $cv->end;
@@ -413,7 +415,7 @@ our %class_str = reverse %class_id;
 
 # names MUST have a trailing dot
 sub _enc_qname($) {
-   pack "(C/a)*", (split /\./, shift), ""
+   pack "(C/a*)*", (split /\./, shift), ""
 }
 
 sub _enc_qd() {
@@ -527,7 +529,7 @@ sub _dec_qd {
 }
 
 our %dec_rr = (
-     1 => sub { join ".", unpack "C4" }, # a
+     1 => sub { join ".", unpack "C4", $_ }, # a
      2 => sub { local $ofs = $ofs - length; _dec_qname }, # ns
      5 => sub { local $ofs = $ofs - length; _dec_qname }, # cname
      6 => sub { 
@@ -536,14 +538,14 @@ our %dec_rr = (
              my $rname = _dec_qname;
              ($mname, $rname, unpack "NNNNN", substr $pkt, $ofs)
           }, # soa
-    11 => sub { ((join ".", unpack "C4"), unpack "C a*", substr $_, 4) }, # wks
+    11 => sub { ((join ".", unpack "C4", $_), unpack "C a*", substr $_, 4) }, # wks
     12 => sub { local $ofs = $ofs - length; _dec_qname }, # ptr
-    13 => sub { unpack "C/a C/a", $_ }, # hinfo
+    13 => sub { unpack "C/a* C/a*", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_qname) }, # mx
-    16 => sub { unpack "(C/a)*", $_ }, # txt
+    16 => sub { unpack "(C/a*)*", $_ }, # txt
     28 => sub { AnyEvent::Socket::format_ip ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_qname) }, # srv
-    99 => sub { unpack "(C/a)*", $_ }, # spf
+    99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
 
 sub _dec_rr {
@@ -739,7 +741,7 @@ immediately.
 sub new {
    my ($class, %arg) = @_;
 
-   socket my $fh, &Socket::AF_INET, &Socket::SOCK_DGRAM, 0
+   socket my $fh, AF_INET, &Socket::SOCK_DGRAM, 0
       or Carp::croak "socket: $!";
 
    AnyEvent::Util::fh_nonblocking $fh, 1;

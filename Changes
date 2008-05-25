@@ -7,6 +7,7 @@ Revision history for Perl extension AnyEvent.
         - AnyEvent::Handle could sometimes stumble over 0-byte writes.
         - fix unpack_sockaddr, now works for AF_INET6 sockaddr's.
         - updated documentation.
+        - lots of workarounds for perl 5.8 quirks.
         - implement a more flexible type system for both reads and writes
           in AnyEvent::Handle.
         - support IPv6 in tcp_server.
