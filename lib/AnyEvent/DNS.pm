@@ -242,7 +242,7 @@ sub addr($$$$$$) {
          $cb->(
             map $_->[2],
             sort {
-               $AnyEvent::PROTOCOL{$a->[1]} <=> $AnyEvent::PROTOCOL{$b->[1]}
+               $AnyEvent::PROTOCOL{$b->[1]} <=> $AnyEvent::PROTOCOL{$a->[1]}
                   or $a->[0] <=> $b->[0]
             }
             @res

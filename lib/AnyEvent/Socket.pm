@@ -485,7 +485,7 @@ to go away.
 sub tcp_server($$$;$) {
    my ($host, $port, $accept, $prepare) = @_;
 
-   $host = $AnyEvent::PROTOCOL{ipv4} > $AnyEvent::PROTOCOL{ipv6} && AF_INET6
+   $host = $AnyEvent::PROTOCOL{ipv4} < $AnyEvent::PROTOCOL{ipv6} && AF_INET6
            ? "::" : "0"
       unless defined $host;
 

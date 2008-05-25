@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+	- properly parse PERL_ANYEVENT_PROTOCOLS and sue the info correctly.
 	- check wether IPv6 sockets can actually be created, otherwise, disable ipv6
           support entirely.
 

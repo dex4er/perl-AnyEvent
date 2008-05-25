@@ -743,12 +743,13 @@ our @REGISTRY;
 
 our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 
-our %PROTOCOL; # (ipv4|ipv6) => (1|2)
+our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 
 {
    my $idx;
    $PROTOCOL{$_} = ++$idx
-      for split /\s*,\s*/, $ENV{PERL_ANYEVENT_PROTOCOLS} || "ipv4,ipv6";
+      for reverse split /\s*,\s*/,
+             $ENV{PERL_ANYEVENT_PROTOCOLS} || "ipv4,ipv6";
 }
 
 my @models = (
