@@ -14,8 +14,6 @@ use Errno qw/EAGAIN EINTR/;
 
 AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
-This module is experimental.
-
 =cut
 
 our $VERSION = '0.04';
@@ -27,22 +25,25 @@ our $VERSION = '0.04';
 
    my $cv = AnyEvent->condvar;
 
-   my $ae_fh = AnyEvent::Handle->new (fh => \*STDIN);
-
-   #TODO
-
-   # or use the constructor to pass the callback:
-
-   my $ae_fh2 =
+   my $handle =
       AnyEvent::Handle->new (
          fh => \*STDIN,
          on_eof => sub {
             $cv->broadcast;
          },
-         #TODO
       );
 
-   $cv->wait;
+   # send some request line
+   $handle->push_write ("getinfo\015\012");
+
+   # read the response line
+   $handle->push_read (line => sub {
+      my ($handle, $line) = @_;
+      warn "read line <$line>\n";
+      $cv->send;
+   });
+
+   $cv->recv;
 
 =head1 DESCRIPTION
 
