@@ -7,7 +7,7 @@ AnyEvent::DNS - fully asynchronous DNS resolution
  use AnyEvent::DNS;
 
  my $cv = AnyEvent->condvar;
- AnyEvent::DNS::a "www.google.de", sub { $cv->send (@_) };
+ AnyEvent::DNS::a "www.google.de", $cv;
  # ... later
  my @addrs = $cv->recv;
 
