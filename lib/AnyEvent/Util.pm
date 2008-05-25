@@ -52,6 +52,7 @@ BEGIN {
 }
 
 our @EXPORT = qw(fh_nonblocking guard);
+our @EXPORT_OK = qw(AF_INET6 WSAEAGAIN);
 
 our $VERSION = '1.0';
 

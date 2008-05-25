@@ -4,7 +4,7 @@ no warnings;
 use strict;
 
 use AnyEvent ();
-use AnyEvent::Util ();
+use AnyEvent::Util qw(WSAEAGAIN);
 use Scalar::Util ();
 use Carp ();
 use Fcntl ();
@@ -303,7 +303,7 @@ sub _drain_wbuf {
                   && $self->{on_drain};
 
             delete $self->{ww} unless length $self->{wbuf};
-         } elsif ($! != EAGAIN && $! != EINTR) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEAGAIN) {
             $self->error;
          }
       };
@@ -789,7 +789,7 @@ sub start_read {
             $self->{eof} = 1;
             $self->_drain_rbuf;
 
-         } elsif ($! != EAGAIN && $! != EINTR) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != &AnyEvent::Util::WSAEAGAIN) {
             return $self->error;
          }
       });
