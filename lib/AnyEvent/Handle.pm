@@ -95,7 +95,7 @@ called.
 On callback entrance, the value of C<$!> contains the operating system
 error (or C<ENOSPC>, C<EPIPE> or C<EBADMSG>).
 
-The callbakc should throw an exception. If it returns, then
+The callback should throw an exception. If it returns, then
 AnyEvent::Handle will C<croak> for you.
 
 While not mandatory, it is I<highly> recommended to set this callback, as
@@ -170,6 +170,12 @@ Use the given Net::SSLeay::CTX object to create the new TLS connection
 (unless a connection object was specified directly). If this parameter is
 missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 
+=item filter_r => $cb
+
+=item filter_w => $cb
+
+These exist, but are undocumented at this time.
+
 =back
 
 =cut
@@ -201,8 +207,8 @@ sub new {
 sub _shutdown {
    my ($self) = @_;
 
-   delete $self->{rw};
-   delete $self->{ww};
+   delete $self->{_rw};
+   delete $self->{_ww};
    delete $self->{fh};
 }
 
@@ -226,7 +232,7 @@ This method returns the file handle of the L<AnyEvent::Handle> object.
 
 =cut
 
-sub fh { $_[0]->{fh} }
+sub fh { $_[0]{fh} }
 
 =item $handle->on_error ($cb)
 
@@ -292,7 +298,7 @@ buffers it independently of the kernel.
 sub _drain_wbuf {
    my ($self) = @_;
 
-   if (!$self->{ww} && length $self->{wbuf}) {
+   if (!$self->{_ww} && length $self->{wbuf}) {
 
       Scalar::Util::weaken $self;
 
@@ -306,7 +312,7 @@ sub _drain_wbuf {
                if $self->{low_water_mark} >= length $self->{wbuf}
                   && $self->{on_drain};
 
-            delete $self->{ww} unless length $self->{wbuf};
+            delete $self->{_ww} unless length $self->{wbuf};
          } elsif ($! != EAGAIN && $! != EINTR && $! != WSAWOULDBLOCK) {
             $self->error;
          }
@@ -316,7 +322,7 @@ sub _drain_wbuf {
       $cb->();
 
       # if still data left in wbuf, we need to poll
-      $self->{ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb)
+      $self->{_ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb)
          if length $self->{wbuf};
    };
 }
@@ -482,24 +488,24 @@ sub _drain_rbuf {
 
    while (my $len = length $self->{rbuf}) {
       no strict 'refs';
-      if (my $cb = shift @{ $self->{queue} }) {
+      if (my $cb = shift @{ $self->{_queue} }) {
          unless ($cb->($self)) {
-            if ($self->{eof}) {
+            if ($self->{_eof}) {
                # no progress can be made (not enough data and no data forthcoming)
                $! = &Errno::EPIPE;
                $self->error;
             }
 
-            unshift @{ $self->{queue} }, $cb;
+            unshift @{ $self->{_queue} }, $cb;
             return;
          }
       } elsif ($self->{on_read}) {
          $self->{on_read}($self);
 
          if (
-            $self->{eof}                    # if no further data will arrive
+            $self->{_eof}                   # if no further data will arrive
             && $len == length $self->{rbuf} # and no data has been consumed
-            && !@{ $self->{queue} }         # and the queue is still empty
+            && !@{ $self->{_queue} }        # and the queue is still empty
             && $self->{on_read}             # and we still want to read data
          ) {
             # then no progress can be made
@@ -508,12 +514,12 @@ sub _drain_rbuf {
          }
       } else {
          # read side becomes idle
-         delete $self->{rw};
+         delete $self->{_rw};
          return;
       }
    }
 
-   if ($self->{eof}) {
+   if ($self->{_eof}) {
       $self->_shutdown;
       $self->{on_eof}($self)
          if $self->{on_eof};
@@ -589,7 +595,7 @@ sub push_read {
             ->($self, $cb, @_);
    }
 
-   push @{ $self->{queue} }, $cb;
+   push @{ $self->{_queue} }, $cb;
    $self->_drain_rbuf;
 }
 
@@ -605,7 +611,7 @@ sub unshift_read {
    }
 
 
-   unshift @{ $self->{queue} }, $cb;
+   unshift @{ $self->{_queue} }, $cb;
    $self->_drain_rbuf;
 }
 
@@ -847,16 +853,16 @@ C<start_read>.
 sub stop_read {
    my ($self) = @_;
 
-   delete $self->{rw};
+   delete $self->{_rw};
 }
 
 sub start_read {
    my ($self) = @_;
 
-   unless ($self->{rw} || $self->{eof}) {
+   unless ($self->{_rw} || $self->{_eof}) {
       Scalar::Util::weaken $self;
 
-      $self->{rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
+      $self->{_rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
          my $rbuf = $self->{filter_r} ? \my $buf : \$self->{rbuf};
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
@@ -866,8 +872,8 @@ sub start_read {
                : $self->_drain_rbuf;
 
          } elsif (defined $len) {
-            delete $self->{rw};
-            $self->{eof} = 1;
+            delete $self->{_rw};
+            $self->{_eof} = 1;
             $self->_drain_rbuf;
 
          } elsif ($! != EAGAIN && $! != EINTR && $! != &AnyEvent::Util::WSAWOULDBLOCK) {
@@ -880,13 +886,13 @@ sub start_read {
 sub _dotls {
    my ($self) = @_;
 
-   if (length $self->{tls_wbuf}) {
-      while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{tls_wbuf})) > 0) {
-         substr $self->{tls_wbuf}, 0, $len, "";
+   if (length $self->{_tls_wbuf}) {
+      while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
+         substr $self->{_tls_wbuf}, 0, $len, "";
       }
    }
 
-   if (defined (my $buf = Net::SSLeay::BIO_read ($self->{tls_wbio}))) {
+   if (defined (my $buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $buf;
       $self->_drain_wbuf;
    }
@@ -922,6 +928,10 @@ C<"connect">, C<"accept"> or an existing Net::SSLeay object).
 The second argument is the optional C<Net::SSLeay::CTX> object that is
 used when AnyEvent::Handle has to create its own TLS connection object.
 
+The TLS connection object will end up in C<< $handle->{tls} >> after this
+call and can be used or changed to your liking. Note that the handshake
+might have already started when this function returns.
+
 =cut
 
 # TODO: maybe document...
@@ -949,17 +959,17 @@ sub starttls {
       (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
       | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
 
-   $self->{tls_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
-   $self->{tls_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+   $self->{_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+   $self->{_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
 
-   Net::SSLeay::set_bio ($ssl, $self->{tls_rbio}, $self->{tls_wbio});
+   Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
 
    $self->{filter_w} = sub {
-      $_[0]{tls_wbuf} .= ${$_[1]};
+      $_[0]{_tls_wbuf} .= ${$_[1]};
       &_dotls;
    };
    $self->{filter_r} = sub {
-      Net::SSLeay::BIO_write ($_[0]{tls_rbio}, ${$_[1]});
+      Net::SSLeay::BIO_write ($_[0]{_rbio}, ${$_[1]});
       &_dotls;
    };
 }
@@ -975,9 +985,10 @@ sub stoptls {
    my ($self) = @_;
 
    Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
-   delete $self->{tls_rbio};
-   delete $self->{tls_wbio};
-   delete $self->{tls_wbuf};
+
+   delete $self->{_rbio};
+   delete $self->{_wbio};
+   delete $self->{_tls_wbuf};
    delete $self->{filter_r};
    delete $self->{filter_w};
 }
@@ -1022,6 +1033,35 @@ sub TLS_CTX() {
       $TLS_CTX
    }
 }
+
+=back
+
+=head1 SUBCLASSING AnyEvent::Handle
+
+In many cases, you might want to subclass AnyEvent::Handle.
+
+To make this easier, a given version of AnyEvent::Handle uses these
+conventions:
+
+=over 4
+
+=item * all constructor arguments become object members.
+
+At least initially, when you pass a C<tls>-argument to the constructor it
+will end up in C<< $handle->{tls} >>. Those members might be changes or
+mutated later on (for example C<tls> will hold the TLS connection object).
+
+=item * other object member names are prefixed with an C<_>.
+
+All object members not explicitly documented (internal use) are prefixed
+with an underscore character, so the remaining non-C<_>-namespace is free
+for use for subclasses.
+
+=item * all members not documented here and not prefixed with an underscore
+are free to use in subclasses.
+
+Of course, new versions of AnyEvent::Handle may introduce more "public"
+member variables, but thats just life, at least it is documented.
 
 =back
 
