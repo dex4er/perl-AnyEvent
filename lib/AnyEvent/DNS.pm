@@ -33,7 +33,7 @@ use strict;
 
 use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
-use AnyEvent qw(WIN32);
+use AnyEvent ();
 use AnyEvent::Handle ();
 
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
@@ -842,7 +842,7 @@ sub os_config {
    $self->{server} = [];
    $self->{search} = [];
 
-   if (WIN32 || $^O =~ /cygwin/i) {
+   if (AnyEvent::WIN32 || $^O =~ /cygwin/i) {
       no strict 'refs';
 
       # there are many options to find the current nameservers etc. on windows

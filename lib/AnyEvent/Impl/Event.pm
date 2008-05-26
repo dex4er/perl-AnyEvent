@@ -22,14 +22,14 @@ package AnyEvent::Impl::Event;
 no warnings;
 use strict;
 
-use AnyEvent qw(WIN32);
+use AnyEvent ();
 
 use Event ();
 
 sub io {
    my ($class, %arg) = @_;
    $arg{fd} = delete $arg{fh};
-   $arg{poll} .= "e" if WIN32; # work around windows connect bug
+   $arg{poll} .= "e" if AnyEvent::WIN32; # work around windows connect bug
    bless \(Event->io (%arg)), $class
 }
 

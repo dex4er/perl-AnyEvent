@@ -759,19 +759,6 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
              $ENV{PERL_ANYEVENT_PROTOCOLS} || "ipv4,ipv6";
 }
 
-sub import {
-   shift;
-   return unless @_;
-
-   my $pkg = caller;
-
-   no strict 'refs';
-
-   for (@_) {
-      *{"$pkg\::WIN32"} = *WIN32 if $_ eq "WIN32";
-   }
-}
-
 my @models = (
    [EV::                   => AnyEvent::Impl::EV::],
    [Event::                => AnyEvent::Impl::Event::],

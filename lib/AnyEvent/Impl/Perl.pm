@@ -76,7 +76,7 @@ use strict;
 use Time::HiRes ();
 use Scalar::Util ();
 
-use AnyEvent qw(WIN32);
+use AnyEvent ();
 
 BEGIN {
    local $SIG{__DIE__};
@@ -131,13 +131,13 @@ sub one_event {
       if ($fds = select
             $vec[0] = $fds[0]{v},
             $vec[1] = $fds[1]{v},
-            WIN32 ? $vec[2] = $fds[1]{v} : undef,
+            AnyEvent::WIN32 ? $vec[2] = $fds[1]{v} : undef,
             @timer ? $timer[0][0] - $NOW  + 0.0009 : 3600
       ) {
          $NOW = clock;
 
          # buggy microshit windows errornously sets exceptfds instead of writefds
-         $vec[1] |= $vec[2] if WIN32;
+         $vec[1] |= $vec[2] if AnyEvent::WIN32;
 
          # prefer write watchers, because they usually reduce
          # memory pressure.

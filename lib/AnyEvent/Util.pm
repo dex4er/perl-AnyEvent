@@ -27,7 +27,7 @@ use Carp ();
 use Errno ();
 use Socket ();
 
-use AnyEvent qw(WIN32);
+use AnyEvent ();
 
 use base 'Exporter';
 
@@ -42,7 +42,7 @@ BEGIN {
    # uhoh
    $af_inet6 ||= 10 if $^O =~ /linux/;
    $af_inet6 ||= 23 if $^O =~ /cygwin/i;
-   $af_inet6 ||= 23 if WIN32;
+   $af_inet6 ||= 23 if AnyEvent::WIN32;
    $af_inet6 ||= 24 if $^O =~ /openbsd|netbsd/;
    $af_inet6 ||= 28 if $^O =~ /freebsd/;
 
@@ -56,7 +56,7 @@ BEGIN {
 
 BEGIN {
    # broken windows perls use undocumented error codes...
-   if (WIN32) {
+   if (AnyEvent::WIN32) {
       eval "sub WSAWOULDBLOCK()  { 10035 }";
       eval "sub WSAEINPROGRESS() { 10036 }";
    } else {
@@ -140,7 +140,7 @@ sub fh_nonblocking($$) {
 
    require Fcntl;
 
-   if (WIN32) {
+   if (AnyEvent::WIN32) {
       $nb = (! ! $nb) + 0;
       ioctl $fh, 0x8004667e, \$nb; # FIONBIO
    } else {

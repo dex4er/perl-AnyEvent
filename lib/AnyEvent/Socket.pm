@@ -42,7 +42,7 @@ use Carp ();
 use Errno ();
 use Socket qw(AF_INET SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
-use AnyEvent qw(WIN32);
+use AnyEvent ();
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
 use AnyEvent::DNS ();
 
@@ -391,7 +391,7 @@ sub tcp_connect($$$;$) {
          
          my $timeout = $prepare && $prepare->($state{fh});
 
-         $timeout ||= 30 if WIN32;
+         $timeout ||= 30 if AnyEvent::WIN32;
 
          $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
             $! = &Errno::ETIMEDOUT;
