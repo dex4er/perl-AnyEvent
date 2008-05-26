@@ -304,6 +304,13 @@ timeout is to be used).
 Note that the socket could be either a IPv4 TCP socket or an IPv6 TCP
 socket (although only IPv4 is currently supported by this module).
 
+Note to Microsoft Windows users: Windows (of course) doesn't correctly
+signal connection errors at all, so unless your event library works around
+this failed connections will simply hang and time-out. The only event
+library that handles this condition correctly is L<EV>, so this is highly
+recommended. To lessen the impact of this windows bug, a default timeout
+of 30 seconds will be imposed on windows. Cygwin is not affected.
+
 Simple Example: connect to localhost on port 22.
 
   tcp_connect localhost => 22, sub {
@@ -380,15 +387,14 @@ sub tcp_connect($$$;$) {
 
          fh_nonblocking $state{fh}, 1;
          
-         # prepare and optional timeout
-         if ($prepare) {
-            my $timeout = $prepare->($state{fh});
+         my $timeout = $prepare && $prepare->($state{fh});
 
-            $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
-               $! = &Errno::ETIMEDOUT;
-               $state{next}();
-            }) if $timeout;
-         }
+         $timeout ||= 30 if $^O =~ /mswin32/i;
+
+         $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
+            $! = &Errno::ETIMEDOUT;
+            $state{next}();
+         }) if $timeout;
 
          # called when the connect was successful, which,
          # in theory, could be the case immediately (but never is in practise)
