@@ -429,8 +429,7 @@ sub tcp_connect($$$;$) {
          } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
             $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
          } else {
-            %state = ();
-            $connect->();
+            $state{next}();
          }
       };
 
