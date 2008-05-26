@@ -220,6 +220,20 @@ Sometimes registering a handler uses the "eventname, parameter" ordering
 (timeouts), sometimes it is "parameter, eventname" (signals). There is
 little consistency overall.
 
+=item Lack of knowledge
+
+  The IO::Poll event loop provides an alternative that theoretically
+  scales better than select().
+
+The IO::Poll "event loop" (who in his right mind would call that an event
+loop) of course scales about identically (sometimes it is a bit faster,
+sometimes a bit slower) to select in theory, and also in practise, of
+course, as both are O(n) in the number of file descriptors, which is
+rather bad.
+
+This is just one place where it gets obvious how little the author of the
+POE manpage understands.
+
 =back
 
 On the good side, AnyEvent allows you to write your modules in a 100%

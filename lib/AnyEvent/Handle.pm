@@ -95,6 +95,9 @@ called.
 On callback entrance, the value of C<$!> contains the operating system
 error (or C<ENOSPC>, C<EPIPE> or C<EBADMSG>).
 
+The callbakc should throw an exception. If it returns, then
+AnyEvent::Handle will C<croak> for you.
+
 While not mandatory, it is I<highly> recommended to set this callback, as
 you will not be notified of errors otherwise. The default simply calls
 die.
@@ -211,11 +214,10 @@ sub error {
       $self->_shutdown;
    }
 
-   if ($self->{on_error}) {
-      $self->{on_error}($self);
-   } else {
-      Carp::croak "AnyEvent::Handle uncaught fatal error: $!";
-   }
+   $self->{on_error}($self)
+      if $self->{on_error};
+
+   Carp::croak "AnyEvent::Handle uncaught fatal error: $!";
 }
 
 =item $fh = $handle->fh
@@ -471,7 +473,8 @@ sub _drain_rbuf {
       defined $self->{rbuf_max}
       && $self->{rbuf_max} < length $self->{rbuf}
    ) {
-      $! = &Errno::ENOSPC; return $self->error;
+      $! = &Errno::ENOSPC;
+      $self->error;
    }
 
    return if $self->{in_drain};
@@ -483,7 +486,8 @@ sub _drain_rbuf {
          unless ($cb->($self)) {
             if ($self->{eof}) {
                # no progress can be made (not enough data and no data forthcoming)
-               $! = &Errno::EPIPE; return $self->error;
+               $! = &Errno::EPIPE;
+               $self->error;
             }
 
             unshift @{ $self->{queue} }, $cb;
@@ -499,7 +503,8 @@ sub _drain_rbuf {
             && $self->{on_read}             # and we still want to read data
          ) {
             # then no progress can be made
-            $! = &Errno::EPIPE; return $self->error;
+            $! = &Errno::EPIPE;
+            $self->error;
          }
       } else {
          # read side becomes idle
