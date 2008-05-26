@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 	- undo the import WIN32 hack.
+        - use sockaddr_family instead of relying on structure layout (because,
+          of course, darwin is broken again).
 
 4.04 Mon May 26 08:03:31 CEST 2008
 	- try to work around yet another windows bug: failed connects are reported

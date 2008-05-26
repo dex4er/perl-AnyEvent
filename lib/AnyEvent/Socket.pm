@@ -239,7 +239,7 @@ Handles both IPv4 and IPv6 sockaddr structures.
 =cut
 
 sub unpack_sockaddr($) {
-   my $af = unpack "S", $_[0];
+   my $af = Socket::sockaddr_family $_[0];
 
    if ($af == AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
