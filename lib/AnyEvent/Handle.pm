@@ -735,6 +735,77 @@ register_read_type netstring => sub {
    }
 };
 
+=item regex => $accept[, $reject[, $skip], $cb->($data)
+
+Makes a regex match against the regex object C<$accept> and returns
+everything up to and including the match.
+
+Example: read a single line terminated by '\n'.
+
+   $handle->push_read (regex => qr<\n>, sub { ... });
+
+If C<$reject> is given and not undef, then it determines when the data is
+to be rejected: it is matched against the data when the C<$accept> regex
+does not match and generates an C<EBADMSG> error when it matches. This is
+useful to quickly reject wrong data (to avoid waiting for a timeout or a
+receive buffer overflow).
+
+Example: expect a single decimal number followed by whitespace, reject
+anything else (not the use of an anchor).
+
+   $handle->push_read (regex => qr<^[0-9]+\s>, qr<[^0-9]>, sub { ... });
+
+If C<$skip> is given and not C<undef>, then it will be matched against
+the receive buffer when neither C<$accept> nor C<$reject> match,
+and everything preceding and including the match will be accepted
+unconditionally. This is useful to skip large amounts of data that you
+know cannot be matched, so that the C<$accept> or C<$reject> regex do not
+have to start matching from the beginning. This is purely an optimisation
+and is usually worth only when you expect more than a few kilobytes.
+
+Example: expect a http header, which ends at C<\015\012\015\012>. Since we
+expect the header to be very large (it isn't in practise, but...), we use
+a skip regex to skip initial portions. The skip regex is tricky in that
+it only accepts something not ending in either \015 or \012, as these are
+required for the accept regex.
+
+   $handle->push_read (regex =>
+      qr<\015\012\015\012>,
+      undef, # no reject
+      qr<^.*[^\015\012]>,
+      sub { ... });
+
+=cut
+
+register_read_type regex => sub {
+   my ($self, $cb, $accept, $reject, $skip) = @_;
+
+   my $data;
+   my $rbuf = \$self->{rbuf};
+
+   sub {
+      # accept
+      if ($$rbuf =~ $accept) {
+         $data .= substr $$rbuf, 0, $+[0], "";
+         $cb->($self, $data);
+         return 1;
+      }
+      
+      # reject
+      if ($reject && $$rbuf =~ $reject) {
+         $! = &Errno::EBADMSG;
+         $self->error;
+      }
+
+      # skip
+      if ($skip && $$rbuf =~ $skip) {
+         $data .= substr $$rbuf, 0, $+[0], "";
+      }
+
+      ()
+   }
+};
+
 =back
 
 =item AnyEvent::Handle::register_read_type type => $coderef->($self, $cb, @args)

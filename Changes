@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- added a a regex read type to AnyEvent::Handle.
+
 4.05 Mon May 26 19:44:06 CEST 2008
         - some platforms ignore the rfc and prepend an extra sa_len member to
           the sockaddr structure, cater for those. also use sockaddr_family,
