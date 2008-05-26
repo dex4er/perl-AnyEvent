@@ -35,6 +35,8 @@ use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
 use AnyEvent::Handle ();
 
+our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
+
 =item AnyEvent::DNS::addr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
 
 Tries to resolve the given nodename and service name into protocol families
@@ -747,7 +749,7 @@ sub new {
    AnyEvent::Util::fh_nonblocking $fh, 1;
 
    my $self = bless {
-      server  => [v127.0.0.1],
+      server  => [],
       timeout => [2, 5, 5],
       search  => [],
       ndots   => 1,
@@ -836,36 +838,49 @@ egregious hacks on windows to force the DNS servers and searchlist out of the sy
 sub os_config {
    my ($self) = @_;
 
+   $self->{server} = [];
+   $self->{search} = [];
+
    if ($^O =~ /mswin32|cygwin/i) {
-      # yeah, it suxx... lets hope DNS is DNS in all locales
+      no strict 'refs';
+
+      # there are many options to find the current nameservers etc. on windows
+      # all of them don't work consistently:
+      # - the registry thing needs separate code on win32 native vs. cygwin
+      # - the registry layout differs between windows versions
+      # - calling windows api functions doesn't work on cygwin
+      # - ipconfig uses locale-specific messages
+
+      # we use ipconfig parsing because, despite all it's brokenness,
+      # it seems most stable in practise.
+      # for good measure, we append a fallback nameserver to our list.
 
       if (open my $fh, "ipconfig /all |") {
-         delete $self->{server};
-         delete $self->{search};
+         # parsing strategy: we go through the output and look for
+         # :-lines with DNS in them. everything in those is regarded as
+         # either a nameserver (if it parses as an ip address), or a suffix
+         # (all else).
 
+         my $dns;
          while (<$fh>) {
-            # first DNS.* is suffix list
-            if (/^\s*DNS/) {
-               while (/\s+([[:alnum:].\-]+)\s*$/) {
-                  push @{ $self->{search} }, $1;
-                  $_ = <$fh>;
+            if (s/^\s.*\bdns\b.*://i) {
+               $dns = 1;
+            } elsif (/^\S/ || /^\s[^:]{16,}: /) {
+               $dns = 0;
+            }
+            if ($dns && /^\s*(\S+)\s*$/) {
+               my $s = $1;
+               $s =~ s/%\d+(?!\S)//; # get rid of scope id
+               if (my $ipn = AnyEvent::Socket::parse_ip ($s)) {
+                  push @{ $self->{server} }, $ipn;
+               } else {
+                  push @{ $self->{search} }, $s;
                }
-               last;
             }
          }
 
-         while (<$fh>) {
-            # second DNS.* is server address list
-            if (/^\s*DNS/) {
-               while (/\s+(\d+\.\d+\.\d+\.\d+)\s*$/) {
-                  my $ipn = AnyEvent::Socket::parse_ip ("$1"); # "" is necessary here, apparently
-                  push @{ $self->{server} }, $ipn
-                     if $ipn;
-                  $_ = <$fh>;
-               }
-               last;
-            }
-         }
+         # always add one fallback server
+         push @{ $self->{server} }, $DNS_FALLBACK[rand @DNS_FALLBACK];
 
          $self->_compile;
       }
@@ -881,6 +896,16 @@ sub os_config {
 
 sub _compile {
    my $self = shift;
+
+   # we currently throw away all ipv6 nameservers, we do not yet support those
+
+   my %search; $self->{search} = [grep 0 <  length, grep !$search{$_}++, @{ $self->{search} }];
+   my %server; $self->{server} = [grep 4 == length, grep !$server{$_}++, @{ $self->{server} }];
+
+   unless (@{ $self->{server} }) {
+      # use 127.0.0.1 by default, and one opendns nameserver as fallback
+      $self->{server} = [v127.0.0.1, $DNS_FALLBACK[rand @DNS_FALLBACK]];
+   }
 
    my @retry;
 
@@ -910,6 +935,8 @@ sub _feed {
 sub _recv {
    my ($self) = @_;
 
+   # we ignore errors (often one gets port unreachable, but there is
+   # no good way to take advantage of that.
    while (my $peer = recv $self->{fh}, my $res, 4096, 0) {
       my ($port, $host) = AnyEvent::Socket::unpack_sockaddr ($peer);
 

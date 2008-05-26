@@ -1,8 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
-	- properly parse PERL_ANYEVENT_PROTOCOLS and sue the info correctly.
+	- properly parse PERL_ANYEVENT_PROTOCOLS and use the info correctly.
 	- check wether IPv6 sockets can actually be created, otherwise, disable ipv6
           support entirely.
+        - vastly improved nameserver/suffix detection algorithm for windows
+          (still a hack...)
+        - try to use a fallback dns server if no dns servers could be found.
 
 4.03 Sun May 25 05:05:57 CEST 2008
 	- work around perl bugs on windows, where perl returns undocumented

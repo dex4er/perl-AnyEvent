@@ -86,7 +86,8 @@ Tries to parse the given IPv6 address and return it in
 octet form (or undef when it isn't in a parsable format).
 
 Should support all forms specified by RFC 2373 (and additionally all IPv4
-forms supported by parse_ipv4).
+forms supported by parse_ipv4). Note that scope-id's are not supported
+(and will not parse).
 
 This function works similarly to C<inet_pton AF_INET6, ...>.
 
