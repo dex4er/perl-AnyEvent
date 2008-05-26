@@ -42,7 +42,7 @@ use Carp ();
 use Errno ();
 use Socket qw(AF_INET SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
-use AnyEvent ();
+use AnyEvent qw(WIN32);
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
 use AnyEvent::DNS ();
 
@@ -304,12 +304,14 @@ timeout is to be used).
 Note that the socket could be either a IPv4 TCP socket or an IPv6 TCP
 socket (although only IPv4 is currently supported by this module).
 
-Note to Microsoft Windows users: Windows (of course) doesn't correctly
-signal connection errors at all, so unless your event library works around
-this failed connections will simply hang and time-out. The only event
-library that handles this condition correctly is L<EV>, so this is highly
-recommended. To lessen the impact of this windows bug, a default timeout
-of 30 seconds will be imposed on windows. Cygwin is not affected.
+Note to the poor Microsoft Windows users: Windows (of course) doesn't
+correctly signal connection errors, so unless your event library works
+around this, failed connections will simply hang. The only event libraries
+that handle this condition correctly are L<EV> and L<Glib>. Additionally,
+AnyEvent works around this bug with L<Event> and in its pure-perl
+backend. All other libraries cannot correctly handle this condition. To
+lessen the impact of this windows bug, a default timeout of 30 seconds
+will be imposed on windows. Cygwin is not affected.
 
 Simple Example: connect to localhost on port 22.
 
@@ -389,7 +391,7 @@ sub tcp_connect($$$;$) {
          
          my $timeout = $prepare && $prepare->($state{fh});
 
-         $timeout ||= 30 if $^O =~ /mswin32/i;
+         $timeout ||= 30 if WIN32;
 
          $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
             $! = &Errno::ETIMEDOUT;

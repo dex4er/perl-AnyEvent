@@ -27,7 +27,7 @@ use Carp ();
 use Errno ();
 use Socket ();
 
-use AnyEvent ();
+use AnyEvent qw(WIN32);
 
 use base 'Exporter';
 
@@ -35,12 +35,14 @@ BEGIN {
    *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
 }
 
+
 BEGIN {
    my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
 
    # uhoh
    $af_inet6 ||= 10 if $^O =~ /linux/;
-   $af_inet6 ||= 23 if $^O =~ /cygwin|mswin32/i;
+   $af_inet6 ||= 23 if $^O =~ /cygwin/i;
+   $af_inet6 ||= 23 if WIN32;
    $af_inet6 ||= 24 if $^O =~ /openbsd|netbsd/;
    $af_inet6 ||= 28 if $^O =~ /freebsd/;
 
@@ -54,7 +56,7 @@ BEGIN {
 
 BEGIN {
    # broken windows perls use undocumented error codes...
-   if ($^O =~ /mswin32/i) {
+   if (WIN32) {
       eval "sub WSAWOULDBLOCK()  { 10035 }";
       eval "sub WSAEINPROGRESS() { 10036 }";
    } else {
@@ -138,7 +140,7 @@ sub fh_nonblocking($$) {
 
    require Fcntl;
 
-   if ($^O eq "MSWin32") {
+   if (WIN32) {
       $nb = (! ! $nb) + 0;
       ioctl $fh, 0x8004667e, \$nb; # FIONBIO
    } else {

@@ -17,7 +17,7 @@ before creating the first AnyEvent watcher.
 
 The L<Event::Lib> module suffers from the same limitations and bugs
 as libevent, most notably it kills already-installed watchers on a
-filedescriptor and it is unable to support fork. It has many other bugs
+file descriptor and it is unable to support fork. It has many other bugs
 such as taking references to file handles and callbacks instead of making
 a copy. Only Tk rivals it in its brokenness.
 
@@ -26,8 +26,11 @@ as Tk and should therefore be avoided. (This was done for simplicity, one
 could in theory work around the problems with lower overhead by managing
 our own watchers).
 
-Event::Lib also leaks filehandles and memory and tends to just exit on
+Event::Lib also leaks file handles and memory and tends to just exit on
 problems.
+
+It also doesn't work around the Windows bug of not signalling TCP
+connection failures.
 
 Avoid Event::Lib if you can.
 
@@ -56,7 +59,7 @@ sub io {
       or die "cannot dup() filehandle: $!";
 
    # event_new errornously takes a reference to fh and cb instead of making a copy
-   # fortunately, gfoing thriugh %arg already makes a copy, so it happpens to work
+   # fortunately, going through %arg already makes a copy, so it happpens to work
    my $w = event_new $fh2, $mode | EV_PERSIST, $arg{cb};
    $w->add;
    bless \\$w, $class
