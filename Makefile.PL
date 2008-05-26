@@ -20,5 +20,12 @@ WriteMakefile(
     test         => { TESTS => "t/*.t t/handle/*.t" },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
+    EXTRA_META => q{
+recommends:
+  Net::SSLeay: 0
+  JSON: 2
+  JSON::XS 2.01
+  EV: 4.05
+    },
 );
 

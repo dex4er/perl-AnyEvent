@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+	- add some recommends to the META.yml.
 	- added a a regex read type to AnyEvent::Handle.
         - always croak in on_error in AnyEvent::Handle.
         - document how to subclass AnyEvent::Handle.
