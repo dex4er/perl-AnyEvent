@@ -207,6 +207,13 @@ sub inet_aton {
    }
 }
 
+# check for broken platforms with extra field in sockaddr structure
+# kind of a rfc vs. bsd issue, as usual (ok, normally it's a
+# unix vs. bsd issue, a iso C vs. bsd issue or simply a
+# correctness vs. bsd issue.
+my $pack_family = 0x55 == Socket::sockaddr_family "\x55\x55"
+                  ? "xC" : "S";
+
 =item $sa = AnyEvent::Socket::pack_sockaddr $port, $host
 
 Pack the given port/host combination into a binary sockaddr structure. Handles
@@ -218,7 +225,7 @@ sub pack_sockaddr($$) {
    if (4 == length $_[1]) {
       Socket::pack_sockaddr_in $_[0], $_[1]
    } elsif (16 == length $_[1]) {
-      pack "SnL a16 L",
+      pack "$pack_family nL a16 L",
          AF_INET6,
          $_[0], # port
          0,     # flowinfo
