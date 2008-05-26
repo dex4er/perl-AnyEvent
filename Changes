@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.04 Mon May 26 08:03:31 CEST 2008
 	- try to work around yet another windows bug: failed connects are reported
           as if it were out-of-band data. windows users: you suck. Only
           EV, Glib, Event and the pure perl backend can handle this condition.
