@@ -66,7 +66,7 @@ sub io {
    open $self->{fh2}, "$mode&" . fileno $self->{fh}
       or die "cannot dup() filehandle: $!";
 
-   eval { fcntl $self->{fh2}, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC }; # eval in case paltform doesn't support it
+   eval { local $SIG{__DIE__}; fcntl $self->{fh2}, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC }; # eval in case paltform doesn't support it
    
    $mw->fileevent ($self->{fh2}, $tk => $cb);
 

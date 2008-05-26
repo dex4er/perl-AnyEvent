@@ -36,7 +36,7 @@ BEGIN {
 }
 
 BEGIN {
-   my $af_inet6 = eval { &Socket::AF_INET6 };
+   my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
 
    # uhoh
    $af_inet6 ||= 10 if $^O =~ /linux/;

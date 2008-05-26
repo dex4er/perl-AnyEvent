@@ -75,6 +75,7 @@ my %sigidx;
 
 # horrid way to get signal name to value mapping
 eval {
+   local $SIG{__DIE__};
    require POSIX;
 
    for (keys %SIG) {

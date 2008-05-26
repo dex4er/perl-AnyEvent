@@ -79,6 +79,8 @@ use Scalar::Util ();
 use AnyEvent ();
 
 BEGIN {
+   local $SIG{__DIE__};
+
    if (0 < eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
       *clock = sub { &Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC) };
       warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;

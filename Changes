@@ -7,6 +7,8 @@ Revision history for Perl extension AnyEvent.
         - vastly improved nameserver/suffix detection algorithm for windows
           (still a hack...)
         - try to use a fallback dns server if no dns servers could be found.
+        - splatter around some local $SIG{__DIE__}'s to work around bad
+          die handlers.
 
 4.03 Sun May 25 05:05:57 CEST 2008
 	- work around perl bugs on windows, where perl returns undocumented

@@ -795,6 +795,7 @@ sub AnyEvent::Util::PostDetect::DESTROY {
 sub detect() {
    unless ($MODEL) {
       no strict 'refs';
+      local $SIG{__DIE__};
 
       if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z]+)$/) {
          my $model = "AnyEvent::Impl::$1";
@@ -927,7 +928,7 @@ sub child {
    $PID_CB{$pid}{$arg{cb}} = $arg{cb};
 
    unless ($WNOHANG) {
-      $WNOHANG = eval { require POSIX; &POSIX::WNOHANG } || 1;
+      $WNOHANG = eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
    }
 
    unless ($CHLD_W) {
