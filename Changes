@@ -3,6 +3,7 @@ Revision history for Perl extension AnyEvent.
 	- try to work around yet another windows bug: failed connects are reported
           as if it were out-of-band data. windows users: you suck. Only
           EV, Glib, Event and the pure perl backend can handle this condition.
+        - optimize write algorithm in AnyEvent::Handle.
 	- properly parse PERL_ANYEVENT_PROTOCOLS and use the info correctly.
 	- check wether IPv6 sockets can actually be created, otherwise, disable ipv6
           support entirely. also hardcode some AF_INEt6 constants for the

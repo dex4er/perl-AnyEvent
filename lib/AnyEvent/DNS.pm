@@ -417,12 +417,12 @@ our %class_id = (
 our %class_str = reverse %class_id;
 
 # names MUST have a trailing dot
-sub _enc_qname($) {
+sub _enc_name($) {
    pack "(C/a*)*", (split /\./, shift), ""
 }
 
 sub _enc_qd() {
-   (_enc_qname $_->[0]) . pack "nn",
+   (_enc_name $_->[0]) . pack "nn",
      ($_->[1] > 0 ? $_->[1] : $type_id {$_->[1]}),
      ($_->[2] > 0 ? $_->[2] : $class_id{$_->[2] || "in"})
 }
@@ -500,7 +500,7 @@ our $ofs;
 our $pkt;
 
 # bitches
-sub _dec_qname {
+sub _dec_name {
    my @res;
    my $redir;
    my $ptr = $ofs;
@@ -511,7 +511,7 @@ sub _dec_qname {
 
       my $len = ord substr $pkt, $ptr++, 1;
 
-      if ($len & 0xc0) {
+      if ($len >= 0xc0) {
          $ptr++;
          $ofs = $ptr if $ptr > $ofs;
          $ptr = (unpack "n", substr $pkt, $ptr - 2, 2) & 0x3fff;
@@ -526,39 +526,39 @@ sub _dec_qname {
 }
 
 sub _dec_qd {
-   my $qname = _dec_qname;
+   my $qname = _dec_name;
    my ($qt, $qc) = unpack "nn", substr $pkt, $ofs; $ofs += 4;
    [$qname, $type_str{$qt} || $qt, $class_str{$qc} || $qc]
 }
 
 our %dec_rr = (
      1 => sub { join ".", unpack "C4", $_ }, # a
-     2 => sub { local $ofs = $ofs - length; _dec_qname }, # ns
-     5 => sub { local $ofs = $ofs - length; _dec_qname }, # cname
+     2 => sub { local $ofs = $ofs - length; _dec_name }, # ns
+     5 => sub { local $ofs = $ofs - length; _dec_name }, # cname
      6 => sub { 
              local $ofs = $ofs - length;
-             my $mname = _dec_qname;
-             my $rname = _dec_qname;
+             my $mname = _dec_name;
+             my $rname = _dec_name;
              ($mname, $rname, unpack "NNNNN", substr $pkt, $ofs)
           }, # soa
     11 => sub { ((join ".", unpack "C4", $_), unpack "C a*", substr $_, 4) }, # wks
-    12 => sub { local $ofs = $ofs - length; _dec_qname }, # ptr
+    12 => sub { local $ofs = $ofs - length; _dec_name }, # ptr
     13 => sub { unpack "C/a* C/a*", $_ }, # hinfo
-    15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_qname) }, # mx
+    15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_name) }, # mx
     16 => sub { unpack "(C/a*)*", $_ }, # txt
     28 => sub { AnyEvent::Socket::format_ip ($_) }, # aaaa
-    33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_qname) }, # srv
+    33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
     99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
 
 sub _dec_rr {
-   my $qname = _dec_qname;
+   my $name = _dec_name;
 
    my ($rt, $rc, $ttl, $rdlen) = unpack "nn N n", substr $pkt, $ofs; $ofs += 10;
    local $_ = substr $pkt, $ofs, $rdlen; $ofs += $rdlen;
 
    [
-      $qname,
+      $name,
       $type_str{$rt}  || $rt,
       $class_str{$rc} || $rc,
       ($dec_rr{$rt} || sub { $_ })->(),

@@ -291,7 +291,9 @@ sub _drain_wbuf {
    my ($self) = @_;
 
    if (!$self->{ww} && length $self->{wbuf}) {
+
       Scalar::Util::weaken $self;
+
       my $cb = sub {
          my $len = syswrite $self->{fh}, $self->{wbuf};
 
@@ -308,9 +310,12 @@ sub _drain_wbuf {
          }
       };
 
-      $self->{ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb);
+      # try to write data immediately
+      $cb->();
 
-      $cb->($self);
+      # if still data left in wbuf, we need to poll
+      $self->{ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb)
+         if length $self->{wbuf};
    };
 }
 
