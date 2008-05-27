@@ -119,7 +119,10 @@ contains an error number. In all other cases, C<$@> will be C<undef>ined.
 The C<$coderef> must not ever call an event-polling function or use
 event-based programming.
 
-Note that forking can be expensive in large programs (RSS 200MB+).
+Note that forking can be expensive in large programs (RSS 200MB+). On
+windows, it is abysmally slow, do not expect more than 5..20 forks/s on
+that sucky platform (note this uses perl's pseudo-threads, so avoid those
+like the plague).
 
 =item $AnyEvent::Util::MAX_FORKS [default: 10]
 
@@ -140,9 +143,6 @@ my @fork_queue;
 
 sub _fork_schedule;
 sub _fork_schedule {
-
-   require Storable;
-
    while () {
       return if $forks >= $MAX_FORKS;
 
@@ -161,7 +161,7 @@ sub _fork_schedule {
 
       my $pid = fork;
 
-      if ($pid > 0) {
+      if ($pid != 0) {
          # parent
          close $w;
 
@@ -216,11 +216,13 @@ sub _fork_schedule {
 
          close $w;
 
-         if (POSIX) {
-            POSIX::_exit (0);
-         } else {
+         if (AnyEvent::WIN32) {
             kill 9, $$; # yeah, windows for the win
+         } else {
+            # on native windows, _exit KILLS YOUR FORKED CHILDREN!
+            POSIX::_exit (0);
          }
+         exit 1;
          
       } elsif (($! != &Errno::EAGAIN && $! != &Errno::ENOMEM) || !$forks) {
          # we ignore some errors as long as we can run at least one job
@@ -231,6 +233,8 @@ sub _fork_schedule {
 }
 
 sub fork_call {
+   require Storable;
+
    push @fork_queue, [@_];
    _fork_schedule;
 }
