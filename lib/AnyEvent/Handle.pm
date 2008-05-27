@@ -174,8 +174,8 @@ missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 
 This is the json coder object used by the C<json> read and write types.
 
-If you don't supply it, then AnyEvent::Handle will use C<encode_json> and
-C<decode_json>.
+If you don't supply it, then AnyEvent::Handle will create and use a
+suitable one, which will write and expect UTF-8 encoded JSON texts.
 
 Note that you are responsible to depend on the JSON module if you want to
 use this functionality, as AnyEvent does not have a dependency itself.
@@ -397,6 +397,26 @@ in UTF-8.
 JSON objects (and arrays) are self-delimiting, so you can write JSON at
 one end of a handle and read them at the other end without using any
 additional framing.
+
+The generated JSON text is guaranteed not to contain any newlines: While
+this module doesn't need delimiters after or between JSON texts to be
+able to read them, many other languages depend on that.
+
+A simple RPC protocol that interoperates easily with others is to send
+JSON arrays (or objects, although arrays are usually the better choice as
+they mimic how function argument passing works) and a newline after each
+JSON text:
+
+   $handle->push_write (json => ["method", "arg1", "arg2"]); # whatever
+   $handle->push_write ("\012");
+ 
+An AnyEvent::Handle receiver would simply use the C<json> read type and
+rely on the fact that the newline will be skipped as leading whitespace:
+
+   $handle->push_read (json => sub { my $array = $_[1]; ... });
+
+Other languages could read single lines terminated by a newline and pass
+this line into their JSON decoder of choice.
 
 =cut
 
@@ -861,7 +881,8 @@ dependency on your own: this module will load the JSON module, but
 AnyEvent does not depend on it itself.
 
 Since JSON texts are fully self-delimiting, the C<json> read and write
-types are an ideal simple RPC protocol: just exchange JSON datagrams.
+types are an ideal simple RPC protocol: just exchange JSON datagrams. See
+the C<json> write type description, above, for an actual example.
 
 =cut
 
@@ -873,7 +894,7 @@ register_read_type json => sub {
    my $data;
    my $rbuf = \$self->{rbuf};
 
-   my $json = $self->{json} ||= JSON::XS->new->utf8;
+   my $json = $self->{json} ||= JSON->new->utf8;
 
    sub {
       my $ref = $json->incr_parse ($self->{rbuf});
