@@ -5,6 +5,10 @@ Revision history for Perl extension AnyEvent.
         - always croak in on_error in AnyEvent::Handle.
         - document how to subclass AnyEvent::Handle.
         - implement AnyEvent::Util::fork_call.
+        - work around _yet_ _another_ windows perl bug in where empty
+          select masks cause errors in the pure perl backend (this
+          workaround cannot be implemented for the other event loops,
+          but EV also works around this).
 
 4.05 Mon May 26 19:44:06 CEST 2008
         - some platforms ignore the rfc and prepend an extra sa_len member to
@@ -57,7 +61,7 @@ Revision history for Perl extension AnyEvent.
         - make on_eof optional in AnyEvent::Handle.
 	- support service names in tcp_connect and tcp_server.
         - work around netbsd/openbsd bug causing unix sockets not to
-          become writable untill empty.
+          become writable until empty.
 	- only make a dummy read for error detection when getpeername
           returns ENOTCONN.
         - defend AnyEvent::Util::inet_aton against Coro::LWP brutal

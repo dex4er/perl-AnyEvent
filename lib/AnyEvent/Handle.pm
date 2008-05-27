@@ -378,6 +378,8 @@ register_write_type netstring => sub {
    sprintf "%d:%s,", (length $string), $string
 };
 
+=item json => $array_or_hashref
+
 =item AnyEvent::Handle::register_write_type type => $coderef->($self, @args)
 
 This function (not method) lets you add your own types to C<push_write>.

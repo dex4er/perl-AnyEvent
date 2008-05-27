@@ -77,6 +77,7 @@ use Time::HiRes ();
 use Scalar::Util ();
 
 use AnyEvent ();
+use AnyEvent::Util ();
 
 BEGIN {
    local $SIG{__DIE__};
@@ -155,6 +156,9 @@ sub one_event {
                }
             }
          }
+      } elsif (AnyEvent::WIN32 && $! == AnyEvent::Util::WSAEINVAL) {
+         # buggy microshit windoze asks us to route around it
+         select undef, undef, undef, @timer ? $timer[0][0] - $NOW  + 0.0009 : 3600;
       }
    }
 }

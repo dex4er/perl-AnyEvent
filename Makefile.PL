@@ -23,7 +23,7 @@ WriteMakefile(
     EXTRA_META => q{
 recommends:
   Net::SSLeay: 0
-  JSON: 2
+  JSON: 2.09
   JSON::XS 2.01
   EV: 4.05
     },
