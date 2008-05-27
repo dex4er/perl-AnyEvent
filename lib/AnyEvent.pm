@@ -50,7 +50,7 @@ I<also> forced to use the same event loop you use.
 
 AnyEvent is different: AnyEvent + POE works fine. AnyEvent + Glib works
 fine. AnyEvent + Tk works fine etc. etc. but none of these work together
-with the rest: POE + IO::Async? no go. Tk + Event? no go. Again: if
+with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
 your module uses one of those, every user of your module has to use it,
 too. But if your module uses AnyEvent, it works transparently with all
 event models it supports (including stuff like POE and IO::Async, as long
@@ -64,7 +64,13 @@ follow. AnyEvent, on the other hand, is lean and up to the point, by only
 offering the functionality that is necessary, in as thin as a wrapper as
 technically possible.
 
-Of course, if you want lots of policy (this can arguably be somewhat
+Of course, AnyEvent comes with a big (and fully optional!) toolbox
+of useful functionality, such as an asynchronous DNS resolver, 100%
+non-blocking connects (even with TLS/SSL, IPv6 and on broken platforms
+such as Windows) and lots of real-world knowledge and workarounds for
+platform bugs and differences.
+
+Now, if you I<do want> lots of policy (this can arguably be somewhat
 useful) and you want to force your users to use the one and only event
 model, you should I<not> use this module.
 
@@ -104,7 +110,7 @@ use AnyEvent so their modules work together with others seamlessly...
 
 The pure-perl implementation of AnyEvent is called
 C<AnyEvent::Impl::Perl>. Like other event modules you can load it
-explicitly.
+explicitly and enjoy the high availability of that event loop :)
 
 =head1 WATCHERS
 
@@ -1124,6 +1130,11 @@ default.
 
 Setting this variable to C<1> will cause L<AnyEvent::DNS> to announce
 EDNS0 in its DNS requests.
+
+=item C<PERL_ANYEVENT_MAX_FORKS>
+
+The maximum number of child processes that C<AnyEvent::Util::fork_call>
+will create in parallel.
 
 =back
 

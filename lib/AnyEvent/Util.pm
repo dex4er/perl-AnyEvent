@@ -31,10 +31,20 @@ use AnyEvent ();
 
 use base 'Exporter';
 
+our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe);
+our @EXPORT_OK = qw(AF_INET6 WSAWOULDBLOCK WSAEINPROGRESS);
+
+our $VERSION = '1.0';
+
 BEGIN {
-   *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
+   my $posix = 1 * eval { local $SIG{__DIE__}; require POSIX };
+   eval "sub POSIX() { $posix }";
 }
 
+BEGIN {
+   # TODO remove this once not used anymore
+   *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
+}
 
 BEGIN {
    my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
@@ -65,51 +75,164 @@ BEGIN {
    }
 }
 
-our @EXPORT = qw(fh_nonblocking guard);
-our @EXPORT_OK = qw(AF_INET6 WSAWOULDBLOCK WSAEINPROGRESS);
+=item ($r, $w) = portable_pipe
 
-our $VERSION = '1.0';
+Calling C<pipe> in Perl is portable - except it doesn't really work on
+sucky windows platforms (at least not with most perls - cygwin's perl
+notably works fine).
 
-our $MAXPARALLEL = 16; # max. number of parallel jobs
+On that platform, you actually get two file handles you cannot use select
+on.
 
-our $running;
-our @queue;
+This function gives you a pipe that actually works even on the broken
+Windows platform (by creating a pair of TCP sockets, so do not expect any
+speed from that).
 
-sub _schedule;
-sub _schedule {
-   return unless @queue;
-   return if $running >= $MAXPARALLEL;
+Returns the empty list on any errors.
 
-   ++$running;
-   my ($cb, $sub, @args) = @{shift @queue};
+=cut
 
-   if (eval { local $SIG{__DIE__}; require POSIX }) {
-      my $pid = open my $fh, "-|";
+sub portable_pipe() {
+   my ($r, $w);
 
-      if (!defined $pid) {
-         die "fork: $!";
-      } elsif (!$pid) {
-         syswrite STDOUT, join "\0", map { unpack "H*", $_ } $sub->(@args);
-         POSIX::_exit (0);
-      }
+   if (AnyEvent::WIN32) {
+      socketpair $r, $w, &Socket::AF_UNIX, &Socket::SOCK_STREAM, 0
+         or return;
+   } else {
+      pipe $r, $w
+         or return;
+   }
 
-      my $w; $w = AnyEvent->io (fh => $fh, poll => 'r', cb => sub {
-         --$running;
-         _schedule;
-         undef $w;
+   ($r, $w)
+}
+
+=item fork_call $coderef, @args, $cb->(@res)
+
+Executes the given code reference asynchronously, by forking. Everything
+the C<$coderef> returns will transferred to the calling process (by
+serialising and deserialising via L<Storable>).
+
+If there are any errors, then the C<$cb> will be called without any
+arguments. In that case, either C<$@> contains the exception, or C<$!>
+contains an error number. In all other cases, C<$@> will be C<undef>ined.
+
+The C<$coderef> must not ever call an event-polling function or use
+event-based programming.
+
+Note that forking can be expensive in large programs (RSS 200MB+).
+
+=item $AnyEvent::Util::MAX_FORKS [default: 10]
+
+The maximum number of child processes that C<fork_call> will fork in
+parallel. Any additional requests will be queued until a slot becomes free
+again.
+
+The environment variable C<PERL_ANYEVENT_MAX_FORKS> is used to initialise
+this value.
+
+=cut
+
+our $MAX_FORKS = int 1 * $ENV{PERL_ANYEVENT_MAX_FORKS};
+$MAX_FORKS = 10 if $MAX_FORKS <= 0;
+
+my $forks;
+my @fork_queue;
+
+sub _fork_schedule;
+sub _fork_schedule {
+
+   require Storable;
+
+   while () {
+      return if $forks >= $MAX_FORKS;
+
+      my $job = shift @fork_queue
+         or return;
+
+      ++$forks;
+
+      my $coderef = shift @$job;
+      my $cb = pop @$job;
+      
+      # gimme a break...
+      my ($r, $w) = portable_pipe
+         or ($forks and last) # allow failures when we have at least one job
+         or die "fork_call: $!";
+
+      my $pid = fork;
+
+      if ($pid > 0) {
+         # parent
+         close $w;
 
          my $buf;
-         sysread $fh, $buf, 16384, length $buf;
-         $cb->(map { pack "H*", $_ } split /\0/, $buf);
-      });
-   } else {
-      $cb->($sub->(@args));
+
+         my $ww; $ww = AnyEvent->io (fh => $r, poll => 'r', cb => sub {
+            my $len = sysread $r, $buf, 65536, length $buf;
+
+            if ($len <= 0) {
+               undef $ww;
+               close $r;
+               --$forks;
+               _fork_schedule;
+               
+               my $result = eval { Storable::thaw ($buf) };
+               $result = [$@] unless $result;
+               $@ = shift @$result;
+
+               $cb->(@$result);
+
+               # clean up the pid
+               waitpid $pid, 0;
+            }
+         });
+
+      } elsif (defined $pid) {
+         # child
+         close $r;
+
+         my $result = eval {
+            local $SIG{__DIE__};
+
+            Storable::freeze ([undef, $coderef->(@$job)])
+         };
+
+         $result = Storable::freeze (["$@"])
+            if $@;
+
+         # windows forces us to these contortions
+         my $ofs;
+
+         while () {
+            my $len = (length $result) - $ofs
+               or last;
+
+            $len = syswrite $w, $result, $len < 65536 ? $len : 65536, $ofs;
+
+            last if $len <= 0;
+
+            $ofs += $len;
+         }
+
+         close $w;
+
+         if (POSIX) {
+            POSIX::_exit (0);
+         } else {
+            kill 9, $$; # yeah, windows for the win
+         }
+         
+      } elsif (($! != &Errno::EAGAIN && $! != &Errno::ENOMEM) || !$forks) {
+         # we ignore some errors as long as we can run at least one job
+         # maybe we should wait a few seconds and retry instead
+         die "fork_call: $!";
+      }
    }
 }
 
-sub _do_asy {
-   push @queue, [@_];
-   _schedule;
+sub fork_call {
+   push @fork_queue, [@_];
+   _fork_schedule;
 }
 
 # to be removed
