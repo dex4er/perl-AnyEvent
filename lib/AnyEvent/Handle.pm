@@ -75,7 +75,7 @@ The filehandle this L<AnyEvent::Handle> object will operate on.
 NOTE: The filehandle will be set to non-blocking (using
 AnyEvent::Util::fh_nonblocking).
 
-=item on_eof => $cb->($self)
+=item on_eof => $cb->($handle)
 
 Set the callback to be called on EOF.
 
@@ -83,7 +83,7 @@ While not mandatory, it is highly recommended to set an eof callback,
 otherwise you might end up with a closed socket while you are still
 waiting for data.
 
-=item on_error => $cb->($self)
+=item on_error => $cb->($handle)
 
 This is the fatal error callback, that is called when, well, a fatal error
 occurs, such as not being able to resolve the hostname, failure to connect
@@ -102,20 +102,20 @@ While not mandatory, it is I<highly> recommended to set this callback, as
 you will not be notified of errors otherwise. The default simply calls
 die.
 
-=item on_read => $cb->($self)
+=item on_read => $cb->($handle)
 
 This sets the default read callback, which is called when data arrives
 and no read request is in the queue.
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
-method or access the C<$self->{rbuf}> member directly.
+method or access the C<$handle->{rbuf}> member directly.
 
 When an EOF condition is detected then AnyEvent::Handle will first try to
 feed all the remaining data to the queued callbacks and C<on_read> before
 calling the C<on_eof> callback. If no progress can be made, then a fatal
 error will be raised (with C<$!> set to C<EPIPE>).
 
-=item on_drain => $cb->()
+=item on_drain => $cb->($handle)
 
 This sets the callback that is called when the write buffer becomes empty
 (or when the callback is set and the buffer is empty already).
@@ -169,6 +169,16 @@ See the C<starttls> method if you need to start TLs negotiation later.
 Use the given Net::SSLeay::CTX object to create the new TLS connection
 (unless a connection object was specified directly). If this parameter is
 missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
+
+=item json => JSON or JSON::XS object
+
+This is the json coder object used by the C<json> read and write types.
+
+If you don't supply it, then AnyEvent::Handle will use C<encode_json> and
+C<decode_json>.
+
+Note that you are responsible to depend on the JSON module if you want to
+use this functionality, as AnyEvent does not have a dependency itself.
 
 =item filter_r => $cb
 
@@ -380,7 +390,26 @@ register_write_type netstring => sub {
 
 =item json => $array_or_hashref
 
-=item AnyEvent::Handle::register_write_type type => $coderef->($self, @args)
+Encodes the given hash or array reference into a JSON object. Unless you
+provide your own JSON object, this means it will be encoded to JSON text
+in UTF-8.
+
+JSON objects (and arrays) are self-delimiting, so you can write JSON at
+one end of a handle and read them at the other end without using any
+additional framing.
+
+=cut
+
+register_write_type json => sub {
+   my ($self, $ref) = @_;
+
+   require JSON;
+
+   $self->{json} ? $self->{json}->encode ($ref)
+                 : JSON::encode_json ($ref)
+};
+
+=item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
 
 This function (not method) lets you add your own types to C<push_write>.
 Whenever the given C<type> is used, C<push_write> will invoke the code
@@ -630,7 +659,7 @@ drop by and tell us):
 
 =over 4
 
-=item chunk => $octets, $cb->($self, $data)
+=item chunk => $octets, $cb->($handle, $data)
 
 Invoke the callback only once C<$octets> bytes have been read. Pass the
 data read to the callback. The callback will never be called with less
@@ -663,7 +692,7 @@ sub unshift_read_chunk {
    $_[0]->unshift_read (chunk => $_[1], $_[2]);
 }
 
-=item line => [$eol, ]$cb->($self, $line, $eol)
+=item line => [$eol, ]$cb->($handle, $line, $eol)
 
 The callback will be called only once a full line (including the end of
 line marker, C<$eol>) has been read. This line (excluding the end of line
@@ -710,7 +739,7 @@ sub unshift_read_line {
    $self->unshift_read (line => @_);
 }
 
-=item netstring => $cb->($string)
+=item netstring => $cb->($handle, $string)
 
 A netstring (http://cr.yp.to/proto/netstrings.txt, this is not an endorsement).
 
@@ -748,7 +777,7 @@ register_read_type netstring => sub {
    }
 };
 
-=item regex => $accept[, $reject[, $skip], $cb->($data)
+=item regex => $accept[, $reject[, $skip], $cb->($handle, $data)
 
 Makes a regex match against the regex object C<$accept> and returns
 everything up to and including the match.
@@ -819,9 +848,52 @@ register_read_type regex => sub {
    }
 };
 
+=item json => $cb->($handle, $hash_or_arrayref)
+
+Reads a JSON object or array, decodes it and passes it to the callback.
+
+If a C<json> object was passed to the constructor, then that will be used
+for the final decode, otherwise it will create a JSON coder expecting UTF-8.
+
+This read type uses the incremental parser available with JSON version
+2.09 (and JSON::XS version 2.2) and above. You have to provide a
+dependency on your own: this module will load the JSON module, but
+AnyEvent does not depend on it itself.
+
+Since JSON texts are fully self-delimiting, the C<json> read and write
+types are an ideal simple RPC protocol: just exchange JSON datagrams.
+
+=cut
+
+register_read_type json => sub {
+   my ($self, $cb, $accept, $reject, $skip) = @_;
+
+   require JSON;
+
+   my $data;
+   my $rbuf = \$self->{rbuf};
+
+   my $json = $self->{json} ||= JSON::XS->new->utf8;
+
+   sub {
+      my $ref = $json->incr_parse ($self->{rbuf});
+
+      if ($ref) {
+         $self->{rbuf} = $json->incr_text;
+         $json->incr_text = "";
+         $cb->($self, $ref);
+
+         1
+      } else {
+         $self->{rbuf} = "";
+         ()
+      }
+   }
+};
+
 =back
 
-=item AnyEvent::Handle::register_read_type type => $coderef->($self, $cb, @args)
+=item AnyEvent::Handle::register_read_type type => $coderef->($handle, $cb, @args)
 
 This function (not method) lets you add your own types to C<push_read>.
 
@@ -833,7 +905,7 @@ The code reference is supposed to return a callback (usually a closure)
 that works as a plain read callback (see C<< ->push_read ($cb) >>).
 
 It should invoke the passed callback when it is done reading (remember to
-pass C<$self> as first argument as all other callbacks do that).
+pass C<$handle> as first argument as all other callbacks do that).
 
 Note that this is a function, and all types registered this way will be
 global, so try to use unique names.

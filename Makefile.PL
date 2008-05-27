@@ -24,7 +24,7 @@ WriteMakefile(
 recommends:
   Net::SSLeay: 0
   JSON: 2.09
-  JSON::XS 2.01
+  JSON::XS 2.2
   EV: 4.05
     },
 );

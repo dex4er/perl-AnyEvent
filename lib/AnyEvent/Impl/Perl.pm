@@ -100,7 +100,7 @@ our $NOW = clock;
 # fds[poll]{w}[fd] contains a list of i/o watchers
 # an I/O watcher is a blessed arrayref containing [fh, poll(0/1), callback, queue-index]
 # the queue-index is simply the index in the {w} array, which is only used to improve
-# benchmark results in the synthetic "man watchers on one fd" benchmark.
+# benchmark results in the synthetic "many watchers on one fd" benchmark.
 my @fds = ({}, {});
 
 my $need_sort = 1e300; # when to re-sort timer list
