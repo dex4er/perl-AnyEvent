@@ -372,10 +372,11 @@ sub tcp_connect($$$;$) {
    my ($host, $port, $connect, $prepare) = @_;
 
    # see http://cr.yp.to/docs/connect.html for some background
+   # also http://advogato.org/article/672.html
 
    my %state = ( fh => undef );
 
-   # name resolution
+   # name/service to type/sockaddr resolution
    AnyEvent::DNS::addr $host, $port, 0, 0, 0, sub {
       my @target = @_;
 
@@ -433,7 +434,11 @@ sub tcp_connect($$$;$) {
          # now connect       
          if (connect $state{fh}, $sockaddr) {
             $connected->();
-         } elsif ($! == &Errno::EINPROGRESS || $! == &Errno::EWOULDBLOCK) { # EINPROGRESS is POSIX
+         } elsif ($! == &Errno::EINPROGRESS # POSIX
+                  || $! == &Errno::EWOULDBLOCK
+                  # WSAEINPROGRESS intentionally not checked - it means something else entirely
+                  || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
+                  || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
             $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
          } else {
             $state{next}();

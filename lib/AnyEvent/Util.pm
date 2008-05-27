@@ -32,7 +32,7 @@ use AnyEvent ();
 use base 'Exporter';
 
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe);
-our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL);
+our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL WSAWOULDBLOCK);
 
 our $VERSION = '1.0';
 
@@ -69,11 +69,13 @@ BEGIN {
    if (AnyEvent::WIN32) {
       eval "sub WSAEINVAL()      { 10022 }";
       eval "sub WSAEWOULDBLOCK() { 10035 }";
+      eval "sub WSAWOULDBLOCK() { 10035 }"; # TODO remove here ands from @export_ok
       eval "sub WSAEINPROGRESS() { 10036 }";
    } else {
       # these should never match any errno value
       eval "sub WSAEINVAL()      { -1e99 }";
       eval "sub WSAEWOULDBLOCK() { -1e99 }";
+      eval "sub WSAWOULDBLOCK() { -1e99 }"; # TODO
       eval "sub WSAEINPROGRESS() { -1e99 }";
    }
 }

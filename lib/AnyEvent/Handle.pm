@@ -4,7 +4,7 @@ no warnings;
 use strict;
 
 use AnyEvent ();
-use AnyEvent::Util qw(WSAWOULDBLOCK);
+use AnyEvent::Util qw(WSAEWOULDBLOCK);
 use Scalar::Util ();
 use Carp ();
 use Fcntl ();
@@ -323,7 +323,7 @@ sub _drain_wbuf {
                   && $self->{on_drain};
 
             delete $self->{_ww} unless length $self->{wbuf};
-         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAWOULDBLOCK) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
             $self->error;
          }
       };
@@ -971,7 +971,7 @@ sub start_read {
             $self->{_eof} = 1;
             $self->_drain_rbuf;
 
-         } elsif ($! != EAGAIN && $! != EINTR && $! != &AnyEvent::Util::WSAWOULDBLOCK) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
             return $self->error;
          }
       });
