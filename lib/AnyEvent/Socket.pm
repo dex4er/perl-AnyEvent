@@ -317,17 +317,10 @@ sub unpack_sockaddr($) {
    } elsif ($af == AF_INET6) {
       unpack "x2 n x4 a16", $_[0]
    } elsif ($af == AF_UNIX) {
-      ((Socket::unpack_sockaddr_un $_[0]), "unix/")
+      ((Socket::unpack_sockaddr_un $_[0]), pack "S", AF_UNIX)
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
-}
-
-sub _tcp_port($) {
-   $_[0] =~ /^(\d*)$/ and return $1*1;
-
-   (getservbyname $_[0], "tcp")[2]
-      or Carp::croak "$_[0]: service unknown"
 }
 
 =item resolve_sockaddr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
@@ -409,7 +402,7 @@ sub resolve_sockaddr($$$$$$) {
       ($service, $port) = (undef, $service);
    } else {
       $port = (getservbyname $service, $proto)[2]
-            or Carp::croak "$service/$proto: service unknown";
+              or Carp::croak "$service/$proto: service unknown";
    }
 
    my @target = [$node, $port];
@@ -693,21 +686,27 @@ sub tcp_connect($$$;$) {
    defined wantarray && guard { %state = () }
 }
 
-=item $guard = tcp_server $host, $port, $accept_cb[, $prepare_cb]
+=item $guard = tcp_server $host, $service, $accept_cb[, $prepare_cb]
 
-Create and bind a TCP socket to the given host, and port, set the
-SO_REUSEADDR flag and call C<listen>.
+Create and bind a stream socket to the given host, and port, set the
+SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
+implies, this function can also bind on UNIX domain sockets.
 
-C<$host> must be an IPv4 or IPv6 address (or C<undef>, in which case it
-binds either to C<0> or to C<::>, depending on whether IPv4 or IPv6 is the
-preferred protocol).
+For internet sockets, C<$host> must be an IPv4 or IPv6 address (or
+C<undef>, in which case it binds either to C<0> or to C<::>, depending on
+whether IPv4 or IPv6 is the preferred protocol).
 
 To bind to the IPv4 wildcard address, use C<0>, to bind to the IPv6
 wildcard address, use C<::>.
 
-The port is specified by C<$port>, which must be either a service name or
+The port is specified by C<$service>, which must be either a service name or
 a numeric port number (or C<0> or C<undef>, in which case an ephemeral
 port will be used).
+
+For UNIX domain sockets, C<$host> must be C<unix/> and C<$service> must be
+the absolute pathname of the socket. This function will try to C<unlink>
+the socket before it tries to bind to it. See SECURITY CONSIDERATIONS,
+below.
 
 For each new connection that could be C<accept>ed, call the C<<
 $accept_cb->($fh, $host, $port) >> with the file handle (in non-blocking
@@ -744,7 +743,7 @@ to go away.
 =cut
 
 sub tcp_server($$$;$) {
-   my ($host, $port, $accept, $prepare) = @_;
+   my ($host, $service, $accept, $prepare) = @_;
 
    $host = $AnyEvent::PROTOCOL{ipv4} < $AnyEvent::PROTOCOL{ipv6} && AF_INET6
            ? "::" : "0"
@@ -753,17 +752,27 @@ sub tcp_server($$$;$) {
    my $ipn = parse_address $host
       or Carp::croak "AnyEvent::Socket::tcp_server: cannot parse '$host' as host address";
 
-   my $domain = 4 == length $ipn ? AF_INET : AF_INET6;
+   my $af = address_family $ipn;
 
    my %state;
 
-   socket $state{fh}, $domain, SOCK_STREAM, 0
+   socket $state{fh}, $af, SOCK_STREAM, 0
       or Carp::croak "socket: $!";
 
-   setsockopt $state{fh}, SOL_SOCKET, SO_REUSEADDR, 1
-      or Carp::croak "so_reuseaddr: $!";
+   if ($af == AF_INET || $af == AF_INET6) {
+      setsockopt $state{fh}, SOL_SOCKET, SO_REUSEADDR, 1
+         or Carp::croak "so_reuseaddr: $!"
+            unless !AnyEvent::WIN32; # work around windows bug
 
-   bind $state{fh}, pack_sockaddr _tcp_port $port, $ipn
+      unless ($service =~ /^\d*$/) {
+         $service = (getservbyname $service, "tcp")[2]
+                    or Carp::croak "$service: service unknown"
+      }
+   } elsif ($af == AF_UNIX) {
+      unlink $service;
+   }
+
+   bind $state{fh}, pack_sockaddr $service, $ipn
       or Carp::croak "bind: $!";
 
    fh_nonblocking $state{fh}, 1;
@@ -771,8 +780,8 @@ sub tcp_server($$$;$) {
    my $len;
 
    if ($prepare) {
-      my ($port, $host) = unpack_sockaddr getsockname $state{fh};
-      $len = $prepare && $prepare->($state{fh}, format_address $host, $port);
+      my ($service, $host) = unpack_sockaddr getsockname $state{fh};
+      $len = $prepare && $prepare->($state{fh}, format_address $host, $service);
    }
    
    $len ||= 128;
@@ -784,8 +793,8 @@ sub tcp_server($$$;$) {
       # this closure keeps $state alive
       while (my $peer = accept my $fh, $state{fh}) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
-         my ($port, $host) = unpack_sockaddr $peer;
-         $accept->($fh, format_address $host, $port);
+         my ($service, $host) = unpack_sockaddr $peer;
+         $accept->($fh, format_address $host, $service);
       }
    });
 
