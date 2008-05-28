@@ -38,41 +38,6 @@ use AnyEvent::Handle ();
 
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
 
-=item AnyEvent::DNS::addr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
-
-Tries to resolve the given nodename and service name into protocol families
-and sockaddr structures usable to connect to this node and service in a
-protocol-independent way. It works remotely similar to the getaddrinfo
-posix function.
-
-C<$node> is either an IPv4 or IPv6 address or a hostname, C<$service> is
-either a service name (port name from F</etc/services>) or a numerical
-port number. If both C<$node> and C<$service> are names, then SRV records
-will be consulted to find the real service, otherwise they will be
-used as-is. If you know that the service name is not in your services
-database, then you can specify the service in the format C<name=port>
-(e.g. C<http=80>).
-
-C<$proto> must be a protocol name, currently C<tcp>, C<udp> or
-C<sctp>. The default is C<tcp>.
-
-C<$family> must be either C<0> (meaning any protocol is OK), C<4> (use
-only IPv4) or C<6> (use only IPv6). This setting might be influenced by
-C<$ENV{PERL_ANYEVENT_PROTOCOLS}>.
-
-C<$type> must be C<SOCK_STREAM>, C<SOCK_DGRAM> or C<SOCK_SEQPACKET> (or
-C<undef> in which case it gets automatically chosen).
-
-The callback will receive zero or more array references that contain
-C<$family, $type, $proto> for use in C<socket> and a binary
-C<$sockaddr> for use in C<connect> (or C<bind>).
-
-The application should try these in the order given.
-
-Example:
-
-   AnyEvent::DNS::addr "google.com", "http", 0, undef, undef, sub { ... };
-
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 
 Tries to resolve the given domain to IPv4 address(es).
@@ -181,7 +146,7 @@ sub srv($$$$) {
 sub ptr($$) {
    my ($ip, $cb) = @_;
 
-   $ip = AnyEvent::Socket::parse_ip ($ip)
+   $ip = AnyEvent::Socket::parse_address ($ip)
       or return $cb->();
 
    if (4 == length $ip) {
@@ -201,127 +166,7 @@ sub any($$) {
    resolver->resolve ($domain => "*", $cb);
 }
 
-#############################################################################
-
-sub addr($$$$$$) {
-   my ($node, $service, $proto, $family, $type, $cb) = @_;
-
-   unless (&AnyEvent::Util::AF_INET6) {
-      $family != 6
-         or return $cb->();
-
-      $family ||= 4;
-   }
-
-   $cb->() if $family == 4 && !$AnyEvent::PROTOCOL{ipv4};
-   $cb->() if $family == 6 && !$AnyEvent::PROTOCOL{ipv6};
-
-   $family ||=4 unless $AnyEvent::PROTOCOL{ipv6};
-   $family ||=6 unless $AnyEvent::PROTOCOL{ipv4};
-
-   $proto ||= "tcp";
-   $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
-
-   my $proton = (getprotobyname $proto)[2]
-      or Carp::croak "$proto: protocol unknown";
-
-   my $port;
-
-   if ($service =~ /^(\S+)=(\d+)$/) {
-      ($service, $port) = ($1, $2);
-   } elsif ($service =~ /^\d+$/) {
-      ($service, $port) = (undef, $service);
-   } else {
-      $port = (getservbyname $service, $proto)[2]
-            or Carp::croak "$service/$proto: service unknown";
-   }
-
-   my @target = [$node, $port];
-
-   # resolve a records / provide sockaddr structures
-   my $resolve = sub {
-      my @res;
-      my $cv = AnyEvent->condvar (cb => sub {
-         $cb->(
-            map $_->[2],
-            sort {
-               $AnyEvent::PROTOCOL{$b->[1]} <=> $AnyEvent::PROTOCOL{$a->[1]}
-                  or $a->[0] <=> $b->[0]
-            }
-            @res
-         )
-      });
-
-      $cv->begin;
-      for my $idx (0 .. $#target) {
-         my ($node, $port) = @{ $target[$idx] };
-
-         if (my $noden = AnyEvent::Socket::parse_ip ($node)) {
-            if (4 == length $noden && $family != 6) {
-               push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
-                           AnyEvent::Socket::pack_sockaddr ($port, $noden)]]
-            }
-
-            if (16 == length $noden && $family != 4) {
-               push @res, [$idx, "ipv6", [&AnyEvent::Util::AF_INET6, $type, $proton,
-                           AnyEvent::Socket::pack_sockaddr ( $port, $noden)]]
-            }
-         } else {
-            # ipv4
-            if ($family != 6) {
-               $cv->begin;
-               a $node, sub {
-                  push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
-                              AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv4 ($_))]]
-                     for @_;
-                  $cv->end;
-               };
-            }
-
-            # ipv6
-            if ($family != 4) {
-               $cv->begin;
-               aaaa $node, sub {
-                  push @res, [$idx, "ipv6", [&AnyEvent::Socket::AF_INET6, $type, $proton,
-                              AnyEvent::Socket::pack_sockaddr ($port, AnyEvent::Socket::parse_ipv6 ($_))]]
-                     for @_;
-                  $cv->end;
-               };
-            }
-         }
-      }
-      $cv->end;
-   };
-
-   # try srv records, if applicable
-   if ($node eq "localhost") {
-      @target = (["127.0.0.1", $port], ["::1", $port]);
-      &$resolve;
-   } elsif (defined $service && !AnyEvent::Socket::parse_ip ($node)) {
-      srv $service, $proto, $node, sub {
-         my (@srv) = @_;
-
-         # no srv records, continue traditionally
-         @srv
-            or return &$resolve;
-
-         # only srv record has "." => abort
-         $srv[0][2] ne "." || $#srv
-            or return $cb->();
-
-         # use srv records then
-         @target = map ["$_->[3].", $_->[2]],
-                      grep $_->[3] ne ".",
-                         @srv;
-
-         &$resolve;
-      };
-   } else {
-      &$resolve;
-   }
-}
-
-#############################################################################
+#################################################################################
 
 =back
 
@@ -546,7 +391,7 @@ our %dec_rr = (
     13 => sub { unpack "C/a* C/a*", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_name) }, # mx
     16 => sub { unpack "(C/a*)*", $_ }, # txt
-    28 => sub { AnyEvent::Socket::format_ip ($_) }, # aaaa
+    28 => sub { AnyEvent::Socket::format_address ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
     99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
@@ -797,7 +642,7 @@ sub parse_resolv_conf {
          # comment
       } elsif (/^\s*nameserver\s+(\S+)\s*$/i) {
          my $ip = $1;
-         if (my $ipn = AnyEvent::Socket::parse_ip ($ip)) {
+         if (my $ipn = AnyEvent::Socket::parse_address ($ip)) {
             push @{ $self->{server} }, $ipn;
          } else {
             warn "nameserver $ip invalid and ignored\n";
@@ -872,7 +717,7 @@ sub os_config {
             if ($dns && /^\s*(\S+)\s*$/) {
                my $s = $1;
                $s =~ s/%\d+(?!\S)//; # get rid of scope id
-               if (my $ipn = AnyEvent::Socket::parse_ip ($s)) {
+               if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
                   push @{ $self->{server} }, $ipn;
                } else {
                   push @{ $self->{search} }, $s;

@@ -40,7 +40,7 @@ use strict;
 
 use Carp ();
 use Errno ();
-use Socket qw(AF_INET SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
+use Socket qw(AF_INET AF_UNIX SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
 use AnyEvent ();
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
@@ -48,7 +48,15 @@ use AnyEvent::DNS ();
 
 use base 'Exporter';
 
-our @EXPORT = qw(parse_ipv4 parse_ipv6 parse_ip format_ip inet_aton tcp_server tcp_connect);
+our @EXPORT = qw(
+   parse_ipv4 parse_ipv6
+   parse_ip parse_address
+   format_ip format_address
+   address_family
+   inet_aton
+   tcp_server
+   tcp_connect
+);
 
 our $VERSION = '1.0';
 
@@ -130,34 +138,75 @@ sub parse_ipv6($) {
    pack "n*", map hex, @h, @t
 }
 
-=item $ipn = parse_ip $text
+sub parse_unix($) {
+   $_[0] eq "unix/"
+      ? pack "S", AF_UNIX
+      : undef
 
-Combines C<parse_ipv4> and C<parse_ipv6> in one function.
+}
+
+=item $ipn = parse_address $text
+
+Combines C<parse_ipv4> and C<parse_ipv6> in one function. The address
+here refers to the host address (not socket address) in network form
+(binary).
+
+If the C<$text> is C<unix/>, then this function returns a special token
+recognised by the other functions in this module to mean "UNIX domain
+socket".
 
 =cut
 
-sub parse_ip($) {
-   &parse_ipv4 || &parse_ipv6
+sub parse_address($) {
+   &parse_ipv4 || &parse_ipv6 || &parse_unix
 }
 
-=item $text = format_ip $ipn
+*parse_ip =\&parse_address; #d#
 
-Takes either an IPv4 address (4 octets) or and IPv6 address (16 octets)
-and converts it into textual form.
+=item $sa_family = address_family $ipn
+
+Returns the address family/protocol-family (AF_xxx/PF_xxx, in one value :)
+of the given host address in network format.
+
+=cut
+
+sub address_family($) {
+   4 == length $_[0]
+      ? AF_INET
+      : 16 == length $_[0]
+         ? AF_INET6
+         : unpack "S", $_[0]
+}
+
+=item $text = format_address $ipn
+
+Covnvert a host address in network format (e.g. 4 octets for IPv4 or 16
+octets for IPv6) and convert it into textual form.
+
+Returns C<unix/> for UNIX domain sockets.
 
 This function works similarly to C<inet_ntop AF_INET || AF_INET6, ...>,
 except it automatically detects the address type.
 
+Returns C<undef> if it cannot detect the type.
+
 =cut
 
-sub format_ip;
-sub format_ip($) {
-   if (4 == length $_[0]) {
+sub format_address;
+sub format_address($) {
+   my $af = address_family $_[0];
+   if ($af == AF_INET) {
       return join ".", unpack "C4", $_[0]
-   } elsif (16 == length $_[0]) {
-      if (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
+   } elsif ($af == AF_INET6) {
+      if (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
+         # v4compatible
+         return "::" . format_address substr $_[0], 12;
+      } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
          # v4mapped
-         return "::ffff:" . format_ip substr $_[0], 12;
+         return "::ffff:" . format_address substr $_[0], 12;
+      } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
+         # v4translated
+         return "::ffff:0:" . format_address substr $_[0], 12;
       } else {
          my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
 
@@ -166,10 +215,14 @@ sub format_ip($) {
             or $ip =~ s/(:0)+/:/;
          return $ip
       }
+   } elsif ($af == AF_UNIX) {
+      return "unix/"
    } else {
       return undef
    }
 }
+
+*format_ip = \&format_address;
 
 =item inet_aton $name_or_address, $cb->(@addresses)
 
@@ -179,7 +232,7 @@ to the callback instead (use the length to detect this - 4 for IPv4, 16
 for IPv6).
 
 Unlike the L<Socket> function of the same name, you can get multiple IPv4
-and IPv6 addresses as result.
+and IPv6 addresses as result (and maybe even other adrdess types).
 
 =cut
 
@@ -214,34 +267,45 @@ sub inet_aton {
 my $pack_family = 0x55 == Socket::sockaddr_family "\x55\x55"
                   ? "xC" : "S";
 
-=item $sa = AnyEvent::Socket::pack_sockaddr $port, $host
+=item $sa = AnyEvent::Socket::pack_sockaddr $service, $host
 
-Pack the given port/host combination into a binary sockaddr structure. Handles
-both IPv4 and IPv6 host addresses.
+Pack the given port/host combination into a binary sockaddr
+structure. Handles both IPv4 and IPv6 host addresses, as well as UNIX
+domain sockets (C<$host> == C<unix/> and C<$service> == absolute
+pathname).
 
 =cut
 
 sub pack_sockaddr($$) {
-   if (4 == length $_[1]) {
+   my $af = address_family $_[1];
+
+   if ($af == AF_INET) {
       Socket::pack_sockaddr_in $_[0], $_[1]
-   } elsif (16 == length $_[1]) {
+   } elsif ($af == AF_INET6) {
       pack "$pack_family nL a16 L",
          AF_INET6,
          $_[0], # port
          0,     # flowinfo
          $_[1], # addr
          0      # scope id
+   } elsif ($af == AF_UNIX) {
+      Socket::pack_sockaddr_un $_[0]
    } else {
       Carp::croak "pack_sockaddr: invalid host";
    }
 }
 
-=item ($port, $host) = AnyEvent::Socket::unpack_sockaddr $sa
+=item ($service, $host) = AnyEvent::Socket::unpack_sockaddr $sa
 
 Unpack the given binary sockaddr structure (as used by bind, getpeername
-etc.) into a C<$port, $host> combination.
+etc.) into a C<$service, $host> combination.
 
-Handles both IPv4 and IPv6 sockaddr structures.
+For IPv4 and IPv6, C<$service> is the port number and C<$host> the host
+address in network format (binary).
+
+For UNIX domain sockets, C<$service> is the absolute pathname and C<$host>
+is a special token that is understood by the other functions in this
+module (C<format_address> converts it to C<unix/>).
 
 =cut
 
@@ -252,6 +316,8 @@ sub unpack_sockaddr($) {
       Socket::unpack_sockaddr_in $_[0]
    } elsif ($af == AF_INET6) {
       unpack "x2 n x4 a16", $_[0]
+   } elsif ($af == AF_UNIX) {
+      ((Socket::unpack_sockaddr_un $_[0]), "unix/")
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
@@ -264,12 +330,181 @@ sub _tcp_port($) {
       or Carp::croak "$_[0]: service unknown"
 }
 
+=item resolve_sockaddr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
+
+Tries to resolve the given nodename and service name into protocol families
+and sockaddr structures usable to connect to this node and service in a
+protocol-independent way. It works remotely similar to the getaddrinfo
+posix function.
+
+For internet addresses, C<$node> is either an IPv4 or IPv6 address or an
+internet hostname, and C<$service> is either a service name (port name
+from F</etc/services>) or a numerical port number. If both C<$node> and
+C<$service> are names, then SRV records will be consulted to find the real
+service, otherwise they will be used as-is. If you know that the service
+name is not in your services database, then you can specify the service in
+the format C<name=port> (e.g. C<http=80>).
+
+For UNIX domain sockets, C<$node> must be the string C<unix/> and
+C<$service> must be the absolute pathname of the socket. In this case,
+C<$proto> will be ignored.
+
+C<$proto> must be a protocol name, currently C<tcp>, C<udp> or
+C<sctp>. The default is currently C<tcp>, but in the future, this function
+might try to use other protocols such as C<sctp>, depending on the socket
+type and any SRV records it might find.
+
+C<$family> must be either C<0> (meaning any protocol is OK), C<4> (use
+only IPv4) or C<6> (use only IPv6). This setting might be influenced by
+C<$ENV{PERL_ANYEVENT_PROTOCOLS}>.
+
+C<$type> must be C<SOCK_STREAM>, C<SOCK_DGRAM> or C<SOCK_SEQPACKET> (or
+C<undef> in which case it gets automatically chosen).
+
+The callback will receive zero or more array references that contain
+C<$family, $type, $proto> for use in C<socket> and a binary
+C<$sockaddr> for use in C<connect> (or C<bind>).
+
+The application should try these in the order given.
+
+Example:
+
+   resolve_sockaddr "google.com", "http", 0, undef, undef, sub { ... };
+
+=cut
+
+sub resolve_sockaddr($$$$$$) {
+   my ($node, $service, $proto, $family, $type, $cb) = @_;
+
+   if ($node eq "unix/") {
+      return $cb->() if $family || !/^\//; # no can do
+
+      return $cb->([AF_UNIX, $type, 0, Socket::pack_sockaddr_un $service]);
+   }
+
+   unless (AF_INET6) {
+      $family != 6
+         or return $cb->();
+
+      $family = 4;
+   }
+
+   $cb->() if $family == 4 && !$AnyEvent::PROTOCOL{ipv4};
+   $cb->() if $family == 6 && !$AnyEvent::PROTOCOL{ipv6};
+
+   $family ||= 4 unless $AnyEvent::PROTOCOL{ipv6};
+   $family ||= 6 unless $AnyEvent::PROTOCOL{ipv4};
+
+   $proto ||= "tcp";
+   $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
+
+   my $proton = (getprotobyname $proto)[2]
+      or Carp::croak "$proto: protocol unknown";
+
+   my $port;
+
+   if ($service =~ /^(\S+)=(\d+)$/) {
+      ($service, $port) = ($1, $2);
+   } elsif ($service =~ /^\d+$/) {
+      ($service, $port) = (undef, $service);
+   } else {
+      $port = (getservbyname $service, $proto)[2]
+            or Carp::croak "$service/$proto: service unknown";
+   }
+
+   my @target = [$node, $port];
+
+   # resolve a records / provide sockaddr structures
+   my $resolve = sub {
+      my @res;
+      my $cv = AnyEvent->condvar (cb => sub {
+         $cb->(
+            map $_->[2],
+            sort {
+               $AnyEvent::PROTOCOL{$b->[1]} <=> $AnyEvent::PROTOCOL{$a->[1]}
+                  or $a->[0] <=> $b->[0]
+            }
+            @res
+         )
+      });
+
+      $cv->begin;
+      for my $idx (0 .. $#target) {
+         my ($node, $port) = @{ $target[$idx] };
+
+         if (my $noden = parse_address $node) {
+            if (4 == length $noden && $family != 6) {
+               push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
+                           pack_sockaddr $port, $noden]]
+            }
+
+            if (16 == length $noden && $family != 4) {
+               push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
+                           pack_sockaddr $port, $noden]]
+            }
+         } else {
+            # ipv4
+            if ($family != 6) {
+               $cv->begin;
+               a $node, sub {
+                  push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
+                              pack_sockaddr $port, parse_ipv4 $_]]
+                     for @_;
+                  $cv->end;
+               };
+            }
+
+            # ipv6
+            if ($family != 4) {
+               $cv->begin;
+               aaaa $node, sub {
+                  push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
+                              pack_sockaddr $port, parse_ipv6 $_]]
+                     for @_;
+                  $cv->end;
+               };
+            }
+         }
+      }
+      $cv->end;
+   };
+
+   # try srv records, if applicable
+   if ($node eq "localhost") {
+      @target = (["127.0.0.1", $port], ["::1", $port]);
+      &$resolve;
+   } elsif (defined $service && !parse_address $node) {
+      srv $service, $proto, $node, sub {
+         my (@srv) = @_;
+
+         # no srv records, continue traditionally
+         @srv
+            or return &$resolve;
+
+         # only srv record has "." => abort
+         $srv[0][2] ne "." || $#srv
+            or return $cb->();
+
+         # use srv records then
+         @target = map ["$_->[3].", $_->[2]],
+                      grep $_->[3] ne ".",
+                         @srv;
+
+         &$resolve;
+      };
+   } else {
+      &$resolve;
+   }
+}
+
 =item $guard = tcp_connect $host, $service, $connect_cb[, $prepare_cb]
 
 This is a convenience function that creates a TCP socket and makes a 100%
-non-blocking connect to the given C<$host> (which can be a hostname or a
-textual IP address) and C<$service> (which can be a numeric port number or
-a service name, or a C<servicename=portnumber> string).
+non-blocking connect to the given C<$host> (which can be a hostname or
+a textual IP address, or the string C<unix/> for UNIX domain sockets)
+and C<$service> (which can be a numeric port number or a service name,
+or a C<servicename=portnumber> string, or the pathname to a UNIX domain
+socket).
 
 If both C<$host> and C<$port> are names, then this function will use SRV
 records to locate the real target(s).
@@ -366,6 +601,12 @@ to 15 seconds.
          15
       };
 
+Example: connect to a UNIX domain socket.
+
+   tcp_connect "unix/", "/tmp/.X11-unix/X0", sub {
+      ...
+   }
+
 =cut
 
 sub tcp_connect($$$;$) {
@@ -377,7 +618,7 @@ sub tcp_connect($$$;$) {
    my %state = ( fh => undef );
 
    # name/service to type/sockaddr resolution
-   AnyEvent::DNS::addr $host, $port, 0, 0, 0, sub {
+   resolve_sockaddr $host, $port, 0, 0, 0, sub {
       my @target = @_;
 
       $state{next} = sub {
@@ -420,7 +661,7 @@ sub tcp_connect($$$;$) {
                   %state = ();
                };
 
-               $connect->($state{fh}, format_ip $host, $port, sub {
+               $connect->($state{fh}, format_address $host, $port, sub {
                   $guard->cancel;
                   $state{next}();
                });
@@ -509,8 +750,8 @@ sub tcp_server($$$;$) {
            ? "::" : "0"
       unless defined $host;
 
-   my $ipn = parse_ip $host
-      or Carp::croak "AnyEvent::Socket::tcp_server: cannot parse '$host' as IPv4 or IPv6 address";
+   my $ipn = parse_address $host
+      or Carp::croak "AnyEvent::Socket::tcp_server: cannot parse '$host' as host address";
 
    my $domain = 4 == length $ipn ? AF_INET : AF_INET6;
 
@@ -531,7 +772,7 @@ sub tcp_server($$$;$) {
 
    if ($prepare) {
       my ($port, $host) = unpack_sockaddr getsockname $state{fh};
-      $len = $prepare && $prepare->($state{fh}, format_ip $host, $port);
+      $len = $prepare && $prepare->($state{fh}, format_address $host, $port);
    }
    
    $len ||= 128;
@@ -544,7 +785,7 @@ sub tcp_server($$$;$) {
       while (my $peer = accept my $fh, $state{fh}) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
          my ($port, $host) = unpack_sockaddr $peer;
-         $accept->($fh, format_ip $host, $port);
+         $accept->($fh, format_address $host, $port);
       }
    });
 

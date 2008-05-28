@@ -1,5 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: some time-outs in AnyEvent::Handle...
+	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
+          which mirrors their purpose better (old names still available
+          for a while). Also moved AnyEvent::DNS::addr to
+          AnyEvent::Socket::resolve_sockaddr.
+	- officially un-experimentalise all newly introduced code.
+        - support unix domain sockets everywhere by specifying
+          a host of "unix/" and the pathname as service.
 	- add some recommends to the META.yml.
 	- added a regex read type to AnyEvent::Handle.
 	- added a json read/write type to AnyEvent::Handle.
@@ -10,6 +18,7 @@ Revision history for Perl extension AnyEvent.
           select masks cause errors in the pure perl backend (this
           workaround cannot be implemented for the other event loops,
           but EV also works around this).
+        - supply AnyEvent::Socket::address_type and make good use of it.
         - clarify and fix the Handle documentation w.r.t $self vs. $handle
           vs. callback arguments.
 
