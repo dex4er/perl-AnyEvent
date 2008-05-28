@@ -235,6 +235,61 @@ timers.
 AnyEvent always prefers relative timers, if available, matching the
 AnyEvent API.
 
+AnyEvent has two additional methods that return the "current time":
+
+=over 4
+
+=item AnyEvent->time
+
+This returns the "current wallclock time" as a fractional number of
+seconds since the Epoch (the same thing as C<time> or C<Time::HiRes::time>
+return, and the result is guaranteed to be compatible with those).
+
+It progresses independently of any event loop processing.
+
+In almost all cases (in all cases if you don't care), this is the function
+to call when you want to know the current time.
+
+=item AnyEvent->now
+
+This also returns the "current wallclock time", but unlike C<time>, above,
+this value might change only once per event loop iteration, depending on
+the event loop (most return the same time as C<time>, above). This is the
+time that AnyEvent timers get scheduled against.
+
+For a practical example of when these times differ, consider L<Event::Lib>
+and L<EV> and the following set-up:
+
+The event loop is running and has just invoked one of your callback at
+time=500 (assume no other callbacks delay processing). In your callback,
+you wait a second by executing C<sleep 1> (blocking the process for a
+second) and then (at time=501) you create a relative timer that fires
+after three seconds.
+
+With L<Event::Lib>, C<< AnyEvent->time >> and C<< AnyEvent->now >> will
+both return C<501>, because that is the current time, and the timer will
+be scheduled to fire at time=504 (C<501> + C<3>).
+
+With L<EV>m C<< AnyEvent->time >> returns C<501> (as that is the current
+time), but C<< AnyEvent->now >> returns C<500>, as that is the time the
+last event processing phase started. With L<EV>, your timer gets scheduled
+to run at time=503 (C<500> + C<3>).
+
+In one sense, L<Event::Lib> is more exact, as it uses the current time
+regardless of any delays introduced by event processing. However, most
+callbacks do not expect large delays in processing, so this causes a
+higher drift (and a lot more syscalls to get the current time).
+
+In another sense, L<EV> is more exact, as your timer will be scheduled at
+the same time, regardless of how long event processing actually took.
+
+In either case, if you care (and in most cases, you don't), then you
+can get whatever behaviour you want with any event loop, by taking the
+difference between C<< AnyEvent->time >> and C<< AnyEvent->now >> into
+account.
+
+=back
+
 =head2 SIGNAL WATCHERS
 
 You can watch for signals using a signal watcher, C<signal> is the signal
@@ -781,7 +836,7 @@ my @models = (
    [Prima::                => AnyEvent::Impl::POE::],
 );
 
-our %method = map +($_ => 1), qw(io timer signal child condvar one_event DESTROY);
+our %method = map +($_ => 1), qw(io timer time now signal child condvar one_event DESTROY);
 
 our @post_detect;
 
@@ -874,6 +929,13 @@ sub AUTOLOAD {
 }
 
 package AnyEvent::Base;
+
+# default implementation for now and time
+
+use Time::HiRes ();
+
+sub time { Time::HiRes::time }
+sub now  { Time::HiRes::time }
 
 # default implementation for ->condvar
 

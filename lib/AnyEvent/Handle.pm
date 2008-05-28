@@ -9,7 +9,6 @@ use Scalar::Util ();
 use Carp ();
 use Fcntl ();
 use Errno qw(EAGAIN EINTR);
-use Time::HiRes qw(time);
 
 =head1 NAME
 
@@ -230,7 +229,7 @@ sub new {
 #   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};  # nop
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
 
-   $self->{_activity} = time;
+   $self->{_activity} = AnyEvent->now;
    $self->_timeout;
 
    $self->start_read;
@@ -321,12 +320,10 @@ sub _timeout {
    my ($self) = @_;
 
    if ($self->{timeout}) {
-      my $NOW = time;
+      my $NOW = AnyEvent->now;
 
       # when would the timeout trigger?
       my $after = $self->{_activity} + $self->{timeout} - $NOW;
-
-      warn "next to in $after\n";#d#
 
       # now or in the past already?
       if ($after <= 0) {
@@ -348,7 +345,6 @@ sub _timeout {
 
       Scalar::Util::weaken $self;
 
-      warn "after $after\n";#d#
       $self->{_tw} ||= AnyEvent->timer (after => $after, cb => sub {
          delete $self->{_tw};
          $self->_timeout;
@@ -412,7 +408,7 @@ sub _drain_wbuf {
          if ($len >= 0) {
             substr $self->{wbuf}, 0, $len, "";
 
-            $self->{_activity} = time;
+            $self->{_activity} = AnyEvent->now;
 
             $self->{on_drain}($self)
                if $self->{low_water_mark} >= length $self->{wbuf}
@@ -1058,7 +1054,7 @@ sub start_read {
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
-            $self->{_activity} = time;
+            $self->{_activity} = AnyEvent->now;
 
             $self->{filter_r}
                ? $self->{filter_r}->($self, $rbuf)

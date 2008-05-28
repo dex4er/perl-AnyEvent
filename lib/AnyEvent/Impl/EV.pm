@@ -23,6 +23,9 @@ use strict;
 
 use EV;
 
+sub time { EV::time }
+sub now  { EV::now  }
+
 sub timer {
    my ($class, %arg) = @_;
 

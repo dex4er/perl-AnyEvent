@@ -1,6 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: some time-outs in AnyEvent::Handle...
+	- implement AnyEvent->time and AnyEvent->now.
 	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
           which mirrors their purpose better (old names still available
           for a while). Also moved AnyEvent::DNS::addr to

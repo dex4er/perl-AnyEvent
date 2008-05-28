@@ -79,6 +79,8 @@ use Scalar::Util ();
 use AnyEvent ();
 use AnyEvent::Util ();
 
+our $VERSION = 0.1;
+
 BEGIN {
    local $SIG{__DIE__};
 
@@ -91,9 +93,9 @@ BEGIN {
    }
 }
 
-our $VERSION = 0.1;
-
 our $NOW = clock;
+
+# we cannot provide now and time here if we run with a monotonic clock. life is hard.
 
 # fds[0] is for read, fds[1] is for write watchers
 # fds[poll]{v} is the bitmask for select
