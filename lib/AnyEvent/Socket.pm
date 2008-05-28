@@ -756,12 +756,16 @@ sub tcp_server($$$;$) {
 
    my %state;
 
+   # win32 perl is too stupid to get this right :/
+   Carp::croak "tcp_server/socket: address family not supported"
+      if AnyEvent::WIN32 && $af == AF_UNIX;
+
    socket $state{fh}, $af, SOCK_STREAM, 0
-      or Carp::croak "socket: $!";
+      or Carp::croak "tcp_server/socket: $!";
 
    if ($af == AF_INET || $af == AF_INET6) {
       setsockopt $state{fh}, SOL_SOCKET, SO_REUSEADDR, 1
-         or Carp::croak "so_reuseaddr: $!"
+         or Carp::croak "tcp_server/so_reuseaddr: $!"
             unless !AnyEvent::WIN32; # work around windows bug
 
       unless ($service =~ /^\d*$/) {
