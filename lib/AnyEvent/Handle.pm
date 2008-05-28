@@ -8,7 +8,8 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK);
 use Scalar::Util ();
 use Carp ();
 use Fcntl ();
-use Errno qw/EAGAIN EINTR/;
+use Errno qw(EAGAIN EINTR);
+use Time::HiRes qw(time);
 
 =head1 NAME
 
@@ -93,7 +94,7 @@ The object will not be in a usable state when this callback has been
 called.
 
 On callback entrance, the value of C<$!> contains the operating system
-error (or C<ENOSPC>, C<EPIPE> or C<EBADMSG>).
+error (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT> or C<EBADMSG>).
 
 The callback should throw an exception. If it returns, then
 AnyEvent::Handle will C<croak> for you.
@@ -121,6 +122,26 @@ This sets the callback that is called when the write buffer becomes empty
 (or when the callback is set and the buffer is empty already).
 
 To append to the write buffer, use the C<< ->push_write >> method.
+
+=item timeout => $fractional_seconds
+
+If non-zero, then this enables an "inactivity" timeout: whenever this many
+seconds pass without a successful read or write on the underlying file
+handle, the C<on_timeout> callback will be invoked (and if that one is
+missing, an C<ETIMEDOUT> errror will be raised).
+
+Note that timeout processing is also active when you currently do not have
+any outstanding read or write requests: If you plan to keep the connection
+idle then you should disable the timout temporarily or ignore the timeout
+in the C<on_timeout> callback.
+
+Zero (the default) disables this timeout.
+
+=item on_timeout => $cb->($handle)
+
+Called whenever the inactivity timeout passes. If you return from this
+callback, then the timeout will be reset as if some activity had happened,
+so this condition is not fatal in any way.
 
 =item rbuf_max => <bytes>
 
@@ -204,10 +225,13 @@ sub new {
       $self->starttls (delete $self->{tls}, delete $self->{tls_ctx});
    }
 
-   $self->on_eof   (delete $self->{on_eof}  ) if $self->{on_eof};
-   $self->on_error (delete $self->{on_error}) if $self->{on_error};
+#   $self->on_eof   (delete $self->{on_eof}  ) if $self->{on_eof};   # nop
+#   $self->on_error (delete $self->{on_error}) if $self->{on_error}; # nop
+#   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};  # nop
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
-   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
+
+   $self->{_activity} = time;
+   $self->_timeout;
 
    $self->start_read;
 
@@ -264,6 +288,76 @@ sub on_eof {
    $_[0]{on_eof} = $_[1];
 }
 
+=item $handle->on_timeout ($cb)
+
+Replace the current C<on_timeout> callback, or disables the callback
+(but not the timeout) if C<$cb> = C<undef>. See C<timeout> constructor
+argument.
+
+=cut
+
+sub on_timeout {
+   $_[0]{on_timeout} = $_[1];
+}
+
+#############################################################################
+
+=item $handle->timeout ($seconds)
+
+Configures (or disables) the inactivity timeout.
+
+=cut
+
+sub timeout {
+   my ($self, $timeout) = @_;
+
+   $self->{timeout} = $timeout;
+   $self->_timeout;
+}
+
+# reset the timeout watcher, as neccessary
+# also check for time-outs
+sub _timeout {
+   my ($self) = @_;
+
+   if ($self->{timeout}) {
+      my $NOW = time;
+
+      # when would the timeout trigger?
+      my $after = $self->{_activity} + $self->{timeout} - $NOW;
+
+      warn "next to in $after\n";#d#
+
+      # now or in the past already?
+      if ($after <= 0) {
+         $self->{_activity} = $NOW;
+
+         if ($self->{on_timeout}) {
+            $self->{on_timeout}->($self);
+         } else {
+            $! = Errno::ETIMEDOUT;
+            $self->error;
+         }
+
+         # callbakx could have changed timeout value, optimise
+         return unless $self->{timeout};
+
+         # calculate new after
+         $after = $self->{timeout};
+      }
+
+      Scalar::Util::weaken $self;
+
+      warn "after $after\n";#d#
+      $self->{_tw} ||= AnyEvent->timer (after => $after, cb => sub {
+         delete $self->{_tw};
+         $self->_timeout;
+      });
+   } else {
+      delete $self->{_tw};
+   }
+}
+
 #############################################################################
 
 =back
@@ -317,6 +411,8 @@ sub _drain_wbuf {
 
          if ($len >= 0) {
             substr $self->{wbuf}, 0, $len, "";
+
+            $self->{_activity} = time;
 
             $self->{on_drain}($self)
                if $self->{low_water_mark} >= length $self->{wbuf}
@@ -962,12 +1058,16 @@ sub start_read {
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
+            $self->{_activity} = time;
+
             $self->{filter_r}
                ? $self->{filter_r}->($self, $rbuf)
                : $self->_drain_rbuf;
 
          } elsif (defined $len) {
             delete $self->{_rw};
+            delete $self->{_ww};
+            delete $self->{_tw};
             $self->{_eof} = 1;
             $self->_drain_rbuf;
 
