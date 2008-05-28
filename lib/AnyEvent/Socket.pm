@@ -766,7 +766,7 @@ sub tcp_server($$$;$) {
    if ($af == AF_INET || $af == AF_INET6) {
       setsockopt $state{fh}, SOL_SOCKET, SO_REUSEADDR, 1
          or Carp::croak "tcp_server/so_reuseaddr: $!"
-            unless !AnyEvent::WIN32; # work around windows bug
+            unless AnyEvent::WIN32; # work around windows bug
 
       unless ($service =~ /^\d*$/) {
          $service = (getservbyname $service, "tcp")[2]
@@ -797,6 +797,7 @@ sub tcp_server($$$;$) {
       # this closure keeps $state alive
       while (my $peer = accept my $fh, $state{fh}) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
+
          my ($service, $host) = unpack_sockaddr $peer;
          $accept->($fh, format_address $host, $service);
       }
