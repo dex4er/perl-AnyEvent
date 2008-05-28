@@ -5,6 +5,7 @@ TODO: some time-outs in AnyEvent::Handle...
           which mirrors their purpose better (old names still available
           for a while). Also moved AnyEvent::DNS::addr to
           AnyEvent::Socket::resolve_sockaddr.
+        - fix IPv6 support in pack_sockaddr.
 	- officially un-experimentalise all newly introduced code.
         - support unix domain sockets everywhere by specifying
           a host of "unix/" and the pathname as service.

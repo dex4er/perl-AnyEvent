@@ -264,7 +264,7 @@ sub inet_aton {
 # kind of a rfc vs. bsd issue, as usual (ok, normally it's a
 # unix vs. bsd issue, a iso C vs. bsd issue or simply a
 # correctness vs. bsd issue.
-my $pack_family = 0x55 == Socket::sockaddr_family "\x55\x55"
+my $pack_family = (0x55 == Socket::sockaddr_family "\x55\x55")
                   ? "xC" : "S";
 
 =item $sa = AnyEvent::Socket::pack_sockaddr $service, $host
@@ -693,8 +693,9 @@ SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
 implies, this function can also bind on UNIX domain sockets.
 
 For internet sockets, C<$host> must be an IPv4 or IPv6 address (or
-C<undef>, in which case it binds either to C<0> or to C<::>, depending on
-whether IPv4 or IPv6 is the preferred protocol).
+C<undef>, in which case it binds either to C<0> or to C<::>, depending
+on whether IPv4 or IPv6 is the preferred protocol, and maybe to both in
+future versions, as applicable).
 
 To bind to the IPv4 wildcard address, use C<0>, to bind to the IPv6
 wildcard address, use C<::>.
@@ -727,6 +728,13 @@ address and port number of the local socket endpoint as second and third
 arguments.
 
 It should return the length of the listen queue (or C<0> for the default).
+
+Note to IPv6 users: RFC-compliant behaviour for IPv6 sockets listening on
+C<::> is to bind to both IPv6 and IPv4 addresses by default on dual-stack
+hosts. Unfortunately, only GNU/Linux seems to implement this properly, so
+if you want both IPv4 and IPv6 listening sockets you should create the
+IPv6 socket first and then attempt to bind on the IPv4 socket, but ignore
+any C<EADDRINUSE> errors.
 
 Example: bind on some TCP port on the local machine and tell each client
 to go away.
@@ -811,6 +819,15 @@ sub tcp_server($$$;$) {
 1;
 
 =back
+
+=head1 SECURITY CONSIDERATIONS
+
+This module is quite powerful, with with power comes the ability to abuse
+as well: If you accept "hostnames" and ports from untrusted sources,
+then note that this can be abused to delete files (host=C<unix/>). This
+is not really a problem with this module, however, as blindly accepting
+any address and protocol and trying to bind a server or connect to it is
+harmful in general.
 
 =head1 AUTHOR
 
