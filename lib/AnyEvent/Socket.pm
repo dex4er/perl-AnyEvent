@@ -439,7 +439,7 @@ sub resolve_sockaddr($$$$$$) {
             # ipv4
             if ($family != 6) {
                $cv->begin;
-               a $node, sub {
+               AnyEvent::DNS::a $node, sub {
                   push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
                               pack_sockaddr $port, parse_ipv4 $_]]
                      for @_;
@@ -450,7 +450,7 @@ sub resolve_sockaddr($$$$$$) {
             # ipv6
             if ($family != 4) {
                $cv->begin;
-               aaaa $node, sub {
+               AnyEvent::DNS::aaaa $node, sub {
                   push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
                               pack_sockaddr $port, parse_ipv6 $_]]
                      for @_;
@@ -467,7 +467,7 @@ sub resolve_sockaddr($$$$$$) {
       @target = (["127.0.0.1", $port], ["::1", $port]);
       &$resolve;
    } elsif (defined $service && !parse_address $node) {
-      srv $service, $proto, $node, sub {
+      AnyEvent::DNS::srv $service, $proto, $node, sub {
          my (@srv) = @_;
 
          # no srv records, continue traditionally

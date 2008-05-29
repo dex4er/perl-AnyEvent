@@ -157,7 +157,7 @@ isn't finished).
 =item read_size => <bytes>
 
 The default read block size (the amount of bytes this module will try to read
-on each [loop iteration). Default: C<4096>.
+during each (loop iteration). Default: C<8192>.
 
 =item low_water_mark => <bytes>
 
@@ -240,6 +240,7 @@ sub new {
 sub _shutdown {
    my ($self) = @_;
 
+   delete $self->{_tw};
    delete $self->{_rw};
    delete $self->{_ww};
    delete $self->{fh};
