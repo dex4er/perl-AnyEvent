@@ -70,8 +70,8 @@ of service records.
 Each srv_rr is an array reference with the following contents: 
 C<[$priority, $weight, $transport, $target]>.
 
-They will be sorted with lowest priority, highest weight first (TODO:
-should use the RFC algorithm to reorder same-priority records for weight).
+They will be sorted with lowest priority first, then randomly
+distributed by weight as per RFC 2782.
 
 Example:
 
@@ -164,7 +164,33 @@ sub srv($$$$) {
 
    # todo, ask for any and check glue records
    resolver->resolve ("_$service._$proto.$domain" => "srv", sub {
-      $cb->(map [@$_[3,4,5,6]], sort { $a->[3] <=> $b->[3] || $b->[4] <=> $a->[4] } @_);
+      my @res;
+
+      # classify by priority
+      my %pri;
+      push @{ $pri{$_->[3]} }, [ @$_[3,4,5,6] ]
+         for @_;
+
+      # order by priority
+      for my $pri (sort { $a->[0] <=> $b->[0] } keys %pri) {
+         # order by weight
+         my @rr = sort { $a->[1] <=> $b->[1] } @{ delete $pri{$pri} };
+
+         my $sum; $sum += $_->[1] for @rr;
+
+         while (@rr) {
+            my $w = int rand $sum + 1;
+            for (0 .. $#rr) {
+               if (($w -= $rr[$_][1]) <= 0) {
+                  $sum -= $rr[$_][1];
+                  push @res, splice @rr, $_, 1, ();
+                  last;
+               }
+            }
+         }
+      }
+
+      $cb->(@res);
    });
 }
 
