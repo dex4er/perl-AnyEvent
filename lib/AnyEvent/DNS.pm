@@ -272,7 +272,6 @@ our %class_id = (
 
 our %class_str = reverse %class_id;
 
-# names MUST have a trailing dot
 sub _enc_name($) {
    pack "(C/a*)*", (split /\./, shift), ""
 }
@@ -342,14 +341,14 @@ sub dns_pack($) {
       scalar @{ $req->{qd} || [] },
       scalar @{ $req->{an} || [] },
       scalar @{ $req->{ns} || [] },
-      $EDNS0 + scalar @{ $req->{ar} || [] }, # include EDNS0 option here
+      $EDNS0 + scalar @{ $req->{ar} || [] }, # EDNS0 option included here
 
       (join "", map _enc_qd, @{ $req->{qd} || [] }),
       (join "", map _enc_rr, @{ $req->{an} || [] }),
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
       (join "", map _enc_rr, @{ $req->{ar} || [] }),
 
-      ($EDNS0 ? pack "C nnNn", 0, 41, MAX_PKT, 0, 0 : "") # EDNS0, 4kiB udp payload size
+      ($EDNS0 ? pack "C nnNn", 0, 41, MAX_PKT, 0, 0 : "") # EDNS0 option
 }
 
 our $ofs;
@@ -961,13 +960,31 @@ sub request($$) {
 
 =item $resolver->resolve ($qname, $qtype, %options, $cb->($rcode, @rr))
 
-Queries the DNS for the given domain name C<$qname> of type C<$qtype> (a
-qtype of "*" is supported and means "any").
+Queries the DNS for the given domain name C<$qname> of type C<$qtype>.
+
+A C<$qtype> is either a numerical query type (e.g. C<1> for A recods) or
+a lowercase name (you have to look at the source to see which aliases are
+supported, but all types from RFC 1034, C<aaaa>, C<srv>, C<spf> and a few
+more are known to this module). A qtype of "*" is supported and means
+"any" record type.
 
 The callback will be invoked with a list of matching result records or
 none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 8.
+
+The callback will be invoked with an result code in string form (noerror,
+formerr, servfail, nxdomain, notimp, refused and so on), or numerical
+form if the result code is not supported. The remaining arguments are
+arraryefs of the form C<[$name, $type, $class, @data>], where C<$name> is
+the domain name, C<$type> a type string or number, C<$class> a class name
+and @data is resource-record-dependent data. For C<a> records, this will
+be the textual IPv4 addresses, for C<ns> or C<cname> records this will be
+a domain name, for C<txt> records these are all the strings and so on.
+
+All types mentioned in RFC 1034, C<aaaa>, C<srv> and C<spf> are
+decoded. All resource records not known to this module will just return
+the raw C<rdata> field as fourth entry.
 
 Note that this resolver is just a stub resolver: it requires a name server
 supporting recursive queries, will not do any recursive queries itself and
@@ -988,7 +1005,8 @@ then the searchlist will be ignored.
 
 Lists the acceptable result types: only result types in this set will be
 accepted and returned. The default includes the C<$qtype> and nothing
-else.
+else. If this list includes C<cname>, then CNAME-chains will not be
+followed (because you asked for the CNAME record).
 
 =item class => "class"
 
