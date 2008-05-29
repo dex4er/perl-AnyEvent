@@ -93,6 +93,10 @@ the callback.
 
 =cut
 
+sub MAX_PKT() { 4096 } # max packet size we advertise and accept
+
+sub DOMAIN_PORT() { 53 } # if this changes drop me a note
+
 sub resolver;
 
 sub a($$) {
@@ -343,7 +347,7 @@ sub dns_pack($) {
       (join "", map _enc_rr, @{ $req->{ns} || [] }),
       (join "", map _enc_rr, @{ $req->{ar} || [] }),
 
-      ($EDNS0 ? pack "C nnNn", 0, 41, 4096, 0, 0 : "") # EDNS0, 4kiB udp payload size
+      ($EDNS0 ? pack "C nnNn", 0, 41, MAX_PKT, 0, 0 : "") # EDNS0, 4kiB udp payload size
 }
 
 our $ofs;
@@ -594,10 +598,14 @@ immediately.
 sub new {
    my ($class, %arg) = @_;
 
-   socket my $fh, AF_INET, &Socket::SOCK_DGRAM, 0
-      or Carp::croak "socket: $!";
+   # try to create a ipv4 and an ipv6 socket
+   # only fail when we cnanot create either
 
-   AnyEvent::Util::fh_nonblocking $fh, 1;
+   socket my $fh4, AF_INET , &Socket::SOCK_DGRAM, 0;
+   socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0;
+
+   $fh4 || $fh6 
+      or Carp::croak "unable to create either an IPv6 or an IPv4 socket";
 
    my $self = bless {
       server  => [],
@@ -607,7 +615,6 @@ sub new {
       max_outstanding => 10,
       reuse   => 300, # reuse id's after 5 minutes only, if possible
       %arg,
-      fh      => $fh,
       reuse_q => [],
    }, $class;
 
@@ -615,7 +622,26 @@ sub new {
    # but perl lacks a good posix module
 
    Scalar::Util::weaken (my $wself = $self);
-   $self->{rw} = AnyEvent->io (fh => $fh, poll => "r", cb => sub { $wself->_recv });
+
+   if ($fh4) {
+      AnyEvent::Util::fh_nonblocking $fh4, 1;
+      $self->{fh4} = $fh4;
+      $self->{rw4} = AnyEvent->io (fh => $fh4, poll => "r", cb => sub {
+         if (my $peer = recv $fh4, my $pkt, MAX_PKT, 0) {
+            $wself->_recv ($pkt, $peer);
+         }
+      });
+   }
+
+   if ($fh6) {
+      $self->{fh6} = $fh6;
+      AnyEvent::Util::fh_nonblocking $fh6, 1;
+      $self->{rw6} = AnyEvent->io (fh => $fh6, poll => "r", cb => sub {
+         if (my $peer = recv $fh6, my $pkt, MAX_PKT, 0) {
+            $wself->_recv ($pkt, $peer);
+         }
+      });
+   }
 
    $self->_compile;
 
@@ -748,10 +774,8 @@ sub os_config {
 sub _compile {
    my $self = shift;
 
-   # we currently throw away all ipv6 nameservers, we do not yet support those
-
-   my %search; $self->{search} = [grep 0 <  length, grep !$search{$_}++, @{ $self->{search} }];
-   my %server; $self->{server} = [grep 4 == length, grep !$server{$_}++, @{ $self->{server} }];
+   my %search; $self->{search} = [grep 0 < length, grep !$search{$_}++, @{ $self->{search} }];
+   my %server; $self->{server} = [grep 0 < length, grep !$server{$_}++, @{ $self->{server} }];
 
    unless (@{ $self->{server} }) {
       # use 127.0.0.1 by default, and one opendns nameserver as fallback
@@ -784,17 +808,16 @@ sub _feed {
 }
 
 sub _recv {
-   my ($self) = @_;
+   my ($self, $pkt, $peer) = @_;
 
    # we ignore errors (often one gets port unreachable, but there is
    # no good way to take advantage of that.
-   while (my $peer = recv $self->{fh}, my $res, 4096, 0) {
-      my ($port, $host) = AnyEvent::Socket::unpack_sockaddr ($peer);
 
-      return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
+   my ($port, $host) = AnyEvent::Socket::unpack_sockaddr ($peer);
 
-      $self->_feed ($res);
-   }
+   return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
+
+   $self->_feed ($pkt);
 }
 
 sub _free_id {
@@ -840,7 +863,7 @@ sub _exec {
 
          if ($res->{tc}) {
             # success, but truncated, so use tcp
-            AnyEvent::Socket::tcp_connect ((Socket::inet_ntoa $server), 53, sub {
+            AnyEvent::Socket::tcp_connect (AnyEvent::Socket::format_address ($server), DOMAIN_PORT, sub {
                my ($fh) = @_
                   or return &$do_retry;
 
@@ -867,8 +890,14 @@ sub _exec {
             undef $do_retry; return $req->[1]->($res);
          }
       }];
+      
+      my $sa = AnyEvent::Socket::pack_sockaddr (DOMAIN_PORT, $server);
 
-      send $self->{fh}, $req->[0], 0, AnyEvent::Socket::pack_sockaddr (53, $server);
+      my $fh = (Socket::sockaddr_family $sa) == AF_INET
+               ? $self->{fh4} : $self->{fh6}
+         or return &$do_retry;
+
+      send $fh, $req->[0], 0, $sa;
    };
 
    &$do_retry;
