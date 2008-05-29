@@ -127,7 +127,7 @@ To append to the write buffer, use the C<< ->push_write >> method.
 If non-zero, then this enables an "inactivity" timeout: whenever this many
 seconds pass without a successful read or write on the underlying file
 handle, the C<on_timeout> callback will be invoked (and if that one is
-missing, an C<ETIMEDOUT> errror will be raised).
+missing, an C<ETIMEDOUT> error will be raised).
 
 Note that timeout processing is also active when you currently do not have
 any outstanding read or write requests: If you plan to keep the connection
