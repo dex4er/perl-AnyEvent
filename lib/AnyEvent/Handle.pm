@@ -1063,8 +1063,6 @@ sub start_read {
 
          } elsif (defined $len) {
             delete $self->{_rw};
-            delete $self->{_ww};
-            delete $self->{_tw};
             $self->{_eof} = 1;
             $self->_drain_rbuf;
 
