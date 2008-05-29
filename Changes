@@ -3,10 +3,10 @@ Revision history for Perl extension AnyEvent.
 	- provide more documentation for the resolver class.
         - really replace longest run of :0: by :: in format_address,
           also properly convert :: and ::1 again.
-        - support naptr name and decode it
+        - support NAPTR record name and decode it.
         - implement random weight sampling for SRV records, as per
           rfc 2782.
-        - replace ptr by real ptr lookup, provide reverse_lookup
+        - replace ptr by real PTR lookup, provide reverse_lookup
           and reverse_verify to replace it, support v4mapped and
           v4compat addresses.
 
