@@ -1,6 +1,5 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: some time-outs in AnyEvent::Handle...
 	- implement AnyEvent->time and AnyEvent->now.
 	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
           which mirrors their purpose better (old names still available
@@ -10,6 +9,7 @@ TODO: some time-outs in AnyEvent::Handle...
 	- officially un-experimentalise all newly introduced code.
         - support unix domain sockets everywhere by specifying
           a host of "unix/" and the pathname as service.
+        - implement an activity timeout in AnyEvent::Handle.
 	- add some recommends to the META.yml.
 	- added a regex read type to AnyEvent::Handle.
 	- added a json read/write type to AnyEvent::Handle.
@@ -23,6 +23,7 @@ TODO: some time-outs in AnyEvent::Handle...
         - supply AnyEvent::Socket::address_type and make good use of it.
         - clarify and fix the Handle documentation w.r.t $self vs. $handle
           vs. callback arguments.
+        - no longer keep 
 
 4.05 Mon May 26 19:44:06 CEST 2008
         - some platforms ignore the rfc and prepend an extra sa_len member to

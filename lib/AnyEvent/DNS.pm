@@ -35,6 +35,7 @@ use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
 use AnyEvent ();
 use AnyEvent::Handle ();
+use AnyEvent::Util qw(AF_INET6);
 
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
 
@@ -149,10 +150,14 @@ sub ptr($$) {
    $ip = AnyEvent::Socket::parse_address ($ip)
       or return $cb->();
 
-   if (4 == length $ip) {
+   my $af = AnyEvent::Socket::address_family ($ip);
+
+   if ($af == AF_INET) {
       $ip = join ".", (reverse split /\./, $ip), "in-addr.arpa.";
-   } else {
+   } elsif ($af == AF_INET6) {
       $ip = join ".", (reverse split //, unpack "H*", $ip), "ip6.arpa.";
+   } else {
+      return $cb->();
    }
 
    resolver->resolve ($ip => "ptr", sub {

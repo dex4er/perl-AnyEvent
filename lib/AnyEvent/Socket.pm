@@ -426,12 +426,14 @@ sub resolve_sockaddr($$$$$$) {
          my ($node, $port) = @{ $target[$idx] };
 
          if (my $noden = parse_address $node) {
-            if (4 == length $noden && $family != 6) {
+            my $af = address_family $noden;
+
+            if ($af == AF_INET && $family != 6) {
                push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
                            pack_sockaddr $port, $noden]]
             }
 
-            if (16 == length $noden && $family != 4) {
+            if ($af == AF_INET6 && $family != 4) {
                push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
                            pack_sockaddr $port, $noden]]
             }

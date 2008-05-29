@@ -331,7 +331,7 @@ sub _timeout {
          $self->{_activity} = $NOW;
 
          if ($self->{on_timeout}) {
-            $self->{on_timeout}->($self);
+            $self->{on_timeout}($self);
          } else {
             $! = Errno::ETIMEDOUT;
             $self->error;
@@ -447,7 +447,7 @@ sub push_write {
    }
 
    if ($self->{filter_w}) {
-      $self->{filter_w}->($self, \$_[0]);
+      $self->{filter_w}($self, \$_[0]);
    } else {
       $self->{wbuf} .= $_[0];
       $self->_drain_wbuf;
@@ -663,11 +663,8 @@ sub _drain_rbuf {
       }
    }
 
-   if ($self->{_eof}) {
-      $self->_shutdown;
-      $self->{on_eof}($self)
-         if $self->{on_eof};
-   }
+   $self->{on_eof}($self)
+      if $self->{_eof} && $self->{on_eof};
 }
 
 =item $handle->on_read ($cb)
@@ -1058,7 +1055,7 @@ sub start_read {
             $self->{_activity} = AnyEvent->now;
 
             $self->{filter_r}
-               ? $self->{filter_r}->($self, $rbuf)
+               ? $self->{filter_r}($self, $rbuf)
                : $self->_drain_rbuf;
 
          } elsif (defined $len) {
