@@ -16,9 +16,9 @@ AnyEvent::DNS - fully asynchronous DNS resolution
 This module offers both a number of DNS convenience functions as well
 as a fully asynchronous and high-performance pure-perl stub resolver.
 
-The stub resolver supports DNS over UDP, optional EDNS0 support for up to
-4kiB datagrams and automatically falls back to virtual circuit mode for
-large responses.
+The stub resolver supports DNS over IPv4 and IPv6, UDP and TCP, optional
+EDNS0 support for up to 4kiB datagrams and automatically falls back to
+virtual circuit mode for large responses.
 
 =head2 CONVENIENCE FUNCTIONS
 
@@ -1017,7 +1017,7 @@ hesiod are the only ones making sense). The default is "in", of course.
 
 Examples:
 
-   # full example, you can paste this into perl
+   # full example, you can paste this into perl:
    use Data::Dumper;
    use AnyEvent::DNS;
    AnyEvent::DNS::resolver->resolve (
