@@ -583,10 +583,11 @@ tries to resolve the name without any suffixes first.
 
 =item max_outstanding => $integer
 
-Most name servers do not handle many parallel requests very well. This option
-limits the number of outstanding requests to C<$n> (default: C<10>), that means
-if you request more than this many requests, then the additional requests will be queued
-until some other requests have been resolved.
+Most name servers do not handle many parallel requests very well. This
+option limits the number of outstanding requests to C<$integer>
+(default: C<10>), that means if you request more than this many requests,
+then the additional requests will be queued until some other requests have
+been resolved.
 
 =item reuse => $seconds
 
