@@ -486,7 +486,7 @@ sub resolve_sockaddr($$$$$$) {
          @srv
             or return &$resolve;
 
-         # only srv record has "." ("" here) => abort
+         # the only srv record has "." ("" here) => abort
          $srv[0][2] ne "" || $#srv
             or return $cb->();
 
