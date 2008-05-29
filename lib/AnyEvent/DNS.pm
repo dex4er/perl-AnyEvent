@@ -1017,19 +1017,35 @@ hesiod are the only ones making sense). The default is "in", of course.
 
 Examples:
 
-   $res->resolve ("ruth.plan9.de", "a", sub {
-      warn Dumper [@_];
-   });
+   # full example, you can paste this into perl
+   use Data::Dumper;
+   use AnyEvent::DNS;
+   AnyEvent::DNS::resolver->resolve (
+      "google.com", "*", my $cv = AnyEvent->condvar);
+   warn Dumper [$cv->recv];
 
-   [
-     [
-       'ruth.schmorp.de',
-       'a',
-       'in',
-       '129.13.162.95'
-     ]
-   ]
+   # shortened result:
+   # [
+   #   [ 'google.com', 'soa', 'in', 'ns1.google.com', 'dns-admin.google.com',
+   #     2008052701, 7200, 1800, 1209600, 300 ],
+   #   [
+   #     'google.com', 'txt', 'in',
+   #     'v=spf1 include:_netblocks.google.com ~all'
+   #   ],
+   #   [ 'google.com', 'a', 'in', '64.233.187.99' ],
+   #   [ 'google.com', 'mx', 'in', 10, 'smtp2.google.com' ],
+   #   [ 'google.com', 'ns', 'in', 'ns2.google.com' ],
+   # ]
 
+   # resolve a records:
+   $res->resolve ("ruth.plan9.de", "a", sub { warn Dumper [@_] });
+
+   # result:
+   # [
+   #   [ 'ruth.schmorp.de', 'a', 'in', '129.13.162.95' ]
+   # ]
+
+   # resolve any records, but return only a and aaaa records:
    $res->resolve ("test1.laendle", "*",
       accept => ["a", "aaaa"],
       sub {
@@ -1037,20 +1053,11 @@ Examples:
       }
    );
 
-   [
-     [
-       'test1.laendle',
-       'a',
-       'in',
-       '10.0.0.255'
-     ],
-     [
-       'test1.laendle',
-       'aaaa',
-       'in',
-       '3ffe:1900:4545:0002:0240:0000:0000:f7e1'
-     ]
-   ]
+   # result:
+   # [
+   #   [ 'test1.laendle', 'a', 'in', '10.0.0.255' ],
+   #   [ 'test1.laendle', 'aaaa', 'in', '3ffe:1900:4545:0002:0240:0000:0000:f7e1' ]
+   # ]
 
 =cut
 
