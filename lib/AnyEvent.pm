@@ -245,17 +245,25 @@ This returns the "current wallclock time" as a fractional number of
 seconds since the Epoch (the same thing as C<time> or C<Time::HiRes::time>
 return, and the result is guaranteed to be compatible with those).
 
-It progresses independently of any event loop processing.
-
-In almost all cases (in all cases if you don't care), this is the function
-to call when you want to know the current time.
+It progresses independently of any event loop processing, i.e. each call
+will check the system clock, which usually gets updated frequently.
 
 =item AnyEvent->now
 
 This also returns the "current wallclock time", but unlike C<time>, above,
 this value might change only once per event loop iteration, depending on
 the event loop (most return the same time as C<time>, above). This is the
-time that AnyEvent timers get scheduled against.
+time that AnyEvent's timers get scheduled against.
+
+I<In almost all cases (in all cases if you don't care), this is the
+function to call when you want to know the current time.>
+
+This function is also often faster then C<< AnyEvent->time >>, and
+thus the preferred method if you want some timestamp (for example,
+L<AnyEvent::Handle> uses this to update it's activity timeouts).
+
+The rest of this section is only of relevance if you try to be very exact
+with your timing, you can skip it without bad conscience.
 
 For a practical example of when these times differ, consider L<Event::Lib>
 and L<EV> and the following set-up:
@@ -270,7 +278,7 @@ With L<Event::Lib>, C<< AnyEvent->time >> and C<< AnyEvent->now >> will
 both return C<501>, because that is the current time, and the timer will
 be scheduled to fire at time=504 (C<501> + C<3>).
 
-With L<EV>m C<< AnyEvent->time >> returns C<501> (as that is the current
+With L<EV>, C<< AnyEvent->time >> returns C<501> (as that is the current
 time), but C<< AnyEvent->now >> returns C<500>, as that is the time the
 last event processing phase started. With L<EV>, your timer gets scheduled
 to run at time=503 (C<500> + C<3>).
@@ -278,7 +286,7 @@ to run at time=503 (C<500> + C<3>).
 In one sense, L<Event::Lib> is more exact, as it uses the current time
 regardless of any delays introduced by event processing. However, most
 callbacks do not expect large delays in processing, so this causes a
-higher drift (and a lot more syscalls to get the current time).
+higher drift (and a lot more system calls to get the current time).
 
 In another sense, L<EV> is more exact, as your timer will be scheduled at
 the same time, regardless of how long event processing actually took.
