@@ -37,6 +37,8 @@ use AnyEvent ();
 use AnyEvent::Handle ();
 use AnyEvent::Util qw(AF_INET6);
 
+our $VERSION = '1.0';
+
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
@@ -893,7 +895,7 @@ sub _exec {
       
       my $sa = AnyEvent::Socket::pack_sockaddr (DOMAIN_PORT, $server);
 
-      my $fh = (Socket::sockaddr_family $sa) == AF_INET
+      my $fh = AF_INET == Socket::sockaddr_family ($sa)
                ? $self->{fh4} : $self->{fh6}
          or return &$do_retry;
 
