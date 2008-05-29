@@ -563,7 +563,7 @@ The following options are supported:
 =item server => [...]
 
 A list of server addresses (default: C<v127.0.0.1>) in network format
-(i.e. as returned by C<AnyEvent::Sockdt::parse_address> - both IPv4 and
+(i.e. as returned by C<AnyEvent::Socket::parse_address> - both IPv4 and
 IPv6 are supported).
 
 =item timeout => [...]
