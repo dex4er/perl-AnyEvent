@@ -189,7 +189,7 @@ sub any($$) {
 
 This variable decides whether dns_pack automatically enables EDNS0
 support. By default, this is disabled (C<0>), unless overridden by
-C<$ENV{PERL_ANYEVENT_EDNS0>), but when set to C<1>, AnyEvent::DNS will use
+C<$ENV{PERL_ANYEVENT_EDNS0}>, but when set to C<1>, AnyEvent::DNS will use
 EDNS0 in all requests.
 
 =cut
