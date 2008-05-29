@@ -250,6 +250,7 @@ our %type_id = (
    txt   =>  16,
    aaaa  =>  28,
    srv   =>  33,
+   naptr =>  35, # rfc2915
    opt   =>  41,
    spf   =>  99,
    tkey  => 249,
@@ -403,6 +404,11 @@ our %dec_rr = (
     16 => sub { unpack "(C/a*)*", $_ }, # txt
     28 => sub { AnyEvent::Socket::format_address ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
+    35 => sub { # naptr
+       my ($order, $preference, $flags, $service, $regexp, $offset) = unpack "nn C/a* C/a* C/a* .", $_;
+       local $ofs = $ofs + $offset - length;
+       ($order, $preference, $flags, $service, $regexp, _dec_name)
+    },
     99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
 
