@@ -78,20 +78,38 @@ Example:
    AnyEvent::DNS::srv "sip", "udp", "schmorp.de", sub { ...
    # @_ = ( [10, 10, 5060, "sip1.schmorp.de" ] )
 
-=item AnyEvent::DNS::ptr $ipv4_or_6, $cb->(@hostnames)
+=item AnyEvent::DNS::ptr $domain, $cb->(@hostnames)
 
-Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
-into it's hostname(s).
-
-Example:
-
-   AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
-   # => f.root-servers.net
+Tries to make a PTR lookup on the given domain. See C<reverse_lookup>
+and C<reverse_verify> if you want to resolve an IP address to a hostname
+instead.
 
 =item AnyEvent::DNS::any $domain, $cb->(@rrs)
 
 Tries to resolve the given domain and passes all resource records found to
 the callback.
+
+=item AnyEvent::DNS::reverse_lookup $ipv4_or_6, $cb->(@hostnames)
+
+Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
+into it's hostname(s). Handles V4MAPPED and V4COMPAT IPv6 addresses
+transparently.
+
+=item AnyEvent::DNS::reverse_verify $ipv4_or_6, $cb->(@hostnames)
+
+The same as C<reverse_lookup>, but does forward-lookups to verify that
+the resolved hostnames indeed point to the address, which makes spoofing
+harder.
+
+If you want to resolve an address into a hostname, this is the preferred
+method: The DNS records could still change, but at least this function
+verified that the hostname, at one point in the past, pointed at the IP
+address you originally resolved.
+
+Example:
+
+   AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
+   # => f.root-servers.net
 
 =cut
 
@@ -151,22 +169,9 @@ sub srv($$$$) {
 }
 
 sub ptr($$) {
-   my ($ip, $cb) = @_;
+   my ($domain, $cb) = @_;
 
-   $ip = AnyEvent::Socket::parse_address ($ip)
-      or return $cb->();
-
-   my $af = AnyEvent::Socket::address_family ($ip);
-
-   if ($af == AF_INET) {
-      $ip = join ".", (reverse split /\./, $ip), "in-addr.arpa.";
-   } elsif ($af == AF_INET6) {
-      $ip = join ".", (reverse split //, unpack "H*", $ip), "ip6.arpa.";
-   } else {
-      return $cb->();
-   }
-
-   resolver->resolve ($ip => "ptr", sub {
+   resolver->resolve ($domain => "ptr", sub {
       $cb->(map $_->[3], @_);
    });
 }
@@ -175,6 +180,78 @@ sub any($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "*", $cb);
+}
+
+# convert textual ip address into reverse lookup form
+sub _munge_ptr($) {
+   my $ipn = $_[0]
+      or return;
+
+   my $ptr;
+
+   my $af = AnyEvent::Socket::address_family ($ipn);
+
+   if ($af == AF_INET6) {
+      $ipn = substr $ipn, 0, 16; # anticipate future expansion
+
+      # handle v4mapped and v4compat
+      if ($ipn =~ s/^\x00{10}(?:\xff\xff|\x00\x00)//) {
+         $af = AF_INET;
+      } else {
+         $ptr = join ".", (reverse split //, unpack "H32", $ipn), "ip6.arpa.";
+      }
+   }
+
+   if ($af == AF_INET) {
+      $ptr = join ".", (reverse unpack "C4", $ipn), "in-addr.arpa.";
+   }
+
+   $ptr
+}
+
+sub reverse_lookup($$) {
+   my ($ip, $cb) = @_;
+
+   $ip = _munge_ptr AnyEvent::Socket::parse_address ($ip)
+      or return $cb->();
+
+   resolver->resolve ($ip => "ptr", sub {
+      $cb->(map $_->[3], @_);
+   });
+}
+
+sub reverse_verify($$) {
+   my ($ip, $cb) = @_;
+   
+   my $ipn = AnyEvent::Socket::parse_address ($ip)
+      or return $cb->();
+
+   my $af = AnyEvent::Socket::address_family ($ipn);
+
+   my @res;
+   my $cnt;
+
+   my $ptr = _munge_ptr $ipn
+      or return $cb->();
+
+   $ip = AnyEvent::Socket::format_address ($ipn); # normalise into the same form
+
+   ptr $ptr, sub {
+      for my $name (@_) {
+         ++$cnt;
+         
+         # () around AF_INET to work around bug in 5.8
+         resolver->resolve ($name => ($af == (AF_INET) ? "a" : "aaaa"), sub {
+            for (@_) {
+               push @res, $name
+                  if $_->[3] eq $ip;
+            }
+            $cb->(@res) unless --$cnt;
+         });
+      }
+
+      $cb->() unless $cnt;
+   };
 }
 
 #################################################################################

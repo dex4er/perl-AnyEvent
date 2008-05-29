@@ -4,6 +4,9 @@ Revision history for Perl extension AnyEvent.
         - really replace longest run of :0: by :: in format_address,
           also properly convert :: and ::1 again.
         - support naptr name and decode it
+        - replace ptr by real ptr lookup, provide reverse_lookup
+          and reverse_verify to replace it, support v4mapped and
+          v4compat addresses.
 
 4.1  Thu May 29 05:45:40 CEST 2008
 	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
