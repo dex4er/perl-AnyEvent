@@ -883,6 +883,34 @@ sub os_config {
    }
 }
 
+=item $resolver->timeout ($timeout, ...)
+
+Sets the timeout values. See the C<timeout> constructor argument (and note
+that this method uses the values itselt, not an array-reference).
+
+=cut
+
+sub timeout {
+   my ($self, @timeout) = @_;
+
+   $self->{timeout} = \@timeout;
+   $self->_compile;
+}
+
+=item $resolver->max_outstanding ($nrequests)
+
+Sets the maximum number of outstanding requests to C<$nrequests>. See the
+C<max_outstanding> constructor argument.
+
+=cut
+
+sub max_outstanding {
+   my ($self, $max) = @_;
+
+   $self->{max_outstanding} = $max;
+   $self->_scheduler;
+}
+
 sub _compile {
    my $self = shift;
 

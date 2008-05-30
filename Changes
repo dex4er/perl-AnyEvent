@@ -16,6 +16,8 @@ Revision history for Perl extension AnyEvent.
           could die. this has been fixed.
         - plug a probable memleak in the DNS vc code.
         - use configured timeout also for VC request phase.
+        - implement timeout and max_outstanding methods
+          for resolver class.
 
 4.1  Thu May 29 05:45:40 CEST 2008
 	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
