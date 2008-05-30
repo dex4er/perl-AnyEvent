@@ -392,7 +392,7 @@ sub _enc_rr() {
 
 =item $pkt = AnyEvent::DNS::dns_pack $dns
 
-Packs a perl data structure into a DNS packet. Reading RFC1034 is strongly
+Packs a perl data structure into a DNS packet. Reading RFC 1035 is strongly
 recommended, then everything will be totally clear. Or maybe not.
 
 Resource records are not yet encodable.
@@ -1073,7 +1073,7 @@ Queries the DNS for the given domain name C<$qname> of type C<$qtype>.
 
 A C<$qtype> is either a numerical query type (e.g. C<1> for A recods) or
 a lowercase name (you have to look at the source to see which aliases are
-supported, but all types from RFC 1034, C<aaaa>, C<srv>, C<spf> and a few
+supported, but all types from RFC 1035, C<aaaa>, C<srv>, C<spf> and a few
 more are known to this module). A qtype of "*" is supported and means
 "any" record type.
 
@@ -1091,7 +1091,7 @@ and @data is resource-record-dependent data. For C<a> records, this will
 be the textual IPv4 addresses, for C<ns> or C<cname> records this will be
 a domain name, for C<txt> records these are all the strings and so on.
 
-All types mentioned in RFC 1034, C<aaaa>, C<srv> and C<spf> are
+All types mentioned in RFC 1035, C<aaaa>, C<srv> and C<spf> are
 decoded. All resource records not known to this module will just return
 the raw C<rdata> field as fourth entry.
 
