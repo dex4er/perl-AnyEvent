@@ -1018,6 +1018,8 @@ sub _exec {
 sub _scheduler {
    my ($self) = @_;
 
+   no strict 'refs';
+
    $NOW = time;
 
    # first clear id reuse queue
@@ -1035,19 +1037,27 @@ sub _scheduler {
          last;
       }
 
-      my $req = shift @{ $self->{queue} }
-         or last;
+      if (my $req = shift @{ $self->{queue} }) {
+         # found a request in the queue, execute it
+         while () {
+            $req->[2] = int rand 65536;
+            last unless exists $self->{id}{$req->[2]};
+         }
 
-      while () {
-         $req->[2] = int rand 65536;
-         last unless exists $self->{id}{$req->[2]};
+         ++$self->{outstanding};
+         $self->{id}{$req->[2]} = 1;
+         substr $req->[0], 0, 2, pack "n", $req->[2];
+
+         $self->_exec ($req);
+
+      } elsif (my $cb = shift @{ $self->{wait} }) {
+         # found a wait_for_slot callback, call that one first
+         $cb->($self);
+
+      } else {
+         # nothing to do, just exit
+         last;
       }
-
-      ++$self->{outstanding};
-      $self->{id}{$req->[2]} = 1;
-      substr $req->[0], 0, 2, pack "n", $req->[2];
-
-      $self->_exec ($req);
    }
 }
 
@@ -1242,6 +1252,37 @@ sub resolve($%) {
    };
 
    $do_search->();
+}
+
+=item $resolver->wait_for_slot ($cb->($resolver))
+
+Wait until a free request slot is available and call the callback with the
+resolver object.
+
+A request slot is used each time a request is actually sent to the
+nameservers: There are never more than C<max_outstanding> of them.
+
+Although you can submit more requests (they will simply be queued until
+a request slot becomes available), sometimes, usually for rate-limiting
+purposes, it is useful to instead wait for a slot before generating the
+request (or simply to know when the request load is low enough so one can
+submit requests again).
+
+This is what this method does: The callback will be called when submitting
+a DNS request will not result in that request being queued. The callback
+may or may not generate any requests in response.
+
+Note that the callback will only be invoked when the request queue is
+empty, so this does not play well if somebody else keeps the request queue
+full at all times.
+
+=cut
+
+sub wait_for_slot {
+   my ($self, $cb) = @_;
+
+   push @{ $self->{wait} }, $cb;
+   $self->_scheduler;
 }
 
 use AnyEvent::Socket (); # circular dependency, so do not import anything and do it at the end

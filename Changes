@@ -9,7 +9,8 @@ Revision history for Perl extension AnyEvent.
         - support NAPTR record name and decode it.
         - implement random weight sampling for SRV records, as per
           rfc 2782.
-        - corretcly abort on srv-record targets of ".".
+        - correctly abort on srv-record targets of ".".
+        - added AnyEvent::DNS::wait_for_slot.
 
 4.1  Thu May 29 05:45:40 CEST 2008
 	- INCOMPATIBLE CHANGE: renamed xxx_ip functions to xxx_address
