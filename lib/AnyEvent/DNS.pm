@@ -976,12 +976,17 @@ sub _exec {
          if ($res->{tc}) {
             # success, but truncated, so use tcp
             AnyEvent::Socket::tcp_connect (AnyEvent::Socket::format_address ($server), DOMAIN_PORT, sub {
+               return unless $do_retry; # some other request could have invalidated us already
+
                my ($fh) = @_
                   or return &$do_retry;
 
-               my $handle = new AnyEvent::Handle
+               my $handle; $handle = new AnyEvent::Handle
                   fh       => $fh,
+                  timeout  => $timeout,
                   on_error => sub {
+                     undef $handle;
+                     return unless $do_retry; # some other request could have invalidated us already
                      # failure, try next
                      &$do_retry;
                   };
@@ -989,10 +994,10 @@ sub _exec {
                $handle->push_write (pack "n/a", $req->[0]);
                $handle->push_read (chunk => 2, sub {
                   $handle->unshift_read (chunk => (unpack "n", $_[1]), sub {
+                     undef $handle;
                      $self->_feed ($_[1]);
                   });
                });
-               shutdown $fh, 1;
 
             }, sub { $timeout });
 
