@@ -700,7 +700,7 @@ been resolved.
 =item reuse => $seconds
 
 The number of seconds (default: C<300>) that a query id cannot be re-used
-after a timeout. If there as no time-out then query id's can be reused
+after a timeout. If there was no time-out then query ids can be reused
 immediately.
 
 =back
@@ -725,7 +725,7 @@ sub new {
       search  => [],
       ndots   => 1,
       max_outstanding => 10,
-      reuse   => 300, # reuse id's after 5 minutes only, if possible
+      reuse   => 300,
       %arg,
       reuse_q => [],
    }, $class;
@@ -840,7 +840,7 @@ sub os_config {
       # - calling windows api functions doesn't work on cygwin
       # - ipconfig uses locale-specific messages
 
-      # we use ipconfig parsing because, despite all it's brokenness,
+      # we use ipconfig parsing because, despite all its brokenness,
       # it seems most stable in practise.
       # for good measure, we append a fallback nameserver to our list.
 
@@ -859,7 +859,7 @@ sub os_config {
             }
             if ($dns && /^\s*(\S+)\s*$/) {
                my $s = $1;
-               $s =~ s/%\d+(?!\S)//; # get rid of scope id
+               $s =~ s/%\d+(?!\S)//; # get rid of ipv6 scope id
                if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
                   push @{ $self->{server} }, $ipn;
                } else {
@@ -886,7 +886,7 @@ sub os_config {
 =item $resolver->timeout ($timeout, ...)
 
 Sets the timeout values. See the C<timeout> constructor argument (and note
-that this method uses the values itselt, not an array-reference).
+that this method uses the values itself, not an array-reference).
 
 =cut
 
@@ -1096,10 +1096,15 @@ sub _scheduler {
 
 =item $resolver->request ($req, $cb->($res))
 
-Sends a single request (a hash-ref formated as specified for
-C<dns_pack>) to the configured nameservers including
-retries. Calls the callback with the decoded response packet if a reply
-was received, or no arguments on timeout.
+This is the main low-level workhorse for sending DNS requests.
+
+This function sends a single request (a hash-ref formated as specified
+for C<dns_pack>) to the configured nameservers in turn until it gets a
+response. It handles timeouts, retries and automatically falls back to
+virtual circuit mode (TCP) when it receives a truncated reply.
+
+Calls the callback with the decoded response packet if a reply was
+received, or no arguments in case none of the servers answered.
 
 =cut
 
@@ -1114,10 +1119,10 @@ sub request($$) {
 
 Queries the DNS for the given domain name C<$qname> of type C<$qtype>.
 
-A C<$qtype> is either a numerical query type (e.g. C<1> for A recods) or
+A C<$qtype> is either a numerical query type (e.g. C<1> for A records) or
 a lowercase name (you have to look at the source to see which aliases are
 supported, but all types from RFC 1035, C<aaaa>, C<srv>, C<spf> and a few
-more are known to this module). A qtype of "*" is supported and means
+more are known to this module). A C<$qtype> of "*" is supported and means
 "any" record type.
 
 The callback will be invoked with a list of matching result records or
