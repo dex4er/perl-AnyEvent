@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.11 Fri May 30 23:42:25 CEST 2008
         - INCOMPATIBLE CHANGE: replace ptr by real PTR lookup, provide
           reverse_lookup and reverse_verify to replace it, support
           v4mapped and v4compat addresses.
