@@ -1,26 +1,33 @@
 =head1 Network Programming with AnyEvent
 
-This is a tutorial that will explain the usage of AnyEvent for
-Network programming.
+This is a tutorial that will introduce you to AnyEvent by writing a small
+event-based program.
 
 =head2 Introduction
 
-AnyEvent is first of all just a framework for multiple event loops.  It's a
-thin abstraction layer above all kinds of event loops. It's main purpose is to
-move the choice of the event loop (whether it should be Glib, Qt, EV or Event,
-or even something else, see also L<AnyEvent>) from the module author to the
-program author.
+AnyEvent is first of all just a framework for multiple event loops. It is
+a thin abstraction layer above all kinds of event loops. Its main purpose
+is to move the choice of the event loop (whether it is Glib, Qt, EV or
+Event, or even something else, see also L<AnyEvent>) from the module
+author to the program author using the module.
 
-The problem was usually that modules like L<Net::IRC> came with their own
-event loop, where the program author needed to start the event loop
-of L<Net::IRC>. That usually meant that he couldn't integrate it easily with
-a L<Gtk2> GUI for instance.
+A typical problem with modules such as L<Net::IRC> is that they come with
+their own event loop. In L<Net::IRC>, the program who uses it needs to
+start the event loop of L<Net::IRC>. That means that one cannot integrate
+this module into a L<Gtk2> GUI for instance, as that module, too, enforces
+the use of its own event loop.
 
-Another example is L<LWP>, it provides no event interface at all. It's a pure
-blocking HTTP client library, which usually means that you either have to
-start a thread or have to fork for a HTTP request, or use L<Coro::LWP>.
+Another example is L<LWP>: it provides no event interface at all. It's a
+pure blocking HTTP (and FTP etc.) client library, which usually means that
+you either have to start a thread or have to fork for a HTTP request, or
+use L<Coro::LWP>, if you want to do something else while waiting for the
+request to finish.
 
-L<AnyEvent> now does B<not> force authors of modules, like L<Net::IRC>, to:
+The motivation behind these designs is often that a module doesn't want to
+depend on some complicated XS-module (Net::IRC), or that it doesn't want
+to force the user to use some specific event loop (LWP).
+
+L<AnyEvent> solves this dilemma, by B<not> forcing module authors to:
 
 =over 4
 
@@ -37,46 +44,64 @@ made by the program author who uses all the modules and writes the main
 program. And even there he doesn't have to choose, he can just ask L<AnyEvent>
 to choose any available event loop for him.
 
+And while AnyEvent can make good use of event loops written in C, such as
+EV or Glib, it also comes with a fast pure-perl event loop implementation
+on its own, which means module authors can rely on AnyEvent without
+fearing a worrisome dependency on some XS module.
+
 Read more about this in the main documentation of the L<AnyEvent> module.
 
 =head2 Network programming and AnyEvent
 
-However, AnyEvent is not just a simple abstraction anymore. It comes with
-some very useful utility modules like L<AnyEvent::Handle>, L<AnyEvent::DNS>
-and L<AnyEvent::Socket> that make your life as non-blocking network programmer
-a lot easier.
+However, AnyEvent is not just a simple abstraction anymore. While the core
+L<AnyEvent> module is still small and self-contained, the distribution
+comes with some very useful utility modules such as L<AnyEvent::Handle>,
+L<AnyEvent::DNS> and L<AnyEvent::Socket>. These can make your life as
+non-blocking network programmer a lot easier.
 
-Now an introduction into these three submodules:
+Here is an introduction into these three submodules:
 
 =head3 L<AnyEvent::Handle>
 
-This module handles non-blocking IO on filehandles in a event based
-manner. It provides a wrapper object around your filehandle that provides
+This module handles non-blocking IO on file handles in an event based
+manner. It provides a wrapper object around your file handle that provides
 queueing and buffering of incoming and outgoing data for you.
 
 More about this later.
 
 =head3 L<AnyEvent::Socket>
 
-This module provides you with functions that handle internet socket creation
+This module provides you with functions that handle socket creation
 and IP address magic. The two main functions are C<tcp_connect> and
-C<tcp_server>. The former will connect a (streaming) socket to an internet host
-for you and the later will make a server socket for you, to accept connections.
+C<tcp_server>. The former will connect a (streaming) socket to an internet
+host for you and the later will make a server socket for you, to accept
+connections.
 
 This module also comes with transparent IPv6 support, this means: If you
-write your programs with this module, you will be IPv6 ready.
+write your programs with this module, you will be IPv6 ready without doing
+anything further.
+
+It also works around a lot of portability quirks (especially on the
+windows platform), which makes it even easier to write your programs in a
+portable way.
 
 =head3 L<AnyEvent::DNS>
 
-This module allows fully asynchronous DNS resolution, and is used for example
-by L<AnyEvent::Socket> to resolve hostnames and service ports.
+This module allows fully asynchronous DNS resolution. It is used mainly
+by L<AnyEvent::Socket> to resolve hostnames and service ports, but is a
+great way to do other DNS resolution tasks, such as reverse lookups of IP
+addresses for log files.
 
 =head2 First experiments with AnyEvent::Handle
 
-Now lets start with something simple, a program that reads non-blocking
-from standard input:
+Now let's start with something simple: a program that reads from standard
+input in a non-blocking way, that is, in a way that lets your program do
+other things while it is waiting for input.
 
-   #!/opt/perl/bin/perl
+First, the full program listing:
+
+   #!/usr/bin/perl
+
    use AnyEvent;
    use AnyEvent::Handle;
 
@@ -107,34 +132,46 @@ from standard input:
       0
    });
 
-   $end_prog->wait;
+   $end_prog->recv;
 
-Lets go through it step by step:
+That's a mouthful, so lets go through it step by step:
 
-   #!/opt/perl/bin/perl
+   #!/usr/bin/perl
+
    use AnyEvent;
    use AnyEvent::Handle;
 
-Nothing new here, just load AnyEvent for the event loop and AnyEvent::Handle.
+Nothing unexpected here, just load AnyEvent for the event functionality
+and AnyEvent::Handle for your file handling needs.
 
    my $end_prog = AnyEvent->condvar;
 
-Here a 'condition variable' is created. It represents the condition when the
-program wants to terminate. We will later 'wait' for that condition, which
-will choose and create an event loop for us.
+Here the program creates a so-called 'condition variable': Condition
+variables are a great way to signal the completion of some event, or to
+state that some condition became true (thus the name).
+
+This condition variable represents the condition that the program wants to
+terminate. Later in the progra, we will 'recv' that condition (call the
+C<recv> method on it), which will wait until the condition gets signalled
+(which is done by calling the C<send> method on it).
+
+The next step is to create the handle object:
 
    my $handle =
       AnyEvent::Handle->new (
-         fh => \*STDIN,
+         fh     => \*STDIN,
          on_eof => sub {
             print "received EOF, exiting...\n";
             $end_prog->broadcast;
          },
 
-We create a handle which will read from the standard input filehandle.
-Setting the C<on_eof> callback is required for every filehandle, as that is a
-condition that we need to check always if we are working with filehandles,
-to prevent reading or writing to a closed filehandle.
+This handle object will read from standard input. Setting the C<on_eof>
+callback should be done for every file handle, as that is a condition that
+we always need to check for when working with file handles, to prevent
+reading or writing to a closed file handle, or getting stuck indefinitely
+in case of an error.
+
+Speaking of errors:
 
          on_error => sub {
             print "error while reading from STDIN: $!\n";
@@ -142,19 +179,20 @@ to prevent reading or writing to a closed filehandle.
          }
       );
 
-The C<on_error> callback is not required, but we set it here in case any
-error happens when we read from the filehandle. It's usually a good idea to
-set this callback also and at least print some diagnostics. Already in our
-small example an error can happen. More to this later...
+The C<on_error> callback is also not required, but we set it here in case
+any error happens when we read from the file handle. It is usually a good
+idea to set this callback and at least print some diagnostic message: Even
+in our small example an error can happen. More on this later...
 
    $handle->push_read (sub {
 
-Here we push a general read callback on the read queue, that will wait until we
-received all the data we wanted to receive. L<AnyEvent::Handle> has two queues
-per filehandle, a read and a write queue. The write queue queues pending data
-that waits to be written to the filehandle. And the read queue queues reading
-callbacks. For more details see the documentation L<AnyEvent::Handle> about the
-READ QUEUE and WRITE QUEUE. 
+Next we push a general read callback on the read queue, which
+will wait until we have received all the data we wanted to
+receive. L<AnyEvent::Handle> has two queues per file handle, a read and a
+write queue. The write queue queues pending data that waits to be written
+to the file handle. And the read queue queues reading callbacks. For more
+details see the documentation L<AnyEvent::Handle> about the READ QUEUE and
+WRITE QUEUE.
 
       my ($handle) = @_;
 
@@ -167,35 +205,39 @@ READ QUEUE and WRITE QUEUE.
       0
    });
 
-This code waits until the word 'end' has been seen in the data received
-on standard input. Once we encounter the stop word 'end' we remove everything from
-the read buffer and call the condition variable we setup earlier, that signals
-our 'end of program' condition. And the callback returns with a true value,
-that signals we are done with reading all the data we were interested in (all data until
-the word 'end' has been seen).
+The actual callback waits until the word 'end' has been seen in the data
+received on standard input. Once we encounter the stop word 'end' we
+remove everything from the read buffer and call the condition variable
+we setup earlier, that signals our 'end of program' condition. And the
+callback returns with a true value, that signals we are done with reading
+all the data we were interested in (all data until the word 'end' has been
+seen).
 
-In all other cases, when the stop word has not been seen yet, we just return a false
-value, to indicate that we are not finished yet.
+In all other cases, when the stop word has not been seen yet, we just
+return a false value, to indicate that we are not finished yet.
 
-The C<rbuf> method returns our read buffer, that we can directly modify as lvalue.
-Alternatively we also could have written:
+The C<rbuf> method returns our read buffer, that we can directly modify as
+lvalue.  Alternatively we also could have written:
 
       if ($handle->{rbuf} =~ s/^.*?\bend\b.*$//s) {
 
+The last line will wait for the condition that our program wants to exit:
 
-   $end_prog->wait;
+   $end_prog->recv;
 
-This last line will wait blocking for the condition that our program wants to
-exit. C<wait> will setup an event loop for us and wait for IO, timers or signals.
+The call to C<recv> will setup an event loop for us and wait for IO, timer
+or signal events and will handle them until the condition gets sent (by
+calling its C<send> method).
 
-The key points were:
+The key points to learn from this example are:
 
 =over 4
 
-=item * Condition variables used to start an event loop.
+=item * Condition variables are used to start an event loop.
 
-=item * Registering the basic callbacks on AnyEvent::Handles.
+=item * How to registering some basic callbacks on AnyEvent::Handle's.
 
-=item * Processing data in the read buffer.
+=item * How to process data in the read buffer.
 
 =back
+

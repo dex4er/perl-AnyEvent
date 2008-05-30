@@ -267,7 +267,7 @@ sub reverse_verify($$) {
          ++$cnt;
          
          # () around AF_INET to work around bug in 5.8
-         resolver->resolve ($name => ($af == (AF_INET) ? "a" : "aaaa"), sub {
+         resolver->resolve ("$name." => ($af == (AF_INET) ? "a" : "aaaa"), sub {
             for (@_) {
                push @res, $name
                   if $_->[3] eq $ip;
@@ -1139,8 +1139,8 @@ and @data is resource-record-dependent data. For C<a> records, this will
 be the textual IPv4 addresses, for C<ns> or C<cname> records this will be
 a domain name, for C<txt> records these are all the strings and so on.
 
-All types mentioned in RFC 1035, C<aaaa>, C<srv> and C<spf> are
-decoded. All resource records not known to this module will just return
+All types mentioned in RFC 1035, C<aaaa>, C<srv>, C<naptr> and C<spf> are
+decoded. All resource records not known to this module will have
 the raw C<rdata> field as fourth entry.
 
 Note that this resolver is just a stub resolver: it requires a name server
@@ -1155,8 +1155,9 @@ The following options are supported:
 
 Use the given search list (which might be empty), by appending each one
 in turn to the C<$qname>. If this option is missing then the configured
-C<ndots> and C<search> define its value. If the C<$qname> ends in a dot,
-then the searchlist will be ignored.
+C<ndots> and C<search> values define its value (depending on C<ndots>, the
+empty suffix will be prepended or appended to that C<search> value). If
+the C<$qname> ends in a dot, then the searchlist will be ignored.
 
 =item accept => [$type...]
 
