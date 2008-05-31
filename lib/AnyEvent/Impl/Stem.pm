@@ -4,10 +4,10 @@ AnyEvent::Impl::Stem - AnyEvent adaptor for Stem
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use Stem;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use Stem;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 

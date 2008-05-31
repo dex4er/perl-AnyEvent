@@ -140,10 +140,10 @@ example), or need to refer to their watcher object in other ways.
 
 An any way to achieve that is this pattern:
 
-  my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
-     # you can use $w here, for example to undef it
-     undef $w;
-  });
+   my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
+      # you can use $w here, for example to undef it
+      undef $w;
+   });
 
 Note that C<my $w; $w => combination. This is necessary because in Perl,
 my variables are only visible after the statement in which they are
@@ -354,21 +354,21 @@ C<fork> the child (alternatively, you can call C<AnyEvent::detect>).
 
 Example: fork a process and wait for it
 
-  my $done = AnyEvent->condvar;
-
-  my $pid = fork or exit 5;
-
-  my $w = AnyEvent->child (
-     pid => $pid,
-     cb  => sub {
-        my ($pid, $status) = @_;
-        warn "pid $pid exited with status $status";
-        $done->send;
-     },
-  );
-
-  # do something else, then wait for process exit
-  $done->recv;
+   my $done = AnyEvent->condvar;
+  
+   my $pid = fork or exit 5;
+  
+   my $w = AnyEvent->child (
+      pid => $pid,
+      cb  => sub {
+         my ($pid, $status) = @_;
+         warn "pid $pid exited with status $status";
+         $done->send;
+      },
+   );
+  
+   # do something else, then wait for process exit
+   $done->recv;
 
 =head2 CONDITION VARIABLES
 
@@ -1175,7 +1175,7 @@ This functionality might change in future versions.
 For example, to force the pure perl model (L<AnyEvent::Impl::Perl>) you
 could start your program like this:
 
-  PERL_ANYEVENT_MODEL=Perl perl ...
+   PERL_ANYEVENT_MODEL=Perl perl ...
 
 =item C<PERL_ANYEVENT_PROTOCOLS>
 
@@ -1660,9 +1660,9 @@ specified in the variable.
 You can make AnyEvent completely ignore this variable by deleting it
 before the first watcher gets created, e.g. with a C<BEGIN> block:
 
-  BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
-
-  use AnyEvent;
+   BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
+  
+   use AnyEvent;
 
 Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
 be used to probe what backend is used and gain other information (which is
@@ -1693,8 +1693,8 @@ Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>, L<AnyEvent::DNS>.
 
 =head1 AUTHOR
 
- Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+   Marc Lehmann <schmorp@schmorp.de>
+   http://home.schmorp.de/
 
 =cut
 

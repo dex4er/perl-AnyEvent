@@ -4,21 +4,21 @@ AnyEvent::Socket - useful IPv4 and IPv6 stuff.
 
 =head1 SYNOPSIS
 
- use AnyEvent::Socket;
-
- tcp_connect "gameserver.deliantra.net", 13327, sub {
-    my ($fh) = @_
-       or die "gameserver.deliantra.net connect failed: $!";
-
-    # enjoy your filehandle
- };
-
- # a simple tcp server
- tcp_server undef, 8888, sub {
-    my ($fh, $host, $port) = @_;
-
-    syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
- };
+   use AnyEvent::Socket;
+   
+   tcp_connect "gameserver.deliantra.net", 13327, sub {
+      my ($fh) = @_
+         or die "gameserver.deliantra.net connect failed: $!";
+   
+      # enjoy your filehandle
+   };
+   
+   # a simple tcp server
+   tcp_server undef, 8888, sub {
+      my ($fh, $host, $port) = @_;
+   
+      syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
+   };
 
 =head1 DESCRIPTION
 
@@ -562,11 +562,11 @@ will be imposed on windows. Cygwin is not affected.
 
 Simple Example: connect to localhost on port 22.
 
-  tcp_connect localhost => 22, sub {
-     my $fh = shift
-        or die "unable to connect: $!";
-     # do something
-  };
+   tcp_connect localhost => 22, sub {
+      my $fh = shift
+         or die "unable to connect: $!";
+      # do something
+   };
 
 Complex Example: connect to www.google.com on port 80 and make a simple
 GET request without much error handling. Also limit the connection timeout

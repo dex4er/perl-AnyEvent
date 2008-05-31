@@ -4,12 +4,12 @@ AnyEvent::DNS - fully asynchronous DNS resolution
 
 =head1 SYNOPSIS
 
- use AnyEvent::DNS;
-
- my $cv = AnyEvent->condvar;
- AnyEvent::DNS::a "www.google.de", $cv;
- # ... later
- my @addrs = $cv->recv;
+   use AnyEvent::DNS;
+   
+   my $cv = AnyEvent->condvar;
+   AnyEvent::DNS::a "www.google.de", $cv;
+   # ... later
+   my @addrs = $cv->recv;
 
 =head1 DESCRIPTION
 
@@ -399,30 +399,30 @@ Resource records are not yet encodable.
 
 Examples:
 
-  # very simple request, using lots of default values:
-  { rd => 1, qd => [ [ "host.domain", "a"] ] }
-
-  # more complex example, showing how flags etc. are named:
-
-  {
-     id => 10000,
-     op => "query",
-     rc => "nxdomain",
-
-     # flags
-     qr => 1,
-     aa => 0,
-     tc => 0,
-     rd => 0,
-     ra => 0,
-     ad => 0,
-     cd => 0,
-
-     qd => [@rr], # query section
-     an => [@rr], # answer section
-     ns => [@rr], # authority section
-     ar => [@rr], # additional records section
-  }
+   # very simple request, using lots of default values:
+   { rd => 1, qd => [ [ "host.domain", "a"] ] }
+  
+   # more complex example, showing how flags etc. are named:
+  
+   {
+      id => 10000,
+      op => "query",
+      rc => "nxdomain",
+  
+      # flags
+      qr => 1,
+      aa => 0,
+      tc => 0,
+      rd => 0,
+      ra => 0,
+      ad => 0,
+      cd => 0,
+  
+      qd => [@rr], # query section
+      an => [@rr], # answer section
+      ns => [@rr], # authority section
+      ar => [@rr], # additional records section
+   }
 
 =cut
 
@@ -535,61 +535,61 @@ Unpacks a DNS packet into a perl data structure.
 
 Examples:
 
-  # an unsuccessful reply
-  {
-    'qd' => [
-              [ 'ruth.plan9.de.mach.uni-karlsruhe.de', '*', 'in' ]
-            ],
-    'rc' => 'nxdomain',
-    'ar' => [],
-    'ns' => [
-              [
-                'uni-karlsruhe.de',
-                'soa',
-                'in',
-                'netserv.rz.uni-karlsruhe.de',
-                'hostmaster.rz.uni-karlsruhe.de',
-                2008052201, 10800, 1800, 2592000, 86400
-              ]
-            ],
-    'tc' => '',
-    'ra' => 1,
-    'qr' => 1,
-    'id' => 45915,
-    'aa' => '',
-    'an' => [],
-    'rd' => 1,
-    'op' => 'query'
-  }
-
-  # a successful reply
-
-  {
-    'qd' => [ [ 'www.google.de', 'a', 'in' ] ],
-    'rc' => 0,
-    'ar' => [
-              [ 'a.l.google.com', 'a', 'in', '209.85.139.9' ],
-              [ 'b.l.google.com', 'a', 'in', '64.233.179.9' ],
-              [ 'c.l.google.com', 'a', 'in', '64.233.161.9' ],
-            ],
-    'ns' => [
-              [ 'l.google.com', 'ns', 'in', 'a.l.google.com' ],
-              [ 'l.google.com', 'ns', 'in', 'b.l.google.com' ],
-            ],
-    'tc' => '',
-    'ra' => 1,
-    'qr' => 1,
-    'id' => 64265,
-    'aa' => '',
-    'an' => [
-              [ 'www.google.de', 'cname', 'in', 'www.google.com' ],
-              [ 'www.google.com', 'cname', 'in', 'www.l.google.com' ],
-              [ 'www.l.google.com', 'a', 'in', '66.249.93.104' ],
-              [ 'www.l.google.com', 'a', 'in', '66.249.93.147' ],
-            ],
-    'rd' => 1,
-    'op' => 0
-  }
+   # an unsuccessful reply
+   {
+     'qd' => [
+               [ 'ruth.plan9.de.mach.uni-karlsruhe.de', '*', 'in' ]
+             ],
+     'rc' => 'nxdomain',
+     'ar' => [],
+     'ns' => [
+               [
+                 'uni-karlsruhe.de',
+                 'soa',
+                 'in',
+                 'netserv.rz.uni-karlsruhe.de',
+                 'hostmaster.rz.uni-karlsruhe.de',
+                 2008052201, 10800, 1800, 2592000, 86400
+               ]
+             ],
+     'tc' => '',
+     'ra' => 1,
+     'qr' => 1,
+     'id' => 45915,
+     'aa' => '',
+     'an' => [],
+     'rd' => 1,
+     'op' => 'query'
+   }
+   
+   # a successful reply
+   
+   {
+     'qd' => [ [ 'www.google.de', 'a', 'in' ] ],
+     'rc' => 0,
+     'ar' => [
+               [ 'a.l.google.com', 'a', 'in', '209.85.139.9' ],
+               [ 'b.l.google.com', 'a', 'in', '64.233.179.9' ],
+               [ 'c.l.google.com', 'a', 'in', '64.233.161.9' ],
+             ],
+     'ns' => [
+               [ 'l.google.com', 'ns', 'in', 'a.l.google.com' ],
+               [ 'l.google.com', 'ns', 'in', 'b.l.google.com' ],
+             ],
+     'tc' => '',
+     'ra' => 1,
+     'qr' => 1,
+     'id' => 64265,
+     'aa' => '',
+     'an' => [
+               [ 'www.google.de', 'cname', 'in', 'www.google.com' ],
+               [ 'www.google.com', 'cname', 'in', 'www.l.google.com' ],
+               [ 'www.l.google.com', 'a', 'in', '66.249.93.104' ],
+               [ 'www.l.google.com', 'a', 'in', '66.249.93.147' ],
+             ],
+     'rd' => 1,
+     'op' => 0
+   }
 
 =cut
 

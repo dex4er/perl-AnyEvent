@@ -4,10 +4,10 @@ AnyEvent::Impl::Event - AnyEvent adaptor for Event
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use EV;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use EV;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 

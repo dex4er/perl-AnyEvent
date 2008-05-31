@@ -6,10 +6,10 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use POE;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use POE;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 
@@ -222,8 +222,8 @@ little consistency overall.
 
 =item Lack of knowledge
 
-  The IO::Poll event loop provides an alternative that theoretically
-  scales better than select().
+   The IO::Poll event loop provides an alternative that theoretically
+   scales better than select().
 
 The IO::Poll "event loop" (who in his right mind would call that an event
 loop) of course scales about identically (sometimes it is a bit faster,

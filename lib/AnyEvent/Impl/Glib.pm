@@ -4,10 +4,10 @@ AnyEvent::Impl::Glib - AnyEvent adaptor for Glib
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use Glib;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use Glib;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 

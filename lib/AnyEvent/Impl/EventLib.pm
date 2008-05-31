@@ -4,10 +4,10 @@ AnyEvent::Impl::EventLib - AnyEvent adaptor for Event::Lib
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use Event::Lib;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use Event::Lib;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 

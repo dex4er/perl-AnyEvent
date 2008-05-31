@@ -4,7 +4,7 @@ AnyEvent::Util - various utility functions.
 
 =head1 SYNOPSIS
 
- use AnyEvent::Util;
+   use AnyEvent::Util;
 
 =head1 DESCRIPTION
 

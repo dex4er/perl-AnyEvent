@@ -4,12 +4,12 @@ AnyEvent::Impl::Qt - AnyEvent adaptor for Qt
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use Qt;
-
-  Qt::Application \@ARGV; # REQUIRED!
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use Qt;
+  
+   Qt::Application \@ARGV; # REQUIRED!
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 
@@ -116,8 +116,8 @@ L<AnyEvent>, L<Qt>.
 
 =head1 AUTHOR
 
- Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+   Marc Lehmann <schmorp@schmorp.de>
+   http://home.schmorp.de/
 
 =cut
 

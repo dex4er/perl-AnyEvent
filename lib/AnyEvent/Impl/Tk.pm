@@ -4,10 +4,10 @@ AnyEvent::Impl::Tk - AnyEvent adaptor for Tk
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  use Tk;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   use Tk;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 

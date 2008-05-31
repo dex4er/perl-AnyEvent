@@ -4,10 +4,10 @@ AnyEvent::Impl::Perl - Pure-Perl event loop and AnyEvent adaptor for itself
 
 =head1 SYNOPSIS
 
-  use AnyEvent;
-  # use AnyEvent::Impl::Perl;
-
-  # this module gets loaded automatically as required
+   use AnyEvent;
+   # use AnyEvent::Impl::Perl;
+  
+   # this module gets loaded automatically as required
 
 =head1 DESCRIPTION
 
@@ -240,8 +240,8 @@ L<AnyEvent>.
 
 =head1 AUTHOR
 
- Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+   Marc Lehmann <schmorp@schmorp.de>
+   http://home.schmorp.de/
 
 =cut
 

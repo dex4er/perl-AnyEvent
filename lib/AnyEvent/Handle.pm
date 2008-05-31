@@ -1121,7 +1121,6 @@ might have already started when this function returns.
 
 =cut
 
-# TODO: maybe document...
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
 
