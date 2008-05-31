@@ -1,21 +1,44 @@
-=head1 Network Programming with AnyEvent
+=head1 Introduction to AnyEvent
 
-This is a tutorial that will introduce you to AnyEvent by writing a small
-event-based program.
+This is a tutorial that will introduce you to the features of AnyEvent.
 
-=head2 Introduction
+The first part introduces the core AnyEvent module (after swamping you a
+bit in evangelism), which might already provide all you ever need.
 
-AnyEvent is first of all just a framework for multiple event loops. It is
-a thin abstraction layer above all kinds of event loops. Its main purpose
-is to move the choice of the event loop (whether it is Glib, Qt, EV or
-Event, or even something else, see also L<AnyEvent>) from the module
-author to the program author using the module.
+The second part focuses on network programming using sockets, for which
+AnyEvent offers a lot of support you can use.
 
-A typical problem with modules such as L<Net::IRC> is that they come with
-their own event loop. In L<Net::IRC>, the program who uses it needs to
-start the event loop of L<Net::IRC>. That means that one cannot integrate
-this module into a L<Gtk2> GUI for instance, as that module, too, enforces
-the use of its own event loop.
+
+=head1 What is AnyEvent?
+
+Skip this section if you want to see code, now!
+
+AnyEvent is first of all just a framework to do event-based
+programming. Typically such frameworks are an all-or-nothing thing: If you
+use one such framework, you can't (easily, or even at all) use another in
+the same program.
+
+AnyEvent is different - it is a thin abstraction layer above all kinds
+of event loops. Its main purpose is to move the choice of the underlying
+framework (the event loop) from the module author to the program author
+using the module.
+
+That means you can write code that uses events to control what it
+does, without forcing other code in the same program to use the same
+underlying framework as you do - i.e. you can create a Perl module
+that is event-based using AnyEvent, and users of that module can still
+choose between using L<Gtk2>, L<Tk>, L<Event> or no event loop at
+all: AnyEvent comes with its own event loop implementation, so your
+code works regardless of other modules that might or might not be
+installed. The latter is important, as AnyEvent does not have any
+dependencies to other modules, which makes it easy to install, for
+example, when you lack a C compiler.
+
+A typical problem with Perl modules such as L<Net::IRC> is that they
+come with their own event loop: In L<Net::IRC>, the program who uses it
+needs to start the event loop of L<Net::IRC>. That means that one cannot
+integrate this module into a L<Gtk2> GUI for instance, as that module,
+too, enforces the use of its own event loop (namely L<Glib>).
 
 Another example is L<LWP>: it provides no event interface at all. It's a
 pure blocking HTTP (and FTP etc.) client library, which usually means that
@@ -25,35 +48,351 @@ request to finish.
 
 The motivation behind these designs is often that a module doesn't want to
 depend on some complicated XS-module (Net::IRC), or that it doesn't want
-to force the user to use some specific event loop (LWP).
+to force the user to use some specific event loop at all (LWP).
 
-L<AnyEvent> solves this dilemma, by B<not> forcing module authors to:
+L<AnyEvent> solves this dilemma, by B<not> forcing module authors to either
 
 =over 4
 
-=item 1. Write their own event loop.
+=item write their own event loop (because guarantees to offer one
+everywhere - even on windows).
 
-=item 2. Choose one fixed event loop.
+=item choose one fixed event loop (because AnyEvent works with all
+important event loops available for Perl, and adding others is trivial).
 
 =back
 
-If the module author uses L<AnyEvent> for all his event needs (IO events, timers,
-signals, ...) all other modules can just use his module and don't have to choose
-an event loop or adapt to his event loop. The choice of the event loop is ultimately
-made by the program author who uses all the modules and writes the main
-program. And even there he doesn't have to choose, he can just ask L<AnyEvent>
-to choose any available event loop for him.
-
-And while AnyEvent can make good use of event loops written in C, such as
-EV or Glib, it also comes with a fast pure-perl event loop implementation
-on its own, which means module authors can rely on AnyEvent without
-fearing a worrisome dependency on some XS module.
+If the module author uses L<AnyEvent> for all his event needs (IO events,
+timers, signals, ...) then all other modules can just use his module and
+don't have to choose an event loop or adapt to his event loop. The choice
+of the event loop is ultimately made by the program author who uses all
+the modules and writes the main program. And even there he doesn't have to
+choose, he can just let L<AnyEvent> choose the best available event loop
+for him.
 
 Read more about this in the main documentation of the L<AnyEvent> module.
 
-=head2 Network programming and AnyEvent
 
-However, AnyEvent is not just a simple abstraction anymore. While the core
+=head1 Introduction to Event-Based Programming
+
+So what exactly is programming using events? It quite simply means that
+instead of your code actively waiting for something, such as the user
+entering something on STDIN:
+
+   $| = 1; print "enter your name> ";
+
+   my $name = <STDIN>;
+
+You instead tell your event framework to notify you in the event of some
+data being available on STDIN, by using a callback mechanism:
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name;
+
+   my $wait_for_input = AnyEvent->io (
+      fh   => \*STDIN, # which file handle to check
+      poll => "r",     # which event to wait for ("r"ead data)
+      cb   => sub {    # what callback to execute
+         $name = <STDIN>; # read it
+      }
+   );
+
+   # do something else here
+
+Looks more complicated, and surely is, but the advantage of using events
+is that your program can do something else instead of waiting for
+input. Waiting as in the first example is also called "blocking" because
+you "block" your process from executing anything else while you do so.
+
+The second example avoids blocking, by only registering interest in a read
+event, which is fast and doesn't block your process. Only when read data
+is available will the callback be called, which can then proceed to read
+the data.
+
+The "interest" is represented by an object returned by C<< AnyEvent->io
+>> called a "watcher" object - called like that because it "watches" your
+file handle (or other event sources) for the event you are interested in.
+
+In the example above, we create an I/O watcher by calling the C<<
+AnyEvent->io >> method. Disinterest in some event is simply expressed by
+forgetting about the watcher, for example, by C<undef>'ing the variable it
+is stored in. AnyEvent will automatically clean up the watcher if it is no
+longer used, much like Perl closes your file handles if you no longer use
+them anywhere.
+
+=head2 Condition Variables
+
+However, the above is not a fullly working program, and will not work
+as-is. The reason is that your callback will not be invoked out of the
+blue, you have to run the event loop. Also, event-based programs sometimes
+have to block, too, as when there simply is nothing else to do and
+everything waits for some events, it needs to block the process as well.
+
+In AnyEvent, this is done using condition variables. Condition variables
+are named "condition variables" because they represent a condition that is
+initially false and needs to be fulfilled.
+
+You can also call them mergepoints, syncpoints, rendezvous ports or even
+callbacks and many other things (and they are often called like this in
+other frameworks). The important point is that you can create them freely
+and later wait for them to become true.
+
+Condition variables have two sides - one side is the "producer" of the
+condition (whatever code detects the condition), the other side is the
+"consumer" (the code that waits for that condition).
+
+In our example in the previous section, the producer is the event callback
+and there is no consumer yet - let's change that now:
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name;
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh   => \*STDIN,
+      poll => "r",
+      cb   => sub {
+         $name = <STDIN>;
+         $name_ready->send;
+      }
+   );
+
+   # do something else here
+
+   # now wait until the name is available:
+   $name_ready->recv;
+
+   undef $wait_for_input; # watche rno longer needed
+
+   print "your name is $name\n";
+
+This program creates an AnyEvent condvar by calling the C<<
+AnyEvent->condvar >> method. It then creates a watcher as usual, but
+inside the callback it C<send>'s the C<$name_ready> condition variable,
+which causes anybody waiting on it to continue.
+
+The "anybody" in this case is the code that follows, which calls C<<
+$name_ready->recv >>: The producer calls C<send>, the consumer calls
+C<recv>.
+
+If there is no C<$name> available yet, then the call to C<<
+$name_ready->recv >> will halt your program until the condition becomes
+true.
+
+As the names C<send> and C<recv> imply, you can actually send and receive
+data using this, for example, the above code could also be written like
+this, without an extra variable to store the name in:
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh => \*STDIN, poll => "r",
+      cb => sub { $name_ready->send (scalar = <STDIN>) }
+   );
+
+   # do something else here
+
+   # now wait and fetch the name
+   my $name = $name_ready->recv;
+
+   undef $wait_for_input; # watche rno longer needed
+
+   print "your name is $name\n";
+
+You can pass any number of arguments to C<send>, and everybody call to
+C<recv> will return them.
+
+=head2 The "main loop"
+
+Most event-based frameworks have something called a "main loop" or "event
+loop run function" or something similar.
+
+Just like in C<recv> AnyEvent, these functions need to be called
+eventually so that your event loop has a chance of actually looking for
+those events you are interested in.
+
+For example, in a L<Gtk2> program, the above example could also be written
+like this:
+
+   use Gtk2 -init;
+   use AnyEvent;
+
+   ############################################
+   # create a window and some label
+
+   my $window = new Gtk2::Window "toplevel";
+   $window->add (my $label = new Gtk2::Label "soon replaced by name");
+
+   $window->show_all;
+
+   ############################################
+   # do our AnyEvent stuff
+
+   $| = 1; print "enter your name> ";
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh => \*STDIN, poll => "r",
+      cb => sub {
+         # set the label
+         $label->set_text (scalar <STDIN>);
+         print "enter another name> ";
+      }
+   );
+
+   ############################################
+   # Now enter Gtk2's event loop
+
+   main Gtk2;
+
+No condition variable anywhere in sight - instead, we just read a line
+from STDIN and replace the text in the label. In fact, since nobody
+C<undef>'s C<$wait_for_input> you can enter multiple lines.
+
+Instead of waiting for a condition variable, the program enters the Gtk2
+main loop by calling C<< Gtk2->main >>, which will block the program and
+wait for events to arrive.
+
+This also shows that AnyEvent is quite flexible - you didn't have anything
+to do to make the AnyEvent watcher use Gtk2 (actually Glib) - it just
+worked.
+
+Admittedly, the example is a bit silly - who would want to read names
+form standard input in a Gtk+ application. But imagine that instead of
+doing that, you would make a HTTP request in the background and display
+it's results. In fact, with event-based programming you can make many
+http-requests in parallel in your program and still provide feedback to
+the user and stay interactive.
+
+In the next part you will see how to do just that - by implementing an
+HTTP request, on our own, with the utility modules AnyEvent comes with.
+
+Before that, however, lets briefly look at how you would write your
+program with using only AnyEvent, without ever calling some other event
+loop's run function.
+
+In the example using condition variables, we used that, and in fact, this
+is the solution:
+
+   my $quit_program = AnyEvent->condvar;
+
+   # create AnyEvent watchers (or not) here
+
+   $quit_program->recv;
+
+If any of your watcher callbacks decide to quit, they can simply call
+C<< $quit_program->send >>. Of course, they could also decide not to and
+simply call C<exit> instead, or they could decide not to quit, ever (e.g.
+in a long-running daemon program).
+
+In that case, you can simply use:
+
+   AnyEvent->condvar->recv;
+
+And this is, in fact, closest to the idea of a main loop run function that
+AnyEvent offers.
+
+=head2 Timers and other event sources
+
+So far, we have only used I/O watchers. These are useful mainly to find
+out wether a Socket has data to read, or space to write more data. On sane
+operating systems this also works for console windows/terminals (typically
+on standard input), serial lines, all sorts of other devices, basically
+almost everything that has a file descriptor but isn't a file itself. (As
+usual, "sane" excludes windows - on that platform you would need different
+functions for all of these, complicating code immesely - think "socket
+only" on windows).
+
+However, I/O is not everything - the secondmost important event source is
+the clock. For example when doing an HTTP request you might want to time
+out when the server doesn't answre within some predefined amount of time.
+
+In AnyEvent, timer event watchers are created by calling the C<<
+AnyEvent->timer >> method:
+
+   use AnyEvent;
+
+   my $cv = AnyEvent->condvar;
+
+   my $wait_one_and_a_half_seconds = AnyEvent->timer (
+      after => 1.5,  # after how many seconds to invoke the cb?
+      cb    => sub { # the callback to invoke
+         $cv->send;
+      },
+   );
+
+   # can do somehting else here
+
+   # now wait till our time has come
+   $cv->recv;
+
+Unlike I/O watchers, timers are only interested in the amount of seconds
+they have to wait. When that amount of time has passed, AnyEvent will
+invoke your callback.
+
+Unlike I/O watchers, which will call your callback as many times as there
+is data available, timers are one-shot: after they have "fired" once and
+invoked your callback, they are dead and no longer do anything.
+
+To get a repeating timer, such as a timer firing roughly once per second,
+you have to recreate it:
+
+   use AnyEvent;
+
+   my $time_watcher;
+
+   sub once_per_second {
+      print "tick\n";
+      
+      # (re-)create the watcher
+      $time_watcher = AnyEvent->timer (
+         after => 1,
+         cb    => \&once_per_second,
+      );
+   }
+
+   # now start the timer
+   once_per_second;
+
+Having to recreate your timer is a restriction put on AnyEvent that is
+present in most event libraries it uses. It is so annoying that some
+future version might worka round this limitation, but right now, it's the
+only way to do repeating timers.
+
+Fortunately most timers aren't really repeating but specify timeouts of
+some sort.
+
+=head3 More esoteric sources
+
+AnyEvent also has some other, more esoteric event sources you can tap
+into: signal and child watchers.
+
+Signal watchers can be used to wait for "signal events", which simply
+means your process got send a signal (Such as C<SIGTERM> or C<SIGUSR1>).
+
+Process watchers wait for a child process to exit. They are useful when
+you fork a separate process and ened to know when it exits, but you do not
+wait for that by blocking.
+
+Both watcher types are described in detail in the main L<AnyEvent> manual
+page.
+
+
+=head1 Network programming and AnyEvent
+
+AnyEvent is not just a simple abstraction anymore. While the core
 L<AnyEvent> module is still small and self-contained, the distribution
 comes with some very useful utility modules such as L<AnyEvent::Handle>,
 L<AnyEvent::DNS> and L<AnyEvent::Socket>. These can make your life as
@@ -61,7 +400,7 @@ non-blocking network programmer a lot easier.
 
 Here is an introduction into these three submodules:
 
-=head3 L<AnyEvent::Handle>
+=head2 L<AnyEvent::Handle>
 
 This module handles non-blocking IO on file handles in an event based
 manner. It provides a wrapper object around your file handle that provides
@@ -69,7 +408,7 @@ queueing and buffering of incoming and outgoing data for you.
 
 More about this later.
 
-=head3 L<AnyEvent::Socket>
+=head2 L<AnyEvent::Socket>
 
 This module provides you with functions that handle socket creation
 and IP address magic. The two main functions are C<tcp_connect> and
@@ -85,7 +424,7 @@ It also works around a lot of portability quirks (especially on the
 windows platform), which makes it even easier to write your programs in a
 portable way.
 
-=head3 L<AnyEvent::DNS>
+=head2 L<AnyEvent::DNS>
 
 This module allows fully asynchronous DNS resolution. It is used mainly
 by L<AnyEvent::Socket> to resolve hostnames and service ports, but is a
