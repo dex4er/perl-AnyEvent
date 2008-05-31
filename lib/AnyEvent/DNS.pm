@@ -67,7 +67,7 @@ Tries to resolve the given domain name into a list of text records.
 Tries to resolve the given service, protocol and domain name into a list
 of service records.
 
-Each srv_rr is an array reference with the following contents: 
+Each C<$srv_rr> is an array reference with the following contents: 
 C<[$priority, $weight, $transport, $target]>.
 
 They will be sorted with lowest priority first, then randomly
