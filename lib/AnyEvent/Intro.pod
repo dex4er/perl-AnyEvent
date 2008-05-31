@@ -279,7 +279,7 @@ the user and stay interactive.
 In the next part you will see how to do just that - by implementing an
 HTTP request, on our own, with the utility modules AnyEvent comes with.
 
-Before that, however, lets briefly look at how you would write your
+Before that, however, let's briefly look at how you would write your
 program with using only AnyEvent, without ever calling some other event
 loop's run function.
 
@@ -404,7 +404,14 @@ the distribution comes with some very useful utility modules such as
 L<AnyEvent::Handle>, L<AnyEvent::DNS> and L<AnyEvent::Socket>. These can
 make your life as non-blocking network programmer a lot easier.
 
-Here is an introduction to these three submodules:
+Here is a quick overview over these three modules:
+
+=head2 L<AnyEvent::DNS>
+
+This module allows fully asynchronous DNS resolution. It is used mainly by
+L<AnyEvent::Socket> to resolve hostnames and service ports for you, but is
+a great way to do other DNS resolution tasks, such as reverse lookups of
+IP addresses for log files.
 
 =head2 L<AnyEvent::Handle>
 
@@ -412,7 +419,8 @@ This module handles non-blocking IO on file handles in an event based
 manner. It provides a wrapper object around your file handle that provides
 queueing and buffering of incoming and outgoing data for you.
 
-More about this later.
+It also implements the most common data formats, such as text lines, or
+fixed and variable-width data blocks.
 
 =head2 L<AnyEvent::Socket>
 
@@ -424,18 +432,218 @@ connections.
 
 This module also comes with transparent IPv6 support, this means: If you
 write your programs with this module, you will be IPv6 ready without doing
-anything further.
+anything special.
 
 It also works around a lot of portability quirks (especially on the
 windows platform), which makes it even easier to write your programs in a
-portable way.
+portable way (did you know that windows uses different error codes for all
+socket functions and that Perl does not know about these? That "Unknown
+error 10022" (which is C<WSAEINVAL>) can mean that our C<connect> call was
+successful? That unsuccessful TCP connects might never be reported back
+to your program? That C<WSAEINPROGRESS> means your C<connect> call was
+ignored instead of being in progress? AnyEvent::Socket works around all of
+these Windows/Perl bugs for you).
 
-=head2 L<AnyEvent::DNS>
+=head2 First experiments with non-blocking connects: a parallel finger
+client.
 
-This module allows fully asynchronous DNS resolution. It is used mainly
-by L<AnyEvent::Socket> to resolve hostnames and service ports, but is a
-great way to do other DNS resolution tasks, such as reverse lookups of IP
-addresses for log files.
+The finger protocol is one of the simplest protocols in use on the
+internet. Or in use in the past, as almost nobody uses it anymore.
+
+It works by connecting to the finger port on another host, writing a
+single line with a user name and then reading the finger response, as
+specified by that user. OK, RFC 1288 specifies a vastly more complex
+protocol, but it basically boils down to this:
+
+   # telnet idsoftware.com finger
+   Trying 192.246.40.37...
+   Connected to idsoftware.com (192.246.40.37).
+   Escape character is '^]'.
+   johnc
+   Welcome to id Software's Finger Service V1.5!
+
+   [...]
+   Now on the web:
+   [...]
+
+   Connection closed by foreign host.
+
+Yeah, I<was> used indeed, but at least the finger daemon still works, so
+let's write a little AnyEvent function that makes a finger request:
+
+   use AnyEvent;
+   use AnyEvent::Socket;
+
+   sub finger($$) {
+      my ($user, $host) = @_;
+
+      # use a condvar to return results
+      my $cv = AnyEvent->condvar;
+
+      # first, connect to the host
+      tcp_connect $host, "finger", sub {
+         # the callback gets the socket handle - or nothing
+         my ($fh) = @_
+            or return $cv->send;
+
+         # now write the username
+         syswrite $fh, "$user\015\012";
+
+         my $response;
+
+         # register a read watcher
+         my $read_watcher; $read_watcher = AnyEvent->io (
+            fh   => $fh,
+            poll => "r",
+            cb   => sub {
+               my $len = sysread $fh, $response, 1024, length $response;
+
+               if ($len <= 0) {
+                  # we are done, or an error occured, lets ignore the latter
+                  undef $read_watcher; # no longer interested
+                  $cv->send ($response); # send results
+               }
+            },
+         );
+      };
+
+      # pass $cv to the caller
+      $cv
+   }
+
+That's a mouthful! Let's dissect this function a bit, first the overall function:
+
+   sub finger($$) {
+      my ($user, $host) = @_;
+
+      # use a condvar to return results
+      my $cv = AnyEvent->condvar;
+
+      # first, connect to the host
+      tcp_connect $host, "finger", sub {
+         ...
+      };
+
+      $cv
+   }
+
+This isn't too complicated, just a function with two parameters, which
+creates a condition variable, returns it, and while it does that,
+initiates a TCP connect to the passed C<$host>. The condition variable
+will be used by the caller to receive the finger response.
+
+Since we are event-based programmers, we do not wait for the connect to
+finish - it could block your program for a minute or longer!
+
+Instead, we pass C<tcp_connect> the callback it should invoke when the
+connect is done. If it is successful, our callback gets passed the socket
+handle as first argument, otherwise, nothing will be passed.
+
+Let's look at our callback in more detail:
+
+         # the callback gets the socket handle - or nothing
+         my ($fh) = @_
+            or return $cv->send;
+
+The first thing the callback does is indeed save the passed socket handle
+in C<$fh>. When there was an error (no arguments), then our instinct would
+tell us to die:
+
+         my ($fh) = @_
+            or die "$host: $!";
+
+While this would give good feedback to the user, our program would
+probably freeze here, as we never report the results to anybody, certainly
+not the caller of our C<finger> function!
+
+This is why we instead return, but also call C<< $cv->send >> without any
+arguments to signal to our consumer that something bad has happened. The
+return value of C<< $cv->send >> is irrelevant, as is the return value of
+our callback. The return statement is simply used for the side effect of,
+well, returning immediately from the callback.
+
+As the next step in the finger protocol, we send the username to the
+finger daemon on the other side of our connection:
+
+         syswrite $fh, "$user\015\012";
+
+Note that this isn't 100% clean - the socket could, for whatever reasons,
+not accept our data. When writing a small amount of data like in this
+example it doesn't matter, but for real-world cases you might need to
+implement some kind of write buffering - or use L<AnyEvent::Handle>, which
+handles these matters for you.
+
+What we do have to do is to implement our own read buffer - the response
+data could arrive late or in multiple chunks, and we cannot just wait for
+it (event-based programming, you know?).
+
+To do that, we register a read watcher on the socket which waits for data:
+
+         my $read_watcher; $read_watcher = AnyEvent->io (
+            fh   => $fh,
+            poll => "r",
+
+There is a trick here, however: the read watcher isn't stored in a global
+variable, but in a local one - if the callback returns, it would normally
+destroy the variable and its contents, which would in turn unregister our
+watcher again.
+
+To avoid that, we C<undef>ine the variable in the watcher callback. This
+means that, when the C<tcp_connect> callback returns, that Perl thinks
+(quite correctly) that the read watcher is still in use - namely in the
+callback.
+
+The callback itself calls C<sysread> for as many times as necessary, until
+C<sysread> returns an error or end-of-file:
+
+            cb   => sub {
+               my $len = sysread $fh, $response, 1024, length $response;
+
+               if ($len <= 0) {
+
+Note that C<sysread> has the ability to append data it reads to a scalar,
+which is what we make good use of in this example.
+
+When C<sysread> indicates we are done, the callback C<undef>ines
+the watcher and then C<send>'s the response data to the condition
+variable. All this has the following effects:
+
+Undefining the watcher destroys it, as our callback was the only one still
+having a reference to it. When the watcher gets destroyed, it destroys the
+callback, which in turn means the C<$fh> handle is no longer used, so that
+gets destroyed as well. The result is that all resources will be nicely
+cleaned up by perl for us.
+
+=head3 Using the finger client
+
+Now, we could probably write the same finger client simpler if we used
+C<IO::Socket::INET>, ignored the problem of multiple hosts and ignored
+IPv6 and a few other things.
+
+But the main advantage is that we can not only run this finger function in
+the background, we even can run multiple sessions in parallel, like this:
+
+   my $f1 = finger "trouble", "noc.dfn.de"; # check for trouble tickets
+   my $f2 = finger "1736"   , "noc.dfn.de"; # fetch ticket 1736
+   my $f3 = finger "johnc", "idsoftware.com"; # finger john
+
+   print "trouble tickets:\n", $f1->recv, "\n";
+   print "trouble ticket #1736:\n", $f2->recv, "\n";
+   print "john carmacks finger file: ", $f3->recv, "\n";
+
+It doesn't look like it, but in fact all three requests run in
+parallel. The code waits for the first finger request to finish first, but
+that doesn't keep it from executing all three in parallel.
+
+=head3 Criticism and fix
+
+To make this example more real-world-ready, we would not only implement
+some write buffering (for the paranoid), but we would also have to handle
+timeouts and maybe protocol errors.
+
+This quickly gets unwieldy, which is why we introduce L<AnyEvent::Handle>
+in the next section, which takes care of all these details for us.
+
 
 =head2 First experiments with AnyEvent::Handle
 
@@ -479,7 +687,7 @@ First, the full program listing:
 
    $end_prog->recv;
 
-That's a mouthful, so lets go through it step by step:
+That's a mouthful, so let's go through it step by step:
 
    #!/usr/bin/perl
 
