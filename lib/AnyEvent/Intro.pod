@@ -394,7 +394,7 @@ page.
 
 So far you have seen how to register event watchers and handle events.
 
-This is a great basis to write network clients and servers, and might be
+This is a great foundation to write network clients and servers, and might be
 all that your module (or program) ever requires, but writing your own I/O
 buffering again and again becomes tedious, not to mention that it attracts
 errors.
@@ -529,15 +529,15 @@ That's a mouthful! Let's dissect this function a bit, first the overall function
 
 This isn't too complicated, just a function with two parameters, which
 creates a condition variable, returns it, and while it does that,
-initiates a TCP connect to the passed C<$host>. The condition variable
+initiates a TCP connect to C<$host>. The condition variable
 will be used by the caller to receive the finger response.
 
 Since we are event-based programmers, we do not wait for the connect to
-finish - it could block your program for a minute or longer!
-
-Instead, we pass C<tcp_connect> the callback it should invoke when the
-connect is done. If it is successful, our callback gets passed the socket
-handle as first argument, otherwise, nothing will be passed.
+finish - it could block your program for a minute or longer! Instead,
+we pass the callback it should invoke when the connect is done to
+C<tcp_connect>. If it is successful, our callback gets called with the
+socket handle as first argument, otherwise, nothing will be passed to our
+callback.
 
 Let's look at our callback in more detail:
 
@@ -545,9 +545,9 @@ Let's look at our callback in more detail:
          my ($fh) = @_
             or return $cv->send;
 
-The first thing the callback does is indeed save the passed socket handle
-in C<$fh>. When there was an error (no arguments), then our instinct would
-tell us to die:
+The first thing the callback does is indeed save the socket handle in
+C<$fh>. When there was an error (no arguments), then our instinct as
+expert Perl programmers would tell us to die:
 
          my ($fh) = @_
             or die "$host: $!";
@@ -586,10 +586,10 @@ To do that, we register a read watcher on the socket which waits for data:
 There is a trick here, however: the read watcher isn't stored in a global
 variable, but in a local one - if the callback returns, it would normally
 destroy the variable and its contents, which would in turn unregister our
-watcher again.
+watcher.
 
 To avoid that, we C<undef>ine the variable in the watcher callback. This
-means that, when the C<tcp_connect> callback returns, that Perl thinks
+means that, when the C<tcp_connect> callback returns, that perl thinks
 (quite correctly) that the read watcher is still in use - namely in the
 callback.
 
@@ -616,9 +616,9 @@ cleaned up by perl for us.
 
 =head3 Using the finger client
 
-Now, we could probably write the same finger client simpler if we used
-C<IO::Socket::INET>, ignored the problem of multiple hosts and ignored
-IPv6 and a few other things.
+Now, we could probably write the same finger client in a simpler way if
+we used C<IO::Socket::INET>, ignored the problem of multiple hosts and
+ignored IPv6 and a few other things that C<tcp_connect> handles for us.
 
 But the main advantage is that we can not only run this finger function in
 the background, we even can run multiple sessions in parallel, like this:
@@ -632,8 +632,29 @@ the background, we even can run multiple sessions in parallel, like this:
    print "john carmacks finger file: ", $f3->recv, "\n";
 
 It doesn't look like it, but in fact all three requests run in
-parallel. The code waits for the first finger request to finish first, but
-that doesn't keep it from executing all three in parallel.
+parallel. The code waits for the first finger request to finish first,
+but that doesn't keep it from executing all three in parallel, a bug time
+saver.
+
+By the way, you do not actually have to wait in the C<recv> method on an
+AnyEvent condition variable, you can also register a callback:
+
+   $cv->cb (sub {
+      my $response = shift->recv;
+      # ...
+   });
+
+The callback will only be invoked when C<send> was called. In fact,
+instead of returning a condition variable you could also pass a third
+parameter to your finger function, the callback to invoke with the
+response:
+
+   sub finger($$$) {
+      my ($user, $host, $cb) = @_;
+
+What you use is a matter of taste - if you expect your function to be
+used mainly in an event-based program you would normally prefer to pass a
+callback directly.
 
 =head3 Criticism and fix
 
