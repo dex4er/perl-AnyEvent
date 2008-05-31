@@ -380,7 +380,7 @@ AnyEvent also has some other, more esoteric event sources you can tap
 into: signal and child watchers.
 
 Signal watchers can be used to wait for "signal events", which simply
-means your process got send a signal (Such as C<SIGTERM> or C<SIGUSR1>).
+means your process got send a signal (such as C<SIGTERM> or C<SIGUSR1>).
 
 Process watchers wait for a child process to exit. They are useful when
 you fork a separate process and ened to know when it exits, but you do not
