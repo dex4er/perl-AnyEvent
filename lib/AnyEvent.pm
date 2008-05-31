@@ -20,6 +20,12 @@ EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
    $w->send; # wake up current and all future recv's
    $w->recv; # enters "main loop" till $condvar gets ->send
 
+=head1 INTRODUCTION/TUTORIAL
+
+This manpage is mainly a reference manual. If you are interested
+in a tutorial or some gentle introduction, have a look at the
+L<AnyEvent::Intro> manpage.
+
 =head1 WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
 Glib, POE, IO::Async, Event... CPAN offers event models by the dozen

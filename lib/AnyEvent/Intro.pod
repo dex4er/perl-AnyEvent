@@ -392,13 +392,19 @@ page.
 
 =head1 Network programming and AnyEvent
 
-AnyEvent is not just a simple abstraction anymore. While the core
-L<AnyEvent> module is still small and self-contained, the distribution
-comes with some very useful utility modules such as L<AnyEvent::Handle>,
-L<AnyEvent::DNS> and L<AnyEvent::Socket>. These can make your life as
-non-blocking network programmer a lot easier.
+So far you have seen how to register event watchers and handle events.
 
-Here is an introduction into these three submodules:
+This is a great basis to write network clients and servers, and might be
+all that your module (or program) ever requires, but writing your own I/O
+buffering again and again becomes tedious, not to mention that it attracts
+errors.
+
+While the core L<AnyEvent> module is still small and self-contained,
+the distribution comes with some very useful utility modules such as
+L<AnyEvent::Handle>, L<AnyEvent::DNS> and L<AnyEvent::Socket>. These can
+make your life as non-blocking network programmer a lot easier.
+
+Here is an introduction to these three submodules:
 
 =head2 L<AnyEvent::Handle>
 
