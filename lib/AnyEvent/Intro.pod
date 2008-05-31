@@ -815,3 +815,7 @@ The key points to learn from this example are:
 
 =back
 
+=head1 AUTHORS
+
+Robin Redeker C<< <elmex at ta-sa.org> >>, Marc Lehmann <schmorp@schmorp.de>.
+

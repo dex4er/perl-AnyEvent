@@ -599,8 +599,9 @@ This is a mutator function that returns the callback set and optionally
 replaces it before doing so.
 
 The callback will be called when the condition becomes "true", i.e. when
-C<send> or C<croak> are called. Calling C<recv> inside the callback
-or at any later time is guaranteed not to block.
+C<send> or C<croak> are called, with the only argument being the condition
+variable itself. Calling C<recv> inside the callback or at any later time
+is guaranteed not to block.
 
 =back
 
