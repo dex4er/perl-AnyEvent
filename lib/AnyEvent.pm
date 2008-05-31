@@ -1,4 +1,4 @@
-=head1 => NAME
+=head1 NAME
 
 AnyEvent - provide framework for multiple event loops
 
