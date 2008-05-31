@@ -11,7 +11,7 @@ AnyEvent offers a lot of support you can use.
 
 =head1 What is AnyEvent?
 
-Skip this section if you want to see code, now!
+If you don't care for the "why's" and want to see code, skip this section!
 
 AnyEvent is first of all just a framework to do event-based
 programming. Typically such frameworks are an all-or-nothing thing: If you
@@ -482,7 +482,7 @@ let's write a little AnyEvent function that makes a finger request:
 
       # first, connect to the host
       tcp_connect $host, "finger", sub {
-         # the callback gets the socket handle - or nothing
+         # the callback receives the socket handle - or nothing
          my ($fh) = @_
             or return $cv->send;
 
