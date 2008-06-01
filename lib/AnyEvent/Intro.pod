@@ -632,9 +632,15 @@ the background, we even can run multiple sessions in parallel, like this:
    print "john carmacks finger file: ", $f3->recv, "\n";
 
 It doesn't look like it, but in fact all three requests run in
-parallel. The code waits for the first finger request to finish first,
-but that doesn't keep it from executing all three in parallel, a bug time
-saver.
+parallel. The code waits for the first finger request to finish first, but
+that doesn't keep it from executing in parallel, because when the first
+C<recv> call sees that the data isn't ready yet, it serves events for all
+three requests automatically.
+
+By taking advantage of network latencies, which allows us to serve other
+requests and events while we wait for an event on one socket, the overall
+time to do these three requests will be greatly reduces, typically all
+three are done in the same time as the slowest of them would use.
 
 By the way, you do not actually have to wait in the C<recv> method on an
 AnyEvent condition variable, you can also register a callback:
