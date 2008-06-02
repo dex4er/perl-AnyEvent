@@ -756,7 +756,48 @@ telnet output is google's response, in which case a C<404 not found> one.
 
 So, here is how you would do it with C<AnyEvent::Handle>:
 
-###TODO
+   sub http_get {
+      my ($host, $uri, $cb) = @_;
+
+      AnyEvent::Socket::tcp_connect $host, "http", sub {
+         my ($fh) = @_
+            or $cb->("HTTP/1.0 500 $!");
+
+         # store results here
+         my ($response, $header, $body);
+
+         my $handle; $handle = new AnyEvent::Handle
+            fh       => $fh,
+            on_error => sub {
+               undef $handle;
+               $cb->("HTTP/1.0 500 $!");
+            },
+            on_eof   => sub {
+               undef $handle; # keep it alive till eof
+               $cb->($response, $header, $body);
+            };
+
+         $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+
+         # now fetch response status line
+         $handle->push_read (line => sub {
+            my ($handle, $line) = @_;
+            $response = $line;
+         });
+
+         # then the headers
+         $handle->push_read (line => "\015\012\015\012", sub {
+            my ($handle, $line) = @_;
+            $header = $line;
+         });
+
+         # and finally handle any remaining data as body
+         $handle->on_read (sub {
+            $body .= $_[0]->rbuf;
+            $_[0]->rbuf = "";
+         });
+      };
+   }
 
 And now let's go through it step by step. First, as usual, the overall
 C<http_get> function structure:
@@ -862,7 +903,7 @@ Reading the response if far more interesting:
 
 =head3 The read queue
 
-the response consists of three parts: a single line of response status, a
+The response consists of three parts: a single line of response status, a
 single paragraph of headers ended by an empty line, and the request body,
 which is simply the remaining data on that connection.
 
@@ -906,157 +947,37 @@ install our own C<on_read> callback:
 
 This callback is invoked every time data arrives and the read queue is
 empty - which in this example will only be the case when both response and
-header have been read.
+header have been read. The C<on_read> callback could actually have been
+specified when constructing the object, but doing it this way preserves
+logical ordering.
 
+The read callback simply adds the current read buffer to it's C<$body>
+variable and, most importantly, I<empties> it by assign the empty string
+to it.
 
-#############################################################################
+After AnyEvent::Handle has been so instructed, it will now handle incoming
+data according to these instructions - if all goes well, the callback will
+be invoked with the response data, if not, it will get an error.
 
-Now let's start with something simple: a program that reads from standard
-input in a non-blocking way, that is, in a way that lets your program do
-other things while it is waiting for input.
+=head3 Using it
 
-First, the full program listing:
+And here is how you would use it:
 
-   #!/usr/bin/perl
+   http_get "www.google.com", "/", sub {
+      my ($response, $header, $body) = @_;
 
-   use AnyEvent;
-   use AnyEvent::Handle;
+      print
+         $response, "\n",
+         $body;
+   };
 
-   my $end_prog = AnyEvent->condvar;
+And of course, you can run as many of these requests in parallel as you
+want (and your memory supports).
 
-   my $handle =
-      AnyEvent::Handle->new (
-         fh => \*STDIN,
-         on_eof => sub {
-            print "received EOF, exiting...\n";
-            $end_prog->broadcast;
-         },
-         on_error => sub {
-            print "error while reading from STDIN: $!\n";
-            $end_prog->broadcast;
-         }
-      );
+=head3 The read queue - revisited
 
-   $handle->push_read (sub {
-      my ($handle) = @_;
+###TODO
 
-      if ($handle->rbuf =~ s/^.*?\bend\b.*$//s) {
-         print "got 'end', existing...\n";
-         $end_prog->broadcast;
-         return 1
-      }
-
-      0
-   });
-
-   $end_prog->recv;
-
-That's a mouthful, so let's go through it step by step:
-
-   #!/usr/bin/perl
-
-   use AnyEvent;
-   use AnyEvent::Handle;
-
-Nothing unexpected here, just load AnyEvent for the event functionality
-and AnyEvent::Handle for your file handling needs.
-
-   my $end_prog = AnyEvent->condvar;
-
-Here the program creates a so-called 'condition variable': Condition
-variables are a great way to signal the completion of some event, or to
-state that some condition became true (thus the name).
-
-This condition variable represents the condition that the program wants to
-terminate. Later in the program, we will 'recv' that condition (call the
-C<recv> method on it), which will wait until the condition gets signalled
-(which is done by calling the C<send> method on it).
-
-The next step is to create the handle object:
-
-   my $handle =
-      AnyEvent::Handle->new (
-         fh     => \*STDIN,
-         on_eof => sub {
-            print "received EOF, exiting...\n";
-            $end_prog->broadcast;
-         },
-
-This handle object will read from standard input. Setting the C<on_eof>
-callback should be done for every file handle, as that is a condition that
-we always need to check for when working with file handles, to prevent
-reading or writing to a closed file handle, or getting stuck indefinitely
-in case of an error.
-
-Speaking of errors:
-
-         on_error => sub {
-            print "error while reading from STDIN: $!\n";
-            $end_prog->broadcast;
-         }
-      );
-
-The C<on_error> callback is also not required, but we set it here in case
-any error happens when we read from the file handle. It is usually a good
-idea to set this callback and at least print some diagnostic message: Even
-in our small example an error can happen. More on this later...
-
-   $handle->push_read (sub {
-
-Next we push a general read callback on the read queue, which
-will wait until we have received all the data we wanted to
-receive. L<AnyEvent::Handle> has two queues per file handle, a read and a
-write queue. The write queue queues pending data that waits to be written
-to the file handle. And the read queue queues reading callbacks. For more
-details see the documentation L<AnyEvent::Handle> about the READ QUEUE and
-WRITE QUEUE.
-
-      my ($handle) = @_;
-
-      if ($handle->rbuf =~ s/^.*?\bend\b.*$//s) {
-         print "got 'end', existing...\n";
-         $end_prog->broadcast;
-         return 1
-      }
-
-      0
-   });
-
-The actual callback waits until the word 'end' has been seen in the data
-received on standard input. Once we encounter the stop word 'end' we
-remove everything from the read buffer and call the condition variable
-we setup earlier, that signals our 'end of program' condition. And the
-callback returns with a true value, that signals we are done with reading
-all the data we were interested in (all data until the word 'end' has been
-seen).
-
-In all other cases, when the stop word has not been seen yet, we just
-return a false value, to indicate that we are not finished yet.
-
-The C<rbuf> method returns our read buffer, that we can directly modify as
-lvalue.  Alternatively we also could have written:
-
-      if ($handle->{rbuf} =~ s/^.*?\bend\b.*$//s) {
-
-The last line will wait for the condition that our program wants to exit:
-
-   $end_prog->recv;
-
-The call to C<recv> will setup an event loop for us and wait for IO, timer
-or signal events and will handle them until the condition gets sent (by
-calling its C<send> method).
-
-The key points to learn from this example are:
-
-=over 4
-
-=item * Condition variables are used to start an event loop.
-
-=item * How to registering some basic callbacks on AnyEvent::Handle's.
-
-=item * How to process data in the read buffer.
-
-=back
 
 =head1 AUTHORS
 

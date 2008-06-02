@@ -522,6 +522,8 @@ register_write_type json => sub {
                  : JSON::encode_json ($ref)
 };
 
+=back
+
 =item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
 
 This function (not method) lets you add your own types to C<push_write>.
@@ -533,8 +535,6 @@ be appended to the write buffer.
 
 Note that this is a function, and all types registered this way will be
 global, so try to use unique names.
-
-=back
 
 =cut
 
