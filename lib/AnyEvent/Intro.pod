@@ -1137,7 +1137,7 @@ The example above could be coded like this:
    });
 
 
-=head1 AUTHORS
+=head1 Authors
 
 Robin Redeker C<< <elmex at ta-sa.org> >>, Marc Lehmann <schmorp@schmorp.de>.
 
