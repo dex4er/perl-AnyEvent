@@ -445,6 +445,7 @@ ignored instead of being in progress? AnyEvent::Socket works around all of
 these Windows/Perl bugs for you).
 
 =head2 Implementing a parallel finger client with non-blocking connects
+and AnyEvent::Socket
 
 The finger protocol is one of the simplest protocols in use on the
 internet. Or in use in the past, as almost nobody uses it anymore.
