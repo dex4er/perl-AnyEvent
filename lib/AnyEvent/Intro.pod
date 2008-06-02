@@ -11,7 +11,7 @@ AnyEvent offers a lot of support you can use.
 
 =head1 What is AnyEvent?
 
-If you don't care for the "why's" and want to see code, skip this section!
+If you don't care for the whys and want to see code, skip this section!
 
 AnyEvent is first of all just a framework to do event-based
 programming. Typically such frameworks are an all-or-nothing thing: If you
@@ -125,7 +125,7 @@ them anywhere.
 
 =head2 Condition Variables
 
-However, the above is not a fullly working program, and will not work
+However, the above is not a fully working program, and will not work
 as-is. The reason is that your callback will not be invoked out of the
 blue, you have to run the event loop. Also, event-based programs sometimes
 have to block, too, as when there simply is nothing else to do and
@@ -135,10 +135,10 @@ In AnyEvent, this is done using condition variables. Condition variables
 are named "condition variables" because they represent a condition that is
 initially false and needs to be fulfilled.
 
-You can also call them mergepoints, syncpoints, rendezvous ports or even
-callbacks and many other things (and they are often called like this in
-other frameworks). The important point is that you can create them freely
-and later wait for them to become true.
+You can also call them "merge points", "sync points", "rendezvous ports"
+or even callbacks and many other things (and they are often called like
+this in other frameworks). The important point is that you can create them
+freely and later wait for them to become true.
 
 Condition variables have two sides - one side is the "producer" of the
 condition (whatever code detects the condition), the other side is the
@@ -307,17 +307,17 @@ AnyEvent offers.
 =head2 Timers and other event sources
 
 So far, we have only used I/O watchers. These are useful mainly to find
-out wether a Socket has data to read, or space to write more data. On sane
+out whether a Socket has data to read, or space to write more data. On sane
 operating systems this also works for console windows/terminals (typically
 on standard input), serial lines, all sorts of other devices, basically
 almost everything that has a file descriptor but isn't a file itself. (As
 usual, "sane" excludes windows - on that platform you would need different
-functions for all of these, complicating code immesely - think "socket
+functions for all of these, complicating code immensely - think "socket
 only" on windows).
 
-However, I/O is not everything - the secondmost important event source is
+However, I/O is not everything - the second most important event source is
 the clock. For example when doing an HTTP request you might want to time
-out when the server doesn't answre within some predefined amount of time.
+out when the server doesn't answer within some predefined amount of time.
 
 In AnyEvent, timer event watchers are created by calling the C<<
 AnyEvent->timer >> method:
@@ -333,7 +333,7 @@ AnyEvent->timer >> method:
       },
    );
 
-   # can do somehting else here
+   # can do something else here
 
    # now wait till our time has come
    $cv->recv;
@@ -368,7 +368,7 @@ you have to recreate it:
 
 Having to recreate your timer is a restriction put on AnyEvent that is
 present in most event libraries it uses. It is so annoying that some
-future version might worka round this limitation, but right now, it's the
+future version might work around this limitation, but right now, it's the
 only way to do repeating timers.
 
 Fortunately most timers aren't really repeating but specify timeouts of
@@ -383,7 +383,7 @@ Signal watchers can be used to wait for "signal events", which simply
 means your process got send a signal (such as C<SIGTERM> or C<SIGUSR1>).
 
 Process watchers wait for a child process to exit. They are useful when
-you fork a separate process and ened to know when it exits, but you do not
+you fork a separate process and need to know when it exits, but you do not
 wait for that by blocking.
 
 Both watcher types are described in detail in the main L<AnyEvent> manual
@@ -731,7 +731,7 @@ variables are a great way to signal the completion of some event, or to
 state that some condition became true (thus the name).
 
 This condition variable represents the condition that the program wants to
-terminate. Later in the progra, we will 'recv' that condition (call the
+terminate. Later in the program, we will 'recv' that condition (call the
 C<recv> method on it), which will wait until the condition gets signalled
 (which is done by calling the C<send> method on it).
 
