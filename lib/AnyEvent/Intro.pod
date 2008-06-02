@@ -54,10 +54,10 @@ L<AnyEvent> solves this dilemma, by B<not> forcing module authors to either
 
 =over 4
 
-=item write their own event loop (because guarantees to offer one
+=item - write their own event loop (because guarantees to offer one
 everywhere - even on windows).
 
-=item choose one fixed event loop (because AnyEvent works with all
+=item - choose one fixed event loop (because AnyEvent works with all
 important event loops available for Perl, and adding others is trivial).
 
 =back
@@ -444,8 +444,7 @@ to your program? That C<WSAEINPROGRESS> means your C<connect> call was
 ignored instead of being in progress? AnyEvent::Socket works around all of
 these Windows/Perl bugs for you).
 
-=head2 First experiments with non-blocking connects: a parallel finger
-client.
+=head2 Implementing a parallel finger client with non-blocking connects
 
 The finger protocol is one of the simplest protocols in use on the
 internet. Or in use in the past, as almost nobody uses it anymore.
@@ -468,8 +467,9 @@ protocol, but it basically boils down to this:
 
    Connection closed by foreign host.
 
-Yeah, I<was> used indeed, but at least the finger daemon still works, so
-let's write a little AnyEvent function that makes a finger request:
+"Now on the web..." yeah, I<was> used indeed, but at least the finger
+daemon still works, so let's write a little AnyEvent function that makes a
+finger request:
 
    use AnyEvent;
    use AnyEvent::Socket;
@@ -511,7 +511,8 @@ let's write a little AnyEvent function that makes a finger request:
       $cv
    }
 
-That's a mouthful! Let's dissect this function a bit, first the overall function:
+That's a mouthful! Let's dissect this function a bit, first the overall
+function and execution flow:
 
    sub finger($$) {
       my ($user, $host) = @_;
@@ -527,53 +528,70 @@ That's a mouthful! Let's dissect this function a bit, first the overall function
       $cv
    }
 
-This isn't too complicated, just a function with two parameters, which
+This isn't too complicated, just a function with two parameters, that
 creates a condition variable, returns it, and while it does that,
-initiates a TCP connect to C<$host>. The condition variable
-will be used by the caller to receive the finger response.
+initiates a TCP connect to C<$host>. The condition variable will be used
+by the caller to receive the finger response, but one could equally well
+pass a third argument, a callback, to the function.
 
-Since we are event-based programmers, we do not wait for the connect to
-finish - it could block your program for a minute or longer! Instead,
-we pass the callback it should invoke when the connect is done to
-C<tcp_connect>. If it is successful, our callback gets called with the
+Since we are programming event'ish, we do not wait for the connect to
+finish - it could block the program for a minute or longer!
+
+Instead, we pass the callback it should invoke when the connect is done to
+C<tcp_connect>. If it is successful, that callback gets called with the
 socket handle as first argument, otherwise, nothing will be passed to our
-callback.
+callback. The important point is that it will always be called as soon as
+the outcome of the TCP connect is known.
 
-Let's look at our callback in more detail:
+This style of programming is also called "continuation style": the
+"continuation" is simply the way the program continues - normally, a
+program continues at the next line after some statement (the exception
+is loops or things like C<return>). When we are interested in events,
+however, we instead specify the "continuation" of our program by passing a
+closure, which makes that closure the "continuation" of the program. The
+C<tcp_connect> call is like saying "return now, and when the connection is
+established or it failed, continue there".
 
-         # the callback gets the socket handle - or nothing
+Now let's look at the callback/closure in more detail:
+
+         # the callback receives the socket handle - or nothing
          my ($fh) = @_
             or return $cv->send;
 
 The first thing the callback does is indeed save the socket handle in
 C<$fh>. When there was an error (no arguments), then our instinct as
-expert Perl programmers would tell us to die:
+expert Perl programmers would tell us to C<die>:
 
          my ($fh) = @_
             or die "$host: $!";
 
-While this would give good feedback to the user, our program would
-probably freeze here, as we never report the results to anybody, certainly
-not the caller of our C<finger> function!
+While this would give good feedback to the user (if he happens to watch
+standard error), our program would probably stop working here, as we never
+report the results to anybody, certainly not the caller of our C<finger>
+function, and most event loops continue even after a C<die>!
 
-This is why we instead return, but also call C<< $cv->send >> without any
-arguments to signal to our consumer that something bad has happened. The
-return value of C<< $cv->send >> is irrelevant, as is the return value of
-our callback. The return statement is simply used for the side effect of,
-well, returning immediately from the callback.
+This is why we instead C<return>, but also call C<< $cv->send >> without
+any arguments to signal to the condvar consumer that something bad has
+happened. The return value of C<< $cv->send >> is irrelevant, as is the
+return value of our callback. The return statement is simply used for the
+side effect of, well, returning immediately from the callback. Checking
+for errors and handling them this way is very common, which is why this
+compact idiom is so handy.
 
 As the next step in the finger protocol, we send the username to the
 finger daemon on the other side of our connection:
 
          syswrite $fh, "$user\015\012";
 
-Note that this isn't 100% clean - the socket could, for whatever reasons,
-not accept our data. When writing a small amount of data like in this
-example it doesn't matter, but for real-world cases you might need to
-implement some kind of write buffering - or use L<AnyEvent::Handle>, which
-handles these matters for you.
+Note that this isn't 100% clean socket programming - the socket could,
+for whatever reasons, not accept our data. When writing a small amount
+of data like in this example it doesn't matter, as a socket buffer is
+almost always big enough for a mere "username", but for real-world
+cases you might need to implement some kind of write buffering - or use
+L<AnyEvent::Handle>, which handles these matters for you, as shown in the
+next section.
 
-What we do have to do is to implement our own read buffer - the response
+What we I<do> have to do is to implement our own read buffer - the response
 data could arrive late or in multiple chunks, and we cannot just wait for
 it (event-based programming, you know?).
 
@@ -593,8 +611,26 @@ means that, when the C<tcp_connect> callback returns, that perl thinks
 (quite correctly) that the read watcher is still in use - namely in the
 callback.
 
+The trick, however, is that instead of:
+
+   my $read_watcher = AnyEvent->io (...
+
+The program does:
+
+   my $read_watcher; $read_watcher = AnyEvent->io (...
+
+The reason for this is a quirk in the way Perl works: variable names
+declared with C<my> are only visible in the I<next> statement. If the
+whole C<< AnyEvent->io >> call, including the callback, would be done in
+a single statement, the callback could not refer to the C<$read_watcher>
+variable to undefine it, so it is done in two statements.
+
+Whether you'd want to format it like this is of course a matter of style,
+this way emphasizes that the declaration and assignment really are one
+logical statement.
+
 The callback itself calls C<sysread> for as many times as necessary, until
-C<sysread> returns an error or end-of-file:
+C<sysread> returns either an error or end-of-file:
 
             cb   => sub {
                my $len = sysread $fh, $response, 1024, length $response;
@@ -602,7 +638,8 @@ C<sysread> returns an error or end-of-file:
                if ($len <= 0) {
 
 Note that C<sysread> has the ability to append data it reads to a scalar,
-which is what we make good use of in this example.
+by specifying an offset, which is what we make good use of in this
+example.
 
 When C<sysread> indicates we are done, the callback C<undef>ines
 the watcher and then C<send>'s the response data to the condition
@@ -633,17 +670,21 @@ the background, we even can run multiple sessions in parallel, like this:
 
 It doesn't look like it, but in fact all three requests run in
 parallel. The code waits for the first finger request to finish first, but
-that doesn't keep it from executing in parallel, because when the first
-C<recv> call sees that the data isn't ready yet, it serves events for all
-three requests automatically.
+that doesn't keep it from executing them parallel: when the first C<recv>
+call sees that the data isn't ready yet, it serves events for all three
+requests automatically, until the first request has finished.
+
+The second C<recv> call might either find the data is already there, or it
+will continue handling events until that is the case, and so on.
 
 By taking advantage of network latencies, which allows us to serve other
 requests and events while we wait for an event on one socket, the overall
-time to do these three requests will be greatly reduces, typically all
-three are done in the same time as the slowest of them would use.
+time to do these three requests will be greatly reduced, typically all
+three are done in the same time as the slowest of them would need to finish.
 
 By the way, you do not actually have to wait in the C<recv> method on an
-AnyEvent condition variable, you can also register a callback:
+AnyEvent condition variable - after all, waiting is evil - you can also
+register a callback:
 
    $cv->cb (sub {
       my $response = shift->recv;
@@ -658,21 +699,217 @@ response:
    sub finger($$$) {
       my ($user, $host, $cb) = @_;
 
-What you use is a matter of taste - if you expect your function to be
-used mainly in an event-based program you would normally prefer to pass a
-callback directly.
+How you implement it is a matter of taste - if you expect your function to
+be used mainly in an event-based program you would normally prefer to pass
+a callback directly. If you write a module and expect your users to use
+it "synchronously" often (for example, a simple http-get script would not
+really care much for events), then you would use a condition variable and
+tell them "simply ->recv the data".
 
-=head3 Criticism and fix
+=head3 Problems with the implementation and how to fix them
 
 To make this example more real-world-ready, we would not only implement
 some write buffering (for the paranoid), but we would also have to handle
 timeouts and maybe protocol errors.
 
-This quickly gets unwieldy, which is why we introduce L<AnyEvent::Handle>
-in the next section, which takes care of all these details for us.
+Doing this quickly gets unwieldy, which is why we introduce
+L<AnyEvent::Handle> in the next section, which takes care of all these
+details for you and let's you concentrate on the actual protocol.
 
 
-=head2 First experiments with AnyEvent::Handle
+=head2 Implementing simple HTTP and HTTPS GET requests with AnyEvent::Handle
+
+The L<AnyEvent::Handle> module has been hyped quite a bit so far, so let's
+see what it really offers.
+
+As finger is such a simple protocol, let's try something slightly more
+complicated: HTTP/1.0.
+
+An HTTP GET request works by sending a single request line that indicates
+what you want the server to do and the URI you want to act it on, followed
+by as many "header" lines (C<Header: data>, same as e-mail headers) as
+required for the request, ended by an empty line.
+
+The response is formatted very similarly, first a line with the response
+status, then again as many header lines as required, then an empty line,
+followed by any data that the server might send.
+
+Again, let's try it out with C<telnet> (I condensed the output a bit - if
+you want to see the full response, do it yourself).
+
+   # telnet www.google.com 80
+   Trying 209.85.135.99...
+   Connected to www.google.com (209.85.135.99).
+   Escape character is '^]'.
+   GET /test HTTP/1.0
+
+   HTTP/1.0 404 Not Found
+   Date: Mon, 02 Jun 2008 07:05:54 GMT
+   Content-Type: text/html; charset=UTF-8
+
+   <html><head>
+   [...]
+   Connection closed by foreign host.
+
+The C<GET ...> and the empty line were entered manually, the rest of the
+telnet output is google's response, in which case a C<404 not found> one.
+
+So, here is how you would do it with C<AnyEvent::Handle>:
+
+###TODO
+
+And now let's go through it step by step. First, as usual, the overall
+C<http_get> function structure:
+
+   sub http_get {
+      my ($host, $uri, $cb) = @_;
+
+      tcp_connect $host, "http", sub {
+         ...
+      };
+   }
+
+Unlike in the finger example, this time the caller has to pass a callback
+to C<http_get>. Also, instead of passing a URL as one would expect, the
+caller has to provide the hostname and URI - normally you would use the
+C<URI> module to parse a URL and separate it into those parts, but that is
+left to the inspired reader :)
+
+Since everything else is left to the caller, all C<http_get> does it to
+initiate the connection with C<tcp_connect> and leave everything else to
+it's callback.
+
+The first thing the callback does is check for connection errors and
+declare some variables:
+
+      my ($fh) = @_
+         or $cb->("HTTP/1.0 500 $!");
+
+      my ($response, $header, $body);
+
+Instead of having an extra mechanism to signal errors, connection errors
+are signalled by crafting a special "response status line", like this:
+
+   HTTP/1.0 500 Connection refused
+
+This means the caller cannot distinguish (easily) between
+locally-generated errors and server errors, but it simplifies error
+handling for the caller a lot.
+
+The next step finally involves L<AnyEvent::Handle>, namely it creates the
+handle object:
+
+      my $handle; $handle = new AnyEvent::Handle
+         fh       => $fh,
+         on_error => sub {
+            undef $handle;
+            $cb->("HTTP/1.0 500 $!");
+         },
+         on_eof   => sub {
+            undef $handle; # keep it alive till eof
+            $cb->($response, $header, $body);
+         };
+
+The constructor expects a file handle, which gets passed via the C<fh>
+argument.
+
+The remaining two argument pairs specify two callbacks to be called on
+any errors (C<on_error>) and in the case of a normal connection close
+(C<on_eof>).
+
+In the first case, we C<undef>ine the handle object and pass the error to
+the callback provided by the callback - done.
+
+In the second case we assume everything went fine and pass the results
+gobbled up so far to the caller-provided callback. This is not quite
+perfect, as when the server "cleanly" closes the connection in the middle
+of sending headers we might wrongly report this as an "OK" to the caller,
+but then, HTTP doesn't support a perfect mechanism that would detect such
+problems in all cases, so we don't bother either.
+
+=head3 The write queue
+
+The next line sends the actual request:
+
+      $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+
+No headers will be sent (this is fine for simple requests), so the whole
+request is just a single line followed by an empty line to signal the end
+of the headers to the server.
+
+The more interesting question is why the method is called C<push_write>
+and not just write. The reason is that you can I<always> add some write
+data without blocking, and to do this, AnyEvent::Handle needs some write
+queue internally - and C<push_write> simply pushes some data at the end of
+that queue, just like Perl's C<push> pushes data at the end of an array.
+
+The deeper reason is that at some point in the future, there might
+be C<unshift_write> as well, and in any case, we will shortly meet
+C<push_read> and C<unshift_read>, and it's usually easiest if all those
+functions have some symmetry in their name.
+
+If C<push_write> is called with more than one argument, then you can even
+do I<formatted> I/O, which simply means your data will be transformed in
+some ways. For example, this would JSON-encode your data before pushing it
+to the write queue:
+
+   $handle->push_write (json => [1, 2, 3]);
+
+Apart from that, this pretty much summarises the write queue, there is
+little else to it.
+
+Reading the response if far more interesting:
+
+=head3 The read queue
+
+the response consists of three parts: a single line of response status, a
+single paragraph of headers ended by an empty line, and the request body,
+which is simply the remaining data on that connection.
+
+For the first two, we push two read requests onto the read queue:
+
+      # now fetch response status line
+      $handle->push_read (line => sub {
+         my ($handle, $line) = @_;
+         $response = $line;
+      });
+
+      # then the headers
+      $handle->push_read (line => "\015\012\015\012", sub {
+         my ($handle, $line) = @_;
+         $header = $line;
+      });
+
+While one can simply push a single callback to the queue, I<formatted> I/O
+really comes to out advantage here, as there is a ready-made "read line"
+read type. The first read expects a single line, ended by C<\015\012> (the
+standard end-of-line marker in internet protocols).
+
+The second "line" is actually a single paragraph - instead of reading it
+line by line we tell C<push_read> that the end-of-line marker is really
+C<\015\012\015\012>, which is an empty line. The result is that the whole
+header paragraph will be treated as a single line and read. The word
+"line" is interpreted very freely, much like Perl itself does it.
+
+Note that push read requests are pushed immediately after creating the
+handle object - since AnyEvent::Handle provides a queue we can push as
+many requests as we want, and AnyEvent::Handle will handle them in order.
+
+There is, however, no read type for "the remaining data". For that, we
+install our own C<on_read> callback:
+
+      # and finally handle any remaining data as body
+      $handle->on_read (sub {
+         $body .= $_[0]->rbuf;
+         $_[0]->rbuf = "";
+      });
+
+This callback is invoked every time data arrives and the read queue is
+empty - which in this example will only be the case when both response and
+header have been read.
+
+
+#############################################################################
 
 Now let's start with something simple: a program that reads from standard
 input in a non-blocking way, that is, in a way that lets your program do

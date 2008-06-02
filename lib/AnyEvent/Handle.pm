@@ -77,30 +77,32 @@ AnyEvent::Util::fh_nonblocking).
 
 =item on_eof => $cb->($handle)
 
-Set the callback to be called on EOF.
+Set the callback to be called when an end-of-file condition is detcted,
+i.e. in the case of a socket, when the other side has closed the
+connection cleanly.
 
 While not mandatory, it is highly recommended to set an eof callback,
 otherwise you might end up with a closed socket while you are still
 waiting for data.
 
-=item on_error => $cb->($handle)
+=item on_error => $cb->($handle, $fatal)
 
-This is the fatal error callback, that is called when, well, a fatal error
-occurs, such as not being able to resolve the hostname, failure to connect
-or a read error.
+This is the error callback, which is called when, well, some error
+occured, such as not being able to resolve the hostname, failure to
+connect or a read error.
 
-The object will not be in a usable state when this callback has been
-called.
+Some errors are fatal (which is indicated by C<$fatal> being true). On
+fatal errors the handle object will be shut down and will not be
+usable. Non-fatal errors can be retried by simply returning, but it is
+recommended to simply ignore this parameter and instead abondon the handle
+object when this callback is invoked.
 
 On callback entrance, the value of C<$!> contains the operating system
 error (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT> or C<EBADMSG>).
 
-The callback should throw an exception. If it returns, then
-AnyEvent::Handle will C<croak> for you.
-
 While not mandatory, it is I<highly> recommended to set this callback, as
 you will not be notified of errors otherwise. The default simply calls
-die.
+C<croak>.
 
 =item on_read => $cb->($handle)
 
@@ -244,20 +246,23 @@ sub _shutdown {
    delete $self->{_rw};
    delete $self->{_ww};
    delete $self->{fh};
+
+   $self->stoptls;
 }
 
-sub error {
-   my ($self) = @_;
+sub _error {
+   my ($self, $errno, $fatal) = @_;
 
-   {
-      local $!;
-      $self->_shutdown;
+   $self->_shutdown
+      if $fatal;
+
+   $! = $errno;
+
+   if ($self->{on_error}) {
+      $self->{on_error}($self, $fatal);
+   } else {
+      Carp::croak "AnyEvent::Handle uncaught error: $!";
    }
-
-   $self->{on_error}($self)
-      if $self->{on_error};
-
-   Carp::croak "AnyEvent::Handle uncaught fatal error: $!";
 }
 
 =item $fh = $handle->fh
@@ -333,8 +338,7 @@ sub _timeout {
          if ($self->{on_timeout}) {
             $self->{on_timeout}($self);
          } else {
-            $! = Errno::ETIMEDOUT;
-            $self->error;
+            $self->_error (&Errno::ETIMEDOUT);
          }
 
          # callbakx could have changed timeout value, optimise
@@ -417,7 +421,7 @@ sub _drain_wbuf {
 
             delete $self->{_ww} unless length $self->{wbuf};
          } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
-            $self->error;
+            $self->_error ($!, 1);
          }
       };
 
@@ -456,8 +460,6 @@ sub push_write {
 
 =item $handle->push_write (type => @args)
 
-=item $handle->unshift_write (type => @args)
-
 Instead of formatting your data yourself, you can also let this module do
 the job by specifying a type and type-specific arguments.
 
@@ -470,8 +472,6 @@ drop by and tell us):
 
 Formats the given value as netstring
 (http://cr.yp.to/proto/netstrings.txt, this is not a recommendation to use them).
-
-=back
 
 =cut
 
@@ -534,6 +534,8 @@ be appended to the write buffer.
 Note that this is a function, and all types registered this way will be
 global, so try to use unique names.
 
+=back
+
 =cut
 
 #############################################################################
@@ -568,12 +570,12 @@ the specified number of bytes which give an XML datagram.
    # in the default state, expect some header bytes
    $handle->on_read (sub {
       # some data is here, now queue the length-header-read (4 octets)
-      shift->unshift_read_chunk (4, sub {
+      shift->unshift_read (chunk => 4, sub {
          # header arrived, decode
          my $len = unpack "N", $_[1];
 
          # now read the payload
-         shift->unshift_read_chunk ($len, sub {
+         shift->unshift_read (chunk => $len, sub {
             my $xml = $_[1];
             # handle xml
          });
@@ -590,13 +592,13 @@ the callbacks:
    $handle->push_write ("request 1\015\012");
 
    # we expect "ERROR" or "OK" as response, so push a line read
-   $handle->push_read_line (sub {
+   $handle->push_read (line => sub {
       # if we got an "OK", we have to _prepend_ another line,
       # so it will be read before the second request reads its 64 bytes
       # which are already in the queue when this callback is called
       # we don't do this in case we got an error
       if ($_[1] eq "OK") {
-         $_[0]->unshift_read_line (sub {
+         $_[0]->unshift_read (line => sub {
             my $response = $_[1];
             ...
          });
@@ -607,7 +609,7 @@ the callbacks:
    $handle->push_write ("request 2\015\012");
 
    # simply read 64 bytes, always
-   $handle->push_read_chunk (64, sub {
+   $handle->push_read (chunk => 64, sub {
       my $response = $_[1];
       ...
    });
@@ -623,8 +625,7 @@ sub _drain_rbuf {
       defined $self->{rbuf_max}
       && $self->{rbuf_max} < length $self->{rbuf}
    ) {
-      $! = &Errno::ENOSPC;
-      $self->error;
+      return $self->_error (&Errno::ENOSPC, 1);
    }
 
    return if $self->{in_drain};
@@ -636,8 +637,7 @@ sub _drain_rbuf {
          unless ($cb->($self)) {
             if ($self->{_eof}) {
                # no progress can be made (not enough data and no data forthcoming)
-               $! = &Errno::EPIPE;
-               $self->error;
+               return $self->_error (&Errno::EPIPE, 1);
             }
 
             unshift @{ $self->{_queue} }, $cb;
@@ -653,8 +653,7 @@ sub _drain_rbuf {
             && $self->{on_read}             # and we still want to read data
          ) {
             # then no progress can be made
-            $! = &Errno::EPIPE;
-            $self->error;
+            return $self->_error (&Errno::EPIPE, 1);
          }
       } else {
          # read side becomes idle
@@ -863,8 +862,7 @@ register_read_type netstring => sub {
    sub {
       unless ($_[0]{rbuf} =~ s/^(0|[1-9][0-9]*)://) {
          if ($_[0]{rbuf} =~ /[^0-9]/) {
-            $! = &Errno::EBADMSG;
-            $self->error;
+            $self->_error (&Errno::EBADMSG);
          }
          return;
       }
@@ -877,8 +875,7 @@ register_read_type netstring => sub {
             if ($_[1] eq ",") {
                $cb->($_[0], $string);
             } else {
-               $! = &Errno::EBADMSG;
-               $self->error;
+               $self->_error (&Errno::EBADMSG);
             }
          });
       });
@@ -945,8 +942,7 @@ register_read_type regex => sub {
       
       # reject
       if ($reject && $$rbuf =~ $reject) {
-         $! = &Errno::EBADMSG;
-         $self->error;
+         $self->_error (&Errno::EBADMSG);
       }
 
       # skip
@@ -1064,7 +1060,7 @@ sub start_read {
             $self->_drain_rbuf;
 
          } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
-            return $self->error;
+            return $self->_error ($!, 1);
          }
       });
    }
@@ -1093,10 +1089,9 @@ sub _dotls {
 
    if ($err!= Net::SSLeay::ERROR_WANT_READ ()) {
       if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
-         $self->error;
+         return $self->_error ($!, 1);
       } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
-         $! = &Errno::EIO;
-         $self->error;
+         return $self->_error (&Errno::EIO, 1);
       }
 
       # all others are fine for our purposes
