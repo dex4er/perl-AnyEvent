@@ -759,7 +759,7 @@ So, here is how you would do it with C<AnyEvent::Handle>:
    sub http_get {
       my ($host, $uri, $cb) = @_;
 
-      AnyEvent::Socket::tcp_connect $host, "http", sub {
+      tcp_connect $host, "http", sub {
          my ($fh) = @_
             or $cb->("HTTP/1.0 500 $!");
 
@@ -959,6 +959,19 @@ After AnyEvent::Handle has been so instructed, it will now handle incoming
 data according to these instructions - if all goes well, the callback will
 be invoked with the response data, if not, it will get an error.
 
+In general, you get pipelining very easy with AnyEvent::Handle: If
+you have a protocol with a request/response structure, your request
+methods/functions will all look like this (simplified):
+
+   sub request {
+
+      # send the request to the server
+      $handle->push_write (...);
+
+      # push some response handlers
+      $handle->push_read (...);
+   }
+
 =head3 Using it
 
 And here is how you would use it:
@@ -974,10 +987,89 @@ And here is how you would use it:
 And of course, you can run as many of these requests in parallel as you
 want (and your memory supports).
 
+=head3 HTTPS
+
+Now, as promised, let's implement the same thing for HTTPS, or more
+correctly, let's change our C<http_get> function into a function that
+speaks HTTPS instead.
+
+HTTPS is, quite simply, a standard TLS connection (B<T>ransport B<L>ayer
+B<S>ecurity is the official name for what most people refer to as C<SSL>)
+that contains standard HTTP protocol exchanges. The other difference to
+HTTP is that it uses port C<443> instead of port C<80>.
+
+To implement these two differences we need two tiny changes, first, in the C<tcp_connect> call
+we replace C<http> by C<https>):
+
+      tcp_connect $host, "https", sub { ...
+
+The other change deals with TLS, which is something L<AnyEvent::Handle>
+does for us, as long as I<you> made sure that the L<Net::SSLeay> module is
+around. To enable TLS with L<AnyEvent::Handle>, we simply pass an addition
+C<tls> parameter to the call to C<AnyEvent::Handle::new>:
+
+         tls      => "connect",
+
+Specifying C<tls> enables TLS, and the argument specifies whether
+AnyEvent::Handle is the server side ("accept") or the client side
+("connect") for the TLS connection, as unlike TCP, there is a clear
+server/client relationship in TLS.
+
+That's all. Of course, all this should be handled transparently by
+C<http_get> after parsing the URL. See the part about exercising your
+inspiration earlier in this document.
+
 =head3 The read queue - revisited
 
-###TODO
+HTTP always uses the same structure in its responses, but many protocols
+require parsing responses different depending on the response itself.
 
+For example, in SMTP, you normally get a single response line:
+
+   220 mail.example.net Neverusesendmail 8.8.8 <mailme@example.net>
+
+But SMTP also supports multi-line responses:
+
+   220-mail.example.net Neverusesendmail 8.8.8 <mailme@example.net>
+   220-hey guys
+   220 my response is longer than yours
+
+To handle this, we need C<unshift_read>. As the name (hopefully) implies,
+C<unshift_read> will not append your read request tot he end of the read
+queue, but instead it will prepend it to the queue.
+
+This is useful for this this situation: You push your response-line read
+request when sending the SMTP command, and when handling it, you look at
+the line to see if more is to come, and C<unshift_read> another reader,
+like this:
+
+   my $response; # response lines end up in here
+
+   my $read_response; $read_response = sub {
+      my ($handle, $line) = @_;
+
+      $response .= "$line\n";
+
+      # check for continuation lines ("-" as 4th character")
+      if ($line =~ /^...-/) {
+         # if yes, then unshift another line read
+         $handle->unshift_read (line => $read_response);
+
+      } else {
+         # otherwise we are done
+
+         # free callback
+         undef $read_response;
+         
+         print "we are don reading: $response\n";
+      }
+   };
+
+   $handle->push_read (line => $read_response);
+
+This recipe can be used for all similar parsing problems, for example in
+NNTP, the response code to some commands indicates that more data will be
+sent.
 
 =head1 AUTHORS
 
