@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
-	- include AnyEvent::Intro as a beginner tutorial.
+4.12 Tue Jun  3 10:58:04 CEST 2008
+	- include AnyEvent::Intro, a tutorial for anyevent,
+          anyevent::socket and anyevent::handle.
         - allow more options in on_error.
 
 4.11 Fri May 30 23:42:25 CEST 2008

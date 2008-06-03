@@ -3,10 +3,13 @@
 This is a tutorial that will introduce you to the features of AnyEvent.
 
 The first part introduces the core AnyEvent module (after swamping you a
-bit in evangelism), which might already provide all you ever need.
+bit in evangelism), which might already provide all you ever need. If you
+are only interested in AnyEvent's event handling capabilities, read no
+further.
 
 The second part focuses on network programming using sockets, for which
-AnyEvent offers a lot of support you can use.
+AnyEvent offers a lot of support you can use, and a lot of workarounds
+around portability quirks.
 
 
 =head1 What is AnyEvent?
