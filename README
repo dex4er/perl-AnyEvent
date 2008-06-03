@@ -1,4 +1,4 @@
-=> NAME
+NAME
     AnyEvent - provide framework for multiple event loops
 
     EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event
@@ -18,6 +18,11 @@ SYNOPSIS
        my $w = AnyEvent->condvar; # stores whether a condition was flagged
        $w->send; # wake up current and all future recv's
        $w->recv; # enters "main loop" till $condvar gets ->send
+
+INTRODUCTION/TUTORIAL
+    This manpage is mainly a reference manual. If you are interested in a
+    tutorial or some gentle introduction, have a look at the AnyEvent::Intro
+    manpage.
 
 WHY YOU SHOULD USE THIS MODULE (OR NOT)
     Glib, POE, IO::Async, Event... CPAN offers event models by the dozen
@@ -130,10 +135,10 @@ WATCHERS
 
     An any way to achieve that is this pattern:
 
-      my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
-         # you can use $w here, for example to undef it
-         undef $w;
-      });
+       my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
+          # you can use $w here, for example to undef it
+          undef $w;
+       });
 
     Note that "my $w; $w =" combination. This is necessary because in Perl,
     my variables are only visible after the statement in which they are
@@ -339,21 +344,21 @@ WATCHERS
 
     Example: fork a process and wait for it
 
-      my $done = AnyEvent->condvar;
-
-      my $pid = fork or exit 5;
-
-      my $w = AnyEvent->child (
-         pid => $pid,
-         cb  => sub {
-            my ($pid, $status) = @_;
-            warn "pid $pid exited with status $status";
-            $done->send;
-         },
-      );
-
-      # do something else, then wait for process exit
-      $done->recv;
+       my $done = AnyEvent->condvar;
+      
+   my $pid = fork or exit 5;
+      
+   my $w = AnyEvent->child (
+          pid => $pid,
+          cb  => sub {
+             my ($pid, $status) = @_;
+             warn "pid $pid exited with status $status";
+             $done->send;
+          },
+       );
+      
+   # do something else, then wait for process exit
+       $done->recv;
 
   CONDITION VARIABLES
     If you are familiar with some event loops you will know that all of them
@@ -569,8 +574,9 @@ WATCHERS
         optionally replaces it before doing so.
 
         The callback will be called when the condition becomes "true", i.e.
-        when "send" or "croak" are called. Calling "recv" inside the
-        callback or at any later time is guaranteed not to block.
+        when "send" or "croak" are called, with the only argument being the
+        condition variable itself. Calling "recv" inside the callback or at
+        any later time is guaranteed not to block.
 
 GLOBAL VARIABLES AND FUNCTIONS
     $AnyEvent::MODEL
@@ -813,7 +819,7 @@ ENVIRONMENT VARIABLES
         For example, to force the pure perl model (AnyEvent::Impl::Perl) you
         could start your program like this:
 
-          PERL_ANYEVENT_MODEL=Perl perl ...
+           PERL_ANYEVENT_MODEL=Perl perl ...
 
     "PERL_ANYEVENT_PROTOCOLS"
         Used by both AnyEvent::DNS and AnyEvent::Socket to determine
@@ -1264,9 +1270,9 @@ SECURITY CONSIDERATIONS
     You can make AnyEvent completely ignore this variable by deleting it
     before the first watcher gets created, e.g. with a "BEGIN" block:
 
-      BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
-
-      use AnyEvent;
+       BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
+      
+   use AnyEvent;
 
     Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
     be used to probe what backend is used and gain other information (which
@@ -1292,6 +1298,6 @@ SEE ALSO
     Nontrivial usage examples: Net::FCP, Net::XMPP2, AnyEvent::DNS.
 
 AUTHOR
-     Marc Lehmann <schmorp@schmorp.de>
-     http://home.schmorp.de/
+       Marc Lehmann <schmorp@schmorp.de>
+       http://home.schmorp.de/
 
