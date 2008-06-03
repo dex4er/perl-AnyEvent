@@ -1,5 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: fix start_read documentation
+	- fix queue management logic in AnyEvent::Handle:
+          when on_read was registered, the queue was empty
+          and no progress could be made AnyEvent::Handle would
+          enter an endless loop.
+        - correctly start reading again when the handle became
+          busy again after idling.
+        - correctly call eof callback under all conditions
+          (hopefully).
+
 4.12 Tue Jun  3 10:58:04 CEST 2008
 	- include AnyEvent::Intro, a tutorial for anyevent,
           anyevent::socket and anyevent::handle.

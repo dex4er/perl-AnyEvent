@@ -641,29 +641,38 @@ sub _drain_rbuf {
             }
 
             unshift @{ $self->{_queue} }, $cb;
-            return;
+            last;
          }
       } elsif ($self->{on_read}) {
          $self->{on_read}($self);
 
          if (
-            $self->{_eof}                   # if no further data will arrive
-            && $len == length $self->{rbuf} # and no data has been consumed
-            && !@{ $self->{_queue} }        # and the queue is still empty
-            && $self->{on_read}             # and we still want to read data
+            $len == length $self->{rbuf} # if no data has been consumed
+            && !@{ $self->{_queue} }     # and the queue is still empty
+            && $self->{on_read}          # but we still have on_read
          ) {
-            # then no progress can be made
-            return $self->_error (&Errno::EPIPE, 1);
+            # no further data will arrive
+            # so no progress can be made
+            return $self->_error (&Errno::EPIPE, 1)
+               if $self->{_eof};
+
+            last; # more data might arrive
          }
       } else {
          # read side becomes idle
          delete $self->{_rw};
-         return;
+         last;
       }
    }
 
    $self->{on_eof}($self)
       if $self->{_eof} && $self->{on_eof};
+
+   # may need to restart read watcher
+   unless ($self->{_rw}) {
+      $self->start_read
+         if $self->{on_read} || @{ $self->{_queue} };
+   }
 }
 
 =item $handle->on_read ($cb)
