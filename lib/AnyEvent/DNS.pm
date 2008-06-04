@@ -1128,7 +1128,7 @@ more are known to this module). A C<$qtype> of "*" is supported and means
 The callback will be invoked with a list of matching result records or
 none on any error or if the name could not be found.
 
-CNAME chains (although illegal) are followed up to a length of 8.
+CNAME chains (although illegal) are followed up to a length of 10.
 
 The callback will be invoked with an result code in string form (noerror,
 formerr, servfail, nxdomain, notimp, refused and so on), or numerical
@@ -1245,7 +1245,7 @@ sub resolve($%) {
          or (undef $do_search), (undef $do_req), return $cb->();
 
       (my $name = lc "$qname." . shift @search) =~ s/\.$//;
-      my $depth = 2;
+      my $depth = 10;
 
       # advance in cname-chain
       $do_req = sub {

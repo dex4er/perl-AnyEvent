@@ -341,7 +341,7 @@ sub _timeout {
             $self->_error (&Errno::ETIMEDOUT);
          }
 
-         # callbakx could have changed timeout value, optimise
+         # callback could have changed timeout value, optimise
          return unless $self->{timeout};
 
          # calculate new after
@@ -349,6 +349,7 @@ sub _timeout {
       }
 
       Scalar::Util::weaken $self;
+      return unless $self; # ->error could have destroyed $self
 
       $self->{_tw} ||= AnyEvent->timer (after => $after, cb => sub {
          delete $self->{_tw};
@@ -1038,6 +1039,11 @@ socket. In this case you can call C<stop_read>. Neither C<on_read> no
 any queued callbacks will be executed then. To start reading again, call
 C<start_read>.
 
+Note that AnyEvent::Handle will automatically C<start_read> for you when
+you change the C<on_read> callback or push/unshift a read callback, and it
+will automatically C<stop_read> for you when neither C<on_read> is set nor
+there are any read requests in the queue.
+
 =cut
 
 sub stop_read {
@@ -1078,20 +1084,29 @@ sub start_read {
 sub _dotls {
    my ($self) = @_;
 
+   my $buf;
+
    if (length $self->{_tls_wbuf}) {
       while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
          substr $self->{_tls_wbuf}, 0, $len, "";
       }
    }
 
-   if (defined (my $buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
+   if (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $buf;
       $self->_drain_wbuf;
    }
 
-   while (defined (my $buf = Net::SSLeay::read ($self->{tls}))) {
-      $self->{rbuf} .= $buf;
-      $self->_drain_rbuf;
+   while (defined ($buf = Net::SSLeay::read ($self->{tls}))) {
+      if (length $buf) {
+         $self->{rbuf} .= $buf;
+         $self->_drain_rbuf;
+      } else {
+         # let's treat SSL-eof as we treat normal EOF
+         $self->{_eof} = 1;
+         $self->_shutdown;
+         return;
+      }
    }
 
    my $err = Net::SSLeay::get_error ($self->{tls}, -1);
