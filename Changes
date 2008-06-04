@@ -3,6 +3,10 @@ Revision history for Perl extension AnyEvent.
 	- AnyEvent::DNS only followed cname chains with length 2,
           contrary to documentation. bumped it up to 10, thanks to
           microsoft, the current broken-dns-config-king.
+        - AnyEvent::DNS didn't check for socket return status
+          but instead relied on perl not creating filehandles in that
+          case - too bad it gives you a bogus file handle (reported
+          and analysed by Vladimir Timofeev).
 	- fix queue management logic in AnyEvent::Handle:
           when on_read was registered, the queue was empty
           and no progress could be made AnyEvent::Handle would

@@ -710,15 +710,6 @@ immediately.
 sub new {
    my ($class, %arg) = @_;
 
-   # try to create a ipv4 and an ipv6 socket
-   # only fail when we cnanot create either
-
-   socket my $fh4, AF_INET , &Socket::SOCK_DGRAM, 0;
-   socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0;
-
-   $fh4 || $fh6 
-      or Carp::croak "unable to create either an IPv6 or an IPv4 socket";
-
    my $self = bless {
       server  => [],
       timeout => [2, 5, 5],
@@ -733,9 +724,15 @@ sub new {
    # search should default to gethostname's domain
    # but perl lacks a good posix module
 
+   # try to create an ipv4 and an ipv6 socket
+   # only fail when we cannot create either
+   my $got_socket;
+
    Scalar::Util::weaken (my $wself = $self);
 
-   if ($fh4) {
+   if (socket my $fh4, AF_INET , &Socket::SOCK_DGRAM, 0) {
+      ++$got_socket;
+
       AnyEvent::Util::fh_nonblocking $fh4, 1;
       $self->{fh4} = $fh4;
       $self->{rw4} = AnyEvent->io (fh => $fh4, poll => "r", cb => sub {
@@ -745,7 +742,9 @@ sub new {
       });
    }
 
-   if ($fh6) {
+   if (AF_INET6 && socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0) {
+      ++$got_socket;
+
       $self->{fh6} = $fh6;
       AnyEvent::Util::fh_nonblocking $fh6, 1;
       $self->{rw6} = AnyEvent->io (fh => $fh6, poll => "r", cb => sub {
@@ -754,6 +753,9 @@ sub new {
          }
       });
    }
+
+   $got_socket
+      or Carp::croak "unable to create either an IPv4 or an IPv6 socket";
 
    $self->_compile;
 
