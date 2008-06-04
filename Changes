@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.13 Thu Jun  5 00:47:59 CEST 2008
 	- AnyEvent::DNS only followed cname chains with length 2,
           contrary to documentation. bumped it up to 10, thanks to
           microsoft, the current broken-dns-config-king.

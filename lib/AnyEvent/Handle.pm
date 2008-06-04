@@ -226,15 +226,11 @@ sub new {
       $self->starttls (delete $self->{tls}, delete $self->{tls_ctx});
    }
 
-#   $self->on_eof   (delete $self->{on_eof}  ) if $self->{on_eof};   # nop
-#   $self->on_error (delete $self->{on_error}) if $self->{on_error}; # nop
-#   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};  # nop
-   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
-
    $self->{_activity} = AnyEvent->now;
    $self->_timeout;
 
-   $self->start_read;
+   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
+   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
 
    $self
 }
@@ -688,6 +684,7 @@ sub on_read {
    my ($self, $cb) = @_;
 
    $self->{on_read} = $cb;
+   $self->_drain_rbuf if $cb;
 }
 
 =item $handle->rbuf
@@ -1035,7 +1032,7 @@ search for C<register_read_type>)).
 =item $handle->start_read
 
 In rare cases you actually do not want to read anything from the
-socket. In this case you can call C<stop_read>. Neither C<on_read> no
+socket. In this case you can call C<stop_read>. Neither C<on_read> nor
 any queued callbacks will be executed then. To start reading again, call
 C<start_read>.
 
