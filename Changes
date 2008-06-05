@@ -4,6 +4,7 @@ Revision history for Perl extension AnyEvent.
         - Fixed a bug in DNS SRV priority sorting.
         - AnyEvent::Util::guard now reports runtime errors while
           executing the guard block as warnings.
+        - handle 0-byte-reads jus before EOF correctly in AnyEvent::Handle.
 
 4.13 Thu Jun  5 00:47:59 CEST 2008
 	- AnyEvent::DNS only followed cname chains with length 2,

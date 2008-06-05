@@ -618,6 +618,8 @@ the callbacks:
 sub _drain_rbuf {
    my ($self) = @_;
 
+   local $self->{_in_drain} = 1;
+
    if (
       defined $self->{rbuf_max}
       && $self->{rbuf_max} < length $self->{rbuf}
@@ -625,11 +627,11 @@ sub _drain_rbuf {
       return $self->_error (&Errno::ENOSPC, 1);
    }
 
-   return if $self->{in_drain};
-   local $self->{in_drain} = 1;
-
-   while (my $len = length $self->{rbuf}) {
+   while () {
       no strict 'refs';
+
+      my $len = length $self->{rbuf};
+
       if (my $cb = shift @{ $self->{_queue} }) {
          unless ($cb->($self)) {
             if ($self->{_eof}) {
@@ -684,7 +686,7 @@ sub on_read {
    my ($self, $cb) = @_;
 
    $self->{on_read} = $cb;
-   $self->_drain_rbuf if $cb;
+   $self->_drain_rbuf if $cb && !$self->{_in_drain};
 }
 
 =item $handle->rbuf
@@ -743,7 +745,7 @@ sub push_read {
    }
 
    push @{ $self->{_queue} }, $cb;
-   $self->_drain_rbuf;
+   $self->_drain_rbuf unless $self->{_in_drain};
 }
 
 sub unshift_read {
@@ -759,7 +761,7 @@ sub unshift_read {
 
 
    unshift @{ $self->{_queue} }, $cb;
-   $self->_drain_rbuf;
+   $self->_drain_rbuf unless $self->{_in_drain};
 }
 
 =item $handle->push_read (type => @args, $cb)
@@ -1064,12 +1066,12 @@ sub start_read {
 
             $self->{filter_r}
                ? $self->{filter_r}($self, $rbuf)
-               : $self->_drain_rbuf;
+               : $self->{_in_drain} || $self->_drain_rbuf;
 
          } elsif (defined $len) {
             delete $self->{_rw};
             $self->{_eof} = 1;
-            $self->_drain_rbuf;
+            $self->_drain_rbuf unless $self->{_in_drain};
 
          } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
             return $self->_error ($!, 1);
@@ -1097,7 +1099,7 @@ sub _dotls {
    while (defined ($buf = Net::SSLeay::read ($self->{tls}))) {
       if (length $buf) {
          $self->{rbuf} .= $buf;
-         $self->_drain_rbuf;
+         $self->_drain_rbuf unless $self->{_in_drain};
       } else {
          # let's treat SSL-eof as we treat normal EOF
          $self->{_eof} = 1;
