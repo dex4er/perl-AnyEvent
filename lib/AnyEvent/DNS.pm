@@ -172,7 +172,7 @@ sub srv($$$$) {
          for @_;
 
       # order by priority
-      for my $pri (sort { $a->[0] <=> $b->[0] } keys %pri) {
+      for my $pri (sort { $a <=> $b } keys %pri) {
          # order by weight
          my @rr = sort { $a->[1] <=> $b->[1] } @{ delete $pri{$pri} };
 
