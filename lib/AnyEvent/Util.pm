@@ -298,7 +298,14 @@ guard.
 =cut
 
 sub AnyEvent::Util::Guard::DESTROY {
-   ${$_[0]}->();
+   local $@;
+
+   eval {
+      local $SIG{__DIE__};
+      ${$_[0]}->();
+   };
+
+   warn "runtime error in AnyEvent::guard callback: $@" if $@;
 }
 
 sub AnyEvent::Util::Guard::cancel($) {
