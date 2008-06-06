@@ -4,7 +4,7 @@ use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
-use Test::More tests => 4;
+use Test::More tests => 7;
 use Socket;
 
 {
@@ -13,8 +13,11 @@ use Socket;
    socketpair my $rd, my $wr, AF_UNIX, SOCK_STREAM, PF_UNSPEC;
 
    my $rd_ae = AnyEvent::Handle->new (
-      fh     => $rd,
-      on_eof => sub { $cv->broadcast },
+      fh       => $rd,
+      on_error => sub {
+         ok ($! == Errno::EPIPE);
+      },
+      on_eof   => sub { $cv->broadcast },
    );
 
    my $concat;
@@ -28,11 +31,11 @@ use Socket;
       $_[0]->push_read (line => $cb);
    });
 
-   syswrite $wr, "A\nBC\nDEF\nG\n" . ("X" x 113) . "\n";
+   syswrite $wr, "A\012BC\012DEF\012G\012" . ("X" x 113) . "\012";
    close $wr;
 
    $cv->wait;
-   is ($concat, "BCDEFG" . ("X" x 113), 'first lines were read correctly');
+   is ($concat, "BCDEFG" . ("X" x 113), 'initial lines were read correctly');
 }
 
 {
@@ -55,16 +58,21 @@ use Socket;
 
    my $wr_ae = new AnyEvent::Handle fh  => $wr, on_eof => sub { die };
 
-   $wr_ae->push_write (netstring => "0:xx,,");
-   $wr_ae->push_write ("A\nBC\nDEF\nG\n" . ("X" x 113) . "\n");
    undef $wr;
+   undef $rd;
+
+   $wr_ae->push_write (netstring => "0:xx,,");
+   $wr_ae->push_write (netstring => "");
+   $wr_ae->push_write (packstring => "w", "hallole" x 99);
+   $wr_ae->push_write ("A\nBC\nDEF\nG\n" . ("X" x 113) . "\n");
    undef $wr_ae;
 
-   $rd_ae->push_read (netstring => sub {
-      is ($_[1], "0:xx,,");
-   });
+   $rd_ae->push_read (netstring => sub { is ($_[1], "0:xx,,"); });
+   $rd_ae->push_read (netstring => sub { is ($_[1], ""); });
+   $rd_ae->push_read (packstring => "w", sub { is ($_[1], "hallole" x 99); });
 
    $cv->wait;
 
    is ($concat, "A:BC:DEF:G:" . ("X" x 113) . ":", 'second lines were read correctly');
 }
+

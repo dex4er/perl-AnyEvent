@@ -107,7 +107,9 @@ C<croak>.
 =item on_read => $cb->($handle)
 
 This sets the default read callback, which is called when data arrives
-and no read request is in the queue.
+and no read request is in the queue (unlike read queue callbacks, this
+callback will only be called when at least one octet of data is in the
+read buffer).
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
 method or access the C<$handle->{rbuf}> member directly.
@@ -230,7 +232,6 @@ sub new {
    $self->_timeout;
 
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
-   $self->on_read  (delete $self->{on_read} ) if $self->{on_read};
 
    $self
 }
@@ -478,6 +479,21 @@ register_write_type netstring => sub {
    sprintf "%d:%s,", (length $string), $string
 };
 
+=item packstring => $format, $data
+
+An octet string prefixed with an encoded length. The encoding C<$format>
+uses the same format as a Perl C<pack> format, but must specify a single
+integer only (only one of C<cCsSlLqQiInNvVjJw> is allowed, plus an
+optional C<!>, C<< < >> or C<< > >> modifier).
+
+=cut
+
+register_write_type packstring => sub {
+   my ($self, $format, $string) = @_;
+
+   pack "$format/a", $string
+};
+
 =item json => $array_or_hashref
 
 Encodes the given hash or array reference into a JSON object. Unless you
@@ -555,8 +571,8 @@ or not.
 
 In the more complex case, you want to queue multiple callbacks. In this
 case, AnyEvent::Handle will call the first queued callback each time new
-data arrives and removes it when it has done its job (see C<push_read>,
-below).
+data arrives (also the first time it is queued) and removes it when it has
+done its job (see C<push_read>, below).
 
 This way you can, for example, push three line-reads, followed by reading
 a chunk of data, and AnyEvent::Handle will execute them in order.
@@ -636,13 +652,15 @@ sub _drain_rbuf {
          unless ($cb->($self)) {
             if ($self->{_eof}) {
                # no progress can be made (not enough data and no data forthcoming)
-               return $self->_error (&Errno::EPIPE, 1);
+               $self->_error (&Errno::EPIPE, 1), last;
             }
 
             unshift @{ $self->{_queue} }, $cb;
             last;
          }
       } elsif ($self->{on_read}) {
+         last unless $len;
+
          $self->{on_read}($self);
 
          if (
@@ -652,7 +670,7 @@ sub _drain_rbuf {
          ) {
             # no further data will arrive
             # so no progress can be made
-            return $self->_error (&Errno::EPIPE, 1)
+            $self->_error (&Errno::EPIPE, 1), last
                if $self->{_eof};
 
             last; # more data might arrive
@@ -857,42 +875,6 @@ sub unshift_read_line {
    $self->unshift_read (line => @_);
 }
 
-=item netstring => $cb->($handle, $string)
-
-A netstring (http://cr.yp.to/proto/netstrings.txt, this is not an endorsement).
-
-Throws an error with C<$!> set to EBADMSG on format violations.
-
-=cut
-
-register_read_type netstring => sub {
-   my ($self, $cb) = @_;
-
-   sub {
-      unless ($_[0]{rbuf} =~ s/^(0|[1-9][0-9]*)://) {
-         if ($_[0]{rbuf} =~ /[^0-9]/) {
-            $self->_error (&Errno::EBADMSG);
-         }
-         return;
-      }
-
-      my $len = $1;
-
-      $self->unshift_read (chunk => $len, sub {
-         my $string = $_[1];
-         $_[0]->unshift_read (chunk => 1, sub {
-            if ($_[1] eq ",") {
-               $cb->($_[0], $string);
-            } else {
-               $self->_error (&Errno::EBADMSG);
-            }
-         });
-      });
-
-      1
-   }
-};
-
 =item regex => $accept[, $reject[, $skip], $cb->($handle, $data)
 
 Makes a regex match against the regex object C<$accept> and returns
@@ -960,6 +942,78 @@ register_read_type regex => sub {
       }
 
       ()
+   }
+};
+
+=item netstring => $cb->($handle, $string)
+
+A netstring (http://cr.yp.to/proto/netstrings.txt, this is not an endorsement).
+
+Throws an error with C<$!> set to EBADMSG on format violations.
+
+=cut
+
+register_read_type netstring => sub {
+   my ($self, $cb) = @_;
+
+   sub {
+      unless ($_[0]{rbuf} =~ s/^(0|[1-9][0-9]*)://) {
+         if ($_[0]{rbuf} =~ /[^0-9]/) {
+            $self->_error (&Errno::EBADMSG);
+         }
+         return;
+      }
+
+      my $len = $1;
+
+      $self->unshift_read (chunk => $len, sub {
+         my $string = $_[1];
+         $_[0]->unshift_read (chunk => 1, sub {
+            if ($_[1] eq ",") {
+               $cb->($_[0], $string);
+            } else {
+               $self->_error (&Errno::EBADMSG);
+            }
+         });
+      });
+
+      1
+   }
+};
+
+=item packstring => $format, $cb->($handle, $string)
+
+An octet string prefixed with an encoded length. The encoding C<$format>
+uses the same format as a Perl C<pack> format, but must specify a single
+integer only (only one of C<cCsSlLqQiInNvVjJw> is allowed, plus an
+optional C<!>, C<< < >> or C<< > >> modifier).
+
+DNS over TCP uses a prefix of C<n>, EPP uses a prefix of C<N>.
+
+Example: read a block of data prefixed by its length in BER-encoded
+format (very efficient).
+
+   $handle->push_read (packstring => "w", sub {
+      my ($handle, $data) = @_;
+   });
+
+=cut
+
+register_read_type packstring => sub {
+   my ($self, $cb, $format) = @_;
+
+   sub {
+      # when we can use 5.10 we can use ".", but for 5.8 we use the re-pack method
+      defined (my $len = eval { unpack $format, $_[0]->{rbuf} })
+         or return;
+
+      # remove prefix
+      substr $_[0]->{rbuf}, 0, (length pack $format, $len), "";
+
+      # read rest
+      $_[0]->unshift_read (chunk => $len, $cb);
+
+      1
    }
 };
 

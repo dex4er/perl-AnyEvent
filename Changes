@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+	- new "packstring" read and write type for AnyEvent::Handle.
+        - allow on_eof handler to be called after on_errro with EPIPE returns.
+        - do not immediately call on_read callback in handle constructor.
+
 4.14 Thu Jun  5 20:29:31 CEST 2008
         - Fixed a bug in DNS SRV priority sorting.
         - AnyEvent::Util::guard now reports runtime errors while

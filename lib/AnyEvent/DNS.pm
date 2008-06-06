@@ -508,6 +508,7 @@ our %dec_rr = (
     28 => sub { AnyEvent::Socket::format_address ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
     35 => sub { # naptr
+       # requires perl 5.10, sorry
        my ($order, $preference, $flags, $service, $regexp, $offset) = unpack "nn C/a* C/a* C/a* .", $_;
        local $ofs = $ofs + $offset - length;
        ($order, $preference, $flags, $service, $regexp, _dec_name)
