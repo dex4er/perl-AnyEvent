@@ -767,6 +767,10 @@ Provides a simple web application server framework.
 
 The fastest ping in the west.
 
+=item L<AnyEvent::DBI>
+
+Executes DBI requests asynchronously in a proxy process.
+
 =item L<Net::IRC3>
 
 AnyEvent based IRC client module family.
