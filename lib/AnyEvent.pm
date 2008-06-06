@@ -754,6 +754,11 @@ connections or tcp servers, with IPv6 and SRV record support and more.
 
 Provides rich asynchronous DNS resolver capabilities.
 
+=item L<AnyEvent::HTTP>
+
+A simple-to-use HTTP library that is capable of making a lot of concurrent
+HTTP requests.
+
 =item L<AnyEvent::HTTPD>
 
 Provides a simple web application server framework.
