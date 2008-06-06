@@ -546,6 +546,21 @@ register_write_type json => sub {
                  : JSON::encode_json ($ref)
 };
 
+=item storable => $reference
+
+Freezes the given reference using L<Storable> and writes it to the
+handle. Uses the C<nfreeze> format.
+
+=cut
+
+register_write_type storable => sub {
+   my ($self, $ref) = @_;
+
+   require Storable;
+
+   pack "w/a", Storable::nfreeze ($ref)
+};
+
 =back
 
 =item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
@@ -1047,7 +1062,7 @@ the C<json> write type description, above, for an actual example.
 =cut
 
 register_read_type json => sub {
-   my ($self, $cb, $accept, $reject, $skip) = @_;
+   my ($self, $cb) = @_;
 
    require JSON;
 
@@ -1069,6 +1084,40 @@ register_read_type json => sub {
          $self->{rbuf} = "";
          ()
       }
+   }
+};
+
+=item storable => $cb->($handle, $ref)
+
+Deserialises a L<Storable> frozen representation as written by the
+C<storable> write type (BER-encoded length prefix followed by nfreeze'd
+data).
+
+Raises C<EBADMSG> error if the data could not be decoded.
+
+=cut
+
+register_read_type storable => sub {
+   my ($self, $cb) = @_;
+
+   require Storable;
+
+   sub {
+      # when we can use 5.10 we can use ".", but for 5.8 we use the re-pack method
+      defined (my $len = eval { unpack "w", $_[0]->{rbuf} })
+         or return;
+
+      # remove prefix
+      substr $_[0]->{rbuf}, 0, (length pack "w", $len), "";
+
+      # read rest
+      $_[0]->unshift_read (chunk => $len, sub {
+         if (my $ref = eval { Storable::thaw ($_[1]) }) {
+            $cb->($_[0], $ref);
+         } else {
+            $self->_error (&Errno::EBADMSG);
+         }
+      });
    }
 };
 

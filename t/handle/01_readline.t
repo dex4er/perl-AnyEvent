@@ -4,7 +4,7 @@ use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Socket;
 
 {
@@ -63,16 +63,18 @@ use Socket;
 
    $wr_ae->push_write (netstring => "0:xx,,");
    $wr_ae->push_write (netstring => "");
+   $wr_ae->push_write (storable => [4,3,2]);
    $wr_ae->push_write (packstring => "w", "hallole" x 99999); # try to exhaust socket buffer here
-   $wr_ae->push_write ("A\nBC\nDEF\nG\n" . ("X" x 113) . "\n");
+   $wr_ae->push_write ("A\012BC\012DEF\nG\012" . ("X" x 113) . "\012");
    undef $wr_ae;
 
-   $rd_ae->push_read (netstring => sub { is ($_[1], "0:xx,,"); });
-   $rd_ae->push_read (netstring => sub { is ($_[1], ""); });
-   $rd_ae->push_read (packstring => "w", sub { is ($_[1], "hallole" x 99999); });
+   $rd_ae->push_read (netstring => sub { is ($_[1], "0:xx,,") });
+   $rd_ae->push_read (netstring => sub { is ($_[1], "") });
+   $rd_ae->push_read (storable => "w", sub { is ("@{$_[1]}", "4 3 2") });
+   $rd_ae->push_read (packstring => "w", sub { is ($_[1], "hallole" x 99999) });
 
    $cv->wait;
 
-   is ($concat, "A:BC:DEF:G:" . ("X" x 113) . ":", 'second lines were read correctly');
+   is ($concat, "A:BC:DEF:G:" . ("X" x 113) . ":", 'second set of lines were read correctly');
 }
 
