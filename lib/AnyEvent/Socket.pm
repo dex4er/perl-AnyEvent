@@ -58,7 +58,7 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.14;
+our $VERSION = 4.15;
 
 =item $ipn = parse_ipv4 $dotted_quad
 

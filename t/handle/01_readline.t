@@ -1,11 +1,14 @@
 #!perl
 
+# actually tests a few other read/write types as well
+
 use strict;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::Handle;
 use Test::More tests => 8;
 use Socket;
+use Errno;
 
 {
    my $cv = AnyEvent->condvar;
@@ -15,7 +18,7 @@ use Socket;
    my $rd_ae = AnyEvent::Handle->new (
       fh       => $rd,
       on_error => sub {
-         ok ($! == Errno::EPIPE);
+         ok ($! == &Errno::EPIPE);
       },
       on_eof   => sub { $cv->broadcast },
    );
