@@ -126,13 +126,59 @@ is stored in. AnyEvent will automatically clean up the watcher if it is no
 longer used, much like Perl closes your file handles if you no longer use
 them anywhere.
 
+=head3 A short note on callbacks
+
+A common issue that hits people is the problem of passing parameters
+to callbacks. Programmers used to languages such as C or C++ are often
+used to a style where one passes the address of a function (a function
+reference) and some data value, e.g.:
+
+   sub callback {
+      my ($arg) = @_;
+
+      $arg->method;
+   }
+
+   my $arg = ...;
+
+   call_me_back_later \&callback, $arg;
+
+This is clumsy, as the place where behaviour is specified (when the
+callback is registered) is often far away from the place where behaviour
+is implemented. It also doesn't use Perl syntax to invoke the code. There
+is also an abstraction penalty to pay as one has to I<name> the callback,
+which often is unnecessary and leads to nonsensical or duplicated names.
+
+In Perl, one can specify behaviour much more directly by using
+I<closures>. Closures are code blocks that take a reference to the
+enclosing scope(s) when they are created. This means lexical variables in scope at the time
+of creating the closure can simply be used inside the closure:
+
+   my $arg = ...;
+
+   call_me_back_later sub { $arg->method };
+
+Under most circumstances, closures are faster, use less resources and
+result in much clearer code then the traditional approach. Faster,
+because parameter passing and storing them in local variables in Perl
+is relatively slow. Less resources, because closures take references to
+existing variables without having to create new ones, and clearer code
+because it is immediately obvious that the second example calls the
+C<method> method when the callback is invoked.
+
+Apart from these, the strongest argument for using closures with AnyEvent
+is that AnyEvent does not allow passing parameters to the callback, so
+closures are the only way to achieve that in most cases :->
+
+
 =head2 Condition Variables
 
-However, the above is not a fully working program, and will not work
-as-is. The reason is that your callback will not be invoked out of the
-blue, you have to run the event loop. Also, event-based programs sometimes
-have to block, too, as when there simply is nothing else to do and
-everything waits for some events, it needs to block the process as well.
+Back to the I/O watcher example: The code not yet a fully working program,
+and will not work as-is. The reason is that your callback will not be
+invoked out of the blue, you have to run the event loop. Also, event-based
+programs sometimes have to block, too, as when there simply is nothing
+else to do and everything waits for some events, it needs to block the
+process as well.
 
 In AnyEvent, this is done using condition variables. Condition variables
 are named "condition variables" because they represent a condition that is
@@ -144,11 +190,11 @@ this in other frameworks). The important point is that you can create them
 freely and later wait for them to become true.
 
 Condition variables have two sides - one side is the "producer" of the
-condition (whatever code detects the condition), the other side is the
-"consumer" (the code that waits for that condition).
+condition (whatever code detects and flags the condition), the other side
+is the "consumer" (the code that waits for that condition).
 
 In our example in the previous section, the producer is the event callback
-and there is no consumer yet - let's change that now:
+and there is no consumer yet - let's change that right now:
 
    use AnyEvent;
 
