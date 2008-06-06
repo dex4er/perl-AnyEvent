@@ -502,7 +502,7 @@ optional C<!>, C<< < >> or C<< > >> modifier).
 register_write_type packstring => sub {
    my ($self, $format, $string) = @_;
 
-   pack "$format/a", $string
+   pack "$format/a*", $string
 };
 
 =item json => $array_or_hashref
@@ -558,7 +558,7 @@ register_write_type storable => sub {
 
    require Storable;
 
-   pack "w/a", Storable::nfreeze ($ref)
+   pack "w/a*", Storable::nfreeze ($ref)
 };
 
 =back
