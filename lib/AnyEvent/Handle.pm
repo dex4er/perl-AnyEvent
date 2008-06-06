@@ -244,6 +244,9 @@ sub new {
 
    $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
 
+   $self->start_read
+      if $self->{on_read} || @{ $self->{_queue} };
+
    $self
 }
 
