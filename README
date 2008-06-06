@@ -713,6 +713,10 @@ OTHER MODULES
     AnyEvent::DNS
         Provides rich asynchronous DNS resolver capabilities.
 
+    AnyEvent::HTTP
+        A simple-to-use HTTP library that is capable of making a lot of
+        concurrent HTTP requests.
+
     AnyEvent::HTTPD
         Provides a simple web application server framework.
 
@@ -1277,6 +1281,13 @@ SECURITY CONSIDERATIONS
     Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
     be used to probe what backend is used and gain other information (which
     is probably even less useful to an attacker than PERL_ANYEVENT_MODEL).
+
+BUGS
+    Perl 5.8 has numerous memleaks that sometimes hit this module and are
+    hard to work around. If you suffer from memleaks, first upgrade to Perl
+    5.10 and check wether the leaks still show up. (Perl 5.10.0 has other
+    annoying mamleaks, such as leaking on "map" and "grep" but it is usually
+    not as pronounced).
 
 SEE ALSO
     Utility functions: AnyEvent::Util.
