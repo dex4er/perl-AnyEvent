@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+4.151 Fri Jun  6 17:34:24 CEST 2008
+	- make sure specifying _only_ on_read and never pushing reads
+          works.
+
 4.15 Fri Jun  6 13:00:46 CEST 2008
 	- the pure perl backend would keep some watchers alive when more than
           one watcher was registered for the same fd.
