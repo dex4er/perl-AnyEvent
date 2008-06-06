@@ -169,6 +169,17 @@ Sets the amount of bytes (default: C<0>) that make up an "empty" write
 buffer: If the write reaches this size or gets even samller it is
 considered empty.
 
+=item linger => <seconds>
+
+If non-zero (default: C<3600>), then the destructor of the
+AnyEvent::Handle object will check wether there is still outstanding write
+data and will install a watcher that will write out this data. No errors
+will be reported (this mostly matches how the operating system treats
+outstanding data at socket close time).
+
+This will not work for partial TLS data that could not yet been
+encoded. This data will be lost.
+
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
 When this parameter is given, it enables TLS (SSL) mode, that means it
@@ -1255,6 +1266,28 @@ sub DESTROY {
    my $self = shift;
 
    $self->stoptls;
+
+   my $linger = exists $self->{linger} ? $self->{linger} : 3600;
+
+   if ($linger && length $self->{wbuf}) {
+      my $fh   = delete $self->{fh};
+      my $wbuf = delete $self->{wbuf};
+
+      my @linger;
+
+      push @linger, AnyEvent->io (fh => $fh, poll => "w", cb => sub {
+         my $len = syswrite $fh, $wbuf, length $wbuf;
+
+         if ($len > 0) {
+            substr $wbuf, 0, $len, "";
+         } else {
+            @linger = (); # end
+         }
+      });
+      push @linger, AnyEvent->timer (after => $linger, cb => sub {
+         @linger = ();
+      });
+   }
 }
 
 =item AnyEvent::Handle::TLS_CTX

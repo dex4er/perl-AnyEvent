@@ -63,13 +63,13 @@ use Socket;
 
    $wr_ae->push_write (netstring => "0:xx,,");
    $wr_ae->push_write (netstring => "");
-   $wr_ae->push_write (packstring => "w", "hallole" x 99);
+   $wr_ae->push_write (packstring => "w", "hallole" x 99999); # try to exhaust socket buffer here
    $wr_ae->push_write ("A\nBC\nDEF\nG\n" . ("X" x 113) . "\n");
    undef $wr_ae;
 
    $rd_ae->push_read (netstring => sub { is ($_[1], "0:xx,,"); });
    $rd_ae->push_read (netstring => sub { is ($_[1], ""); });
-   $rd_ae->push_read (packstring => "w", sub { is ($_[1], "hallole" x 99); });
+   $rd_ae->push_read (packstring => "w", sub { is ($_[1], "hallole" x 99999); });
 
    $cv->wait;
 

@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- the pure perl backend would keep some watchers alive when more than
+          one watcher was registered for the same fd.
 	- new "packstring" read and write type for AnyEvent::Handle.
         - allow on_eof handler to be called after on_errro with EPIPE returns.
         - do not immediately call on_read callback in handle constructor.

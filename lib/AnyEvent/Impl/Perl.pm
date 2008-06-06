@@ -213,7 +213,7 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
       my $last = pop @$q;
 
       if ($last != $self) {
-         $q->[$self->[3]] = $last;
+         Scalar::Util::weaken ($q->[$self->[3]] = $last);
          $last->[3] = $self->[3];
       }
    }
