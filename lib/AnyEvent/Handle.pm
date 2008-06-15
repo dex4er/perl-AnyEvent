@@ -126,6 +126,12 @@ This sets the callback that is called when the write buffer becomes empty
 
 To append to the write buffer, use the C<< ->push_write >> method.
 
+This callback is useful when you don't want to put all of your write data
+into the queue at once, for example, when you want to write the contents
+of some file to the socket you might not want to read the whole file into
+memory and push it into the queue, but instead only read more data from
+the file when the write queue becomes empty.
+
 =item timeout => $fractional_seconds
 
 If non-zero, then this enables an "inactivity" timeout: whenever this many
@@ -595,8 +601,9 @@ a queue.
 
 In the simple case, you just install an C<on_read> callback and whenever
 new data arrives, it will be called. You can then remove some data (if
-enough is there) from the read buffer (C<< $handle->rbuf >>) if you want
-or not.
+enough is there) from the read buffer (C<< $handle->rbuf >>). Or you cna
+leave the data there if you want to accumulate more (e.g. when only a
+partial message has been received so far).
 
 In the more complex case, you want to queue multiple callbacks. In this
 case, AnyEvent::Handle will call the first queued callback each time new
@@ -624,13 +631,17 @@ the specified number of bytes which give an XML datagram.
       });
    });
 
-Example 2: Implement a client for a protocol that replies either with
-"OK" and another line or "ERROR" for one request, and 64 bytes for the
-second request. Due tot he availability of a full queue, we can just
-pipeline sending both requests and manipulate the queue as necessary in
-the callbacks:
+Example 2: Implement a client for a protocol that replies either with "OK"
+and another line or "ERROR" for the first request that is sent, and 64
+bytes for the second request. Due to the availability of a queue, we can
+just pipeline sending both requests and manipulate the queue as necessary
+in the callbacks.
 
-   # request one
+When the first callback is called and sees an "OK" response, it will
+C<unshift> another line-read. This line-read will be queued I<before> the
+64-byte chunk callback.
+
+   # request one, returns either "OK + extra line" or "ERROR"
    $handle->push_write ("request 1\015\012");
 
    # we expect "ERROR" or "OK" as response, so push a line read
@@ -647,7 +658,7 @@ the callbacks:
       }
    });
 
-   # request two
+   # request two, simply returns 64 octets
    $handle->push_write ("request 2\015\012");
 
    # simply read 64 bytes, always
