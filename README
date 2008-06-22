@@ -723,6 +723,9 @@ OTHER MODULES
     AnyEvent::FastPing
         The fastest ping in the west.
 
+    AnyEvent::DBI
+        Executes DBI requests asynchronously in a proxy process.
+
     Net::IRC3
         AnyEvent based IRC client module family.
 

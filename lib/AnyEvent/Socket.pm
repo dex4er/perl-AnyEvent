@@ -80,7 +80,7 @@ sub parse_ipv4($) {
    return undef if grep $_ >= 256, @_[0 .. @_ - 2];
 
    # check trailing part against range
-   return undef if $_[-1] >= 1 << (8 * (4 - $#_));
+   return undef if $_[-1] >= 2 ** (8 * (4 - $#_));
 
    pack "N", (pop)
              + ($_[0] << 24)

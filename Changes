@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+4.152 Sun Jun 22 14:15:44 CEST 2008
+	- allow for 32-bit perls that implement shifts difefrently
+          on diferent architectures in parse_ipv4 (reported and
+          analysed by Keiichi DAIBA).
+
 4.151 Fri Jun  6 17:34:24 CEST 2008
 	- make sure specifying _only_ on_read and never pushing reads
           works.
