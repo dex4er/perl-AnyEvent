@@ -164,6 +164,30 @@ be configured to accept only so-and-so much data that it cannot act on
 amount of data without a callback ever being called as long as the line
 isn't finished).
 
+=item autocork => <boolean>
+
+When disabled (the default), then C<push_write> will try to immediately
+write the data to the handle if possible. This avoids having to register
+a write watcher and wait for the next event loop iteration, but can be
+inefficient if you write multiple small chunks (this disadvantage is
+usually avoided by your kernel's nagle algorithm, see C<low_delay>).
+
+When enabled, then writes will always be queued till the next event loop
+iteration. This is efficient when you do many small writes per iteration,
+but less efficient when you do a single write only.
+
+=item no_delay => <boolean>
+
+When doing small writes on sockets, your operating system kernel might
+wait a bit for more data before actually sending it out. This is called
+the Nagle algorithm, and usually it is beneficial.
+
+In some situations you want as low a delay as possible, which cna be
+accomplishd by setting this option to true.
+
+The default is your opertaing system's default behaviour, this option
+explicitly enables or disables it, if possible.
+
 =item read_size => <bytes>
 
 The default read block size (the amount of bytes this module will try to read
@@ -248,7 +272,8 @@ sub new {
    $self->{_activity} = AnyEvent->now;
    $self->_timeout;
 
-   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
+   $self->on_drain (delete $self->{on_drain}) if exists $self->{on_drain};
+   $self->no_delay (delete $self->{no_delay}) if exists $self->{no_delay};
 
    $self->start_read
       if $self->{on_read};
@@ -320,6 +345,29 @@ argument.
 
 sub on_timeout {
    $_[0]{on_timeout} = $_[1];
+}
+
+=item $handle->autocork ($boolean)
+
+Enables or disables the current autocork behaviour (see C<autocork>
+constructor argument).
+
+=cut
+
+=item $handle->no_delay ($boolean)
+
+Enables or disables the C<no_delay> setting (see constructor argument of
+the same name for details).
+
+=cut
+
+sub no_delay {
+   $_[0]{no_delay} = $_[1];
+
+   eval {
+      local $SIG{__DIE__};
+      setsockopt $_[0]{fh}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, int $_[1];
+   };
 }
 
 #############################################################################
@@ -444,7 +492,7 @@ sub _drain_wbuf {
       };
 
       # try to write data immediately
-      $cb->();
+      $cb->() unless $self->{autocork};
 
       # if still data left in wbuf, we need to poll
       $self->{_ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb)
