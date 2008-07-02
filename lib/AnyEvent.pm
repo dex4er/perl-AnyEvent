@@ -818,7 +818,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = 4.152;
+our $VERSION = '4.160'; # temporary workaround for broken fedora
 our $MODEL;
 
 our $AUTOLOAD;
@@ -990,7 +990,7 @@ sub AnyEvent::Base::Signal::DESTROY {
 
    delete $SIG_CB{$signal}{$cb};
 
-   $SIG{$signal} = 'DEFAULT' unless keys %{ $SIG_CB{$signal} };
+   delete $SIG{$signal} unless keys %{ $SIG_CB{$signal} };
 }
 
 # default implementation for ->child

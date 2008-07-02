@@ -1,6 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
 4.160
+	- re-registering signal watchers after unregistering one did
+          not work if a backend falls back on AnyEvent's default
+          implementation (also affected child watchers).
 	- new AnyEvent::Handle options: autocork and no_delay.
 
 4.152 Sun Jun 22 14:15:44 CEST 2008
