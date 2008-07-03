@@ -818,7 +818,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = '4.160'; # temporary workaround for broken fedora
+our $VERSION = 4.160;
 our $MODEL;
 
 our $AUTOLOAD;

@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-4.160
+4.160 Thu Jul  3 04:02:21 CEST 2008
 	- re-registering signal watchers after unregistering one did
           not work if a backend falls back on AnyEvent's default
           implementation (also affected child watchers).
