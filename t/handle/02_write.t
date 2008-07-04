@@ -47,7 +47,7 @@ $rd_ae->push_read (chunk => 5132, sub {
 
    });
 
-   $rd_ae->push_read (chunk => 1, sub {
+   $rd_ae->push_read (chunk => 5000, sub {
       print "ok " . $n++ . " - second read chunk\n";
       $cv->broadcast
    });
