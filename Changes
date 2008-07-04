@@ -1,7 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+4.161 Fri Jul  4 14:24:48 CEST 2008
         - fixed the t/handle/02_write.t, it read after write, with the
-          assumption that all data could be written before read.
+          assumption that all data could be written before read
+          (reported by Jim Razmus).
 
 4.160 Thu Jul  3 04:02:21 CEST 2008
 	- re-registering signal watchers after unregistering one did
