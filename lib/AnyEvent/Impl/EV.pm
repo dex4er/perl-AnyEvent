@@ -30,7 +30,7 @@ sub now  { EV::now  }
 sub timer {
    my ($class, %arg) = @_;
 
-   EV::timer $arg{after}, $arg{repeat} && $arg{after}, $arg{cb}
+   EV::timer $arg{after}, $arg{interval}, $arg{cb}
 }
 
 sub io {

@@ -225,12 +225,12 @@ sub timer {
    
    my $self;
 
-   if ($arg{repeat}) {
-      my $cb    = $arg{cb};
-      my $after = $arg{after};
+   if ($arg{interval}) {
+      my $cb   = $arg{cb};
+      my $ival = $arg{interval};
 
-      $self = [$MNOW + $after , sub {
-         $_[0][0] = $MNOW + $after;
+      $self = [$MNOW + $arg{after} , sub {
+         $_[0][0] = $MNOW + $ival;
          push @timer, $_[0];
          Scalar::Util::weaken $timer[-1];
          $need_sort = $_[0][0] if $_[0][0] < $need_sort;

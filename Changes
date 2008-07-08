@@ -1,7 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: document repeat or use interval.
-	- support a "repeat" argument for repeating timers.
+	- support an "interval" argument for repeating timers.
 
 	- not importing anything from Event causes it to malfunction
           and not use Time::HiRes, work around this bug.

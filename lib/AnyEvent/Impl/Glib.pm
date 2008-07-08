@@ -61,13 +61,17 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   my $cb = $arg{cb};
-   my $rp = $arg{repeat};
+   my $cb   = $arg{cb};
+   my $ival = $arg{interval} * 1000;
 
-   my $source = add Glib::Timeout 1000 * delete $arg{after}, sub {
-      &$cb;
-      $rp
-   };
+   my $source; $source = add Glib::Timeout $arg{after} * 1000,
+      $ival ? sub {
+                remove Glib::Source $source;
+                $source = add Glib::Timeout $ival, sub { &$cb; 1 };
+                &$cb;
+                0
+              }
+            : sub { &$cb; 0 };
 
    bless \\$source, $class
 }

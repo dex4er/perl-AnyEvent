@@ -291,15 +291,15 @@ sub timer {
    my ($class, %arg) = @_;
 
    my $after = $arg{after};
+   my $ival  = $arg{interval};
    my $cb    = $arg{cb};
-   my $rp    = $arg{repeat};
 
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
             $_[KERNEL]->delay_set (timeout => $after);
          },
-         timeout => $rp ? sub { $_[KERNEL]->delay_set (timeout => $after); $cb->() } : $cb,
+         timeout => $ival ? sub { $_[KERNEL]->delay_set (timeout => $ival); $cb->() } : $cb,
          stop => sub {
             $_[KERNEL]->alarm_remove_all;
          },

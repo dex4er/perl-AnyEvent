@@ -34,20 +34,22 @@ package AnyEvent::Impl::Qt::Timer;
 
 use Qt;
 use Qt::isa qw(Qt::Timer);
-use Qt::slots cb => [];
+use Qt::slots cb => [], interval => [];
 
 # having to go through these contortions just to get a timer event is
 # considered an advantage over other gui toolkits how?
 
 sub NEW {
-   my ($class, $after, $singleshot, $cb) = @_;
+   my ($class, $after, $interval, $cb) = @_;
    shift->SUPER::NEW ();
-   this->{cb} = $cb;
+   this->{interval} = $interval;
+   this->{cb}       = $cb;
    this->connect (this, SIGNAL "timeout()", SLOT "cb()");
-   this->start ($after * 1000, $singleshot);
+   this->start ($after, 1);
 }
 
 sub cb {
+   this->start (this->{interval}, 1);
    (this->{cb})->();
 }
 
@@ -101,7 +103,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   AnyEvent::Impl::Qt::Timer $arg{after}, !$arg{repeat}, $arg{cb}
+   AnyEvent::Impl::Qt::Timer $arg{after} * 1000, $arg{interval} * 1000, $arg{cb}
 }
 
 sub one_event {

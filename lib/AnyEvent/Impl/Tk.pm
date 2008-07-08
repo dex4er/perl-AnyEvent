@@ -87,21 +87,21 @@ sub AnyEvent::Impl::Tk::Io::DESTROY {
 sub timer {
    my (undef, %arg) = @_;
    
-   my $after = $arg{after} * 1000;
-   my $cb    = $arg{cb};
+   my $cb = $arg{cb};
 
    my $self = bless \\$cb, AnyEvent::Impl::Tk::Timer::;
 
-   if ($arg{repeat}) {
+   if ($arg{interval}) {
+      my $ival = $arg{interval} * 1000;
       my $rcb; $rcb = sub {
          if ($cb) {
-            $mw->after ($after, $rcb);
+            $mw->after ($ival, $rcb);
             &$cb;
          }
       };
-      $mw->after ($after, $rcb);
+      $mw->after ($arg{after} * 1000, $rcb);
    } else {
-      $mw->after ($after, sub {
+      $mw->after ($arg{after} * 1000, sub {
          &$cb if $cb;
       });
    }
