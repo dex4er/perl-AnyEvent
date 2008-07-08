@@ -5,6 +5,7 @@ README
 Makefile.PL
 lib/AnyEvent.pm
 lib/AnyEvent/Intro.pod
+lib/AnyEvent/Strict.pm
 lib/AnyEvent/DNS.pm
 lib/AnyEvent/Util.pm
 lib/AnyEvent/Handle.pm
