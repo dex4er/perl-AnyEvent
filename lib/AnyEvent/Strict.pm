@@ -8,8 +8,6 @@ use Carp qw(croak);
 use AnyEvent ();
 
 AnyEvent::post_detect {
-   # assume the first ISA member is the implementation
-   # # and link us in before it in the chain.
    my $MODEL = shift @AnyEvent::ISA;
    unshift @ISA, $MODEL;
    unshift @AnyEvent::ISA, AnyEvent::Strict::
