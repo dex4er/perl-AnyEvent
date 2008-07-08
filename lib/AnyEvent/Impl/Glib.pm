@@ -41,7 +41,6 @@ our $maincontext = Glib::MainContext->default;
 sub io {
    my ($class, %arg) = @_;
    
-   my $fh = $arg{fh};
    my $cb = $arg{cb};
 
    my @cond;
@@ -51,7 +50,6 @@ sub io {
 
    my $source = add_watch Glib::IO fileno $arg{fh}, \@cond, sub {
       &$cb;
-      $fh; # mention it here to keep it from being destroyed
       1
    };
 

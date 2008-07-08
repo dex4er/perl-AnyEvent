@@ -195,9 +195,10 @@ presence is undefined and you cannot rely on them. Portable AnyEvent
 callbacks cannot use arguments passed to time watcher callbacks.
 
 The callback will normally be invoked once only. If you specify another
-parameter, C<interval>, as a positive number, then the callback will be
-invoked regularly at that interval (in fractional seconds) after the first
-invocation.
+parameter, C<interval>, as a strictly positive number (> 0), then the
+callback will be invoked regularly at that interval (in fractional
+seconds) after the first invocation. If C<interval> is specified with a
+false value, then it is treated as if it were missing.
 
 The callback will be rescheduled before invoking the callback, but no
 attempt is done to avoid timer drift in most backends, so the interval is
