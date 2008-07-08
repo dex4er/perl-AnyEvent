@@ -47,10 +47,10 @@ our $mw = new MainWindow;
 $mw->withdraw;
 
 sub io {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
    
-   my $self = bless \%arg, $class;
-   my $cb = $self->{cb};
+   my $self = bless \%arg, AnyEvent::Impl::Tk::Io::;
+   my $cb   = $self->{cb};
 
    # cygwin requires the fh mode to be matching, unix doesn't
    my ($tk, $mode) = $self->{poll} eq "r" ? ("readable", "<")
@@ -73,20 +73,7 @@ sub io {
    $self
 }
 
-sub timer {
-   my ($class, %arg) = @_;
-   
-   my $self = bless \%arg, $class;
-   my $rcb = \$self->{cb};
-
-   $mw->after ($self->{after} * 1000, sub {
-      $$rcb->() if $$rcb;
-   });
-
-   $self
-}
-
-sub cancel {
+sub AnyEvent::Impl::Tk::Io::DESTROY {
    my ($self) = @_;
 
    if (my $fh = delete $self->{fh2}) {
@@ -95,15 +82,35 @@ sub cancel {
       $mw->fileevent ($fh, readable => "");
       $mw->fileevent ($fh, writable => "");
    }
-
-   undef $self->{cb};
-   delete $self->{cb};
 }
 
-sub DESTROY {
-   my ($self) = @_;
+sub timer {
+   my (undef, %arg) = @_;
+   
+   my $after = $arg{after} * 1000;
+   my $cb    = $arg{cb};
 
-   $self->cancel;
+   my $self = bless \\$cb, AnyEvent::Impl::Tk::Timer::;
+
+   if ($arg{repeat}) {
+      my $rcb; $rcb = sub {
+         if ($cb) {
+            $mw->after ($after, $rcb);
+            &$cb;
+         }
+      };
+      $mw->after ($after, $rcb);
+   } else {
+      $mw->after ($after, sub {
+         &$cb if $cb;
+      });
+   }
+
+   $self
+}
+
+sub AnyEvent::Impl::Tk::Timer::DESTROY {
+   $${$_[0]} = undef;
 }
 
 sub one_event {

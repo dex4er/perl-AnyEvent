@@ -1,5 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: document repeat or use interval.
+	- support a "repeat" argument for repeating timers.
+
+	- not importing anything from Event causes it to malfunction
+          and not use Time::HiRes, work around this bug.
+        - fix a bug in the pure perl event loop that caused timers to
+          be delayed under some circumstances.
+        - minor optimisations applied to most backends.
+
 4.161 Fri Jul  4 14:24:48 CEST 2008
         - fixed the t/handle/02_write.t, it read after write, with the
           assumption that all data could be written before read

@@ -68,8 +68,9 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
 
-   my ($cb, $w) = delete $arg{cb};
-   $w = timer_new sub { $w->remove; $cb->(); undef $w; undef $cb };
+   my $w; $w = timer_new $arg{repeat}
+                  ? sub { $arg{cb}->(); $w->add ($arg{after}) }
+                  : sub { $w->remove; undef $w; (delete $arg{cb})->() };
    $w->add ($arg{after} || 1e-10); # work around 0-bug in Event::Lib
    bless \\$w, $class
 }
@@ -95,6 +96,8 @@ sub signal {
 }
 
 sub DESTROY {
+   local $@;
+
    ${${$_[0]}}->remove;
 }
 

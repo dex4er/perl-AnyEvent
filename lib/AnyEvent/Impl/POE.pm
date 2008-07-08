@@ -50,6 +50,10 @@ This means that you will either have to live with lost events or you have
 to make sure to load AnyEvent early enough (this is usually not that
 difficult in a main program, but hard in a module).
 
+POE has other weird messages, and sometimes weird behaviour, for example,
+it doesn't support overloaded code references as callbacks for no apparent
+reason.
+
 =item One POE session per Event
 
 AnyEvent has to create one POE::Session per event watcher, which is
@@ -256,16 +260,16 @@ POE::Kernel->run;
 
 sub io {
    my ($class, %arg) = @_;
-   my $poll = delete $arg{poll};
-   my $cb   = delete $arg{cb};
 
    # cygwin requires the fh mode to be matching, unix doesn't
-   my ($pee, $mode) = $poll eq "r" ? ("select_read" , "<")
-                    : $poll eq "w" ? ("select_write", ">")
+   my ($pee, $mode) = $arg{poll} eq "r" ? ("select_read" , "<")
+                    : $arg{poll} eq "w" ? ("select_write", ">")
                     : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
 
    open my $fh, "$mode&" . fileno $arg{fh}
       or die "cannot dup() filehandle: $!";
+
+   my $cb = $arg{cb};
 
    my $session = POE::Session->create (
       inline_states => {
@@ -285,16 +289,17 @@ sub io {
 
 sub timer {
    my ($class, %arg) = @_;
-   my $after = delete $arg{after};
-   my $cb    = delete $arg{cb};
+
+   my $after = $arg{after};
+   my $cb    = $arg{cb};
+   my $rp    = $arg{repeat};
+
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
             $_[KERNEL]->delay_set (timeout => $after);
          },
-         timeout => sub {
-            $cb->();
-         },
+         timeout => $rp ? sub { $_[KERNEL]->delay_set (timeout => $after); $cb->() } : $cb,
          stop => sub {
             $_[KERNEL]->alarm_remove_all;
          },

@@ -19,6 +19,7 @@ creating the first AnyEvent watcher.
 
 package AnyEvent::Impl::EV;
 
+no warnings;
 use strict;
 
 use EV;
@@ -29,7 +30,7 @@ sub now  { EV::now  }
 sub timer {
    my ($class, %arg) = @_;
 
-   EV::timer $arg{after}, 0, $arg{cb}
+   EV::timer $arg{after}, $arg{repeat} && $arg{after}, $arg{cb}
 }
 
 sub io {

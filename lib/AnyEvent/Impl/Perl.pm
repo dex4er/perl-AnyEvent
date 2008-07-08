@@ -129,20 +129,21 @@ sub one_event {
    if (@timer && $timer[0][0] <= $MNOW) {
       do {
          my $timer = shift @timer;
-         $timer->[1][0]() if $timer->[1];
+         $timer->[1]($timer) if $timer->[1];
       } while @timer && $timer[0][0] <= $MNOW;
 
    } else {
       # poll for I/O events, we do not do this when there
       # were any pending timers to ensure that one_event returns
       # quickly when some timers have been handled
-      my (@vec, $fds);
+      my ($wait, @vec, $fds)
+         = (@timer && $timer[0][0] < $need_sort ? $timer[0][0] : $need_sort) - $MNOW;
 
       if ($fds = select
             $vec[0] = $fds[0]{v},
             $vec[1] = $fds[1]{v},
             AnyEvent::WIN32 ? $vec[2] = $fds[1]{v} : undef,
-            @timer ? $timer[0][0] - $MNOW  + 0.0009 : 3600
+            $wait < 3600 ? $wait + 0.0009 : 3600
       ) {
          _update_clock;
 
@@ -222,12 +223,26 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
 sub timer {
    my ($class, %arg) = @_;
    
-   my $self = bless [$arg{cb}], AnyEvent::Impl::Perl::Timer::;
-   my $time = $MNOW + $arg{after};
+   my $self;
 
-   push @timer, [$time, $self];
-   Scalar::Util::weaken $timer[-1][1];
-   $need_sort = $time if $time < $need_sort;
+   if ($arg{repeat}) {
+      my $cb    = $arg{cb};
+      my $after = $arg{after};
+
+      $self = [$MNOW + $after , sub {
+         $_[0][0] = $MNOW + $after;
+         push @timer, $_[0];
+         Scalar::Util::weaken $timer[-1];
+         $need_sort = $_[0][0] if $_[0][0] < $need_sort;
+         &$cb;
+      }];
+   } else {
+      $self = [$MNOW + $arg{after}, $arg{cb}];
+   }
+
+   push @timer, $self;
+   Scalar::Util::weaken $timer[-1];
+   $need_sort = $self->[0] if $self->[0] < $need_sort;
 
    $self
 }

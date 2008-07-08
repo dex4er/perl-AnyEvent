@@ -7,7 +7,7 @@ AnyEvent::Impl::Qt - AnyEvent adaptor for Qt
    use AnyEvent;
    use Qt;
   
-   Qt::Application \@ARGV; # REQUIRED!
+   my $app = Qt::Application \@ARGV; # REQUIRED!
   
    # this module gets loaded automatically as required
 
@@ -40,15 +40,15 @@ use Qt::slots cb => [];
 # considered an advantage over other gui toolkits how?
 
 sub NEW {
-   my ($class, $after, $cb) = @_;
-   shift->SUPER::NEW;
+   my ($class, $after, $singleshot, $cb) = @_;
+   shift->SUPER::NEW ();
    this->{cb} = $cb;
    this->connect (this, SIGNAL "timeout()", SLOT "cb()");
-   this->start ($after * 1000, 1);
+   this->start ($after * 1000, $singleshot);
 }
 
 sub cb {
-   (delete this->{cb})->();
+   (this->{cb})->();
 }
 
 sub DESTROY {
@@ -101,7 +101,7 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   AnyEvent::Impl::Qt::Timer $arg{after}, $arg{cb}
+   AnyEvent::Impl::Qt::Timer $arg{after}, !$arg{repeat}, $arg{cb}
 }
 
 sub one_event {
