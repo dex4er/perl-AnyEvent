@@ -154,11 +154,11 @@ declared.
 You can create an I/O watcher by calling the C<< AnyEvent->io >> method
 with the following mandatory key-value pairs as arguments:
 
-C<fh> the Perl I<file handle> (I<not> file descriptor) to watch
-for events. C<poll> must be a string that is either C<r> or C<w>,
-which creates a watcher waiting for "r"eadable or "w"ritable events,
-respectively. C<cb> is the callback to invoke each time the file handle
-becomes ready.
+C<fh> the Perl I<file handle> (I<not> file descriptor) to watch for events
+(AnyEvent might or might not keep a reference to this file handle). C<poll>
+must be a string that is either C<r> or C<w>, which creates a watcher
+waiting for "r"eadable or "w"ritable events, respectively. C<cb> is the
+callback to invoke each time the file handle becomes ready.
 
 Although the callback might get passed parameters, their value and
 presence is undefined and you cannot rely on them. Portable AnyEvent
