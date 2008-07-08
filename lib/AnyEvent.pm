@@ -172,9 +172,9 @@ Some event loops issue spurious readyness notifications, so you should
 always use non-blocking calls when reading/writing from/to your file
 handles.
 
-Example:
+Example: wait for readability of STDIN, then read a line and disable the
+watcher.
 
-   # wait for readability of STDIN, then read a line and disable the watcher
    my $w; $w = AnyEvent->io (fh => \*STDIN, poll => 'r', cb => sub {
       chomp (my $input = <STDIN>);
       warn "read: $input\n";
@@ -194,13 +194,17 @@ Although the callback might get passed parameters, their value and
 presence is undefined and you cannot rely on them. Portable AnyEvent
 callbacks cannot use arguments passed to time watcher callbacks.
 
-The timer callback will be invoked at most once: if you want a repeating
-timer you have to create a new watcher (this is a limitation by both Tk
-and Glib).
+The callback will normally be invoked once only. If you specify another
+parameter, C<interval>, as a positive number, then the callback will be
+invoked regularly at that interval (in fractional seconds) after the first
+invocation.
 
-Example:
+The callback will be rescheduled before invoking the callback, but no
+attempt is done to avoid timer drift in most backends, so the interval is
+only approximate.
 
-   # fire an event after 7.7 seconds
+Example: fire an event after 7.7 seconds.
+
    my $w = AnyEvent->timer (after => 7.7, cb => sub {
       warn "timeout\n";
    });
@@ -208,18 +212,11 @@ Example:
    # to cancel the timer:
    undef $w;
 
-Example 2:
+Example 2: fire an event after 0.5 seconds, then roughly every second.
 
-   # fire an event after 0.5 seconds, then roughly every second
-   my $w;
-
-   my $cb = sub {
-      # cancel the old timer while creating a new one
-      $w = AnyEvent->timer (after => 1, cb => $cb);
+   my $w = AnyEvent->timer (after => 0.5, interval => 1, cb => sub {
+      warn "timeout\n";
    };
-
-   # start the "loop" by creating the first watcher
-   $w = AnyEvent->timer (after => 0.5, cb => $cb);
 
 =head3 TIMING ISSUES
 
@@ -740,15 +737,17 @@ available via CPAN.
 Contains various utility functions that replace often-used but blocking
 functions such as C<inet_aton> by event-/callback-based versions.
 
-=item L<AnyEvent::Handle>
-
-Provide read and write buffers and manages watchers for reads and writes.
-
 =item L<AnyEvent::Socket>
 
 Provides various utility functions for (internet protocol) sockets,
 addresses and name resolution. Also functions to create non-blocking tcp
 connections or tcp servers, with IPv6 and SRV record support and more.
+
+=item L<AnyEvent::Handle>
+
+Provide read and write buffers, manages watchers for reads and writes,
+supports raw and formatted I/O, I/O queued and fully transparent and
+non-blocking SSL/TLS.
 
 =item L<AnyEvent::DNS>
 
@@ -769,7 +768,27 @@ The fastest ping in the west.
 
 =item L<AnyEvent::DBI>
 
-Executes DBI requests asynchronously in a proxy process.
+Executes L<DBI> requests asynchronously in a proxy process.
+
+=item L<AnyEvent::AIO>
+
+Truly asynchronous I/O, should be in the toolbox of every event
+programmer. AnyEvent::AIO transparently fuses L<IO::AIO> and AnyEvent
+together.
+
+=item L<AnyEvent::BDB>
+
+Truly asynchronous Berkeley DB access. AnyEvent::BDB transparently fuses
+L<BDB> and AnyEvent together.
+
+=item L<AnyEvent::GPSD>
+
+A non-blocking interface to gpsd, a daemon delivering GPS information.
+
+=item L<AnyEvent::IGS>
+
+A non-blocking interface to the Internet Go Server protocol (used by
+L<App::IGS>).
 
 =item L<Net::IRC3>
 
@@ -792,17 +811,6 @@ High level API for event-based execution flow control.
 
 Has special support for AnyEvent via L<Coro::AnyEvent>.
 
-=item L<AnyEvent::AIO>, L<IO::AIO>
-
-Truly asynchronous I/O, should be in the toolbox of every event
-programmer. AnyEvent::AIO transparently fuses IO::AIO and AnyEvent
-together.
-
-=item L<AnyEvent::BDB>, L<BDB>
-
-Truly asynchronous Berkeley DB access. AnyEvent::AIO transparently fuses
-IO::AIO and AnyEvent together.
-
 =item L<IO::Lambda>
 
 The lambda approach to I/O - don't ask, look there. Can use AnyEvent.
@@ -818,7 +826,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = 4.161;
+our $VERSION = 4.2;
 our $MODEL;
 
 our $AUTOLOAD;

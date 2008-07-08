@@ -35,7 +35,7 @@ sub io {
 
 sub timer {
    my ($class, %arg) = @_;
-   bless \Event->timer (%arg), $class
+   bless \Event->timer (%arg, repeat => $arg{interval}), $class
 }
 
 sub signal {
