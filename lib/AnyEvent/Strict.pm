@@ -1,10 +1,30 @@
+=head1 NAME
+
+AnyEvent::Strict - force strict mode on for the whole process
+
+=head1 SYNOPSIS
+
+   use AnyEvent::Strict;
+   # struct mode now switched on
+
+=head1 DESCRIPTION
+
+This module implements AnyEvent's strict mode.
+
+Loading it makes AnyEvent check all arguments to AnyEvent-methods, at the
+expense of being slower (often the argument checking takes longer than the
+actual fucntion).
+
+Normally, you don't load this module yourself but instead use it
+indirectly via the C<PERL_ANYEVENT_STRICT> environment variable (see
+L<AnyEvent>). However, this module can be loaded at any time.
+
+=cut
+
 package AnyEvent::Strict;
 
-# supply checks for argument validity for many functions
-# this is an internal module. although it could be loaded
-# at any time, this is not really documented.
-
 use Carp qw(croak);
+
 use AnyEvent ();
 
 AnyEvent::post_detect {
@@ -127,4 +147,12 @@ sub now {
    $class->SUPER::now (@_)
 }
 
-1
+1;
+
+=head1 AUTHOR
+
+ Marc Lehmann <schmorp@schmorp.de>
+ http://home.schmorp.de/
+
+=cut
+

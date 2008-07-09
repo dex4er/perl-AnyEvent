@@ -171,6 +171,25 @@ is that AnyEvent does not allow passing parameters to the callback, so
 closures are the only way to achieve that in most cases :->
 
 
+=head3 A hint on debugging
+
+AnyEvent does, by default, not do any argument checking. This can lead to
+strange and unexpected results especially if you are trying to learn yur
+ways with AnyEvent.
+
+AnyEvent supports a special "strict" mode, off by default, which does very
+strict argument checking, at the expense of being somewhat slower. When
+developing, however, this mode is very useful.
+
+You can enable this strict mode either by having an environment variable
+C<PERL_ANYEVENT_STRICT> with a true value in your environment:
+
+   PERL_ANYEVENT_STRICT=1 perl test.pl
+
+Or you can write C<use AnyEvent::Strict> in your program, which has the
+same effect (do not do this in production, however).
+
+
 =head2 Condition Variables
 
 Back to the I/O watcher example: The code not yet a fully working program,

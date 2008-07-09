@@ -1208,10 +1208,14 @@ model it chooses.
 
 AnyEvent does not do much argument checking by default, as thorough
 argument checking is very costly. Setting this variable to a true value
-will cause AnyEvent to thoroughly check the arguments passed to most
-method calls and croaks if it finds any problems. In other words, enables
-"strict" mode.  Unlike C<use strict> it is definitely recommended ot keep
-it off in production.
+will cause AnyEvent to load C<AnyEvent::Strict> and then to thoroughly
+check the arguments passed to most method calls. If it finds any problems
+it will croak.
+
+In other words, enables "strict" mode.
+
+Unlike C<use strict> it is definitely recommended ot keep it off in
+production.
 
 =item C<PERL_ANYEVENT_MODEL>
 
