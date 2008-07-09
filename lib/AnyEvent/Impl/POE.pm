@@ -252,6 +252,7 @@ package AnyEvent::Impl::POE;
 no warnings;
 use strict;
 
+use AnyEvent ();
 use POE;
 
 # have to do this to keep POE from spilling ugly messages
@@ -262,12 +263,7 @@ sub io {
    my ($class, %arg) = @_;
 
    # cygwin requires the fh mode to be matching, unix doesn't
-   my ($pee, $mode) = $arg{poll} eq "r" ? ("select_read" , "<")
-                    : $arg{poll} eq "w" ? ("select_write", ">")
-                    : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
-
-   open my $fh, "$mode&" . fileno $arg{fh}
-      or die "cannot dup() filehandle: $!";
+   my ($fh, $pee) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, "select_read", "select_write";
 
    my $cb = $arg{cb};
 

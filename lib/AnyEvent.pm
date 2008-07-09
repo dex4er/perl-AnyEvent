@@ -965,6 +965,27 @@ sub AUTOLOAD {
    $class->$func (@_);
 }
 
+# utility function to dup a filehandle. this is used by many backends
+# to support binding more than one watcher per filehandle (they usually
+# allow only one watcher per fd, so we dup it to get a different one).
+sub _dupfh($$$$) {
+   my ($poll, $fh, $r, $w) = @_;
+
+   require Fcntl;
+
+   # cygwin requires the fh mode to be matching, unix doesn't
+   my ($rw, $mode) = $poll eq "r" ? ($r, "<")
+                   : $poll eq "w" ? ($w, ">")
+                   : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
+
+   open my $fh2, "$mode&" . fileno $fh
+      or die "cannot dup() filehandle: $!";
+
+   # we assume CLOEXEC is already set by perl in all important cases
+
+   ($fh2, $rw)
+}
+
 package AnyEvent::Base;
 
 # default implementation for now and time

@@ -34,28 +34,10 @@ package AnyEvent::Impl::Qt::Timer;
 
 use Qt;
 use Qt::isa qw(Qt::Timer);
-use Qt::slots cb => [], interval => [];
+use Qt::slots cb => [];
 
 # having to go through these contortions just to get a timer event is
 # considered an advantage over other gui toolkits how?
-
-sub NEW {
-   my ($class, $after, $interval, $cb) = @_;
-   shift->SUPER::NEW ();
-   this->{interval} = $interval;
-   this->{cb}       = $cb;
-   this->connect (this, SIGNAL "timeout()", SLOT "cb()");
-   this->start ($after, 1);
-}
-
-sub cb {
-   this->start (this->{interval}, 1);
-   (this->{cb})->();
-}
-
-sub DESTROY {
-   $_[0]->stop;
-}
 
 package AnyEvent::Impl::Qt::Io;
 
@@ -77,7 +59,27 @@ sub cb {
    this->setEnabled (1);
 }
 
+sub NEW {
+   my ($class, $after, $interval, $cb) = @_;
+   shift->SUPER::NEW ();
+   this->{interval} = $interval;
+   this->{cb}       = $cb;
+   this->connect (this, SIGNAL "timeout()", SLOT "cb()");
+   this->start ($after, 1);
+}
+
+sub cb {
+   this->start (this->{interval}, 1);
+   (this->{cb})->();
+}
+
+sub DESTROY {
+   $_[0]->stop;
+}
+
 package AnyEvent::Impl::Qt;
+
+use AnyEvent ();
 
 use Qt;
 use AnyEvent::Impl::Qt::Timer;
@@ -86,18 +88,13 @@ use AnyEvent::Impl::Qt::Io;
 sub io {
    my ($class, %arg) = @_;
 
-   # cygwin requires the fh mode to be matching, unix doesn't
-   my ($qt, $mode) = $arg{poll} eq "r" ? (Qt::SocketNotifier::Read (), "<")
-                   : $arg{poll} eq "w" ? (Qt::SocketNotifier::Write(), ">")
-                   : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
-
    # work around these bugs in Qt:
    # - adding a callback might destroy other callbacks
    # - only one callback per fd/poll combination
-   open my $fh2, "$mode&" . fileno $arg{fh}
-      or die "cannot dup() filehandle: $!";
+   my ($fh, $qt) = AnyEvent::_dupfh $arg{poll}, $arg{fh},
+                      Qt::SocketNotifier::Read (), Qt::SocketNotifier::Write();
 
-   AnyEvent::Impl::Qt::Io $fh2, $qt, $arg{cb}
+   AnyEvent::Impl::Qt::Io $fh, $qt, $arg{cb}
 }
 
 sub timer {

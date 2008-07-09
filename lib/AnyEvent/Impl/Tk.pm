@@ -41,6 +41,8 @@ package AnyEvent::Impl::Tk;
 no warnings;
 use strict;
 
+use AnyEvent ();
+
 use Tk ();
 
 our $mw = new MainWindow;
@@ -48,14 +50,6 @@ $mw->withdraw;
 
 sub io {
    my (undef, %arg) = @_;
-   
-   my $self = bless \%arg, AnyEvent::Impl::Tk::Io::;
-   my $cb   = $self->{cb};
-
-   # cygwin requires the fh mode to be matching, unix doesn't
-   my ($tk, $mode) = $self->{poll} eq "r" ? ("readable", "<")
-                   : $self->{poll} eq "w" ? ("writable", ">")
-                   : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
 
    # work around these bugs in Tk:
    # - removing a callback will destroy other callbacks
@@ -63,25 +57,20 @@ sub io {
    # - adding a callback might destroy other callbacks
    # - only one callback per fh
    # - only one callback per fh/poll combination
-   open $self->{fh2}, "$mode&" . fileno $self->{fh}
-      or die "cannot dup() filehandle: $!";
+   my ($fh, $tk) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, "readable", "writable";
 
-   eval { local $SIG{__DIE__}; fcntl $self->{fh2}, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC }; # eval in case paltform doesn't support it
-   
-   $mw->fileevent ($self->{fh2}, $tk => $cb);
+   $mw->fileevent ($fh, $tk => $arg{cb});
 
-   $self
+   bless \\$fh, AnyEvent::Impl::Tk::Io::
 }
 
 sub AnyEvent::Impl::Tk::Io::DESTROY {
-   my ($self) = @_;
+   my $fh = $${$_[0]};
 
-   if (my $fh = delete $self->{fh2}) {
-      # work around another bug: watchers don't get removed when
-      # the fh is closed contrary to documentation.
-      $mw->fileevent ($fh, readable => "");
-      $mw->fileevent ($fh, writable => "");
-   }
+   # work around another bug: watchers don't get removed when
+   # the fh is closed contrary to documentation.
+   $mw->fileevent ($fh, readable => "");
+   $mw->fileevent ($fh, writable => "");
 }
 
 sub timer {

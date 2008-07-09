@@ -42,25 +42,20 @@ no warnings;
 use strict;
 
 use Carp ();
+use AnyEvent ();
 use Event::Lib;
 
 sub io {
    my ($class, %arg) = @_;
 
-   # cygwin requires the fh mode to be matching, unix doesn't
-   my ($le, $mode) = $arg{poll} eq "r" ? (EV_READ , "<")
-                   : $arg{poll} eq "w" ? (EV_WRITE, ">")
-                   : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
-
    # work around these bugs in Event::Lib:
    # - adding a callback might destroy other callbacks
    # - only one callback per fd/poll combination
-   open my $fh2, "$mode&" . fileno $arg{fh}
-      or die "cannot dup() filehandle: $!";
+   my ($fh, $mode) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, EV_READ, EV_WRITE;
 
    # event_new errornously takes a reference to fh and cb instead of making a copy
-   # fortunately, going through %arg already makes a copy, so it happpens to work
-   my $w = event_new $fh2, $mode | EV_PERSIST, $arg{cb};
+   # fortunately, going through %arg/_dupfh already makes a copy, so it happpens to work
+   my $w = event_new $fh, $mode | EV_PERSIST, $arg{cb};
    $w->add;
    bless \\$w, $class
 }
