@@ -61,16 +61,17 @@ sub io {
 
    $mw->fileevent ($fh, $tk => $arg{cb});
 
-   bless \\$fh, AnyEvent::Impl::Tk::Io::
+   bless [$fh, $tk], AnyEvent::Impl::Tk::Io::
 }
 
 sub AnyEvent::Impl::Tk::Io::DESTROY {
-   my $fh = $${$_[0]};
+   my ($fh, $tk) = @{$_[0]};
 
    # work around another bug: watchers don't get removed when
-   # the fh is closed contrary to documentation.
-   $mw->fileevent ($fh, readable => "");
-   $mw->fileevent ($fh, writable => "");
+   # the fh is closed contrary to documentation. also, trying
+   # to unregister a read callback will make it impossible
+   # to remove the write callback.
+   $mw->fileevent ($fh, $tk => "");
 }
 
 sub timer {

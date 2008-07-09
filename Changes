@@ -7,6 +7,8 @@ Revision history for Perl extension AnyEvent.
         - fix a bug in the pure perl event loop that caused timers to
           be delayed under some circumstances.
         - implement optional argument checking via PERL_ANYEVENT_STRICT.
+        - more bug workaroudns against the endlessly broken Tk module,
+          seems to work now on 32 bit machines, but less so on 64 bit.
         - minor optimisations applied to most backends.
 
 4.161 Fri Jul  4 14:24:48 CEST 2008
