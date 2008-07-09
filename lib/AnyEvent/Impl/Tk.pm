@@ -26,7 +26,8 @@ so if you register a read and a write watcher for one fh, AnyEvent will
 create two additional file descriptors (and handles).
 
 This creates a high overhead and is slow, but seems to work around all
-known bugs in L<Tk::fileevent>.
+known bugs in L<Tk::fileevent> on 32 bit architectures (Tk seems to be
+terminally broken on 64 bit).
 
 To be able to access the Tk event loop, this module creates a main
 window and withdraws it immediately. This might cause flickering on some
