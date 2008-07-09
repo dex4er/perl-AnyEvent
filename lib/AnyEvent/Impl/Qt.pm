@@ -27,18 +27,6 @@ Avoid Qt if you can.
 
 =cut
 
-no warnings;
-use strict;
-
-package AnyEvent::Impl::Qt::Timer;
-
-use Qt;
-use Qt::isa qw(Qt::Timer);
-use Qt::slots cb => [];
-
-# having to go through these contortions just to get a timer event is
-# considered an advantage over other gui toolkits how?
-
 package AnyEvent::Impl::Qt::Io;
 
 use Qt;
@@ -59,6 +47,15 @@ sub cb {
    this->setEnabled (1);
 }
 
+package AnyEvent::Impl::Qt::Timer;
+
+use Qt;
+use Qt::isa qw(Qt::Timer);
+use Qt::slots cb => [];
+
+# having to go through these contortions just to get a timer event is
+# considered an advantage over other gui toolkits how?
+
 sub NEW {
    my ($class, $after, $interval, $cb) = @_;
    shift->SUPER::NEW ();
@@ -73,11 +70,10 @@ sub cb {
    (this->{cb})->();
 }
 
-sub DESTROY {
-   $_[0]->stop;
-}
-
 package AnyEvent::Impl::Qt;
+
+no warnings;
+use strict;
 
 use AnyEvent ();
 
@@ -85,6 +81,7 @@ use Qt;
 use AnyEvent::Impl::Qt::Timer;
 use AnyEvent::Impl::Qt::Io;
 
+our $app = Qt::Application \@ARGV; # REQUIRED!
 sub io {
    my ($class, %arg) = @_;
 

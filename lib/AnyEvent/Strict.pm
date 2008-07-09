@@ -8,6 +8,8 @@ use Carp qw(croak);
 use AnyEvent ();
 
 AnyEvent::post_detect {
+   # assume the first ISA member is the implementation
+   # # and link us in before it in the chain.
    my $MODEL = shift @AnyEvent::ISA;
    unshift @ISA, $MODEL;
    unshift @AnyEvent::ISA, AnyEvent::Strict::
@@ -65,7 +67,7 @@ sub signal {
       or croak "AnyEvent->signal called with illegal cb argument '$arg{cb}'";
    delete $arg{cb};
  
-   eval "require POSIX; defined &POSIX::SIG$arg{signal}"
+   eval "require POSIX; 0 < &POSIX::SIG$arg{signal}"
       or croak "AnyEvent->signal called with illegal signal name '$arg{signal}'";
    delete $arg{signal};
  
