@@ -1,13 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
-4.2
+4.2  Sat Jul 12 22:42:11 CEST 2008
 	- support an "interval" argument for repeating timers.
-	- not importing anything from Event causes it to malfunction
-          and not use Time::HiRes, work around this bug.
         - fix a bug in the pure perl event loop that caused timers to
           be delayed under some circumstances.
         - implement optional argument checking via PERL_ANYEVENT_STRICT.
-        - more bug workaroudns against the endlessly broken Tk module,
+	- not importing anything from Event causes it to malfunction
+          and not use Time::HiRes, work around this bug.
+        - more bug workarounds against the endlessly broken Tk module,
           seems to work now on 32 bit machines, but less so on 64 bit.
         - minor optimisations applied to most backends.
 
