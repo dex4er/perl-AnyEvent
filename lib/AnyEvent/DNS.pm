@@ -1000,7 +1000,7 @@ sub _exec {
          $NOW = time;
 
          # timeout, try next
-         &$do_retry;
+         &$do_retry if $do_retry;
       }), sub {
          my ($res) = @_;
 

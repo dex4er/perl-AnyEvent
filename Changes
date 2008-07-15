@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- avoid calling do_retry if the request has already
+          finished in AnyEvent::DNS (reported by Anatoly K. Sharifulin).
+
 4.2  Sat Jul 12 22:42:11 CEST 2008
 	- support an "interval" argument for repeating timers.
         - fix a bug in the pure perl event loop that caused timers to
