@@ -169,11 +169,11 @@ my @fork_queue;
 
 sub _fork_schedule;
 sub _fork_schedule {
-   while () {
-      return if $forks >= $MAX_FORKS;
+   require Storable;
 
+   while ($forks < $MAX_FORKS) {
       my $job = shift @fork_queue
-         or return;
+         or last;
 
       ++$forks;
 
@@ -208,7 +208,8 @@ sub _fork_schedule {
 
                $cb->(@$result);
 
-               kill 9, $pid if AnyEvent::WIN32; # work around the endlessly broken windows perls
+               # work around the endlessly broken windows perls
+               kill 9, $pid if AnyEvent::WIN32;
 
                # clean up the pid
                waitpid $pid, 0;
@@ -242,14 +243,13 @@ sub _fork_schedule {
             $ofs += $len;
          }
 
-         close $w;
-
+         # on native windows, _exit KILLS YOUR FORKED CHILDREN!
          if (AnyEvent::WIN32) {
-            sleep 3600 while 1; # yes, we can't kill ourselves, and windows has no working _exit
-         } else {
-            # on native windows, _exit KILLS YOUR FORKED CHILDREN!
-            POSIX::_exit (0);
+            shutdown $w, 1; # signal parent to please kill us
+            sleep 10; # give parent a chance to clean up
+            sysread $w, my $buf, 1; # this *might* detect the parent exiting in some cases.
          }
+         POSIX::_exit (0);
          exit 1;
          
       } elsif (($! != &Errno::EAGAIN && $! != &Errno::ENOMEM) || !$forks) {
@@ -261,8 +261,6 @@ sub _fork_schedule {
 }
 
 sub fork_call(&@) {
-   require Storable;
-
    push @fork_queue, [@_];
    _fork_schedule;
 }
