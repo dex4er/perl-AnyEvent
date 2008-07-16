@@ -34,7 +34,7 @@ use base 'Exporter';
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe);
 our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL WSAWOULDBLOCK);
 
-our $VERSION = 4.160;
+our $VERSION = 4.21;
 
 BEGIN {
    my $posix = 1 * eval { local $SIG{__DIE__}; require POSIX };
@@ -113,22 +113,42 @@ sub portable_pipe() {
 
 =item fork_call { CODE } @args, $cb->(@res)
 
-Executes the given code reference asynchronously, by forking. Everything
-the C<$coderef> returns will transferred to the calling process (by
-serialising and deserialising via L<Storable>).
+Executes the given code block asynchronously, by forking. Everything the
+block returns will be transferred to the calling process (by serialising and
+deserialising via L<Storable>).
 
 If there are any errors, then the C<$cb> will be called without any
 arguments. In that case, either C<$@> contains the exception (and C<$!> is
 irrelevant), or C<$!> contains an error number. In all other cases, C<$@>
 will be C<undef>ined.
 
-The C<$coderef> must not ever call an event-polling function or use
-event-based programming.
+The code block must not ever call an event-polling function or use
+event-based programming that might cause any callbacks registered in the
+parent to run.
+
+Due to the endlessly sucky and broken native windows perls (there is no
+way to cleanly exit a child process on that platform that doesn't also
+kill the parent), you have to make sure that your main program doesn't
+exit as long as any C<fork_calls> are still in progress, otherwise the
+program won't exit (we are open for improvements that don't require XS
+hackery).
 
 Note that forking can be expensive in large programs (RSS 200MB+). On
 windows, it is abysmally slow, do not expect more than 5..20 forks/s on
 that sucky platform (note this uses perl's pseudo-threads, so avoid those
 like the plague).
+
+Example: poor man's async disk I/O (better use L<IO::AIO<).
+
+   fork_call {
+      open my $fh, "</etc/passwd"
+         or die "passwd: $!";
+      local $/;
+      <$fh>
+   } sub {
+      my ($passwd) = @_;
+      ...
+   };
 
 =item $AnyEvent::Util::MAX_FORKS [default: 10]
 
@@ -188,6 +208,8 @@ sub _fork_schedule {
 
                $cb->(@$result);
 
+               kill 9, $pid if AnyEvent::WIN32; # work around the endlessly broken windows perls
+
                # clean up the pid
                waitpid $pid, 0;
             }
@@ -223,7 +245,7 @@ sub _fork_schedule {
          close $w;
 
          if (AnyEvent::WIN32) {
-            kill 9, $$; # yeah, windows for the win
+            sleep 3600 while 1; # yes, we can't kill ourselves, and windows has no working _exit
          } else {
             # on native windows, _exit KILLS YOUR FORKED CHILDREN!
             POSIX::_exit (0);
