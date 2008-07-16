@@ -118,8 +118,9 @@ the C<$coderef> returns will transferred to the calling process (by
 serialising and deserialising via L<Storable>).
 
 If there are any errors, then the C<$cb> will be called without any
-arguments. In that case, either C<$@> contains the exception, or C<$!>
-contains an error number. In all other cases, C<$@> will be C<undef>ined.
+arguments. In that case, either C<$@> contains the exception (and C<$!> is
+irrelevant), or C<$!> contains an error number. In all other cases, C<$@>
+will be C<undef>ined.
 
 The C<$coderef> must not ever call an event-polling function or use
 event-based programming.
