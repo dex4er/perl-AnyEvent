@@ -138,7 +138,7 @@ windows, it is abysmally slow, do not expect more than 5..20 forks/s on
 that sucky platform (note this uses perl's pseudo-threads, so avoid those
 like the plague).
 
-Example: poor man's async disk I/O (better use L<IO::AIO<).
+Example: poor man's async disk I/O (better use L<IO::AIO>).
 
    fork_call {
       open my $fh, "</etc/passwd"

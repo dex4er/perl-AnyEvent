@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.160;
+our $VERSION = 4.21;
 
 =head1 SYNOPSIS
 

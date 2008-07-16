@@ -1,9 +1,14 @@
 Revision history for Perl extension AnyEvent.
 
+4.21
 	- INCOMPATIBLE CHANGE: AnyEvent::Util::fork_call now has a prototype
           which is incompatible to previous invocation syntax.
-	- avoid calling do_retry if the request has already
-          finished in AnyEvent::DNS (reported by Anatoly K. Sharifulin).
+        - work around more windows perl bugs in fork_call. I cannot imagine
+          why anybody would bother implementing fork in such an obviously
+          unusable way.
+	- avoid calling $do_retry if the request has already finished in
+          AnyEvent::DNS, thus avoiding an exception (reported by Anatoly
+          K. Sharifulin).
 
 4.2  Sat Jul 12 22:42:11 CEST 2008
 	- support an "interval" argument for repeating timers.
