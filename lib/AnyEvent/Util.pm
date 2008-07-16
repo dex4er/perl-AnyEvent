@@ -111,7 +111,7 @@ sub portable_pipe() {
    ($r, $w)
 }
 
-=item fork_call $coderef, @args, $cb->(@res)
+=item fork_call { CODE } @args, $cb->(@res)
 
 Executes the given code reference asynchronously, by forking. Everything
 the C<$coderef> returns will transferred to the calling process (by
@@ -237,7 +237,7 @@ sub _fork_schedule {
    }
 }
 
-sub fork_call {
+sub fork_call(&@) {
    require Storable;
 
    push @fork_queue, [@_];

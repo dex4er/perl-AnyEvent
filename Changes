@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- INCOMPATIBLE CHANGE: AnyEvent::Util::fork_call now has a prototype
+          which is incompatible to previous invocation syntax.
 	- avoid calling do_retry if the request has already
           finished in AnyEvent::DNS (reported by Anatoly K. Sharifulin).
 
