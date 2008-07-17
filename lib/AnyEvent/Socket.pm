@@ -207,10 +207,11 @@ Example:
 sub parse_hostport($;$) {
    my ($host, $port);
 
-   for ($_[0]) { # work on a copy
+   for ("$_[0]") { # work on a copy, to reset pos
+
       # parse host, special cases: "ipv6" or "ipv6 port"
       unless (
-         ($host) = /^\s* ([0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F:]*)/xgc
+         ($host) = /^\s* ([0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F\.:]*)/xgc
          and parse_ipv6 $host
       ) {
          /^\s*/xgc;
