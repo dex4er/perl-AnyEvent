@@ -207,7 +207,7 @@ Example:
 sub parse_hostport($;$) {
    my ($host, $port);
 
-   for ("$_[0]") { # work on a copy, to reset pos
+   for ("$_[0]") { # work on a copy, just in case, and also reset pos
 
       # parse host, special cases: "ipv6" or "ipv6 port"
       unless (
