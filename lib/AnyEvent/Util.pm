@@ -126,12 +126,13 @@ The code block must not ever call an event-polling function or use
 event-based programming that might cause any callbacks registered in the
 parent to run.
 
-Due to the endlessly sucky and broken native windows perls (there is no
-way to cleanly exit a child process on that platform that doesn't also
-kill the parent), you have to make sure that your main program doesn't
-exit as long as any C<fork_calls> are still in progress, otherwise the
-program won't exit (we are open for improvements that don't require XS
-hackery).
+Win32 spoilers: Due to the endlessly sucky and broken native windows
+perls (there is no way to cleanly exit a child process on that platform
+that doesn't also kill the parent), you have to make sure that your main
+program doesn't exit as long as any C<fork_calls> are still in progress,
+otherwise the program won't exit. Also, on most windows platforms some
+memory will leak for every invocation. We are open for improvements that
+don't require XS hackery.
 
 Note that forking can be expensive in large programs (RSS 200MB+). On
 windows, it is abysmally slow, do not expect more than 5..20 forks/s on
@@ -209,7 +210,8 @@ sub _fork_schedule {
                $cb->(@$result);
 
                # work around the endlessly broken windows perls
-               kill 9, $pid if AnyEvent::WIN32;
+               sleep 1;
+               #kill 9, $pid if AnyEvent::WIN32;
 
                # clean up the pid
                waitpid $pid, 0;
@@ -245,6 +247,9 @@ sub _fork_schedule {
 
          # on native windows, _exit KILLS YOUR FORKED CHILDREN!
          if (AnyEvent::WIN32) {
+            warn "bp1\n";#d#
+            exec "";
+            warn "bp2($!)\n";#d#
             shutdown $w, 1; # signal parent to please kill us
             sleep 10; # give parent a chance to clean up
             sysread $w, my $buf, 1; # this *might* detect the parent exiting in some cases.
@@ -263,6 +268,15 @@ sub _fork_schedule {
 sub fork_call(&@) {
    push @fork_queue, [@_];
    _fork_schedule;
+}
+
+END {
+   if (AnyEvent::WIN32) {
+      while ($forks) {
+         @fork_queue = ();
+         AnyEvent->one_event;
+      }
+   }
 }
 
 # to be removed

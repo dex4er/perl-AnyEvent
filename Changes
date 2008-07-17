@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-4.21
+4.21 Thu Jul 17 14:40:05 CEST 2008
 	- INCOMPATIBLE CHANGE: AnyEvent::Util::fork_call now has a prototype
           which is incompatible to previous invocation syntax.
         - work around more windows perl bugs in fork_call. I cannot imagine
