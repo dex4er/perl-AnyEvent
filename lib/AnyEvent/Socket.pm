@@ -49,6 +49,7 @@ use AnyEvent::DNS ();
 use base 'Exporter';
 
 our @EXPORT = qw(
+   parse_hostport
    parse_ipv4 parse_ipv6
    parse_ip parse_address
    format_ip format_address
@@ -58,7 +59,7 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.21;
+our $VERSION = 4.22;
 
 =item $ipn = parse_ipv4 $dotted_quad
 
@@ -162,6 +163,82 @@ sub parse_address($) {
 }
 
 *parse_ip =\&parse_address; #d#
+
+=item ($host, $service) = parse_hostport $string[, $default_service]
+
+Splitting a string of the form C<hostname:port> is a common
+problem. Unfortunately, just splitting on the colon makes it hard to
+specify IPv6 addresses and doesn't support the less common but well
+standardised C<[ip literal]> syntax.
+
+This function tries to do this job in a better way, it supports the
+following formats, where C<port> can be a numerical port number of a
+service name, or a C<name=port> string, and the C< port> and C<:port>
+parts are optional. Also, everywhere where an IP address is supported
+a hostname or unix domain socket address is also supported (see
+C<parse_unix>).
+
+   hostname:port    e.g. "www.linux.org", "www.x.de:443", "www.x.de:https=443"
+   ipv4:port        e.g. "198.182.196.56", "127.1:22"
+   ipv6             e.g. "::1", "affe::1"
+   [ipv4or6]:port   e.g. "[::1]", "[10.0.1]:80"
+   [ipv4or6] port   e.g. "[127.0.0.1]", "[www.x.org] 17"
+   ipv4or6 port     e.g. "::1 443", "10.0.0.1 smtp"
+
+It also supports defaulting the service name in a simple way by using
+C<$default_service> if no service was detected. If neither a service was
+detected nor a default was specified, then this function returns the
+empty list. The same happens when a parse error weas detected, such as a
+hostname with a colon in it (the function is rather conservative, though).
+
+Example:
+
+  print join ",", parse_hostport "localhost:443";
+  # => "localhost,443"
+
+  print join ",", parse_hostport "localhost", "https";
+  # => "localhost,https"
+
+  print join ",", parse_hostport "[::1]";
+  # => "," (empty list)
+
+=cut
+
+sub parse_hostport($;$) {
+   my ($host, $port);
+
+   for ($_[0]) { # work on a copy
+      # parse host, special cases: "ipv6" or "ipv6 port"
+      unless (
+         ($host) = /^\s* ([0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F:]*)/xgc
+         and parse_ipv6 $host
+      ) {
+         /^\s*/xgc;
+
+         if (/^ \[ ([^\[\]]+) \]/xgc) {
+            $host = $1;
+         } elsif (/^ ([^\[\]:\ ]+) /xgc) {
+            $host = $1;
+         } else {
+            return;
+         }
+      }
+
+      # parse port
+      if (/\G (?:\s+|:) ([^:[:space:]]+) \s*$/xgc) {
+         $port = $1;
+      } elsif (/\G\s*$/gc && length $_[1]) {
+         $port = $_[1];
+      } else {
+         return;
+      }
+   }
+
+   # hostnames must not contain :'s
+   return if $host =~ /:/ && !parse_ipv6 $host;
+
+   ($host, $port)
+}
 
 =item $sa_family = address_family $ipn
 

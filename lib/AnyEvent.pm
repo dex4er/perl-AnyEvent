@@ -828,7 +828,7 @@ use strict;
 
 use Carp;
 
-our $VERSION = 4.21;
+our $VERSION = 4.22;
 our $MODEL;
 
 our $AUTOLOAD;

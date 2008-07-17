@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+4.22
+	- new function AnyEvent::Socket::parse_hostport.
+
 4.21 Thu Jul 17 14:40:05 CEST 2008
 	- INCOMPATIBLE CHANGE: AnyEvent::Util::fork_call now has a prototype
           which is incompatible to previous invocation syntax.
