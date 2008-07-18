@@ -77,7 +77,7 @@ AnyEvent::Util::fh_nonblocking).
 
 =item on_eof => $cb->($handle)
 
-Set the callback to be called when an end-of-file condition is detcted,
+Set the callback to be called when an end-of-file condition is detected,
 i.e. in the case of a socket, when the other side has closed the
 connection cleanly.
 
