@@ -227,7 +227,7 @@ to make sure that you call either C<Net::SSLeay::set_connect_state>
 or C<Net::SSLeay::set_accept_state> on it before you pass it to
 AnyEvent::Handle.
 
-See the C<starttls> method if you need to start TLs negotiation later.
+See the C<starttls> method if you need to start TLS negotiation later.
 
 =item tls_ctx => $ssl_ctx
 
@@ -1450,7 +1450,7 @@ conventions:
 =item * all constructor arguments become object members.
 
 At least initially, when you pass a C<tls>-argument to the constructor it
-will end up in C<< $handle->{tls} >>. Those members might be changes or
+will end up in C<< $handle->{tls} >>. Those members might be changed or
 mutated later on (for example C<tls> will hold the TLS connection object).
 
 =item * other object member names are prefixed with an C<_>.
