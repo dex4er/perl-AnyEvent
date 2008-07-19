@@ -454,6 +454,15 @@ Example:
 
 =cut
 
+# microsoft can't even get getprotobyname working (the etc/protocols file
+# gets lost fairly often on windows), so we have to hardcode some common
+# protocol numbers ourselves.
+our %PROTO_BYNAME;
+
+$PROTO_BYNAME{tcp}  = &Socket::IPPROTO_TCP  if defined &Socket::IPPROTO_TCP;
+$PROTO_BYNAME{udp}  = &Socket::IPPROTO_UDP  if defined &Socket::IPPROTO_UDP;
+$PROTO_BYNAME{icmp} = &Socket::IPPROTO_ICMP if defined &Socket::IPPROTO_ICMP;
+
 sub resolve_sockaddr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
 
@@ -479,7 +488,7 @@ sub resolve_sockaddr($$$$$$) {
    $proto ||= "tcp";
    $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
 
-   my $proton = (getprotobyname $proto)[2]
+   my $proton = $PROTO_BYNAME{lc $proto} || (getprotobyname $proto)[2]
       or Carp::croak "$proto: protocol unknown";
 
    my $port;
