@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-4.22
+4.22 Sun Jul 20 16:34:13 CEST 2008
 	- new function AnyEvent::Socket::parse_hostport.
         - as the bulkheads at microsoft can't even get getprotobyname reliably
           working on their shitty fucking broken os we need to hardcode
