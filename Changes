@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- document the first parameter passed to condvar callbacks to be
+          the callback.
+
 4.22 Sun Jul 20 16:34:13 CEST 2008
 	- new function AnyEvent::Socket::parse_hostport.
         - as the bulkheads at microsoft can't even get getprotobyname reliably

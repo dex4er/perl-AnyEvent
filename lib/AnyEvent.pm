@@ -8,17 +8,26 @@ EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
 
    use AnyEvent;
 
-   my $w = AnyEvent->io (fh => $fh, poll => "r|w", cb => sub {
-      ...
-   });
+   my $w = AnyEvent->io (fh => $fh, poll => "r|w", cb => sub { ...  });
 
-   my $w = AnyEvent->timer (after => $seconds, cb => sub {
+   my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
+   my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...
+
+   print AnyEvent->now;  # prints current event loop time
+   print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
+
+   my $w = AnyEvent->signal (signal => "TERM", cb => sub { ... });
+
+   my $w = AnyEvent->child (pid => $pid, cb => sub {
+      my ($pid, $status) = @_;
       ...
    });
 
    my $w = AnyEvent->condvar; # stores whether a condition was flagged
    $w->send; # wake up current and all future recv's
    $w->recv; # enters "main loop" till $condvar gets ->send
+   # use a condvar in callback mode:
+   $w->cb (sub { $_[0]->recv });
 
 =head1 INTRODUCTION/TUTORIAL
 
@@ -382,9 +391,12 @@ The instrument to do that is called a "condition variable", so called
 because they represent a condition that must become true.
 
 Condition variables can be created by calling the C<< AnyEvent->condvar
+
 >> method, usually without arguments. The only argument pair allowed is
+
 C<cb>, which specifies a callback to be called when the condition variable
-becomes true.
+becomes true, with the condition variable as the first argument (but not
+the results).
 
 After creation, the condition variable is "false" until it becomes "true"
 by calling the C<send> method (or calling the condition variable as if it
@@ -449,6 +461,23 @@ condition variables are also code references.
    my $done = AnyEvent->condvar;
    my $delay = AnyEvent->timer (after => 5, cb => $done);
    $done->recv;
+
+Example: Imagine an API that returns a condvar and doesn't support
+callbacks. This is how you make a synchronous call, for example from
+the main program:
+
+   use AnyEvent::CouchDB;
+
+   ...
+
+   my @info = $couchdb->info->recv;
+
+And this is how you would just ste a callback to be called whenever the
+results are available:
+
+   $couchdb->info->cb (sub {
+      my @info = $_[0]->recv;
+   });
 
 =head3 METHODS FOR PRODUCERS
 
@@ -592,7 +621,7 @@ waits otherwise.
 Returns true when the condition is "true", i.e. whether C<send> or
 C<croak> have been called.
 
-=item $cb = $cv->cb ([new callback])
+=item $cb = $cv->cb ($cb->($cv))
 
 This is a mutator function that returns the callback set and optionally
 replaces it before doing so.
