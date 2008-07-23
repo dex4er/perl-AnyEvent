@@ -156,13 +156,18 @@ If the C<$text> is C<unix/>, then this function returns a special token
 recognised by the other functions in this module to mean "UNIX domain
 socket".
 
+=item $text = AnyEvent::Socket::aton $ipn
+
+Same as C<parse_address>, but not exported (think C<Socket::inet_aton> but
+I<without> name resolution).
+
 =cut
 
 sub parse_address($) {
    &parse_ipv4 || &parse_ipv6 || &parse_unix
 }
 
-*parse_ip =\&parse_address; #d#
+*aton = \&parse_address;
 
 =item ($host, $service) = parse_hostport $string[, $default_service]
 
@@ -268,6 +273,10 @@ except it automatically detects the address type.
 
 Returns C<undef> if it cannot detect the type.
 
+=item $text = AnyEvent::Socket::ntoa $ipn
+
+Same as format_address, but not exported (think C<inet_ntoa>).
+
 =cut
 
 sub format_address;
@@ -310,7 +319,7 @@ sub format_address($) {
    }
 }
 
-*format_ip = \&format_address;
+*ntoa = \&format_address;
 
 =item inet_aton $name_or_address, $cb->(@addresses)
 
