@@ -16,10 +16,12 @@ do anything to make Glib work with AnyEvent except by loading Glib before
 creating the first AnyEvent watcher.
 
 Glib is probably the most inefficient event loop that has ever seen the
-light of the world: Glib not only scans all its watchers (really, ALL
-of them, whether I/O-related, timer-related or not) during each loop
+light of the world: Glib not only scans all its watchers (really, ALL of
+them, whether I/O-related, timer-related or what not) during each loop
 iteration, it also does so multiple times and rebuilds the poll list for
 the kernel each time again, dynamically even.
+
+On the positive side, Glib generally works correctly, no quarrels there.
 
 If you create many watchers (as in: more than two), you might consider one
 of the L<Glib::EV>, L<EV::Glib> or L<Glib::Event> modules that map Glib to
