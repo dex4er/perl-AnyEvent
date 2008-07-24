@@ -20,11 +20,12 @@ If you want to use this module instead of autoloading another event loop
 you can simply load it before creating the first watcher.
 
 As for performance, this module is on par with (and usually faster than)
-most select/poll-based C event modules such as Event or Glib (it does
-not come close to EV, though), with respect to I/O watchers. Timers are
-handled less optimally.
+most select/poll-based C event modules such as Event or Glib (it does not
+even come close to EV, though), with respect to I/O watchers. Timers are
+handled less optimally, but for many common tasks, it's still on par with
+event loops written in C.
 
-This event loop has been optimised for the following cases:
+This event loop has been optimised for the following use cases:
 
 =over 4
 
@@ -40,29 +41,40 @@ correct for time jumps in any way.
 The clock chosen will be reported if the environment variable
 C<$PERL_ANYEVENT_VERBOSE> is set to 8 or higher.
 
-=item lots of watchers on one fd
+=item any number of watchers on one fd
 
-This is purely a dirty benchmark optimisation not relevant in practise.
-The more common case of having one watcher per fd/poll combo is
-special-cased and still fast.
+Supporting a large number of watchers per fd is purely a dirty benchmark
+optimisation not relevant in practise. The more common case of having one
+watcher per fd/poll combo is special-cased, however, and therefore fast,
+too.
 
-=item relatively few active fds per select call
+=item relatively few active fds per C<select> call
 
 This module expects that only a tiny amount of fds is active at any one
 time. This is relatively typical of larger servers (but not the case where
-select traditionally is fast), at the expense of the "dense activity case"
-where most of fds are active (which suits select and poll). The optimal
-implementation of the "dense" case is not much faster, though, so the
-module should behave very well in most cases.
+C<select> traditionally is fast), at the expense of the "dense activity
+case" where most of the fds are active (which suits C<select>).
+
+The optimal implementation of the "dense" case is not much faster, though,
+so the module should behave very well in most cases, subject to the bad
+scalability of C<select> in general.
 
 =item lots of timer changes/iteration, or none at all
 
-This module sorts the timer list again on each iteration, if timers have
-been created. If you add lots of timers, this is pretty efficient, but the
-common case of only adding a few timers is not handled very efficiently.
+This module sorts the timer list using perl's C<sort>, even though a total
+ordering is not required for timers.
 
-This should not have much of an impact unless you have hundreds of timers,
-though.
+This sorting is expensive, but means sorting can be avoided unless the
+timer list has changed in a way that requires a new sort.
+
+This means that adding lots of timers is very efficient, as well as not
+changing the timers. Advancing timers (e.g. recreating a timeout watcher
+on activity) is also relatively efficient, for example, if you have a
+large number of timeout watchers that time out after 10 seconds, then the
+timer list will be sorted only once every 10 seconds.
+
+This should not have much of an impact unless you have hundreds or
+thousands of timers, though, or your timers have very small timeouts.
 
 =back
 

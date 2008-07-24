@@ -391,7 +391,6 @@ The instrument to do that is called a "condition variable", so called
 because they represent a condition that must become true.
 
 Condition variables can be created by calling the C<< AnyEvent->condvar
-
 >> method, usually without arguments. The only argument pair allowed is
 
 C<cb>, which specifies a callback to be called when the condition variable

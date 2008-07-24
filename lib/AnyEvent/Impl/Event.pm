@@ -15,6 +15,9 @@ This module provides transparent support for AnyEvent. You don't have to
 do anything to make Event work with AnyEvent except by loading Event before
 creating the first AnyEvent watcher.
 
+The event module is reasonably efficient and generally works correctly
+even with many watchers.
+
 =cut
 
 package AnyEvent::Impl::Event;
