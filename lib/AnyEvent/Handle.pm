@@ -1104,11 +1104,20 @@ register_read_type packstring => sub {
       defined (my $len = eval { unpack $format, $_[0]{rbuf} })
          or return;
 
-      # remove prefix
-      substr $_[0]{rbuf}, 0, (length pack $format, $len), "";
+      $format = length pack $format, $len;
 
-      # read rest
-      $_[0]->unshift_read (chunk => $len, $cb);
+      # bypass unshift if we already have the remaining chunk
+      if ($format + $len <= length $_[0]{rbuf}) {
+         my $data = substr $_[0]{rbuf}, $format, $len;
+         substr $_[0]{rbuf}, 0, $format + $len, "";
+         $cb->($_[0], $data);
+      } else {
+         # remove prefix
+         substr $_[0]{rbuf}, 0, $format, "";
+
+         # read remaining chunk
+         $_[0]->unshift_read (chunk => $len, $cb);
+      }
 
       1
    }
@@ -1178,17 +1187,28 @@ register_read_type storable => sub {
       defined (my $len = eval { unpack "w", $_[0]{rbuf} })
          or return;
 
-      # remove prefix
-      substr $_[0]{rbuf}, 0, (length pack "w", $len), "";
+      my $format = length pack "w", $len;
 
-      # read rest
-      $_[0]->unshift_read (chunk => $len, sub {
-         if (my $ref = eval { Storable::thaw ($_[1]) }) {
-            $cb->($_[0], $ref);
-         } else {
-            $self->_error (&Errno::EBADMSG);
-         }
-      });
+      # bypass unshift if we already have the remaining chunk
+      if ($format + $len <= length $_[0]{rbuf}) {
+         my $data = substr $_[0]{rbuf}, $format, $len;
+         substr $_[0]{rbuf}, 0, $format + $len, "";
+         $cb->($_[0], Storable::thaw ($data));
+      } else {
+         # remove prefix
+         substr $_[0]{rbuf}, 0, $format, "";
+
+         # read remaining chunk
+         $_[0]->unshift_read (chunk => $len, sub {
+            if (my $ref = eval { Storable::thaw ($_[1]) }) {
+               $cb->($_[0], $ref);
+            } else {
+               $self->_error (&Errno::EBADMSG);
+            }
+         });
+      }
+
+      1
    }
 };
 
