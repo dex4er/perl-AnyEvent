@@ -940,15 +940,24 @@ not marked by the end of line marker.
 register_read_type line => sub {
    my ($self, $cb, $eol) = @_;
 
-   $eol = qr|(\015?\012)| if @_ < 3;
-   $eol = quotemeta $eol unless ref $eol;
-   $eol = qr|^(.*?)($eol)|s;
+   if (@_ < 3) {
+      # this is more than twice as fast as the generic code below
+      sub {
+         $_[0]{rbuf} =~ s/^([^\015\012]*)(\015?\012)// or return;
 
-   sub {
-      $_[0]{rbuf} =~ s/$eol// or return;
+         $cb->($_[0], $1, $2);
+         1
+      }
+   } else {
+      $eol = quotemeta $eol unless ref $eol;
+      $eol = qr|^(.*?)($eol)|s;
 
-      $cb->($_[0], $1, $2);
-      1
+      sub {
+         $_[0]{rbuf} =~ s/$eol// or return;
+
+         $cb->($_[0], $1, $2);
+         1
+      }
    }
 };
 
@@ -1092,11 +1101,11 @@ register_read_type packstring => sub {
 
    sub {
       # when we can use 5.10 we can use ".", but for 5.8 we use the re-pack method
-      defined (my $len = eval { unpack $format, $_[0]->{rbuf} })
+      defined (my $len = eval { unpack $format, $_[0]{rbuf} })
          or return;
 
       # remove prefix
-      substr $_[0]->{rbuf}, 0, (length pack $format, $len), "";
+      substr $_[0]{rbuf}, 0, (length pack $format, $len), "";
 
       # read rest
       $_[0]->unshift_read (chunk => $len, $cb);
@@ -1166,11 +1175,11 @@ register_read_type storable => sub {
 
    sub {
       # when we can use 5.10 we can use ".", but for 5.8 we use the re-pack method
-      defined (my $len = eval { unpack "w", $_[0]->{rbuf} })
+      defined (my $len = eval { unpack "w", $_[0]{rbuf} })
          or return;
 
       # remove prefix
-      substr $_[0]->{rbuf}, 0, (length pack "w", $len), "";
+      substr $_[0]{rbuf}, 0, (length pack "w", $len), "";
 
       # read rest
       $_[0]->unshift_read (chunk => $len, sub {

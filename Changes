@@ -3,6 +3,8 @@ Revision history for Perl extension AnyEvent.
 	- document the first parameter passed to condvar callbacks to be
           the callback.
         - add AnyEvent::Socket::{ntoa,aton} aliases.
+        - optimize the AE::Handle->push_read (line ..) for the default
+          eol marker.
 
 4.22 Sun Jul 20 16:34:13 CEST 2008
 	- new function AnyEvent::Socket::parse_hostport.
