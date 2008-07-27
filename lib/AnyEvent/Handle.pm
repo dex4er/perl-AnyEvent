@@ -1,7 +1,7 @@
 package AnyEvent::Handle;
 
 no warnings;
-use strict;
+use strict qw(subs vars);
 
 use AnyEvent ();
 use AnyEvent::Util qw(WSAEWOULDBLOCK);
@@ -732,8 +732,6 @@ sub _drain_rbuf {
    }
 
    while () {
-      no strict 'refs';
-
       my $len = length $self->{rbuf};
 
       if (my $cb = shift @{ $self->{_queue} }) {
