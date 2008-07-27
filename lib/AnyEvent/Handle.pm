@@ -81,9 +81,12 @@ Set the callback to be called when an end-of-file condition is detected,
 i.e. in the case of a socket, when the other side has closed the
 connection cleanly.
 
-While not mandatory, it is highly recommended to set an eof callback,
+While not mandatory, it is I<highly> recommended to set an eof callback,
 otherwise you might end up with a closed socket while you are still
 waiting for data.
+
+If an EOF condition has been detected but no C<on_eof> callback has been
+set, then a fatal error will be raised with C<$!> set to <0>.
 
 =item on_error => $cb->($handle, $fatal)
 
@@ -768,8 +771,13 @@ sub _drain_rbuf {
       }
    }
 
-   $self->{on_eof}($self)
-      if $self->{_eof} && $self->{on_eof};
+   if ($self->{_eof}) {
+      if ($self->{on_eof}) {
+         $self->{on_eof}($self)
+      } else {
+         $self->_error (0, 1);
+      }
+   }
 
    # may need to restart read watcher
    unless ($self->{_rw}) {
