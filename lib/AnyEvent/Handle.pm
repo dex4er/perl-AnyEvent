@@ -907,15 +907,6 @@ register_read_type chunk => sub {
    }
 };
 
-# compatibility with older API
-sub push_read_chunk {
-   $_[0]->push_read (chunk => $_[1], $_[2]);
-}
-
-sub unshift_read_chunk {
-   $_[0]->unshift_read (chunk => $_[1], $_[2]);
-}
-
 =item line => [$eol, ]$cb->($handle, $line, $eol)
 
 The callback will be called only once a full line (including the end of
@@ -960,17 +951,6 @@ register_read_type line => sub {
       }
    }
 };
-
-# compatibility with older API
-sub push_read_line {
-   my $self = shift;
-   $self->push_read (line => @_);
-}
-
-sub unshift_read_line {
-   my $self = shift;
-   $self->unshift_read (line => @_);
-}
 
 =item regex => $accept[, $reject[, $skip], $cb->($handle, $data)
 

@@ -197,7 +197,7 @@ Revision history for Perl extension AnyEvent.
           become writable until empty.
 	- only make a dummy read for error detection when getpeername
           returns ENOTCONN.
-        - defend AnyEvent::Util::inet_aton against Coro::LWP brutal
+        - defend AnyEvent::Util::inet_aton against Coro::LWP's brutal
           override.
         - new AnyEvent::Guard::cancel.
 
@@ -221,7 +221,7 @@ Revision history for Perl extension AnyEvent.
 	- work around a bug in perl 5.8.8's local. Reported by Yi Ma Mao.
 
 3.4  Sun May 11 00:29:25 CEST 2008
-	- complete re-implementation of condvars with a hopefully much mroe useful
+	- complete re-implementation of condvars with a hopefully much more useful
           API (backward compatible functions exist but are undocumented).
 	- AnyEvent::Handle fully rewritten with a hopefully more powerful API
           (still subject to change).
