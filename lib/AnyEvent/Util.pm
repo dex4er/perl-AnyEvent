@@ -34,7 +34,7 @@ use base 'Exporter';
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe);
 our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL WSAWOULDBLOCK);
 
-our $VERSION = 4.22;
+our $VERSION = 4.231;
 
 BEGIN {
    my $posix = 1 * eval { local $SIG{__DIE__}; require POSIX };
@@ -210,8 +210,7 @@ sub _fork_schedule {
                $cb->(@$result);
 
                # work around the endlessly broken windows perls
-               sleep 1;
-               #kill 9, $pid if AnyEvent::WIN32;
+               kill 9, $pid if AnyEvent::WIN32;
 
                # clean up the pid
                waitpid $pid, 0;
@@ -247,9 +246,6 @@ sub _fork_schedule {
 
          # on native windows, _exit KILLS YOUR FORKED CHILDREN!
          if (AnyEvent::WIN32) {
-            warn "bp1\n";#d#
-            exec "";
-            warn "bp2($!)\n";#d#
             shutdown $w, 1; # signal parent to please kill us
             sleep 10; # give parent a chance to clean up
             sysread $w, my $buf, 1; # this *might* detect the parent exiting in some cases.

@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+4.231 Tue Jul 29 13:12:15 CEST 2008
+        - remove some debugging code left in AnyEvent::Util::fork_call
+          (and no, it's impossible to implement with the broken windows
+          perls without resource leaks or worse).
+
 4.23 Tue Jul 29 12:19:59 CEST 2008
 	- document the first parameter passed to condvar callbacks to be
           the callback.
