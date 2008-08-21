@@ -268,7 +268,8 @@ use this functionality, as AnyEvent does not have a dependency itself.
 
 =item filter_w => $cb
 
-These exist, but are undocumented at this time.
+These exist, but are undocumented at this time. (They are used internally
+by the TLS code).
 
 =back
 
@@ -1369,6 +1370,12 @@ sub starttls {
    # (unfortunately, we have to hardcode constants because the abysmally misdesigned
    # and mismaintained ssleay-module doesn't even offer them).
    # http://www.mail-archive.com/openssl-dev@openssl.org/msg22420.html
+   #
+   # in short: this is a mess.
+   # 
+   # note that we do not try to kepe the length constant between writes as we are required to do.
+   # we assume that most (but not all) of this insanity only applies to non-blocking cases,
+   # and we drive openssl fully in blocking mode here.
    Net::SSLeay::CTX_set_mode ($self->{tls},
       (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
       | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
