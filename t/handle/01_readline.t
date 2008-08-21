@@ -19,8 +19,11 @@ use Errno;
       fh       => $rd,
       on_error => sub {
          ok ($! == &Errno::EPIPE);
+         $cv->broadcast;
       },
-      on_eof   => sub { $cv->broadcast },
+      on_eof   => sub {
+         ok (0, "got eof");
+      },
    );
 
    my $concat;

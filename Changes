@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+4.233 Fri Aug 22 01:48:05 CEST 2008
+	- fix a bug in the testsuite, causing a hang.
+        - clarified lots of AnyEvent::Handle constructor arguments.
+
 4.232 Thu Aug 21 20:44:25 CEST 2008
 	- fix a bug in AnyEvent::Handle that could cause two fatal error
           callbacks on EOF, which caused AnyEvent::HTTP to signal success twice

@@ -91,7 +91,7 @@ use Scalar::Util ();
 use AnyEvent ();
 use AnyEvent::Util ();
 
-our $VERSION = 4.232;
+our $VERSION = 4.233;
 
 our ($NOW, $MNOW);
 

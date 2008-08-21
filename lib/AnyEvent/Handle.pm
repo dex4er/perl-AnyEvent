@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.232;
+our $VERSION = 4.233;
 
 =head1 SYNOPSIS
 
@@ -105,7 +105,7 @@ connect or a read error.
 
 Some errors are fatal (which is indicated by C<$fatal> being true). On
 fatal errors the handle object will be shut down and will not be usable
-(but you are free to look at the current C< ->rbuf >). Examples of fatal
+(but you are free to look at the current C<< ->rbuf >>). Examples of fatal
 errors are an EOF condition with active (but unsatisifable) read watchers
 (C<EPIPE>) or I/O errors.
 
@@ -154,12 +154,13 @@ the file when the write queue becomes empty.
 If non-zero, then this enables an "inactivity" timeout: whenever this many
 seconds pass without a successful read or write on the underlying file
 handle, the C<on_timeout> callback will be invoked (and if that one is
-missing, an C<ETIMEDOUT> error will be raised).
+missing, a non-fatal C<ETIMEDOUT> error will be raised).
 
 Note that timeout processing is also active when you currently do not have
 any outstanding read or write requests: If you plan to keep the connection
 idle then you should disable the timout temporarily or ignore the timeout
-in the C<on_timeout> callback.
+in the C<on_timeout> callback, in which case AnyEvent::Handle will simply
+restart the timeout.
 
 Zero (the default) disables this timeout.
 
@@ -173,7 +174,7 @@ so this condition is not fatal in any way.
 
 If defined, then a fatal error will be raised (with C<$!> set to C<ENOSPC>)
 when the read buffer ever (strictly) exceeds this size. This is useful to
-avoid denial-of-service attacks.
+avoid some forms of denial-of-service attacks.
 
 For example, a server accepting connections from untrusted sources should
 be configured to accept only so-and-so much data that it cannot act on
@@ -184,14 +185,16 @@ isn't finished).
 =item autocork => <boolean>
 
 When disabled (the default), then C<push_write> will try to immediately
-write the data to the handle if possible. This avoids having to register
-a write watcher and wait for the next event loop iteration, but can be
-inefficient if you write multiple small chunks (this disadvantage is
-usually avoided by your kernel's nagle algorithm, see C<low_delay>).
+write the data to the handle, if possible. This avoids having to register
+a write watcher and wait for the next event loop iteration, but can
+be inefficient if you write multiple small chunks (on the wire, this
+disadvantage is usually avoided by your kernel's nagle algorithm, see
+C<no_delay>, but this option can save costly syscalls).
 
 When enabled, then writes will always be queued till the next event loop
 iteration. This is efficient when you do many small writes per iteration,
-but less efficient when you do a single write only.
+but less efficient when you do a single write only per iteration (or when
+the write buffer often is full). It also increases write latency.
 
 =item no_delay => <boolean>
 
@@ -199,16 +202,17 @@ When doing small writes on sockets, your operating system kernel might
 wait a bit for more data before actually sending it out. This is called
 the Nagle algorithm, and usually it is beneficial.
 
-In some situations you want as low a delay as possible, which cna be
-accomplishd by setting this option to true.
+In some situations you want as low a delay as possible, which can be
+accomplishd by setting this option to a true value.
 
-The default is your opertaing system's default behaviour, this option
-explicitly enables or disables it, if possible.
+The default is your opertaing system's default behaviour (most likely
+enabled), this option explicitly enables or disables it, if possible.
 
 =item read_size => <bytes>
 
-The default read block size (the amount of bytes this module will try to read
-during each (loop iteration). Default: C<8192>.
+The default read block size (the amount of bytes this module will
+try to read during each loop iteration, which affects memory
+requirements). Default: C<8192>.
 
 =item low_water_mark => <bytes>
 
@@ -216,25 +220,32 @@ Sets the amount of bytes (default: C<0>) that make up an "empty" write
 buffer: If the write reaches this size or gets even samller it is
 considered empty.
 
+Sometimes it can be beneficial (for performance reasons) to add data to
+the write buffer before it is fully drained, but this is a rare case, as
+the operating system kernel usually buffers data as well, so the default
+is good in almost all cases.
+
 =item linger => <seconds>
 
 If non-zero (default: C<3600>), then the destructor of the
-AnyEvent::Handle object will check wether there is still outstanding write
-data and will install a watcher that will write out this data. No errors
-will be reported (this mostly matches how the operating system treats
-outstanding data at socket close time).
+AnyEvent::Handle object will check whether there is still outstanding
+write data and will install a watcher that will write this data to the
+socket. No errors will be reported (this mostly matches how the operating
+system treats outstanding data at socket close time).
 
-This will not work for partial TLS data that could not yet been
-encoded. This data will be lost.
+This will not work for partial TLS data that could not be encoded
+yet. This data will be lost.
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
 When this parameter is given, it enables TLS (SSL) mode, that means
-AnyEvent will start a TLS handshake and will transparently encrypt/decrypt
-data.
+AnyEvent will start a TLS handshake as soon as the conenction has been
+established and will transparently encrypt/decrypt data afterwards.
 
 TLS mode requires Net::SSLeay to be installed (it will be loaded
-automatically when you try to create a TLS handle).
+automatically when you try to create a TLS handle): this module doesn't
+have a dependency on that module, so if your module requires it, you have
+to add the dependency yourself.
 
 Unlike TCP, TLS has a server and client side: for the TLS server side, use
 C<accept>, and for the TLS client side of a connection, use C<connect>
@@ -245,11 +256,11 @@ to make sure that you call either C<Net::SSLeay::set_connect_state>
 or C<Net::SSLeay::set_accept_state> on it before you pass it to
 AnyEvent::Handle.
 
-See the C<starttls> method for when need to start TLS negotiation later.
+See the C<< ->starttls >> method for when need to start TLS negotiation later.
 
 =item tls_ctx => $ssl_ctx
 
-Use the given Net::SSLeay::CTX object to create the new TLS connection
+Use the given C<Net::SSLeay::CTX> object to create the new TLS connection
 (unless a connection object was specified directly). If this parameter is
 missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 
@@ -332,7 +343,7 @@ sub _error {
 
 =item $fh = $handle->fh
 
-This method returns the file handle of the L<AnyEvent::Handle> object.
+This method returns the file handle used to create the L<AnyEvent::Handle> object.
 
 =cut
 
@@ -360,9 +371,9 @@ sub on_eof {
 
 =item $handle->on_timeout ($cb)
 
-Replace the current C<on_timeout> callback, or disables the callback
-(but not the timeout) if C<$cb> = C<undef>. See C<timeout> constructor
-argument.
+Replace the current C<on_timeout> callback, or disables the callback (but
+not the timeout) if C<$cb> = C<undef>. See the C<timeout> constructor
+argument and method.
 
 =cut
 
