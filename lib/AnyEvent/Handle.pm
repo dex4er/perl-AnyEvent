@@ -258,7 +258,8 @@ missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
 This is the json coder object used by the C<json> read and write types.
 
 If you don't supply it, then AnyEvent::Handle will create and use a
-suitable one, which will write and expect UTF-8 encoded JSON texts.
+suitable one (on demand), which will write and expect UTF-8 encoded JSON
+texts.
 
 Note that you are responsible to depend on the JSON module if you want to
 use this functionality, as AnyEvent does not have a dependency itself.
