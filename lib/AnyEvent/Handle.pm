@@ -72,8 +72,9 @@ The constructor supports these arguments (all as key => value pairs).
 
 The filehandle this L<AnyEvent::Handle> object will operate on.
 
-NOTE: The filehandle will be set to non-blocking (using
-AnyEvent::Util::fh_nonblocking).
+NOTE: The filehandle will be set to non-blocking mode (using
+C<AnyEvent::Util::fh_nonblocking>) by the constructor and needs to stay in
+that mode.
 
 =item on_eof => $cb->($handle)
 
