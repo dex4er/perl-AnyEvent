@@ -51,6 +51,9 @@ This module is a helper module to make it easier to do event-based I/O on
 filehandles. For utility functions for doing non-blocking connects and accepts
 on sockets see L<AnyEvent::Util>.
 
+The L<AnyEvent::Intro> tutorial contains some well-documented
+AnyEvent::Handle examples.
+
 In the following, when the documentation refers to of "bytes" then this
 means characters. As sysread and syswrite are used for all I/O, their
 treatment of characters applies to this module as well.
