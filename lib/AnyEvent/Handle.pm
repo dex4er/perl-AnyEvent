@@ -229,22 +229,23 @@ encoded. This data will be lost.
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
-When this parameter is given, it enables TLS (SSL) mode, that means it
-will start making tls handshake and will transparently encrypt/decrypt
+When this parameter is given, it enables TLS (SSL) mode, that means
+AnyEvent will start a TLS handshake and will transparently encrypt/decrypt
 data.
 
 TLS mode requires Net::SSLeay to be installed (it will be loaded
 automatically when you try to create a TLS handle).
 
-For the TLS server side, use C<accept>, and for the TLS client side of a
-connection, use C<connect> mode.
+Unlike TCP, TLS has a server and client side: for the TLS server side, use
+C<accept>, and for the TLS client side of a connection, use C<connect>
+mode.
 
 You can also provide your own TLS connection object, but you have
 to make sure that you call either C<Net::SSLeay::set_connect_state>
 or C<Net::SSLeay::set_accept_state> on it before you pass it to
 AnyEvent::Handle.
 
-See the C<starttls> method if you need to start TLS negotiation later.
+See the C<starttls> method for when need to start TLS negotiation later.
 
 =item tls_ctx => $ssl_ctx
 
