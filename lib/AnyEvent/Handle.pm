@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.231;
+our $VERSION = 4.232;
 
 =head1 SYNOPSIS
 
@@ -81,6 +81,11 @@ Set the callback to be called when an end-of-file condition is detected,
 i.e. in the case of a socket, when the other side has closed the
 connection cleanly.
 
+For sockets, this just means that the other side has stopped sending data,
+you can still try to write data, and, in fact, one can return from the eof
+callback and continue writing data, as only the read part has been shut
+down.
+
 While not mandatory, it is I<highly> recommended to set an eof callback,
 otherwise you might end up with a closed socket while you are still
 waiting for data.
@@ -95,10 +100,15 @@ occured, such as not being able to resolve the hostname, failure to
 connect or a read error.
 
 Some errors are fatal (which is indicated by C<$fatal> being true). On
-fatal errors the handle object will be shut down and will not be
-usable. Non-fatal errors can be retried by simply returning, but it is
-recommended to simply ignore this parameter and instead abondon the handle
-object when this callback is invoked.
+fatal errors the handle object will be shut down and will not be usable
+(but you are free to look at the current C< ->rbuf >). Examples of fatal
+errors are an EOF condition with active (but unsatisifable) read watchers
+(C<EPIPE>) or I/O errors.
+
+Non-fatal errors can be retried by simply returning, but it is recommended
+to simply ignore this parameter and instead abondon the handle object
+when this callback is invoked. Examples of non-fatal errors are timeouts
+C<ETIMEDOUT>) or badly-formatted data (C<EBADMSG>).
 
 On callback entrance, the value of C<$!> contains the operating system
 error (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT> or C<EBADMSG>).
@@ -293,6 +303,9 @@ sub _shutdown {
    delete $self->{fh};
 
    $self->stoptls;
+
+   delete $self->{on_read};
+   delete $self->{_queue};
 }
 
 sub _error {
@@ -731,7 +744,7 @@ sub _drain_rbuf {
       defined $self->{rbuf_max}
       && $self->{rbuf_max} < length $self->{rbuf}
    ) {
-      return $self->_error (&Errno::ENOSPC, 1);
+      $self->_error (&Errno::ENOSPC, 1), return;
    }
 
    while () {
@@ -741,7 +754,7 @@ sub _drain_rbuf {
          unless ($cb->($self)) {
             if ($self->{_eof}) {
                # no progress can be made (not enough data and no data forthcoming)
-               $self->_error (&Errno::EPIPE, 1), last;
+               $self->_error (&Errno::EPIPE, 1), return;
             }
 
             unshift @{ $self->{_queue} }, $cb;
@@ -759,7 +772,7 @@ sub _drain_rbuf {
          ) {
             # no further data will arrive
             # so no progress can be made
-            $self->_error (&Errno::EPIPE, 1), last
+            $self->_error (&Errno::EPIPE, 1), return
                if $self->{_eof};
 
             last; # more data might arrive

@@ -1,5 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+4.232 Thu Aug 21 20:44:25 CEST 2008
+	- fix a bug in AnyEvent::Handle that could cause two fatal error
+          callbacks on EOF, which caused AnyEvent::HTTP to signal success twice
+          (testcase by Leon Brocard).
+        - clarified on_eof/on_error documentation a bit.
+
 4.231 Tue Jul 29 13:12:15 CEST 2008
         - remove some debugging code left in AnyEvent::Util::fork_call
           (and no, it's impossible to implement with the broken windows
