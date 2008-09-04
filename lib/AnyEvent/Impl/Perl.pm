@@ -97,28 +97,28 @@ our ($NOW, $MNOW);
 BEGIN {
    local $SIG{__DIE__};
 
-   if (eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
+   if (eval "use Time::HiRes (); &Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
       *_update_clock = sub {
          $NOW  = &Time::HiRes::time;
          $MNOW = Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC);
       };
       warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
-   } elsif (eval "use Time::HiRes qw(time); 1") {
+   } elsif (eval "use Time::HiRes (); 1") {
       *_update_clock = sub {
          $NOW = $MNOW = &Time::HiRes::time;
       };
       warn "AnyEvent::Impl::Perl using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
    } elsif (eval "use POSIX (); (POSIX::times())[0] != -1") { # -1 is also a valid return value :/
-      my $HZ = POSIX::sysconf (&POSIX::_SC_CLK_TCK);
-      my $now = (POSIX::times ())[0];
+      my $HZ1 = 1 / POSIX::sysconf (&POSIX::_SC_CLK_TCK);
+      my $last = (POSIX::times ())[0];
       my $next;
       *_update_clock = sub {
          $NOW  = time; # d'oh
 
          $next = (POSIX::times ())[0];
-         $now = $next - 1 if $now > $next;
-         $MNOW += ($next - $now) / $HZ;
-         $now = $next;
+         $last = $next - 1 if $last > $next;
+         $MNOW += ($next - $last) * $HZ1;
+         $last = $next;
       };
       warn "AnyEvent::Impl::Perl using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::verbose >= 8;
    } else {
