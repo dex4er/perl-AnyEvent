@@ -31,8 +31,9 @@ This event loop has been optimised for the following use cases:
 
 =item monotonic clock is available
 
-This module will use the POSIX monotonic clock option if it can be
-detected at runtime, in which case it will not suffer adversely from time
+This module will use the POSIX monotonic clock option (if it can be
+detected at runtime) or the POSIX C<times> function (if the resolution is
+better than 100Hz), in which case it will not suffer adversely from time
 jumps.
 
 If no monotonic clock is available, this module will not attempt to
@@ -94,36 +95,52 @@ our $VERSION = 4.233;
 
 our ($NOW, $MNOW);
 
+sub MAXWAIT() { 1000 } # never sleep for longer than this many seconds
+
 BEGIN {
    local $SIG{__DIE__};
+   my $time_hires = eval "use Time::HiRes (); 1";
+   my $clk_tck    = eval "use POSIX (); POSIX::sysconf (&POSIX::_SC_CLK_TCK)";
+   my $round; # actual granularity
 
-   if (eval "use Time::HiRes (); &Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
+   if ($time_hires && eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
+      warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
       *_update_clock = sub {
          $NOW  = &Time::HiRes::time;
          $MNOW = Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC);
       };
-      warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
-   } elsif (eval "use Time::HiRes (); 1") {
-      *_update_clock = sub {
-         $NOW = $MNOW = &Time::HiRes::time;
-      };
-      warn "AnyEvent::Impl::Perl using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
-   } elsif (eval "use POSIX (); (POSIX::times())[0] != -1") { # -1 is also a valid return value :/
-      my $HZ1 = 1 / POSIX::sysconf (&POSIX::_SC_CLK_TCK);
+
+   } elsif (100 <= $clk_tck && $clk_tck <= 1000000 && "use POSIX (); (POSIX::times())[0] != -1") { # -1 is also a valid return value :/
+      warn "AnyEvent::Impl::Perl using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::verbose >= 8;
+      my $HZ1 = 1 / $clk_tck;
+
       my $last = (POSIX::times ())[0];
       my $next;
       *_update_clock = sub {
          $NOW  = time; # d'oh
 
          $next = (POSIX::times ())[0];
-         $last = $next - 1 if $last > $next;
+         # we assume 32 bit signed on wrap but 64 bit will never wrap
+         $last -= 0x100000000 if $last > $next;
          $MNOW += ($next - $last) * $HZ1;
          $last = $next;
       };
-      warn "AnyEvent::Impl::Perl using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::verbose >= 8;
+
+      $round = $HZ1;
+
+   } elsif (eval "use Time::HiRes (); 1") {
+      warn "AnyEvent::Impl::Perl using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
+      *_update_clock = sub {
+         $NOW = $MNOW = &Time::HiRes::time;
+      };
+
    } else {
       die "FATAL: unable to find sub-second time source (is this really perl 5.8.0 or later?)";
    }
+
+   $round = 0.001 if $round < 0.001; # 1ms is enough for us
+   $round -= $round * 1e-2; # 0.1 => 0.099
+   eval "sub ROUNDUP() { $round }";
 }
 
 _update_clock;
@@ -165,11 +182,13 @@ sub one_event {
       my ($wait, @vec, $fds)
          = (@timer && $timer[0][0] < $need_sort ? $timer[0][0] : $need_sort) - $MNOW;
 
+      $wait = $wait < MAXWAIT ? $wait + ROUNDUP : MAXWAIT;
+
       if ($fds = select
             $vec[0] = $fds[0]{v},
             $vec[1] = $fds[1]{v},
             AnyEvent::WIN32 ? $vec[2] = $fds[1]{v} : undef,
-            $wait < 3600 ? $wait + 0.0009 : 3600
+            $wait
       ) {
          _update_clock;
 
@@ -194,7 +213,7 @@ sub one_event {
          }
       } elsif (AnyEvent::WIN32 && $! == AnyEvent::Util::WSAEINVAL) {
          # buggy microshit windoze asks us to route around it
-         select undef, undef, undef, @timer ? $timer[0][0] - $MNOW  + 0.0009 : 3600;
+         select undef, undef, undef, $wait;
       }
    }
 }

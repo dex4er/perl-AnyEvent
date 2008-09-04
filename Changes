@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- perl backend will not use POSIX::times as monotonic clock
+          when available and the monotonic clock option is not.
         - run even without Time::HiRes in some cases now, but do not
           provide sub-second accuracy (all supported perl versions have
           Time::HiRes).
