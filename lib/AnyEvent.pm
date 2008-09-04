@@ -1018,10 +1018,17 @@ package AnyEvent::Base;
 
 # default implementation for now and time
 
-use Time::HiRes ();
+BEGIN {
+   if (eval "use Time::HiRes (); time (); 1") {
+      *_time = \&Time::HiRes::time;
+      # if (eval "use POSIX (); (POSIX::times())...
+   } else {
+      *_time = \&CORE::time; # epic fail
+   }
+}
 
-sub time { Time::HiRes::time }
-sub now  { Time::HiRes::time }
+sub time { _time }
+sub now  { _time }
 
 # default implementation for ->condvar
 

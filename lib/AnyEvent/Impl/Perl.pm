@@ -85,7 +85,6 @@ package AnyEvent::Impl::Perl;
 no warnings;
 use strict;
 
-use Time::HiRes ();
 use Scalar::Util ();
 
 use AnyEvent ();
@@ -98,17 +97,32 @@ our ($NOW, $MNOW);
 BEGIN {
    local $SIG{__DIE__};
 
-   if (0 < eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
+   if (eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
       *_update_clock = sub {
-         $NOW  = Time::HiRes::time;
+         $NOW  = &Time::HiRes::time;
          $MNOW = Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC);
       };
       warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
-   } else {
+   } elsif (eval "use Time::HiRes qw(time); 1") {
       *_update_clock = sub {
-         $NOW = $MNOW = Time::HiRes::time;
+         $NOW = $MNOW = &Time::HiRes::time;
       };
-      warn "AnyEvent::Impl::Perl using default (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
+      warn "AnyEvent::Impl::Perl using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
+   } elsif (eval "use POSIX (); (POSIX::times())[0] != -1") { # -1 is also a valid return value :/
+      my $HZ = POSIX::sysconf (&POSIX::_SC_CLK_TCK);
+      my $now = (POSIX::times ())[0];
+      my $next;
+      *_update_clock = sub {
+         $NOW  = time; # d'oh
+
+         $next = (POSIX::times ())[0];
+         $now = $next - 1 if $now > $next;
+         $MNOW += ($next - $now) / $HZ;
+         $now = $next;
+      };
+      warn "AnyEvent::Impl::Perl using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::verbose >= 8;
+   } else {
+      die "FATAL: unable to find sub-second time source (is this really perl 5.8.0 or later?)";
    }
 }
 

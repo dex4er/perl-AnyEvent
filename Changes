@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+        - run even without Time::HiRes in some cases now, but do not
+          provide sub-second accuracy (all supported perl versions have
+          Time::HiRes).
+
 4.233 Fri Aug 22 01:48:05 CEST 2008
 	- fix a bug in the testsuite, causing a hang.
         - clarified lots of AnyEvent::Handle constructor arguments.
