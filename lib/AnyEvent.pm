@@ -342,11 +342,18 @@ Example: exit on SIGINT
 You can also watch on a child process exit and catch its exit status.
 
 The child process is specified by the C<pid> argument (if set to C<0>, it
-watches for any child process exit). The watcher will trigger as often
-as status change for the child are received. This works by installing a
-signal handler for C<SIGCHLD>. The callback will be called with the pid
-and exit status (as returned by waitpid), so unlike other watcher types,
-you I<can> rely on child watcher callback arguments.
+watches for any child process exit). The watcher will triggered only when
+the child process has finished and an exit status is available, not on
+any trace events (stopped/continued).
+
+The callback will be called with the pid and exit status (as returned by
+waitpid), so unlike other watcher types, you I<can> rely on child watcher
+callback arguments.
+
+This watcher type works by installing a signal handler for C<SIGCHLD>,
+and since it cannot be shared, nothing else should use SIGCHLD or reap
+random child processes (waiting for specific child processes, e.g. inside
+C<system>, is just fine).
 
 There is a slight catch to child watchers, however: you usually start them
 I<after> the child process was created, and this means the process could
@@ -856,7 +863,7 @@ use strict qw(vars subs);
 
 use Carp;
 
-our $VERSION = 4.233;
+our $VERSION = 4.234;
 our $MODEL;
 
 our $AUTOLOAD;
