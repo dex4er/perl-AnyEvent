@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 
-use 5.008;
+use 5.008; # AnyEvent core seems to work with 5.6
 
 print <<EOF;
 
