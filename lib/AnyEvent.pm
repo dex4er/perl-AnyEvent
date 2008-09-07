@@ -1030,7 +1030,7 @@ BEGIN {
       *_time = \&Time::HiRes::time;
       # if (eval "use POSIX (); (POSIX::times())...
    } else {
-      *_time = \&CORE::time; # epic fail
+      *_time = sub { time }; # epic fail
    }
 }
 
