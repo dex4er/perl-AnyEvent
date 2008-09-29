@@ -332,11 +332,18 @@ WATCHERS
     You can also watch on a child process exit and catch its exit status.
 
     The child process is specified by the "pid" argument (if set to 0, it
-    watches for any child process exit). The watcher will trigger as often
-    as status change for the child are received. This works by installing a
-    signal handler for "SIGCHLD". The callback will be called with the pid
-    and exit status (as returned by waitpid), so unlike other watcher types,
-    you *can* rely on child watcher callback arguments.
+    watches for any child process exit). The watcher will triggered only
+    when the child process has finished and an exit status is available, not
+    on any trace events (stopped/continued).
+
+    The callback will be called with the pid and exit status (as returned by
+    waitpid), so unlike other watcher types, you *can* rely on child watcher
+    callback arguments.
+
+    This watcher type works by installing a signal handler for "SIGCHLD",
+    and since it cannot be shared, nothing else should use SIGCHLD or reap
+    random child processes (waiting for specific child processes, e.g.
+    inside "system", is just fine).
 
     There is a slight catch to child watchers, however: you usually start
     them *after* the child process was created, and this means the process
@@ -792,51 +799,25 @@ OTHER MODULES
         The lambda approach to I/O - don't ask, look there. Can use
         AnyEvent.
 
-SUPPLYING YOUR OWN EVENT MODEL INTERFACE
-    This is an advanced topic that you do not normally need to use AnyEvent
-    in a module. This section is only of use to event loop authors who want
-    to provide AnyEvent compatibility.
+ERROR AND EXCEPTION HANDLING
+    In general, AnyEvent does not do any error handling - it relies on the
+    caller to do that if required. The AnyEvent::Strict module (see also the
+    "PERL_ANYEVENT_STRICT" environment variable, below) provides strict
+    checking of all AnyEvent methods, however, which is highly useful during
+    development.
 
-    If you need to support another event library which isn't directly
-    supported by AnyEvent, you can supply your own interface to it by
-    pushing, before the first watcher gets created, the package name of the
-    event module and the package name of the interface to use onto
-    @AnyEvent::REGISTRY. You can do that before and even without loading
-    AnyEvent, so it is reasonably cheap.
+    As for exception handling (i.e. runtime errors and exceptions thrown
+    while executing a callback), this is not only highly event-loop
+    specific, but also not in any way wrapped by this module, as this is the
+    job of the main program.
 
-    Example:
-
-       push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
-
-    This tells AnyEvent to (literally) use the "urxvt::anyevent::"
-    package/class when it finds the "urxvt" package/module is already
-    loaded.
-
-    When AnyEvent is loaded and asked to find a suitable event model, it
-    will first check for the presence of urxvt by trying to "use" the
-    "urxvt::anyevent" module.
-
-    The class should provide implementations for all watcher types. See
-    AnyEvent::Impl::EV (source code), AnyEvent::Impl::Glib (Source code) and
-    so on for actual examples. Use "perldoc -m AnyEvent::Impl::Glib" to see
-    the sources.
-
-    If you don't provide "signal" and "child" watchers than AnyEvent will
-    provide suitable (hopefully) replacements.
-
-    The above example isn't fictitious, the *rxvt-unicode* (a.k.a. urxvt)
-    terminal emulator uses the above line as-is. An interface isn't included
-    in AnyEvent because it doesn't make sense outside the embedded
-    interpreter inside *rxvt-unicode*, and it is updated and maintained as
-    part of the *rxvt-unicode* distribution.
-
-    *rxvt-unicode* also cheats a bit by not providing blocking access to
-    condition variables: code blocking while waiting for a condition will
-    "die". This still works with most modules/usages, and blocking calls
-    must not be done in an interactive application, so it makes sense.
+    The pure perl event loop simply re-throws the exception (usually within
+    "condvar->recv"), the Event and EV modules call "$Event/EV::DIED->()",
+    Glib uses "install_exception_handler" and so on.
 
 ENVIRONMENT VARIABLES
-    The following environment variables are used by this module:
+    The following environment variables are used by this module or its
+    submodules:
 
     "PERL_ANYEVENT_VERBOSE"
         By default, AnyEvent will be completely silent except in fatal
@@ -859,8 +840,9 @@ ENVIRONMENT VARIABLES
 
         In other words, enables "strict" mode.
 
-        Unlike "use strict" it is definitely recommended ot keep it off in
-        production.
+        Unlike "use strict", it is definitely recommended ot keep it off in
+        production. Keeping "PERL_ANYEVENT_STRICT=1" in your environment
+        while developing programs can be very useful, however.
 
     "PERL_ANYEVENT_MODEL"
         This can be used to specify the event model to be used by AnyEvent,
@@ -911,6 +893,49 @@ ENVIRONMENT VARIABLES
     "PERL_ANYEVENT_MAX_FORKS"
         The maximum number of child processes that
         "AnyEvent::Util::fork_call" will create in parallel.
+
+SUPPLYING YOUR OWN EVENT MODEL INTERFACE
+    This is an advanced topic that you do not normally need to use AnyEvent
+    in a module. This section is only of use to event loop authors who want
+    to provide AnyEvent compatibility.
+
+    If you need to support another event library which isn't directly
+    supported by AnyEvent, you can supply your own interface to it by
+    pushing, before the first watcher gets created, the package name of the
+    event module and the package name of the interface to use onto
+    @AnyEvent::REGISTRY. You can do that before and even without loading
+    AnyEvent, so it is reasonably cheap.
+
+    Example:
+
+       push @AnyEvent::REGISTRY, [urxvt => urxvt::anyevent::];
+
+    This tells AnyEvent to (literally) use the "urxvt::anyevent::"
+    package/class when it finds the "urxvt" package/module is already
+    loaded.
+
+    When AnyEvent is loaded and asked to find a suitable event model, it
+    will first check for the presence of urxvt by trying to "use" the
+    "urxvt::anyevent" module.
+
+    The class should provide implementations for all watcher types. See
+    AnyEvent::Impl::EV (source code), AnyEvent::Impl::Glib (Source code) and
+    so on for actual examples. Use "perldoc -m AnyEvent::Impl::Glib" to see
+    the sources.
+
+    If you don't provide "signal" and "child" watchers than AnyEvent will
+    provide suitable (hopefully) replacements.
+
+    The above example isn't fictitious, the *rxvt-unicode* (a.k.a. urxvt)
+    terminal emulator uses the above line as-is. An interface isn't included
+    in AnyEvent because it doesn't make sense outside the embedded
+    interpreter inside *rxvt-unicode*, and it is updated and maintained as
+    part of the *rxvt-unicode* distribution.
+
+    *rxvt-unicode* also cheats a bit by not providing blocking access to
+    condition variables: code blocking while waiting for a condition will
+    "die". This still works with most modules/usages, and blocking calls
+    must not be done in an interactive application, so it makes sense.
 
 EXAMPLE PROGRAM
     The following program uses an I/O watcher to read data from STDIN, a

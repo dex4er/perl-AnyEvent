@@ -1,11 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
+4.234 Mon Sep 29 04:08:13 CEST 2008
 	- fix child watcher documentation: only child exits will be reported,
           no trace events.
-	- perl backend will not use POSIX::times as monotonic clock
+        - mention SIGPIPE in AnyEvent::Handle.
+	- perl backend will now use POSIX::times as monotonic clock
           when available and the monotonic clock option is not.
         - run even without Time::HiRes in some cases now, but do not
-          provide sub-second accuracy (all supported perl versions have
+          provide sub-second accuracy (all *supported* perl versions have
           Time::HiRes).
 
 4.233 Fri Aug 22 01:48:05 CEST 2008
