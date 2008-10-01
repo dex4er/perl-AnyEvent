@@ -297,10 +297,8 @@ sub new {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   if ($self->{tls}) {
-      require Net::SSLeay;
-      $self->starttls (delete $self->{tls}, delete $self->{tls_ctx});
-   }
+   $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
+      if $self->{tls};
 
    $self->{_activity} = AnyEvent->now;
    $self->_timeout;
@@ -1377,6 +1375,8 @@ AnyEvent::Handle object (this is due to bugs in OpenSSL).
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
 
+   require Net::SSLeay;
+
    Carp::croak "it is an error to call starttls more than once on an Anyevent::Handle object"
       if $self->{tls};
    
@@ -1428,7 +1428,7 @@ sub stoptls {
    my ($self) = @_;
 
    if ($self->{tls}) {
-      Net::SSLeay::shutdown $self->{tls};
+      Net::SSLeay::shutdown ($self->{tls});
 
       &_dotls;
 
