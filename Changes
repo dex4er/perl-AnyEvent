@@ -1,5 +1,18 @@
 Revision history for Perl extension AnyEvent.
 
+4.3
+        - fix a bug in AnyEvent::Handle where in SSL connect mode, the
+          client would first wait for some data by the server and
+          otherwise hang. (Reported and analyzed in an absolutely
+          exemplary manner by Adam Rosenstein).
+        - fix a bug in AnyEvent::Handle where SSL EOF would not be treated
+          as stream EOF, putting the connection into a hung state.
+          (Reported and analyzed in an absolutely exemplary manner by Adam
+          Rosenstein).
+        - fix a potential segfault in AnyEvent::Handle when the TLS context
+          would go missing in a read callback (e.g. due to stoptls) -
+          Net::SSLeay of course makes no type checking whatsoever.
+
 4.234 Mon Sep 29 04:08:13 CEST 2008
 	- fix child watcher documentation: only child exits will be reported,
           no trace events.

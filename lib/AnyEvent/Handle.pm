@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.234;
+our $VERSION = 4.3;
 
 =head1 SYNOPSIS
 
@@ -1321,21 +1321,17 @@ sub _dotls {
       }
    }
 
-   if (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
-      $self->{wbuf} .= $buf;
-      $self->_drain_wbuf;
-   }
-
    while (defined ($buf = Net::SSLeay::read ($self->{tls}))) {
-      if (length $buf) {
-         $self->{rbuf} .= $buf;
-         $self->_drain_rbuf unless $self->{_in_drain};
-      } else {
+      unless (length $buf) {
          # let's treat SSL-eof as we treat normal EOF
+         delete $self->{_rw};
          $self->{_eof} = 1;
-         $self->_shutdown;
-         return;
       }
+
+      $self->{rbuf} .= $buf;
+      $self->_drain_rbuf unless $self->{_in_drain};
+
+      $self->{tls} or return; # tls could have gone away
    }
 
    my $err = Net::SSLeay::get_error ($self->{tls}, -1);
@@ -1348,6 +1344,11 @@ sub _dotls {
       }
 
       # all others are fine for our purposes
+   }
+
+   if (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
+      $self->{wbuf} .= $buf;
+      $self->_drain_wbuf;
    }
 }
 
@@ -1412,6 +1413,8 @@ sub starttls {
       Net::SSLeay::BIO_write ($_[0]{_rbio}, ${$_[1]});
       &_dotls;
    };
+
+   &_dotls; # need to trigger the initial negotiation exchange
 }
 
 =item $handle->stoptls
