@@ -328,7 +328,7 @@ sub _shutdown {
    delete $self->{_ww};
    delete $self->{fh};
 
-   $self->stoptls;
+   &_freetls;
 
    delete $self->{on_read};
    delete $self->{_queue};
@@ -1326,12 +1326,12 @@ sub _dotls {
          # let's treat SSL-eof as we treat normal EOF
          delete $self->{_rw};
          $self->{_eof} = 1;
+         &_freetls;
       }
 
       $self->{rbuf} .= $buf;
       $self->_drain_rbuf unless $self->{_in_drain};
-
-      $self->{tls} or return; # tls could have gone away
+      $self->{tls} or return; # tls session might have gone away in callback
    }
 
    my $err = Net::SSLeay::get_error ($self->{tls}, -1);
@@ -1368,13 +1368,17 @@ The TLS connection object will end up in C<< $handle->{tls} >> after this
 call and can be used or changed to your liking. Note that the handshake
 might have already started when this function returns.
 
+If it an error to start a TLS handshake more than once per
+AnyEvent::Handle object (this is due to bugs in OpenSSL).
+
 =cut
 
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
 
-   $self->stoptls;
-
+   Carp::croak "it is an error to call starttls more than once on an Anyevent::Handle object"
+      if $self->{tls};
+   
    if ($ssl eq "accept") {
       $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
       Net::SSLeay::set_accept_state ($ssl);
@@ -1419,27 +1423,41 @@ sub starttls {
 
 =item $handle->stoptls
 
-Destroys the SSL connection, if any. Partial read or write data will be
-lost.
+Shuts down the SSL connection - this makes a proper EOF handshake by
+sending a close notify to the other side, but since OpenSSL doesn't
+support non-blocking shut downs, it is not possible to re-use the stream
+afterwards.
 
 =cut
 
 sub stoptls {
    my ($self) = @_;
 
-   Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
+   if ($self->{tls}) {
+      Net::SSLeay::shutdown $self->{tls};
 
-   delete $self->{_rbio};
-   delete $self->{_wbio};
-   delete $self->{_tls_wbuf};
-   delete $self->{filter_r};
-   delete $self->{filter_w};
+      &_dotls;
+
+      # we don't give a shit. no, we do, but we can't. no...
+      # we, we... have to use openssl :/
+      &_freetls;
+   }
+}
+
+sub _freetls {
+   my ($self) = @_;
+
+   return unless $self->{tls};
+
+   Net::SSLeay::free (delete $self->{tls});
+   
+   delete @$self{qw(_rbio filter_w _wbio filter_r)};
 }
 
 sub DESTROY {
    my $self = shift;
 
-   $self->stoptls;
+   &_freetls;
 
    my $linger = exists $self->{linger} ? $self->{linger} : 3600;
 
