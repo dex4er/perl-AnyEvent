@@ -827,9 +827,9 @@ A non-blocking interface to gpsd, a daemon delivering GPS information.
 A non-blocking interface to the Internet Go Server protocol (used by
 L<App::IGS>).
 
-=item L<Net::IRC3>
+=item L<AnyEvent::IRC>
 
-AnyEvent based IRC client module family.
+AnyEvent based IRC client module family (replacing the older Net::IRC3).
 
 =item L<Net::XMPP2>
 
