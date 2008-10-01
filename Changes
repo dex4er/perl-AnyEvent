@@ -12,6 +12,9 @@ Revision history for Perl extension AnyEvent.
         - fix a potential segfault in AnyEvent::Handle when the TLS context
           would go missing in a read callback (e.g. due to stoptls) -
           Net::SSLeay of course makes no type checking whatsoever.
+        - AnyEvent::Handle will not stop the read watcher in TLS mode.
+        - AnyEvent::Handle->stoptls will send a TLS close notify
+          instead of simply destroying the stream now.
 
 4.234 Mon Sep 29 04:08:13 CEST 2008
 	- fix child watcher documentation: only child exits will be reported,

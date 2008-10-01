@@ -242,7 +242,8 @@ socket. No errors will be reported (this mostly matches how the operating
 system treats outstanding data at socket close time).
 
 This will not work for partial TLS data that could not be encoded
-yet. This data will be lost.
+yet. This data will be lost. Calling the C<stoptls> method in time might
+help.
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
@@ -282,13 +283,6 @@ texts.
 
 Note that you are responsible to depend on the JSON module if you want to
 use this functionality, as AnyEvent does not have a dependency itself.
-
-=item filter_r => $cb
-
-=item filter_w => $cb
-
-These exist, but are undocumented at this time. (They are used internally
-by the TLS code).
 
 =back
 
@@ -497,7 +491,7 @@ sub on_drain {
    $self->{on_drain} = $cb;
 
    $cb->($self)
-      if $cb && $self->{low_water_mark} >= length $self->{wbuf};
+      if $cb && $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf});
 }
 
 =item $handle->push_write ($data)
@@ -524,7 +518,7 @@ sub _drain_wbuf {
             $self->{_activity} = AnyEvent->now;
 
             $self->{on_drain}($self)
-               if $self->{low_water_mark} >= length $self->{wbuf}
+               if $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf})
                   && $self->{on_drain};
 
             delete $self->{_ww} unless length $self->{wbuf};
@@ -558,8 +552,9 @@ sub push_write {
            ->($self, @_);
    }
 
-   if ($self->{filter_w}) {
-      $self->{filter_w}($self, \$_[0]);
+   if ($self->{tls}) {
+      $self->{_tls_wbuf} .= $_[0];
+      &_dotls ($self);
    } else {
       $self->{wbuf} .= $_[0];
       $self->_drain_wbuf;
@@ -805,7 +800,7 @@ sub _drain_rbuf {
          }
       } else {
          # read side becomes idle
-         delete $self->{_rw};
+         delete $self->{_rw} unless $self->{tls};
          last;
       }
    }
@@ -1273,12 +1268,15 @@ you change the C<on_read> callback or push/unshift a read callback, and it
 will automatically C<stop_read> for you when neither C<on_read> is set nor
 there are any read requests in the queue.
 
+These methods will have no effect when in TLS mode (as TLS doesn't support
+half-duplex connections).
+
 =cut
 
 sub stop_read {
    my ($self) = @_;
 
-   delete $self->{_rw};
+   delete $self->{_rw} unless $self->{tls};
 }
 
 sub start_read {
@@ -1288,15 +1286,18 @@ sub start_read {
       Scalar::Util::weaken $self;
 
       $self->{_rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
-         my $rbuf = $self->{filter_r} ? \my $buf : \$self->{rbuf};
+         my $rbuf = \($self->{tls} ? my $buf : $self->{rbuf});
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
             $self->{_activity} = AnyEvent->now;
 
-            $self->{filter_r}
-               ? $self->{filter_r}($self, $rbuf)
-               : $self->{_in_drain} || $self->_drain_rbuf;
+            if ($self->{tls}) {
+               Net::SSLeay::BIO_write ($self->{_rbio}, $$rbuf);
+               &_dotls ($self);
+            } else {
+               $self->_drain_rbuf unless $self->{_in_drain};
+            }
 
          } elsif (defined $len) {
             delete $self->{_rw};
@@ -1397,9 +1398,10 @@ sub starttls {
    #
    # in short: this is a mess.
    # 
-   # note that we do not try to kepe the length constant between writes as we are required to do.
+   # note that we do not try to keep the length constant between writes as we are required to do.
    # we assume that most (but not all) of this insanity only applies to non-blocking cases,
-   # and we drive openssl fully in blocking mode here.
+   # and we drive openssl fully in blocking mode here. Or maybe we don't - openssl seems to
+   # have identity issues in that area.
    Net::SSLeay::CTX_set_mode ($self->{tls},
       (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
       | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
@@ -1409,16 +1411,8 @@ sub starttls {
 
    Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
 
-   $self->{filter_w} = sub {
-      $_[0]{_tls_wbuf} .= ${$_[1]};
-      &_dotls;
-   };
-   $self->{filter_r} = sub {
-      Net::SSLeay::BIO_write ($_[0]{_rbio}, ${$_[1]});
-      &_dotls;
-   };
-
-   &_dotls; # need to trigger the initial negotiation exchange
+   &_dotls; # need to trigger the initial handshake
+   $self->start_read; # make sure we actually do read
 }
 
 =item $handle->stoptls
@@ -1451,7 +1445,7 @@ sub _freetls {
 
    Net::SSLeay::free (delete $self->{tls});
    
-   delete @$self{qw(_rbio filter_w _wbio filter_r)};
+   delete @$self{qw(_rbio _wbio _tls_wbuf)};
 }
 
 sub DESTROY {
