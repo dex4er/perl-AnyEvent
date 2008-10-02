@@ -16,6 +16,8 @@ Revision history for Perl extension AnyEvent.
         - AnyEvent::Handle will not stop the read watcher in TLS mode.
         - AnyEvent::Handle->stoptls will send a TLS close notify
           instead of simply destroying the stream now.
+        - fix a bug where large blocks of data written in TLS mode
+          would not be sent unless triggered by receives.
         - on_drain will now take the tls write buffer into account.
         - SSL operations have been streamlined a bit and should be faster
           now, more to come, though.

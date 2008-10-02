@@ -579,7 +579,7 @@ Formats the given value as netstring
 register_write_type netstring => sub {
    my ($self, $string) = @_;
 
-   sprintf "%d:%s,", (length $string), $string
+   (length $string) . ":$string,"
 };
 
 =item packstring => $format, $data
@@ -1103,7 +1103,8 @@ uses the same format as a Perl C<pack> format, but must specify a single
 integer only (only one of C<cCsSlLqQiInNvVjJw> is allowed, plus an
 optional C<!>, C<< < >> or C<< > >> modifier).
 
-DNS over TCP uses a prefix of C<n>, EPP uses a prefix of C<N>.
+For example, DNS over TCP uses a prefix of C<n> (2 octet network order),
+EPP uses a prefix of C<N> (4 octtes).
 
 Example: read a block of data prefixed by its length in BER-encoded
 format (very efficient).
@@ -1345,7 +1346,7 @@ sub _dotls {
       # all others are fine for our purposes
    }
 
-   if (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
+   while (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $buf;
       $self->_drain_wbuf;
    }
@@ -1520,9 +1521,10 @@ sub TLS_CTX() {
 
 =item How do I read data until the other side closes the connection?
 
-If you just want to read your data into a perl scalar, the easiest way to achieve this is
-by setting an C<on_read> callback that does nothing, clearing the C<on_eof> callback
-and in the C<on_error> callback, the data will be in C<$_[0]{rbuf}>:
+If you just want to read your data into a perl scalar, the easiest way
+to achieve this is by setting an C<on_read> callback that does nothing,
+clearing the C<on_eof> callback and in the C<on_error> callback, the data
+will be in C<$_[0]{rbuf}>:
 
    $handle->on_read (sub { });
    $handle->on_eof (undef);
@@ -1541,7 +1543,8 @@ intact. This is also one reason why so many internet protocols have an
 explicit QUIT command.
 
 
-=item I don't want to destroy the handle too early - how do I wait until all data has been sent?
+=item I don't want to destroy the handle too early - how do I wait until
+all data has been written?
 
 After writing your last bits of data, set the C<on_drain> callback
 and destroy the handle in there - with the default setting of
