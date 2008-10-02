@@ -1513,6 +1513,50 @@ sub TLS_CTX() {
 
 =back
 
+
+=head1 NONFREQUENTLY ASKED QUESTIONS
+
+=over 4
+
+=item How do I read data until the other side closes the connection?
+
+If you just want to read your data into a perl scalar, the easiest way to achieve this is
+by setting an C<on_read> callback that does nothing, clearing the C<on_eof> callback
+and in the C<on_error> callback, the data will be in C<$_[0]{rbuf}>:
+
+   $handle->on_read (sub { });
+   $handle->on_eof (undef);
+   $handle->on_error (sub {
+      my $data = delete $_[0]{rbuf};
+      undef $handle;
+   });
+
+The reason to use C<on_error> is that TCP connections, due to latencies
+and packets loss, might get closed quite violently with an error, when in
+fact, all data has been received.
+
+It is usually better to use acknowledgements when transfering data,
+to make sure the other side hasn't just died and you got the data
+intact. This is also one reason why so many internet protocols have an
+explicit QUIT command.
+
+
+=item I don't want to destroy the handle too early - how do I wait until all data has been sent?
+
+After writing your last bits of data, set the C<on_drain> callback
+and destroy the handle in there - with the default setting of
+C<low_water_mark> this will be called precisely when all data has been
+written to the socket:
+
+   $handle->push_write (...);
+   $handle->on_drain (sub {
+      warn "all data submitted to the kernel\n";
+      undef $handle;
+   });
+
+=back
+
+
 =head1 SUBCLASSING AnyEvent::Handle
 
 In many cases, you might want to subclass AnyEvent::Handle.

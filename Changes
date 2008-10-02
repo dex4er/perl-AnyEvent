@@ -19,6 +19,7 @@ Revision history for Perl extension AnyEvent.
         - on_drain will now take the tls write buffer into account.
         - SSL operations have been streamlined a bit and should be faster
           now, more to come, though.
+        - added a FAQ section, will document nontrivial issues in there.
 
 4.234 Mon Sep 29 04:08:13 CEST 2008
 	- fix child watcher documentation: only child exits will be reported,

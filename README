@@ -779,8 +779,9 @@ OTHER MODULES
         A non-blocking interface to the Internet Go Server protocol (used by
         App::IGS).
 
-    Net::IRC3
-        AnyEvent based IRC client module family.
+    AnyEvent::IRC
+        AnyEvent based IRC client module family (replacing the older
+        Net::IRC3).
 
     Net::XMPP2
         AnyEvent based XMPP (Jabber protocol) module family.
