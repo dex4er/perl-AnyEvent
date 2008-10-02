@@ -1756,6 +1756,42 @@ watchers, as the management overhead dominates.
 =back
 
 
+=head1 SIGNALS
+
+AnyEvent currently installs handlers for these signals:
+
+=over 4
+
+=item SIGCHLD
+
+A handler for C<SIGCHLD> is installed by AnyEvent's child watcher
+emulation for event loops that do not support them natively. Also, some
+event loops install a similar handler.
+
+=item SIGPIPE
+
+A no-op handler is installed for C<SIGPIPE> when C<$SIG{PIPE}> is C<undef>
+when AnyEvent gets loaded.
+
+The rationale for this is that AnyEvent users usually do not really depend
+on SIGPIPE delivery (which is purely an optimisation for shell use, or
+badly-written programs), but C<SIGPIPE> can cause spurious and rare
+program exits as a lot of people do not expect C<SIGPIPE> when writing to
+some random socket.
+
+The rationale for installing a no-op handler as opposed to ignoring it is
+that this way, the handler will be restored to defaults on exec.
+
+Feel free to install your own handler, or reset it to defaults.
+
+=back
+
+=cut
+
+$SIG{PIPE} = sub { }
+   unless defined $SIG{PIPE};
+
+
 =head1 FORK
 
 Most event libraries are not fork-safe. The ones who are usually are

@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 4.3
+	- AnyEvent will now install a no-op signal handler for SIGPIPE,
+          unless one has been installed already.
 	- fixed a great number of bugs and corner cases in AnyEvent::Handle:
         - fix a bug in where in SSL connect mode, the
           client would first wait for some data by the server and
