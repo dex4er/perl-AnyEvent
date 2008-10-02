@@ -552,6 +552,7 @@ sub push_write {
 
    if ($self->{tls}) {
       $self->{_tls_wbuf} .= $_[0];
+
       &_dotls ($self);
    } else {
       $self->{wbuf} .= $_[0];
@@ -1293,6 +1294,7 @@ sub start_read {
 
             if ($self->{tls}) {
                Net::SSLeay::BIO_write ($self->{_rbio}, $$rbuf);
+
                &_dotls ($self);
             } else {
                $self->_drain_rbuf unless $self->{_in_drain};
@@ -1310,44 +1312,45 @@ sub start_read {
    }
 }
 
+# poll the write BIO and send the data if applicable
 sub _dotls {
    my ($self) = @_;
 
-   my $buf;
+   my $tmp;
 
    if (length $self->{_tls_wbuf}) {
-      while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
-         substr $self->{_tls_wbuf}, 0, $len, "";
+      while (($tmp = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
+         substr $self->{_tls_wbuf}, 0, $tmp, "";
       }
    }
 
-   while (defined ($buf = Net::SSLeay::read ($self->{tls}))) {
-      unless (length $buf) {
+   while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
+      unless (length $tmp) {
          # let's treat SSL-eof as we treat normal EOF
          delete $self->{_rw};
          $self->{_eof} = 1;
          &_freetls;
       }
 
-      $self->{rbuf} .= $buf;
+      $self->{rbuf} .= $tmp;
       $self->_drain_rbuf unless $self->{_in_drain};
       $self->{tls} or return; # tls session might have gone away in callback
    }
 
-   my $err = Net::SSLeay::get_error ($self->{tls}, -1);
+   $tmp = Net::SSLeay::get_error ($self->{tls}, -1);
 
-   if ($err!= Net::SSLeay::ERROR_WANT_READ ()) {
-      if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
+   if ($tmp != Net::SSLeay::ERROR_WANT_READ ()) {
+      if ($tmp == Net::SSLeay::ERROR_SYSCALL ()) {
          return $self->_error ($!, 1);
-      } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
+      } elsif ($tmp == Net::SSLeay::ERROR_SSL ())  {
          return $self->_error (&Errno::EIO, 1);
       }
 
-      # all others are fine for our purposes
+      # all other errors are fine for our purposes
    }
 
-   while (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
-      $self->{wbuf} .= $buf;
+   while (length ($tmp = Net::SSLeay::BIO_read ($self->{_wbio}))) {
+      $self->{wbuf} .= $tmp;
       $self->_drain_wbuf;
    }
 }
