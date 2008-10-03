@@ -1,16 +1,18 @@
 Revision history for Perl extension AnyEvent.
 
-4.3
+4.3  Fri Oct  3 09:18:43 CEST 2008
 	- AnyEvent will now install a no-op signal handler for SIGPIPE,
           unless one has been installed already.
+        - warn about not loaidng AnyEvent::Impl::POE early enough
+          (patch by Adam Rosenstein).
 	- fixed a great number of bugs and corner cases in AnyEvent::Handle:
         - fix a bug in where in SSL connect mode, the
           client would first wait for some data by the server and
-          otherwise hang. (Reported and analyzed in an absolutely
+          otherwise hang. (reported and analyzed in an absolutely
           exemplary manner by Adam Rosenstein).
         - fix a bug in where SSL EOF would not be treated
           as stream EOF, putting the connection into a hung state.
-          (Reported and analyzed in an absolutely exemplary manner by Adam
+          (reported and analyzed in an absolutely exemplary manner by Adam
           Rosenstein).
         - fix a potential segfault when the TLS context
           would go missing in a read callback (e.g. due to stoptls) -
