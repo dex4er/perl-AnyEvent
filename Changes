@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: destroy is a must when called inside read or write callbacks.
+TODO: delet {_rw} on tls eof solves https issues?
 	- implement AnyEvent::Handle->destroy method.
 	- hint about unexpected effects in tls mode.
 
