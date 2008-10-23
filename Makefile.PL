@@ -13,7 +13,7 @@ print <<EOF;
 *** difficulties installing this package due to dependencies, report this
 *** to the packager as a bug.
 ***
-*** This module is guarenteed to stay pure-perl and still be full-featured
+*** This module is guaranteed to stay pure-perl and still be full-featured
 *** and performant, even without any optionally recommended modules.
 ***
 

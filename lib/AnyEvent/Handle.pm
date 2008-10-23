@@ -328,7 +328,7 @@ sub _error {
 
    if ($self->{on_error}) {
       $self->{on_error}($self, $fatal);
-   } else {
+   } elsif ($self->{fh}) {
       Carp::croak "AnyEvent::Handle uncaught error: $!";
    }
 }

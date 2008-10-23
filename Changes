@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- implement AnyEvent::Handle->destroy method.
+	- hint about unexpected effects in tls mode.
+
 4.3  Fri Oct  3 09:18:43 CEST 2008
 	- AnyEvent will now install a no-op signal handler for SIGPIPE,
           unless one has been installed already.
