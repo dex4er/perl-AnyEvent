@@ -1472,6 +1472,24 @@ sub DESTROY {
    }
 }
 
+=item $handle->destroy
+
+Shut's down the handle object as much as possible - this call ensures that
+no further callbacks will be invoked and resources will be freed as much
+as possible. You must not call any methods on the object afterwards.
+
+The handle might still linger in the background and write out remaining
+data, as specified by the C<linger> option, however.
+
+=cut
+
+sub destroy {
+   my ($self) = @_;
+
+   $self->DESTROY;
+   %$self = ();
+}
+
 =item AnyEvent::Handle::TLS_CTX
 
 This function creates and returns the Net::SSLeay::CTX object used by
@@ -1551,6 +1569,23 @@ written to the socket:
       warn "all data submitted to the kernel\n";
       undef $handle;
    });
+
+=item I get different callback invocations in TLS mode/Why can't I pause
+reading?
+
+Unlike, say, TCP, TLS conenctions do not consist of two independent
+communication channels, one for each direction. Or put differently. the
+read and write directions are not independent of each other: you cannot
+write data unless you are also prepared to read, and vice versa.
+
+This can mean than, in TLS mode, you might get C<on_error> or C<on_eof>
+callback invocations when you are not expecting any read data - the reason
+is that AnyEvent::Handle always reads in TLS mode.
+
+During the connection, you have to make sure that you always have a
+non-empty read-queue, or an C<on_read> watcher. At the end of the
+connection (or when you no longer want to use it) you can call the
+C<destroy> method.
 
 =back
 
