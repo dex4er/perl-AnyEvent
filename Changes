@@ -1,9 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: destroy is a must when called inside read or write callbacks.
-TODO: delet {_rw} on tls eof solves https issues?
-	- implement AnyEvent::Handle->destroy method.
+	- implemented AnyEvent::Handle->destroy method.
 	- hint about unexpected effects in tls mode.
+        - speed up AnyEvent::Impl::Perl by using more arrays
+          instead of hashes without the slightest loss of readability :)
 
 4.3  Fri Oct  3 09:18:43 CEST 2008
 	- AnyEvent will now install a no-op signal handler for SIGPIPE,
