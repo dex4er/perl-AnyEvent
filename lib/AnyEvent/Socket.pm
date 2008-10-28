@@ -762,7 +762,7 @@ sub tcp_connect($$$;$) {
                   %state = ();
                };
 
-               $connect->($state{fh}, format_address $host, $port, sub {
+               $connect->(delete $state{fh}, format_address $host, $port, sub {
                   $guard->cancel;
                   $state{next}();
                });
