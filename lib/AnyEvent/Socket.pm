@@ -750,7 +750,7 @@ sub tcp_connect($$$;$) {
 
          # called when the connect was successful, which,
          # in theory, could be the case immediately (but never is in practise)
-         my $connected = sub {
+         $state{connected} = sub {
             delete $state{ww};
             delete $state{to};
 
@@ -758,9 +758,7 @@ sub tcp_connect($$$;$) {
             if (my $sin = getpeername $state{fh}) {
                my ($port, $host) = unpack_sockaddr $sin;
 
-               my $guard = guard {
-                  %state = ();
-               };
+               my $guard = guard { %state = () };
 
                $connect->(delete $state{fh}, format_address $host, $port, sub {
                   $guard->cancel;
@@ -775,13 +773,13 @@ sub tcp_connect($$$;$) {
 
          # now connect       
          if (connect $state{fh}, $sockaddr) {
-            $connected->();
+            $state{connected}->();
          } elsif ($! == &Errno::EINPROGRESS # POSIX
                   || $! == &Errno::EWOULDBLOCK
                   # WSAEINPROGRESS intentionally not checked - it means something else entirely
                   || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
                   || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
-            $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $connected);
+            $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $state{connected});
          } else {
             $state{next}();
          }

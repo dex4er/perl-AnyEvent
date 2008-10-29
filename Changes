@@ -5,6 +5,7 @@ Revision history for Perl extension AnyEvent.
         - speed up AnyEvent::Impl::Perl by using more arrays
           instead of hashes without the slightest loss of readability :)
         - work around a perl argument refcounting bug.
+        - with some perl patches applied, AnyEvent now seems leak-free.
 
 4.3  Fri Oct  3 09:18:43 CEST 2008
 	- AnyEvent will now install a no-op signal handler for SIGPIPE,

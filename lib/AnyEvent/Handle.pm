@@ -1373,7 +1373,7 @@ sub starttls {
 
    require Net::SSLeay;
 
-   Carp::croak "it is an error to call starttls more than once on an Anyevent::Handle object"
+   Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
       if $self->{tls};
    
    if ($ssl eq "accept") {
