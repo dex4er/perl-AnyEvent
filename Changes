@@ -1,7 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+4.31 Thu Oct 30 04:41:48 CET 2008
 	- implemented AnyEvent::Handle->destroy method.
-	- hint about unexpected effects in tls mode.
+	- hint about unexpected effects in TLS mode.
         - speed up AnyEvent::Impl::Perl by using more arrays
           instead of hashes without the slightest loss of readability :)
         - work around a perl argument refcounting bug.
