@@ -445,11 +445,12 @@ might try to use other protocols such as C<sctp>, depending on the socket
 type and any SRV records it might find.
 
 C<$family> must be either C<0> (meaning any protocol is OK), C<4> (use
-only IPv4) or C<6> (use only IPv6). This setting might be influenced by
+only IPv4) or C<6> (use only IPv6). The default is influenced by
 C<$ENV{PERL_ANYEVENT_PROTOCOLS}>.
 
 C<$type> must be C<SOCK_STREAM>, C<SOCK_DGRAM> or C<SOCK_SEQPACKET> (or
-C<undef> in which case it gets automatically chosen).
+C<undef> in which case it gets automatically chosen to be C<SOCK_STREAM>
+unless C<$proto> is C<udp>).
 
 The callback will receive zero or more array references that contain
 C<$family, $type, $proto> for use in C<socket> and a binary
@@ -476,9 +477,9 @@ sub resolve_sockaddr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
 
    if ($node eq "unix/") {
-      return $cb->() if $family || !/^\//; # no can do
+      return $cb->() if $family || $service !~ /^\//; # no can do
 
-      return $cb->([AF_UNIX, $type, 0, Socket::pack_sockaddr_un $service]);
+      return $cb->([AF_UNIX, defined $type ? $type : SOCK_STREAM, 0, Socket::pack_sockaddr_un $service]);
    }
 
    unless (AF_INET6) {
@@ -719,7 +720,7 @@ sub tcp_connect($$$;$) {
    my %state = ( fh => undef );
 
    # name/service to type/sockaddr resolution
-   resolve_sockaddr $host, $port, 0, 0, 0, sub {
+   resolve_sockaddr $host, $port, 0, 0, undef, sub {
       my @target = @_;
 
       $state{next} = sub {
@@ -852,6 +853,12 @@ to go away.
    }, sub {
       my ($fh, $thishost, $thisport) = @_;
       warn "bound to $thishost, port $thisport\n";
+   };
+
+Example: bind a server on a unix domain socket.
+
+   tcp_server "unix/", "/tmp/mydir/mysocket", sub {
+      my ($fh) = @_;
    };
 
 =cut

@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- fix AnyEvent::Socket::resolve_sockaddr to properly support
+          unix sockets again and choose a proper default for
+          the socket type.
+        - fix call to resolve_sockaddr in tcp_connect.
+
 4.31 Thu Oct 30 04:41:48 CET 2008
 	- implemented AnyEvent::Handle->destroy method.
 	- hint about unexpected effects in TLS mode.
