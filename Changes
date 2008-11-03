@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.32 Mon Nov  3 22:46:32 CET 2008
 	- fix AnyEvent::Socket::resolve_sockaddr to properly support
           unix sockets again and choose a proper default for
           the socket type.
