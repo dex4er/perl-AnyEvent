@@ -27,7 +27,8 @@ create two additional file descriptors (and handles).
 
 This creates a high overhead and is slow, but seems to work around all
 known bugs in L<Tk::fileevent> on 32 bit architectures (Tk seems to be
-terminally broken on 64 bit).
+terminally broken on 64 bit, do not expect more than 10 or so watchers to
+work on 64 bit machines).
 
 To be able to access the Tk event loop, this module creates a main
 window and withdraws it immediately. This might cause flickering on some
