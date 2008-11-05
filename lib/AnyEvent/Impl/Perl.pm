@@ -223,8 +223,10 @@ sub one_event {
 sub io {
    my ($class, %arg) = @_;
 
+   my $fd = fileno $arg{fh};
+
    my $self = bless [
-      $arg{fh},
+      $fd,
       $arg{poll} eq "w",
       $arg{cb},
       # q-idx
@@ -233,7 +235,6 @@ sub io {
    my $fds = $fds[$self->[1]];
 
    # add watcher to fds structure
-   my $fd = fileno $self->[0];
    my $q = $fds->[W][$fd] ||= [];
 
    (vec $fds->[V], $fd, 1) = 1;
@@ -251,7 +252,7 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
    my $fds = $fds[$self->[1]];
 
    # remove watcher from fds structure
-   my $fd = fileno $self->[0];
+   my $fd = $self->[0];
 
    if (@{ $fds->[W][$fd] } == 1) {
       delete $fds->[W][$fd];

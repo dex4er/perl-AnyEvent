@@ -1538,7 +1538,7 @@ watcher.
          EV/EV   400000   224   0.47   0.35    0.27 EV native interface
         EV/Any   100000   224   2.88   0.34    0.27 EV + AnyEvent watchers
     CoroEV/Any   100000   224   2.85   0.35    0.28 coroutines + Coro::Signal
-      Perl/Any   100000   452   4.14   0.75    0.99 pure perl implementation
+      Perl/Any   100000   452   4.13   0.73    0.95 pure perl implementation
    Event/Event    16000   517  32.20  31.80    0.81 Event native interface
      Event/Any    16000   590  35.85  31.55    1.06 Event + AnyEvent watchers
       Glib/Any    16000  1357 102.33  12.31   51.00 quadratic behaviour
