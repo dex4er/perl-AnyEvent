@@ -84,9 +84,9 @@ thousands of timers, though, or your timers have very small timeouts.
 package AnyEvent::Impl::Perl;
 
 no warnings;
-use strict;
+use strict qw(vars subs);
 
-use Scalar::Util ();
+use Scalar::Util qw(weaken);
 
 use AnyEvent ();
 use AnyEvent::Util ();
@@ -241,7 +241,7 @@ sub io {
 
    $self->[3] = @$q;
    push @$q, $self;
-   Scalar::Util::weaken $q->[-1];
+   weaken $q->[-1];
 
    $self
 }
@@ -262,7 +262,7 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
       my $last = pop @$q;
 
       if ($last != $self) {
-         Scalar::Util::weaken ($q->[$self->[3]] = $last);
+         weaken ($q->[$self->[3]] = $last);
          $last->[3] = $self->[3];
       }
    }
@@ -280,7 +280,7 @@ sub timer {
       $self = [$MNOW + $arg{after} , sub {
          $_[0][0] = $MNOW + $ival;
          push @timer, $_[0];
-         Scalar::Util::weaken $timer[-1];
+         weaken $timer[-1];
          $need_sort = $_[0][0] if $_[0][0] < $need_sort;
          &$cb;
       }];
@@ -289,7 +289,7 @@ sub timer {
    }
 
    push @timer, $self;
-   Scalar::Util::weaken $timer[-1];
+   weaken $timer[-1];
    $need_sort = $self->[0] if $self->[0] < $need_sort;
 
    $self
