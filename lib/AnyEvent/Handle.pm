@@ -376,9 +376,13 @@ sub on_timeout {
 =item $handle->autocork ($boolean)
 
 Enables or disables the current autocork behaviour (see C<autocork>
-constructor argument).
+constructor argument). Changes will only take effect on the next write.
 
 =cut
+
+sub autocork {
+   $_[0]{autocork} = $_[1];
+}
 
 =item $handle->no_delay ($boolean)
 
