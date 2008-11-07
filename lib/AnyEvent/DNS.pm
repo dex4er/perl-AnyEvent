@@ -1118,7 +1118,7 @@ sub request($$) {
    $self->_scheduler;
 }
 
-=item $resolver->resolve ($qname, $qtype, %options, $cb->($rcode, @rr))
+=item $resolver->resolve ($qname, $qtype, %options, $cb->(@rr))
 
 Queries the DNS for the given domain name C<$qname> of type C<$qtype>.
 

@@ -4,6 +4,8 @@ Revision history for Perl extension AnyEvent.
           by only storing the file descriptor, not the file handle.
         - add missing autocork method to AnyEvent::Handle (reported
           by Adam Rosenstein).
+        - Anyevent::DNS->resolve errornously documented an $rcode result
+          argument, but there isn't (spotted by Henrik Krohns).
 
 4.32 Mon Nov  3 22:46:32 CET 2008
 	- fix AnyEvent::Socket::resolve_sockaddr to properly support
