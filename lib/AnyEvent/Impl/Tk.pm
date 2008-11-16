@@ -17,15 +17,20 @@ creating the first AnyEvent watcher.
 
 Tk is buggy. Tk is extremely buggy. Tk is so unbelievably buggy that
 for each bug reported and fixed, you get one new bug followed by
-reintroduction of the old bug in a later revision. I regularly run out of
-words to describe how bad it really is.
+reintroduction of the old bug in a later revision. It is also basiclaly
+unmaintained: the maintainers are not even interested in improving
+the situation - reporting bugs is considered rude, and fixing bugs is
+considered changing holy code, so it's apparently better to leave it
+broken.
+
+I regularly run out of words to describe how bad it really is.
 
 To work around the many, many bugs in Tk that don't get fixed, this
 adaptor dup()'s all filehandles that get passed into its I/O watchers,
 so if you register a read and a write watcher for one fh, AnyEvent will
 create two additional file descriptors (and handles).
 
-This creates a high overhead and is slow, but seems to work around all
+This creates a high overhead and is slow, but seems to work around most
 known bugs in L<Tk::fileevent> on 32 bit architectures (Tk seems to be
 terminally broken on 64 bit, do not expect more than 10 or so watchers to
 work on 64 bit machines).
