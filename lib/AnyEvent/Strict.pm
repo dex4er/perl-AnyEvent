@@ -43,7 +43,7 @@ sub io {
       or croak "AnyEvent->io called with illegal cb argument '$arg{cb}'";
    delete $arg{cb};
  
-   fileno $arg{fh}
+   defined fileno $arg{fh}
       or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
    delete $arg{fh};
  

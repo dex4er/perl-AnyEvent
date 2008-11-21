@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+4.33 Fri Nov 21 02:35:40 CET 2008
+	- AnyEvent::Strict did errornously flag a fileno of 0 as
+          illegal.
 	- reduce memory usage and slightly speed up the pure perl backend
           by only storing the file descriptor, not the file handle.
         - add missing autocork method to AnyEvent::Handle (reported
