@@ -29,7 +29,7 @@ our $VERSION = 4.33;
       AnyEvent::Handle->new (
          fh => \*STDIN,
          on_eof => sub {
-            $cv->broadcast;
+            $cv->send;
          },
       );
 
