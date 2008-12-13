@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- take advantage of the Guard module if it exists.
+
 4.33 Fri Nov 21 02:35:40 CET 2008
 	- AnyEvent::Strict did errornously flag a fileno of 0 as
           illegal.

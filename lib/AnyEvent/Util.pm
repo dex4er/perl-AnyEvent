@@ -69,7 +69,7 @@ BEGIN {
    if (AnyEvent::WIN32) {
       eval "sub WSAEINVAL()      { 10022 }";
       eval "sub WSAEWOULDBLOCK() { 10035 }";
-      eval "sub WSAWOULDBLOCK() { 10035 }"; # TODO remove here ands from @export_ok
+      eval "sub WSAWOULDBLOCK() { 10035 }"; # TODO remove here and from @export_ok
       eval "sub WSAEINPROGRESS() { 10036 }";
    } else {
       # these should never match any errno value
@@ -319,6 +319,9 @@ code block.
 This is often handy in continuation-passing style code to clean up some
 resource regardless of where you break out of a process.
 
+The L<Guard> module will be used to implement this function, if it is
+available. Otherwise a pure-perl implementation is used.
+
 You can call one method on the returned object:
 
 =item $guard->cancel
@@ -328,23 +331,29 @@ guard.
 
 =cut
 
-sub AnyEvent::Util::Guard::DESTROY {
-   local $@;
+BEGIN {
+   if (eval "use Guard 0.5; 1") {
+      *guard = \&Guard::guard;
+   } else {
+      *AnyEvent::Util::Guard::DESTROY = sub {
+         local $@;
 
-   eval {
-      local $SIG{__DIE__};
-      ${$_[0]}->();
-   };
+         eval {
+            local $SIG{__DIE__};
+            ${$_[0]}->();
+         };
 
-   warn "runtime error in AnyEvent::guard callback: $@" if $@;
-}
+         warn "runtime error in AnyEvent::guard callback: $@" if $@;
+      };
 
-sub AnyEvent::Util::Guard::cancel($) {
-   ${$_[0]} = sub { };
-}
+      *AnyEvent::Util::Guard::cancel = sub ($) {
+         ${$_[0]} = sub { };
+      };
 
-sub guard(&) {
-   bless \(my $cb = shift), AnyEvent::Util::Guard::
+      *guard = sub (&) {
+         bless \(my $cb = shift), AnyEvent::Util::Guard::
+      }
+   }
 }
 
 1;

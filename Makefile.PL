@@ -34,6 +34,7 @@ recommends:
   JSON: 2.09
   JSON::XS 2.2
   EV: 4.05
+  Guard: 0.5
     },
 );
 
