@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- socketpair fails on many vista machines because vista has
+          completely broken accept/getpeername and getsockname functions,
+          so we provide our own socketpair emulation that kind of works
+          (AnyEvent::Util::portable_pipe).
+        - new function: AnyEvent::Util::portable_socketpair.
 	- take advantage of the Guard module if it exists.
 
 4.33 Fri Nov 21 02:35:40 CET 2008

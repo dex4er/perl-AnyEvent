@@ -84,13 +84,11 @@ BEGIN {
 
 Calling C<pipe> in Perl is portable - except it doesn't really work on
 sucky windows platforms (at least not with most perls - cygwin's perl
-notably works fine).
-
-On that platform, you actually get two file handles you cannot use select
-on.
+notably works fine): On windows, you actually get two file handles you
+cannot use select on.
 
 This function gives you a pipe that actually works even on the broken
-Windows platform (by creating a pair of TCP sockets, so do not expect any
+windows platform (by creating a pair of TCP sockets, so do not expect any
 speed from that).
 
 See portable_socketpair, below, for a bidirectional "pipe".
