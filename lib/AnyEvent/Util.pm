@@ -31,7 +31,7 @@ use AnyEvent ();
 
 use base 'Exporter';
 
-our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe);
+our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpair);
 our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL WSAWOULDBLOCK);
 
 our $VERSION = 4.33;
@@ -93,22 +93,89 @@ This function gives you a pipe that actually works even on the broken
 Windows platform (by creating a pair of TCP sockets, so do not expect any
 speed from that).
 
+See portable_socketpair, below, for a bidirectional "pipe".
+
+Returns the empty list on any errors.
+
+=item ($fh1, $fh2) = portable_socketpair
+
+Just like C<portable_pipe>, above, but returns a bidirectional pipe
+(usually by calling socketpair to create a local loopback socket).
+
 Returns the empty list on any errors.
 
 =cut
 
-sub portable_pipe() {
-   my ($r, $w);
+sub _win32_socketpair {
+   # perl's socketpair emulation fails on many vista machines, because
+   # vista returns fantasy port numbers.
 
-   if (AnyEvent::WIN32) {
-      socketpair $r, $w, &Socket::AF_UNIX, &Socket::SOCK_STREAM, 0
-         or return;
-   } else {
-      pipe $r, $w
-         or return;
+   for (1..10) {
+      socket my $l, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+         or next;
+
+      bind $l, Socket::pack_sockaddr_in 0, "\x7f\x00\x00\x01"
+         or next;
+
+      my $sa = getsockname $l
+         or next;
+
+      listen $l, 1
+         or next;
+
+      socket my $r, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+         or next;
+
+      bind $r, Socket::pack_sockaddr_in 0, "\x7f\x00\x00\x01"
+         or next;
+
+      connect $r, $sa
+         or next;
+
+      accept my $w, $l
+         or next;
+
+      # vista has completely broken peername/sockname that return
+      # fantasy ports. this combo seems to work, though.
+      #
+      (Socket::unpack_sockaddr_in getpeername $r)[0]
+      == (Socket::unpack_sockaddr_in getsockname $w)[0]
+         or (($! = WSAEINVAL), next);
+
+      # vista example (you can't make this shit up...):
+      #(Socket::unpack_sockaddr_in getsockname $r)[0] == 53364
+      #(Socket::unpack_sockaddr_in getpeername $r)[0] == 53363
+      #(Socket::unpack_sockaddr_in getsockname $w)[0] == 53363
+      #(Socket::unpack_sockaddr_in getpeername $w)[0] == 53365
+
+      return ($r, $w);
    }
 
-   ($r, $w)
+   ()
+}
+
+sub portable_pipe() {
+   if (AnyEvent::WIN32) {
+      return _win32_socketpair;
+   } else {
+      my ($r, $w);
+
+      pipe $r, $w
+         or return;
+
+      return ($r, $w);
+   }
+}
+
+sub portable_socketpair() {
+   if (AnyEvent::WIN32) {
+      return _win32_socketpair;
+   } else {
+      socketpair my $fh1, my $fh2, &Socket::AF_UNIX, &Socket::SOCK_STREAM, &Socket::PF_UNSPEC
+         or return;
+
+      return ($fh1, $fh2)
+   }
 }
 
 =item fork_call { CODE } @args, $cb->(@res)
