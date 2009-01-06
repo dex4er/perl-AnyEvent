@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.331 Tue Jan  6 21:07:25 CET 2009
 	- socketpair fails on many vista machines because vista has
           completely broken accept/getpeername and getsockname functions,
           so we provide our own socketpair emulation that kind of works
