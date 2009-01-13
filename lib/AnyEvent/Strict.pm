@@ -13,7 +13,7 @@ This module implements AnyEvent's strict mode.
 
 Loading it makes AnyEvent check all arguments to AnyEvent-methods, at the
 expense of being slower (often the argument checking takes longer than the
-actual fucntion).
+actual function).
 
 Normally, you don't load this module yourself but instead use it
 indirectly via the C<PERL_ANYEVENT_STRICT> environment variable (see
