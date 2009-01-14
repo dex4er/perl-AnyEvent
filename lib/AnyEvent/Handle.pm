@@ -257,6 +257,11 @@ to make sure that you call either C<Net::SSLeay::set_connect_state>
 or C<Net::SSLeay::set_accept_state> on it before you pass it to
 AnyEvent::Handle.
 
+B<IMPORTANT:> since Net::SSLeay "objects" are really only integers,
+passing in the wrong integer will lead to certain crash. This most often
+happens when one uses a stylish C<< tls => 1 >> and is surprised about the
+segmentation fault.
+
 See the C<< ->starttls >> method for when need to start TLS negotiation later.
 
 =item tls_ctx => $ssl_ctx
