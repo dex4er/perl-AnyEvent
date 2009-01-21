@@ -1146,7 +1146,8 @@ register_read_type packstring => sub {
 
 =item json => $cb->($handle, $hash_or_arrayref)
 
-Reads a JSON object or array, decodes it and passes it to the callback.
+Reads a JSON object or array, decodes it and passes it to the
+callback. When a parse error occurs, an C<EBADMSG> error will be raised.
 
 If a C<json> object was passed to the constructor, then that will be used
 for the final decode, otherwise it will create a JSON coder expecting UTF-8.
@@ -1173,18 +1174,30 @@ register_read_type json => sub {
    my $json = $self->{json} ||= JSON->new->utf8;
 
    sub {
-      my $ref = $json->incr_parse ($self->{rbuf});
+      eval {
+         my $ref = $json->incr_parse ($self->{rbuf});
 
-      if ($ref) {
-         $self->{rbuf} = $json->incr_text;
-         $json->incr_text = "";
-         $cb->($self, $ref);
+         if ($ref) {
+            $self->{rbuf} = $json->incr_text;
+            $json->incr_text = "";
+            $cb->($self, $ref);
+
+            1
+         } else {
+            $self->{rbuf} = "";
+            ()
+         }
 
          1
-      } else {
-         $self->{rbuf} = "";
-         ()
-      }
+      } or do {
+         $json->incr_skip;
+
+         $self->{rbuf} = $json->incr_text;
+         $json->incr_text = "";
+
+         $self->_error (&Errno::EBADMSG);
+      };
+
    }
 };
 
