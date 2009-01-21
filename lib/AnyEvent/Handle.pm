@@ -1174,22 +1174,15 @@ register_read_type json => sub {
    my $json = $self->{json} ||= JSON->new->utf8;
 
    sub {
-      eval {
-         my $ref = $json->incr_parse ($self->{rbuf});
+      my $ref = eval { $json->incr_parse ($self->{rbuf}) };
 
-         if ($ref) {
-            $self->{rbuf} = $json->incr_text;
-            $json->incr_text = "";
-            $cb->($self, $ref);
-
-            1
-         } else {
-            $self->{rbuf} = "";
-            ()
-         }
+      if ($ref) {
+         $self->{rbuf} = $json->incr_text;
+         $json->incr_text = "";
+         $cb->($self, $ref);
 
          1
-      } or do {
+      } elsif ($@) {
          # error case
          $json->incr_skip;
 
@@ -1197,7 +1190,12 @@ register_read_type json => sub {
          $json->incr_text = "";
 
          $self->_error (&Errno::EBADMSG);
-      };
+         ()
+
+      } else {
+         $self->{rbuf} = "";
+         ()
+      }
    }
 };
 
