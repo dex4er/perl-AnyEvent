@@ -1190,6 +1190,7 @@ register_read_type json => sub {
 
          1
       } or do {
+         # error case
          $json->incr_skip;
 
          $self->{rbuf} = $json->incr_text;
