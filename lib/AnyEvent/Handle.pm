@@ -1198,7 +1198,6 @@ register_read_type json => sub {
 
          $self->_error (&Errno::EBADMSG);
       };
-
    }
 };
 
