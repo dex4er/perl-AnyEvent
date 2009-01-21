@@ -1190,10 +1190,11 @@ register_read_type json => sub {
          $json->incr_text = "";
 
          $self->_error (&Errno::EBADMSG);
-         ()
 
+         ()
       } else {
          $self->{rbuf} = "";
+
          ()
       }
    }
