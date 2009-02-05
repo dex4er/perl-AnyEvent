@@ -27,7 +27,7 @@ use strict;
 
 use AnyEvent ();
 
-use Event qw(time); # we have to important something to make Event use Time::HiRes
+use Event qw(time); # we have to importt something to make Event use Time::HiRes
 
 sub io {
    my ($class, %arg) = @_;
