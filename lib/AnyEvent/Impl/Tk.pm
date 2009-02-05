@@ -17,7 +17,7 @@ creating the first AnyEvent watcher.
 
 Tk is buggy. Tk is extremely buggy. Tk is so unbelievably buggy that
 for each bug reported and fixed, you get one new bug followed by
-reintroduction of the old bug in a later revision. It is also basiclaly
+reintroduction of the old bug in a later revision. It is also basically
 unmaintained: the maintainers are not even interested in improving
 the situation - reporting bugs is considered rude, and fixing bugs is
 considered changing holy code, so it's apparently better to leave it
