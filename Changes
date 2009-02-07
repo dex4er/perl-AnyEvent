@@ -1,6 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
 	- raise EBADMSG error on JSON decoding errors.
+        - fix some minor manpage bugs (reported by Maximilian Gaß).
+        - speed up select bitmask parsing quite a bit in the pure perl
+          backend.
 
 4.331 Tue Jan  6 21:07:25 CET 2009
 	- socketpair fails on many vista machines because vista has

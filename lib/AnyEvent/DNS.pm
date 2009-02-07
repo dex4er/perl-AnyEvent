@@ -1133,14 +1133,12 @@ none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 10.
 
-The callback will be invoked with an result code in string form (noerror,
-formerr, servfail, nxdomain, notimp, refused and so on), or numerical
-form if the result code is not supported. The remaining arguments are
-arraryefs of the form C<[$name, $type, $class, @data>], where C<$name> is
-the domain name, C<$type> a type string or number, C<$class> a class name
-and @data is resource-record-dependent data. For C<a> records, this will
-be the textual IPv4 addresses, for C<ns> or C<cname> records this will be
-a domain name, for C<txt> records these are all the strings and so on.
+The callback will be invoked with arraryefs of the form C<[$name, $type,
+$class, @data>], where C<$name> is the domain name, C<$type> a type string
+or number, C<$class> a class name and @data is resource-record-dependent
+data. For C<a> records, this will be the textual IPv4 addresses, for C<ns>
+or C<cname> records this will be a domain name, for C<txt> records these
+are all the strings and so on.
 
 All types mentioned in RFC 1035, C<aaaa>, C<srv>, C<naptr> and C<spf> are
 decoded. All resource records not known to this module will have

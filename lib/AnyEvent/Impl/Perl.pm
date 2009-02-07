@@ -206,7 +206,7 @@ sub one_event {
             # a string of bits
             for (unpack "b*", $vec[$_]) {
                # and then repeatedly match a regex skipping the 0's
-               while (/\G0*1/g) {
+               while (/1/g) {
                   # and using the resulting string position as fd
                   $_ && $_->[2]()
                      for @{ $fds->[W][-1 + pos] || [] };

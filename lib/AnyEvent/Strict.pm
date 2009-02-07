@@ -5,7 +5,7 @@ AnyEvent::Strict - force strict mode on for the whole process
 =head1 SYNOPSIS
 
    use AnyEvent::Strict;
-   # struct mode now switched on
+   # strict mode now switched on
 
 =head1 DESCRIPTION
 
