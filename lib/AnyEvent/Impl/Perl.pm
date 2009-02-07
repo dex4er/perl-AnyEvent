@@ -205,11 +205,11 @@ sub one_event {
             # we parse the bitmask by first expanding it into
             # a string of bits
             for (unpack "b*", $vec[$_]) {
-               # and then repeatedly match a regex skipping the 0's
+               # and then repeatedly matching a regex against it
                while (/1/g) {
-                  # and using the resulting string position as fd
+                  # and use the resulting string position as fd
                   $_ && $_->[2]()
-                     for @{ $fds->[W][-1 + pos] || [] };
+                     for @{ $fds->[W][(pos) - 1] || [] };
                }
             }
          }
