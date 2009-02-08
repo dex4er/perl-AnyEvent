@@ -186,7 +186,7 @@ sub one_event {
 
       $wait = $wait < MAXWAIT ? $wait + ROUNDUP : MAXWAIT;
 
-      if ($fds = select
+      if ($fds = CORE::select
             $vec[0] = $fds[0][V],
             $vec[1] = $fds[1][V],
             AnyEvent::WIN32 ? $vec[2] = $fds[1][V] : undef,
