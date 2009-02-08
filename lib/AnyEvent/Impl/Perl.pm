@@ -215,7 +215,7 @@ sub one_event {
          }
       } elsif (AnyEvent::WIN32 && $! == AnyEvent::Util::WSAEINVAL) {
          # buggy microshit windoze asks us to route around it
-         select undef, undef, undef, $wait;
+         CORE::select undef, undef, undef, $wait;
       }
    }
 }
