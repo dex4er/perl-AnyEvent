@@ -129,7 +129,9 @@ callback will only be called when at least one octet of data is in the
 read buffer).
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
-method or access the C<$handle->{rbuf}> member directly.
+method or access the C<$handle->{rbuf}> member directly. Note that you
+must not enlarge or modify the read buffer, you can only remove data at
+the beginning from it.
 
 When an EOF condition is detected then AnyEvent::Handle will first try to
 feed all the remaining data to the queued callbacks and C<on_read> before
@@ -769,6 +771,8 @@ sub _drain_rbuf {
    }
 
    while () {
+      # we need to use a separate tls read buffer, as we must not receive data while
+      # we are draining the buffer, and this can only happen with TLS.
       $self->{rbuf} .= delete $self->{_tls_rbuf} if exists $self->{_tls_rbuf};
 
       my $len = length $self->{rbuf};
@@ -841,8 +845,11 @@ sub on_read {
 
 Returns the read buffer (as a modifiable lvalue).
 
-You can access the read buffer directly as the C<< ->{rbuf} >> member, if
-you want.
+You can access the read buffer directly as the C<< ->{rbuf} >>
+member, if you want. However, the only operation allowed on the
+read buffer (apart from looking at it) is removing data from its
+beginning. Otherwise modifying or appending to it is not allowed and will
+lead to hard-to-track-down bugs.
 
 NOTE: The read buffer should only be used or modified if the C<on_read>,
 C<push_read> or C<unshift_read> methods are used. The other read methods
