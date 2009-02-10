@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: ssl-bug (write can caquse read data to become available, in_drain causes skip, no progress detected).
+	- separately buffer TLS read data, as otherwise the read queue could
+          deadlock as receiving data is not expected while draining the
+          read queue (which cna only happen with TLS).
 	- raise EBADMSG error on JSON decoding errors.
         - fix some minor manpage bugs (reported by Maximilian Gaß).
         - speed up select bitmask parsing quite a bit in the pure perl

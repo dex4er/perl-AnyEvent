@@ -769,7 +769,7 @@ sub _drain_rbuf {
    }
 
    while () {
-      $self->{rbuf} .= delete $self->{tls_rbuf} if exists $self->{tls_rbuf};#d#
+      $self->{rbuf} .= delete $self->{_tls_rbuf} if exists $self->{_tls_rbuf};
 
       my $len = length $self->{rbuf};
 
@@ -1347,7 +1347,7 @@ sub _dotls {
          &_freetls;
       }
 
-      $self->{tls_rbuf} .= $tmp;#d#
+      $self->{_tls_rbuf} .= $tmp;
       $self->_drain_rbuf unless $self->{_in_drain};
       $self->{tls} or return; # tls session might have gone away in callback
    }
@@ -1357,7 +1357,7 @@ sub _dotls {
    if ($tmp != Net::SSLeay::ERROR_WANT_READ ()) {
       if ($tmp == Net::SSLeay::ERROR_SYSCALL ()) {
          return $self->_error ($!, 1);
-      } elsif ($tmp == Net::SSLeay::ERROR_SSL ())  {
+      } elsif ($tmp == Net::SSLeay::ERROR_SSL ()) {
          return $self->_error (&Errno::EIO, 1);
       }
 
