@@ -769,6 +769,8 @@ sub _drain_rbuf {
    }
 
    while () {
+      $self->{rbuf} .= delete $self->{tls_rbuf} if exists $self->{tls_rbuf};#d#
+
       my $len = length $self->{rbuf};
 
       if (my $cb = shift @{ $self->{_queue} }) {
@@ -1345,7 +1347,7 @@ sub _dotls {
          &_freetls;
       }
 
-      $self->{rbuf} .= $tmp;
+      $self->{tls_rbuf} .= $tmp;#d#
       $self->_drain_rbuf unless $self->{_in_drain};
       $self->{tls} or return; # tls session might have gone away in callback
    }
