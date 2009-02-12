@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.34  Thu Feb 12 18:32:45 CET 2009
 	- separately buffer TLS read data, as otherwise the read queue could
           deadlock as receiving data is not expected while draining the
           read queue (which cna only happen with TLS).
