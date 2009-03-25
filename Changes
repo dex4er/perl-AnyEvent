@@ -1,5 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
+4.341
+        - event models relying on AnyEvent's signal watcher emulation did
+          invoke the callback asynchronously, contradicting documentation
+          and causing signals to get lost (this includes AnyEvent's own
+          event loop). AnyEvent now uses the standard pipe trick to make
+          callback execution synchronous to the event loop.
+        - work around the ever-incompatibly-changing API of MakeMaker.
+
 4.34  Thu Feb 12 18:32:45 CET 2009
 	- separately buffer TLS read data, as otherwise the read queue could
           deadlock as receiving data is not expected while draining the

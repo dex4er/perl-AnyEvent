@@ -872,8 +872,8 @@ ENVIRONMENT VARIABLES
 
         This variable can effectively be used for denial-of-service attacks
         against local programs (e.g. when setuid), although the impact is
-        likely small, as the program has to handle connection errors
-        already-
+        likely small, as the program has to handle conenction and other
+        failures anyways.
 
         Examples: "PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6" - prefer IPv4 over
         IPv6, but support both and try to use both.

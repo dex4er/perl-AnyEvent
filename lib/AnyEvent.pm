@@ -863,7 +863,7 @@ use strict qw(vars subs);
 
 use Carp;
 
-our $VERSION = 4.34;
+our $VERSION = 4.341;
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1006,8 +1006,6 @@ sub AUTOLOAD {
 sub _dupfh($$$$) {
    my ($poll, $fh, $r, $w) = @_;
 
-   require Fcntl;
-
    # cygwin requires the fh mode to be matching, unix doesn't
    my ($rw, $mode) = $poll eq "r" ? ($r, "<")
                    : $poll eq "w" ? ($w, ">")
@@ -1045,17 +1043,46 @@ sub condvar {
 
 # default implementation for ->signal
 
-our %SIG_CB;
+our ($SIGPIPE_R, $SIGPIPE_W, %SIG_CB, %SIG_EV, $SIG_IO);
+
+sub _signal_exec {
+   while (%SIG_EV) {
+      sysread $SIGPIPE_R, my $dummy, 4;
+      for (keys %SIG_EV) {
+         delete $SIG_EV{$_};
+         $_->() for values %{ $SIG_CB{$_} || {} };
+      }
+   }
+}
 
 sub signal {
    my (undef, %arg) = @_;
+
+   unless ($SIGPIPE_R) {
+      if (AnyEvent::WIN32) {
+         ($SIGPIPE_R, $SIGPIPE_W) = AnyEvent::Util::portable_pipe ();
+         AnyEvent::Util::fh_nonblocking ($SIGPIPE_R) if $SIGPIPE_R;
+         AnyEvent::Util::fh_nonblocking ($SIGPIPE_W) if $SIGPIPE_W; # just in case
+      } else {
+         pipe $SIGPIPE_R, $SIGPIPE_W;
+         require Fcntl;
+         fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
+         fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
+      }
+
+      $SIGPIPE_R
+         or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
+
+      $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
+   }
 
    my $signal = uc $arg{signal}
       or Carp::croak "required option 'signal' is missing";
 
    $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
    $SIG{$signal} ||= sub {
-      $_->() for values %{ $SIG_CB{$signal} || {} };
+      syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
+      undef $SIG_EV{$signal};
    };
 
    bless [$signal, $arg{cb}], "AnyEvent::Base::Signal"

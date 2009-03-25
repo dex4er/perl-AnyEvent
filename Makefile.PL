@@ -28,13 +28,14 @@ WriteMakefile(
     test         => { TESTS => "t/*.t t/handle/*.t" },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
-    EXTRA_META => q{
-recommends:
-  Net::SSLeay: 1.32
-  JSON: 2.09
-  JSON::XS 2.2
-  EV: 4.05
-  Guard: 0.5
+    META_MERGE => {
+        recommends => {
+           "Net::SSLeay" => 1.32,
+           "JSON"        => 2.09,
+           "JSON::XS"    => 2.2,
+           "EV"          => 4.05,
+           "Guard"       => 0.5,
+        }
     },
 );
 
