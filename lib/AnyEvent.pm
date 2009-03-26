@@ -1862,7 +1862,7 @@ $ENV{PERL_ANYEGENT_STRICT}.
 Perl 5.8 has numerous memleaks that sometimes hit this module and are hard
 to work around. If you suffer from memleaks, first upgrade to Perl 5.10
 and check wether the leaks still show up. (Perl 5.10.0 has other annoying
-mamleaks, such as leaking on C<map> and C<grep> but it is usually not as
+memleaks, such as leaking on C<map> and C<grep> but it is usually not as
 pronounced).
 
 
