@@ -7,6 +7,8 @@ Revision history for Perl extension AnyEvent.
           event loop). AnyEvent now uses the standard pipe trick to make
           callback execution synchronous to the event loop.
         - work around the ever-incompatibly-changing API of MakeMaker.
+        - document that changing global variables without restoring them
+          is a bad idea in Perl (noted by Adam Rosenstein).
 
 4.34  Thu Feb 12 18:32:45 CET 2009
 	- separately buffer TLS read data, as otherwise the read queue could

@@ -139,6 +139,12 @@ creating a watcher it will immediately "watch" for events and invoke the
 callback when the event occurs (of course, only when the event model
 is in control).
 
+Note that B<callbacks must not permanently change global variables>
+potentially in use by the event loop (such as C<$_> or C<$[>) and that B<<
+callbacks must not C<die> >>. The former is good programming practise in
+Perl and the latter stems from the fact that exception handling differs
+widely between event loops.
+
 To disable the watcher you have to destroy it (e.g. by setting the
 variable you store it in to C<undef> or otherwise deleting all references
 to it).
