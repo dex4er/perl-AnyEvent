@@ -1052,8 +1052,9 @@ sub condvar {
 our ($SIGPIPE_R, $SIGPIPE_W, %SIG_CB, %SIG_EV, $SIG_IO);
 
 sub _signal_exec {
+   sysread $SIGPIPE_R, my $dummy, 4;
+
    while (%SIG_EV) {
-      sysread $SIGPIPE_R, my $dummy, 4;
       for (keys %SIG_EV) {
          delete $SIG_EV{$_};
          $_->() for values %{ $SIG_CB{$_} || {} };

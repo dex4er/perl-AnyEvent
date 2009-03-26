@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: leakthing pasth
+TODO: strict checks for file, and valid fd
 4.341
         - event models relying on AnyEvent's signal watcher emulation did
           invoke the callback asynchronously, contradicting documentation
