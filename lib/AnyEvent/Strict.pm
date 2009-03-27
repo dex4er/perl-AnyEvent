@@ -45,6 +45,8 @@ sub io {
  
    defined fileno $arg{fh}
       or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
+   -f $arg{fh}
+      and croak "AnyEvent->io called with fh argument pointing to a file";
    delete $arg{fh};
  
    $arg{poll} =~ /^[rw]$/

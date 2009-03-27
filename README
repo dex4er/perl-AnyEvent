@@ -134,6 +134,12 @@ WATCHERS
     callback when the event occurs (of course, only when the event model is
     in control).
 
+    Note that callbacks must not permanently change global variables
+    potentially in use by the event loop (such as $_ or $[) and that
+    callbacks must not "die". The former is good programming practise in
+    Perl and the latter stems from the fact that exception handling differs
+    widely between event loops.
+
     To disable the watcher you have to destroy it (e.g. by setting the
     variable you store it in to "undef" or otherwise deleting all references
     to it).
@@ -158,11 +164,17 @@ WATCHERS
     You can create an I/O watcher by calling the "AnyEvent->io" method with
     the following mandatory key-value pairs as arguments:
 
-    "fh" the Perl *file handle* (*not* file descriptor) to watch for events
-    (AnyEvent might or might not keep a reference to this file handle).
+    "fh" is the Perl *file handle* (*not* file descriptor) to watch for
+    events (AnyEvent might or might not keep a reference to this file
+    handle). Note that only file handles pointing to things for which
+    non-blocking operation makes sense are allowed. This includes sockets,
+    most character devices, pipes, fifos and so on, but not for example
+    files or block devices.
+
     "poll" must be a string that is either "r" or "w", which creates a
-    watcher waiting for "r"eadable or "w"ritable events, respectively. "cb"
-    is the callback to invoke each time the file handle becomes ready.
+    watcher waiting for "r"eadable or "w"ritable events, respectively.
+
+    "cb" is the callback to invoke each time the file handle becomes ready.
 
     Although the callback might get passed parameters, their value and
     presence is undefined and you cannot rely on them. Portable AnyEvent
@@ -1389,7 +1401,7 @@ BUGS
     Perl 5.8 has numerous memleaks that sometimes hit this module and are
     hard to work around. If you suffer from memleaks, first upgrade to Perl
     5.10 and check wether the leaks still show up. (Perl 5.10.0 has other
-    annoying mamleaks, such as leaking on "map" and "grep" but it is usually
+    annoying memleaks, such as leaking on "map" and "grep" but it is usually
     not as pronounced).
 
 SEE ALSO
