@@ -1,6 +1,5 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: leakthing pasth
 TODO: strict checks for file, and valid fd
 4.341
         - event models relying on AnyEvent's signal watcher emulation did
@@ -8,6 +7,8 @@ TODO: strict checks for file, and valid fd
           and causing signals to get lost (this includes AnyEvent's own
           event loop). AnyEvent now uses the standard pipe trick to make
           callback execution synchronous to the event loop.
+        - AnyEvent::Handle didn't free tls context data on DESTROY
+          (patch by Pavel Shaydo).
         - work around the ever-incompatibly-changing API of MakeMaker.
         - document that changing global variables without restoring them
           is a bad idea in Perl (noted by Adam Rosenstein).

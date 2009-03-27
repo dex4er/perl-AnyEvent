@@ -1475,7 +1475,7 @@ sub _freetls {
 }
 
 sub DESTROY {
-   my $self = shift;
+   my ($self) = @_;
 
    &_freetls;
 
