@@ -1072,19 +1072,25 @@ sub signal {
    my (undef, %arg) = @_;
 
    unless ($SIGPIPE_R) {
+      require Fcntl;
+
       if (AnyEvent::WIN32) {
+         require AnyEvent::Util;
+
          ($SIGPIPE_R, $SIGPIPE_W) = AnyEvent::Util::portable_pipe ();
          AnyEvent::Util::fh_nonblocking ($SIGPIPE_R) if $SIGPIPE_R;
          AnyEvent::Util::fh_nonblocking ($SIGPIPE_W) if $SIGPIPE_W; # just in case
       } else {
          pipe $SIGPIPE_R, $SIGPIPE_W;
-         require Fcntl;
          fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
          fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
       }
 
       $SIGPIPE_R
          or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
+
+      fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+      fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
 
       $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
    }

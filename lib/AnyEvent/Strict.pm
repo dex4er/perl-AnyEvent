@@ -23,6 +23,8 @@ L<AnyEvent>). However, this module can be loaded at any time.
 
 package AnyEvent::Strict;
 
+no warnings; # *sigh*
+
 use Carp qw(croak);
 
 use AnyEvent ();
