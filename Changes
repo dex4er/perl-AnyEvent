@@ -1,7 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
-	- set the cloexec flag on the signal pipe.
         - actually make the signal pipe work under win32.
+	- set the cloexec flag on the signal pipe (normally set by perl too).
 
 4.35  Fri Mar 27 11:48:20 CET 2009
         - event models relying on AnyEvent's signal watcher emulation did

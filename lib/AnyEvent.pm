@@ -1089,6 +1089,7 @@ sub signal {
       $SIGPIPE_R
          or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
 
+      # not strictly required, as $^F is normally 2, but let's make sure...
       fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
       fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
 
