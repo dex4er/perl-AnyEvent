@@ -1101,6 +1101,7 @@ sub signal {
 
    $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
    $SIG{$signal} ||= sub {
+      local $!;
       syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
       undef $SIG_EV{$signal};
    };
