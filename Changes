@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.351 Sat Apr 11 07:56:14 CEST 2009
         - actually make the signal pipe work under win32.
         - localise $! in signal handler to avoid changing $!, although
           perl itself does not seem to save/restore errno either.
