@@ -106,14 +106,14 @@ sub child {
    my %arg = @_;
 
    ref $arg{cb}
-      or croak "AnyEvent->signal called with illegal cb argument '$arg{cb}'";
+      or croak "AnyEvent->child called with illegal cb argument '$arg{cb}'";
    delete $arg{cb};
  
    $arg{pid} =~ /^-?\d+$/
-      or croak "AnyEvent->signal called with illegal pid value '$arg{pid}'";
+      or croak "AnyEvent->child called with malformed pid value '$arg{pid}'";
    delete $arg{pid};
  
-   croak "AnyEvent->signal called with unsupported parameter(s) " . join ", ", keys %arg
+   croak "AnyEvent->child called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
    $class->SUPER::child (@_)
