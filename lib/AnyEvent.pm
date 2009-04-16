@@ -984,7 +984,7 @@ sub detect() {
             }
 
             $MODEL
-              or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.";
+              or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.\n";
          }
       }
 
@@ -1024,7 +1024,7 @@ sub _dupfh($$$$) {
                    : Carp::croak "AnyEvent->io requires poll set to either 'r' or 'w'";
 
    open my $fh2, "$mode&" . fileno $fh
-      or die "cannot dup() filehandle: $!";
+      or die "cannot dup() filehandle: $!,";
 
    # we assume CLOEXEC is already set by perl in all important cases
 
