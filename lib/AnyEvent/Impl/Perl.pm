@@ -145,7 +145,8 @@ BEGIN {
 
 _update_clock;
 
-sub now { $NOW }
+sub now        { $NOW          }
+sub now_update { _update_clock }
 
 # fds[0] is for read, fds[1] is for write watchers
 # fds[poll][V] is the bitmask for select

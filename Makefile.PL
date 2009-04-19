@@ -33,8 +33,8 @@ WriteMakefile(
            "Net::SSLeay" => 1.32,
            "JSON"        => 2.09,
            "JSON::XS"    => 2.2,
-           "EV"          => 4.05,
-           "Guard"       => 0.5,
+           "EV"          => 3.05,
+           "Guard"       => 1.02,
         }
     },
 );

@@ -22,10 +22,11 @@ package AnyEvent::Impl::EV;
 no warnings;
 use strict;
 
-use EV;
+use EV 3.44;
 
-sub time { EV::time }
-sub now  { EV::now  }
+sub time       { EV::time       }
+sub now        { EV::now        }
+sub now_update { EV::now_update }
 
 sub timer {
    my ($class, %arg) = @_;

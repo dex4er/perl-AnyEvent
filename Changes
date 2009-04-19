@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 	- fix AnyEvent::Strict error messages for child watchers.
+        - fix/update Makefile.PL "recommends" versions.
+        - add AnyEvent->now_update.
 
 4.351 Sat Apr 11 07:56:14 CEST 2009
         - actually make the signal pipe work under win32.
