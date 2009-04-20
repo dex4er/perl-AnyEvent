@@ -316,6 +316,20 @@ WATCHERS
         the difference between "AnyEvent->time" and "AnyEvent->now" into
         account.
 
+    AnyEvent->now_update
+        Some event loops (such as EV or AnyEvent::Impl::Perl) cache the
+        current time for each loop iteration (see the discussion of
+        AnyEvent->now, above).
+
+        When a callback runs for a long time (or when the process sleeps),
+        then this "current" time will differ substantially from the real
+        time, which might affect timers and time-outs.
+
+        When this is the case, you can call this method, which will update
+        the event loop's idea of "current time".
+
+        Note that updating the time *might* cause some events to be handled.
+
   SIGNAL WATCHERS
     You can watch for signals using a signal watcher, "signal" is the signal
     *name* in uppercase and without any "SIG" prefix, "cb" is the Perl

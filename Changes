@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.352 Mon Apr 20 16:31:11 CEST 2009
 	- fix AnyEvent::Strict error messages for child watchers.
         - fix/update Makefile.PL "recommends" versions.
         - add AnyEvent->now_update.
