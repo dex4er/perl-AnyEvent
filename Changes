@@ -1,5 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: perl idle
+TODO:	- implemented idle watchers, where applicable.
+	- AnyEvent->time died when Event backend was in use.
+        - fix a memleak in the Tk backend.
+        - sped up Tk timer handling.
+        - fix Qt timers without interval.
+
 4.352 Mon Apr 20 16:31:11 CEST 2009
 	- fix AnyEvent::Strict error messages for child watchers.
         - fix/update Makefile.PL "recommends" versions.

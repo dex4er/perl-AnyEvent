@@ -32,6 +32,11 @@ problems.
 It also doesn't work around the Windows bug of not signalling TCP
 connection failures.
 
+Event::Lib does not support idle watchers. They could be emulated using
+low-priority timers but as the priority range (and availability) is not
+queryable nor guaranteed, and the default priority is likely the lowest
+one, this module cannot use them.
+
 Avoid Event::Lib if you can.
 
 =cut

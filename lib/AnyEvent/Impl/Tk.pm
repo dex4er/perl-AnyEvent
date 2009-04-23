@@ -35,6 +35,11 @@ known bugs in L<Tk::fileevent> on 32 bit architectures (Tk seems to be
 terminally broken on 64 bit, do not expect more than 10 or so watchers to
 work on 64 bit machines).
 
+Note also that Tk event ids wrap around after 2**32 or so events, which on
+my machine can happen within less than 12 hours, after which Tk will stomp
+on random other events and kill them. So don't run Tk programs for more
+than an hour or so.
+
 To be able to access the Tk event loop, this module creates a main
 window and withdraws it immediately. This might cause flickering on some
 platforms, but Tk perversely requires a window to be able to wait for file
@@ -68,10 +73,10 @@ sub io {
 
    $mw->fileevent ($fh, $tk => $arg{cb});
 
-   bless [$fh, $tk], AnyEvent::Impl::Tk::Io::
+   bless [$fh, $tk], "AnyEvent::Impl::Tk::io"
 }
 
-sub AnyEvent::Impl::Tk::Io::DESTROY {
+sub AnyEvent::Impl::Tk::io::DESTROY {
    my ($fh, $tk) = @{$_[0]};
 
    # work around another bug: watchers don't get removed when
@@ -85,29 +90,43 @@ sub timer {
    my (undef, %arg) = @_;
    
    my $cb = $arg{cb};
-
-   my $self = bless \\$cb, AnyEvent::Impl::Tk::Timer::;
+   my $id;
 
    if ($arg{interval}) {
       my $ival = $arg{interval} * 1000;
-      my $rcb; $rcb = sub {
-         if ($cb) {
-            $mw->after ($ival, $rcb);
-            &$cb;
-         }
+      my $rcb = sub {
+         $id = Tk::after $mw, $ival, [$_[0], $_[0]];
+         &$cb;
       };
-      $mw->after ($arg{after} * 1000, $rcb);
+      $id = Tk::after $mw, $arg{after} * 1000, [$rcb, $rcb];
    } else {
-      $mw->after ($arg{after} * 1000, sub {
-         &$cb if $cb;
-      });
+      # tk blesses $cb, thus the extra indirection
+      $id = Tk::after $mw, $arg{after} * 1000, sub { &$cb };
    }
 
-   $self
+   bless \\$id, "AnyEvent::Impl::Tk::after"
 }
 
-sub AnyEvent::Impl::Tk::Timer::DESTROY {
-   $${$_[0]} = undef;
+sub idle {
+   my (undef, %arg) = @_;
+
+   my $cb = $arg{cb};
+   my $id;
+   my $rcb = sub {
+      # in their endless stupidity, they decided to give repeating idle watchers
+      # strictly higher priority than timers :/
+      $id = Tk::after $mw, 0 => [sub {
+         $id = Tk::after $mw, idle => [$_[0], $_[0]];
+      }, $_[0]];
+      &$cb;
+   };
+
+   $id = Tk::after $mw, idle => [$rcb, $rcb];
+   bless \\$id, "AnyEvent::Impl::Tk::after"
+}
+
+sub AnyEvent::Impl::Tk::after::DESTROY {
+   Tk::after $mw, cancel => $${$_[0]};
 }
 
 sub one_event {

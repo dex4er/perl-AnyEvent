@@ -23,6 +23,8 @@ autoprobed (but it will be autodetected when the main program uses Qt).
 Qt suffers from the same limitations as Event::Lib and Tk, the workaround
 is also the same (duplicating file descriptors).
 
+Qt doesn't support idle events, so they are being emulated.
+
 Avoid Qt if you can.
 
 =cut
@@ -66,8 +68,8 @@ sub NEW {
 }
 
 sub cb {
-   this->start (this->{interval}, 1);
-   (this->{cb})->();
+   this->start (this->{interval}, 1) if defined this->{interval};
+   this->{cb}->();
 }
 
 package AnyEvent::Impl::Qt;
@@ -89,7 +91,7 @@ sub io {
    # - adding a callback might destroy other callbacks
    # - only one callback per fd/poll combination
    my ($fh, $qt) = AnyEvent::_dupfh $arg{poll}, $arg{fh},
-                      Qt::SocketNotifier::Read (), Qt::SocketNotifier::Write();
+                      Qt::SocketNotifier::Read (), Qt::SocketNotifier::Write ();
 
    AnyEvent::Impl::Qt::Io $fh, $qt, $arg{cb}
 }
@@ -97,8 +99,19 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   AnyEvent::Impl::Qt::Timer $arg{after} * 1000, $arg{interval} * 1000, $arg{cb}
+   # old Qt treats 0 timeout as "idle"
+   AnyEvent::Impl::Qt::Timer
+      $arg{after} * 1000 || 1,
+      $arg{interval} ? $arg{interval} * 1000 || 1 : undef,
+      $arg{cb}
 }
+
+# newer Qt have no idle mode for timers anymore...
+#sub idle {
+#   my ($class, %arg) = @_;
+#   
+#   AnyEvent::Impl::Qt::Timer 0, 0, $arg{cb}
+#}
 
 sub one_event {
    Qt::app->processOneEvent;

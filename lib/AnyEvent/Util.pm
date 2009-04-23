@@ -400,7 +400,7 @@ BEGIN {
    if (eval "use Guard 0.5; 1") {
       *guard = \&Guard::guard;
    } else {
-      *AnyEvent::Util::Guard::DESTROY = sub {
+      *AnyEvent::Util::guard::DESTROY = sub {
          local $@;
 
          eval {
@@ -411,12 +411,12 @@ BEGIN {
          warn "runtime error in AnyEvent::guard callback: $@" if $@;
       };
 
-      *AnyEvent::Util::Guard::cancel = sub ($) {
+      *AnyEvent::Util::guard::cancel = sub ($) {
          ${$_[0]} = sub { };
       };
 
       *guard = sub (&) {
-         bless \(my $cb = shift), AnyEvent::Util::Guard::
+         bless \(my $cb = shift), "AnyEvent::Util::guard"
       }
    }
 }

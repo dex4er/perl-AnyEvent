@@ -21,13 +21,14 @@ them, whether I/O-related, timer-related or what not) during each loop
 iteration, it also does so multiple times and rebuilds the poll list for
 the kernel each time again, dynamically even.
 
-On the positive side, Glib generally works correctly, no quarrels there.
+On the positive side, and most importantly, Glib generally works
+correctly, no quarrels there.
 
 If you create many watchers (as in: more than two), you might consider one
 of the L<Glib::EV>, L<EV::Glib> or L<Glib::Event> modules that map Glib to
 other, more efficient, event loops.
 
-This module uses the default Glib main context for all it's watchers.
+This module uses the default Glib main context for all its watchers.
 
 =cut
 
@@ -50,11 +51,7 @@ sub io {
    push @cond, "in",  "hup" if $arg{poll} eq "r";
    push @cond, "out", "hup" if $arg{poll} eq "w";
 
-   my $source = add_watch Glib::IO fileno $arg{fh}, \@cond, sub {
-      &$cb;
-      1
-   };
-
+   my $source = add_watch Glib::IO fileno $arg{fh}, \@cond, sub { &$cb; 1 };
    bless \\$source, $class
 }
 
@@ -73,6 +70,14 @@ sub timer {
               }
             : sub { &$cb; 0 };
 
+   bless \\$source, $class
+}
+
+sub idle {
+   my ($class, %arg) = @_;
+   
+   my $cb = $arg{cb};
+   my $source = add Glib::Idle sub { &$cb; 1 };
    bless \\$source, $class
 }
 

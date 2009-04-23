@@ -1,4 +1,5 @@
 $|=1;
+$^W=0;
 BEGIN { print "1..6\n" }
 
 use AnyEvent;

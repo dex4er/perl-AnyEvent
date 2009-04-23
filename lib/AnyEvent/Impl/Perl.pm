@@ -160,6 +160,7 @@ sub W() { 1 }
 
 my $need_sort = 1e300; # when to re-sort timer list
 my @timer; # list of [ abs-timeout, Timer::[callback] ]
+my @idle;  # list of idle callbacks
 
 # the pure perl mainloop
 sub one_event {
@@ -175,7 +176,7 @@ sub one_event {
    if (@timer && $timer[0][0] <= $MNOW) {
       do {
          my $timer = shift @timer;
-         $timer->[1]($timer) if $timer->[1];
+         $timer->[1] && $timer->[1]($timer);
       } while @timer && $timer[0][0] <= $MNOW;
 
    } else {
@@ -186,20 +187,21 @@ sub one_event {
          = (@timer && $timer[0][0] < $need_sort ? $timer[0][0] : $need_sort) - $MNOW;
 
       $wait = $wait < MAXWAIT ? $wait + ROUNDUP : MAXWAIT;
+      $wait = 0 if @idle;
 
-      if ($fds = CORE::select
-            $vec[0] = $fds[0][V],
-            $vec[1] = $fds[1][V],
-            AnyEvent::WIN32 ? $vec[2] = $fds[1][V] : undef,
-            $wait
-      ) {
-         _update_clock;
+      $fds = CORE::select
+        $vec[0] = $fds[0][V],
+        $vec[1] = $fds[1][V],
+        AnyEvent::WIN32 ? $vec[2] = $fds[1][V] : undef,
+        $wait;
 
+      _update_clock;
+
+      if ($fds) {
          # buggy microshit windows errornously sets exceptfds instead of writefds
          $vec[1] |= $vec[2] if AnyEvent::WIN32;
 
-         # prefer write watchers, because they usually reduce
-         # memory pressure.
+         # prefer write watchers, because they might reduce memory pressure.
          for (1, 0) {
             my $fds = $fds[$_];
 
@@ -216,7 +218,9 @@ sub one_event {
          }
       } elsif (AnyEvent::WIN32 && $! == AnyEvent::Util::WSAEINVAL) {
          # buggy microshit windoze asks us to route around it
-         CORE::select undef, undef, undef, $wait;
+         CORE::select undef, undef, undef, $wait if $wait;
+      } elsif (!@timer || $timer[0][0] > $MNOW) {
+         $$$_ && $$$_->() for @idle = grep $$$_, @idle;
       }
    }
 }
@@ -231,7 +235,7 @@ sub io {
       $arg{poll} eq "w",
       $arg{cb},
       # q-idx
-   ], AnyEvent::Impl::Perl::Io::;
+   ], "AnyEvent::Impl::Perl::io";
 
    my $fds = $fds[$self->[1]];
 
@@ -247,7 +251,7 @@ sub io {
    $self
 }
 
-sub AnyEvent::Impl::Perl::Io::DESTROY {
+sub AnyEvent::Impl::Perl::io::DESTROY {
    my ($self) = @_;
 
    my $fds = $fds[$self->[1]];
@@ -294,6 +298,15 @@ sub timer {
    $need_sort = $self->[0] if $self->[0] < $need_sort;
 
    $self
+}
+
+sub idle {
+   my ($class, %arg) = @_;
+
+   push @idle, \\$arg{cb};
+   weaken ${$idle[-1]};
+
+   ${$idle[-1]}
 }
 
 1;

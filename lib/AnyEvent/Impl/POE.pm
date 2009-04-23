@@ -244,6 +244,11 @@ rather bad.
 This is just one place where it gets obvious how little the author of the
 POE manpage understands.
 
+=item No idle events
+
+The POE-recommended workaround to this is apparently to use
+C<fork>. Consequently, idle watchera will have to be emulated by AnyEvent.
+
 =back
 
 On the good side, AnyEvent allows you to write your modules in a 100%
@@ -297,7 +302,7 @@ sub io {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub timer {
@@ -318,7 +323,7 @@ sub timer {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub signal {
@@ -341,7 +346,7 @@ sub signal {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub child {
@@ -365,7 +370,7 @@ sub child {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub DESTROY {

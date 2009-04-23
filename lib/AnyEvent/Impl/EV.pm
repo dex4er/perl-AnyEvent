@@ -61,6 +61,12 @@ sub child {
    }
 }
 
+sub idle {
+   my ($class, %arg) = @_;
+
+   EV::idle $arg{cb}
+}
+
 sub one_event {
    EV::loop EV::LOOP_ONESHOT;
 }

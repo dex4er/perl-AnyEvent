@@ -27,7 +27,7 @@ use strict;
 
 use AnyEvent ();
 
-use Event qw(time); # we have to importt something to make Event use Time::HiRes
+use Event qw(unloop); # we have to import something to make Event use Time::HiRes
 
 sub io {
    my ($class, %arg) = @_;
@@ -44,6 +44,11 @@ sub timer {
 sub signal {
    my ($class, %arg) = @_;
    bless \Event->signal (%arg), $class
+}
+
+sub idle {
+   my ($class, %arg) = @_;
+   bless \Event->idle (repeat => 1, min => 0, %arg), $class
 }
 
 sub DESTROY {

@@ -37,7 +37,7 @@ sub timer {
 
    $stem->start;
 
-   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
+   bless \\$stem, "AnyEvent::Impl::Stem::wrap"
 }
 
 sub io {
@@ -55,7 +55,7 @@ sub io {
 
    $stem->start;
 
-   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
+   bless \\$stem, "AnyEvent::Impl::Stem::wrap"
 }
 
 sub signal {
@@ -68,10 +68,10 @@ sub signal {
 
    $stem->start;
 
-   bless \\$stem, AnyEvent::Impl::Stem::Wrap::
+   bless \\$stem, "AnyEvent::Impl::Stem::wrap"
 }
 
-sub AnyEvent::Impl::Stem::Wrap::DESTROY {
+sub AnyEvent::Impl::Stem::wrap::DESTROY {
    ${${$_[0]}}->cancel;
 }
 
@@ -92,7 +92,7 @@ sub child {
 
 sub condvar {
    die;
-   bless \my $flag, AnyEvent::Impl::Stem::
+   bless \my $flag, "AnyEvent::Impl::Stem"
 }
 
 sub broadcast {

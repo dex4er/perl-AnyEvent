@@ -119,6 +119,20 @@ sub child {
    $class->SUPER::child (@_)
 }
 
+sub idle {
+   my $class = shift;
+   my %arg = @_;
+
+   ref $arg{cb}
+      or croak "AnyEvent->idle called with illegal cb argument '$arg{cb}'";
+   delete $arg{cb};
+ 
+   croak "AnyEvent->idle called with unsupported parameter(s) " . join ", ", keys %arg
+      if keys %arg;
+
+   $class->SUPER::idle (@_)
+}
+
 sub condvar {
    my $class = shift;
    my %arg = @_;

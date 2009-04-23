@@ -1,4 +1,5 @@
 $|=1;
+$^W=0;
 
 BEGIN {
    # check for broken perls

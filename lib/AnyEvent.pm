@@ -8,20 +8,27 @@ EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
 
    use AnyEvent;
 
-   my $w = AnyEvent->io (fh => $fh, poll => "r|w", cb => sub { ...  });
+   # file descriptor readable
+   my $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub { ...  });
 
+   # one-shot or repeating timers
    my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
    my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...
 
    print AnyEvent->now;  # prints current event loop time
    print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
 
+   # POSIX signal
    my $w = AnyEvent->signal (signal => "TERM", cb => sub { ... });
 
+   # child process exit
    my $w = AnyEvent->child (pid => $pid, cb => sub {
       my ($pid, $status) = @_;
       ...
    });
+
+   # called when event loop idle (if applicable)
+   my $w = AnyEvent->idle (cb => sub { ... });
 
    my $w = AnyEvent->condvar; # stores whether a condition was flagged
    $w->send; # wake up current and all future recv's
@@ -411,6 +418,41 @@ Example: fork a process and wait for it
   
    # do something else, then wait for process exit
    $done->recv;
+
+=head2 IDLE WATCHERS
+
+Sometimes there is a need to do something, but it is not so important
+to do it instantly, but only when there is nothing better to do. This
+"nothing better to do" is usually defined to be "no other events need
+attention by the event loop".
+
+Idle watchers ideally get invoked when the event loop has nothing
+better to do, just before it would block the process to wait for new
+events. Instead of blocking, the idle watcher is invoked.
+
+Most event loops unfortunately do not really support idle watchers (only
+EV, Event and Glib do it in a usable fashion) - for the rest, AnyEvent
+will simply call the callback "from time to time".
+
+Example: read lines from STDIN, but only process them when the
+program is otherwise idle:
+
+   my @lines; # read data
+   my $idle_w;
+   my $io_w = AnyEvent->io (fh => \*STDIN, poll => 'r', cb => sub {
+      push @lines, scalar <STDIN>;
+
+      # start an idle watcher, if not already done
+      $idle_w ||= AnyEvent->idle (cb => sub {
+         # handle only one line, when there are lines left
+         if (my $line = shift @lines) {
+            print "handled when idle: $line";
+         } else {
+            # otherwise disable the idle watcher again
+            undef $idle_w;
+         }
+      });
+   });
 
 =head2 CONDITION VARIABLES
 
@@ -933,7 +975,7 @@ my @models = (
 );
 
 our %method = map +($_ => 1),
-   qw(io timer time now now_update signal child condvar one_event DESTROY);
+   qw(io timer time now now_update signal child idle condvar one_event DESTROY);
 
 our @post_detect;
 
@@ -948,12 +990,12 @@ sub post_detect(&) {
       push @post_detect, $cb;
 
       defined wantarray
-         ? bless \$cb, "AnyEvent::Util::PostDetect"
+         ? bless \$cb, "AnyEvent::Util::postdetect"
          : ()
    }
 }
 
-sub AnyEvent::Util::PostDetect::DESTROY {
+sub AnyEvent::Util::postdetect::DESTROY {
    @post_detect = grep $_ != ${$_[0]}, @post_detect;
 }
 
@@ -1052,7 +1094,7 @@ package AnyEvent::Base;
 # default implementations for many methods
 
 BEGIN {
-   if (eval "use Time::HiRes (); time (); 1") {
+   if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
       *_time = \&Time::HiRes::time;
       # if (eval "use POSIX (); (POSIX::times())...
    } else {
@@ -1067,7 +1109,7 @@ sub now_update { }
 # default implementation for ->condvar
 
 sub condvar {
-   bless { @_ == 3 ? (_ae_cb => $_[2]) : () }, AnyEvent::CondVar::
+   bless { @_ == 3 ? (_ae_cb => $_[2]) : () }, "AnyEvent::CondVar"
 }
 
 # default implementation for ->signal
@@ -1123,10 +1165,10 @@ sub signal {
       undef $SIG_EV{$signal};
    };
 
-   bless [$signal, $arg{cb}], "AnyEvent::Base::Signal"
+   bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
 }
 
-sub AnyEvent::Base::Signal::DESTROY {
+sub AnyEvent::Base::signal::DESTROY {
    my ($signal, $cb) = @{$_[0]};
 
    delete $SIG_CB{$signal}{$cb};
@@ -1177,16 +1219,52 @@ sub child {
       &_sigchld;
    }
 
-   bless [$pid, $arg{cb}], "AnyEvent::Base::Child"
+   bless [$pid, $arg{cb}], "AnyEvent::Base::child"
 }
 
-sub AnyEvent::Base::Child::DESTROY {
+sub AnyEvent::Base::child::DESTROY {
    my ($pid, $cb) = @{$_[0]};
 
    delete $PID_CB{$pid}{$cb};
    delete $PID_CB{$pid} unless keys %{ $PID_CB{$pid} };
 
    undef $CHLD_W unless keys %PID_CB;
+}
+
+# idle emulation is done by simply using a timer, regardless
+# of whether the proces sis idle or not, and not letting
+# the callback use more than 50% of the time.
+sub idle {
+   my (undef, %arg) = @_;
+
+   my ($cb, $w, $rcb) = $arg{cb};
+
+   $rcb = sub {
+      if ($cb) {
+         $w = _time;
+         &$cb;
+         $w = _time - $w;
+
+         # never use more then 50% of the time for the idle watcher,
+         # within some limits
+         $w = 0.0001 if $w < 0.0001;
+         $w = 5      if $w > 5;
+
+         $w = AnyEvent->timer (after => $w, cb => $rcb);
+      } else {
+         # clean up...
+         undef $w;
+         undef $rcb;
+      }
+   };
+
+   $w = AnyEvent->timer (after => 0.05, cb => $rcb);
+
+   bless \\$cb, "AnyEvent::Base::idle"
+}
+
+sub AnyEvent::Base::idle::DESTROY {
+   undef $${$_[0]};
 }
 
 package AnyEvent::CondVar;
