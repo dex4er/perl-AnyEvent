@@ -38,6 +38,7 @@ sub io {
 
 sub timer {
    my ($class, %arg) = @_;
+   $arg{after} = 0 if $arg{after} < 0;
    bless \Event->timer (%arg, repeat => $arg{interval}), $class
 }
 
