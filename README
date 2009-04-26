@@ -7,20 +7,27 @@ NAME
 SYNOPSIS
        use AnyEvent;
 
-       my $w = AnyEvent->io (fh => $fh, poll => "r|w", cb => sub { ...  });
+       # file descriptor readable
+       my $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub { ...  });
 
+       # one-shot or repeating timers
        my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
        my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...
 
        print AnyEvent->now;  # prints current event loop time
        print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
 
+       # POSIX signal
        my $w = AnyEvent->signal (signal => "TERM", cb => sub { ... });
 
+       # child process exit
        my $w = AnyEvent->child (pid => $pid, cb => sub {
           my ($pid, $status) = @_;
           ...
        });
+
+       # called when event loop idle (if applicable)
+       my $w = AnyEvent->idle (cb => sub { ... });
 
        my $w = AnyEvent->condvar; # stores whether a condition was flagged
        $w->send; # wake up current and all future recv's
@@ -401,6 +408,40 @@ WATCHERS
       
    # do something else, then wait for process exit
        $done->recv;
+
+  IDLE WATCHERS
+    Sometimes there is a need to do something, but it is not so important to
+    do it instantly, but only when there is nothing better to do. This
+    "nothing better to do" is usually defined to be "no other events need
+    attention by the event loop".
+
+    Idle watchers ideally get invoked when the event loop has nothing better
+    to do, just before it would block the process to wait for new events.
+    Instead of blocking, the idle watcher is invoked.
+
+    Most event loops unfortunately do not really support idle watchers (only
+    EV, Event and Glib do it in a usable fashion) - for the rest, AnyEvent
+    will simply call the callback "from time to time".
+
+    Example: read lines from STDIN, but only process them when the program
+    is otherwise idle:
+
+       my @lines; # read data
+       my $idle_w;
+       my $io_w = AnyEvent->io (fh => \*STDIN, poll => 'r', cb => sub {
+          push @lines, scalar <STDIN>;
+
+          # start an idle watcher, if not already done
+          $idle_w ||= AnyEvent->idle (cb => sub {
+             # handle only one line, when there are lines left
+             if (my $line = shift @lines) {
+                print "handled when idle: $line";
+             } else {
+                # otherwise disable the idle watcher again
+                undef $idle_w;
+             }
+          });
+       });
 
   CONDITION VARIABLES
     If you are familiar with some event loops you will know that all of them
