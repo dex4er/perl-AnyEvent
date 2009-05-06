@@ -354,6 +354,7 @@ our %type_id = (
    aaaa  =>  28,
    srv   =>  33,
    naptr =>  35, # rfc2915
+   dname =>  39, # rfc2672
    opt   =>  41,
    spf   =>  99,
    tkey  => 249,
@@ -513,6 +514,7 @@ our %dec_rr = (
        local $ofs = $ofs + $offset - length;
        ($order, $preference, $flags, $service, $regexp, _dec_name)
     },
+    39 => sub { local $ofs = $ofs - length; _dec_name }, # dname
     99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
 

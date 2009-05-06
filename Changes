@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- AnyEvent::DNS: add the "dname" resource record name.
+
 4.4   Sun Apr 26 20:12:33 CEST 2009
 	- implemented idle watchers, where applicable.
 	- AnyEvent->time died when Event backend was in use.
