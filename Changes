@@ -1,6 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
-	- AnyEvent::DNS: add the "dname" resource record name.
+4.41  Wed May 13 14:41:29 CEST 2009
+	- AnyEvent::DNS: add the "dname" resource record name
+          for cosmetic reasons.
+        - work around issues in older perls (5.8.0?) when
+          a signal handler is deleted from the %SIG hash.
 
 4.4   Sun Apr 26 20:12:33 CEST 2009
 	- implemented idle watchers, where applicable.

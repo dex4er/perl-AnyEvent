@@ -932,7 +932,7 @@ use strict qw(vars subs);
 
 use Carp;
 
-our $VERSION = 4.4;
+our $VERSION = 4.41;
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1173,7 +1173,7 @@ sub AnyEvent::Base::signal::DESTROY {
 
    delete $SIG_CB{$signal}{$cb};
 
-   delete $SIG{$signal} unless keys %{ $SIG_CB{$signal} };
+   $SIG{$signal} = 'DEFAULT' unless keys %{ $SIG_CB{$signal} };
 }
 
 # default implementation for ->child
