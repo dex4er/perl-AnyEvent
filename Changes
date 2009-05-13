@@ -1,10 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
-4.41  Wed May 13 14:41:29 CEST 2009
+4.41
 	- AnyEvent::DNS: add the "dname" resource record name
           for cosmetic reasons.
         - work around issues in older perls (5.8.0?) when
           a signal handler is deleted from the %SIG hash.
+        - use POSIX::_exit in child test, to avoid running
+          destructors.
+        - speed up CHLD handling by relying on SIGCHLD being
+          synchronously delivered, even when we roll our own
+          implementation.
 
 4.4   Sun Apr 26 20:12:33 CEST 2009
 	- implemented idle watchers, where applicable.

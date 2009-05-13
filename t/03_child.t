@@ -1,5 +1,3 @@
-$|=1;
-
 BEGIN {
    # check for broken perls
    if ($^O =~ /mswin32/i) {
@@ -17,8 +15,11 @@ EOF
 }
 
 BEGIN {
+   $|=1;
    print "1..7\n"
 }
+
+use POSIX ();
 
 use AnyEvent;
 use AnyEvent::Impl::Perl;
@@ -38,7 +39,7 @@ my $cv = AnyEvent->condvar;
 
 unless ($pid) {
    print "ok 2\n";
-   exit 3;
+   POSIX::_exit 3;
 }
 
 my $w = AnyEvent->child (pid => $pid, cb => sub {
@@ -49,7 +50,7 @@ my $w = AnyEvent->child (pid => $pid, cb => sub {
 
 $cv->wait;
 
-my $pid2 = fork || exit 7;
+my $pid2 = fork || POSIX::_exit 7;
 
 my $cv2 = AnyEvent->condvar;
 

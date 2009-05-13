@@ -1173,7 +1173,10 @@ sub AnyEvent::Base::signal::DESTROY {
 
    delete $SIG_CB{$signal}{$cb};
 
-   $SIG{$signal} = 'DEFAULT' unless keys %{ $SIG_CB{$signal} };
+   # delete doesn't work with older perls - they then
+   # print weird messages, or just unconditionally exit
+   # instead of getting the default action.
+   undef $SIG{$signal} unless keys %{ $SIG_CB{$signal} };
 }
 
 # default implementation for ->child
@@ -1181,24 +1184,13 @@ sub AnyEvent::Base::signal::DESTROY {
 our %PID_CB;
 our $CHLD_W;
 our $CHLD_DELAY_W;
-our $PID_IDLE;
 our $WNOHANG;
 
-sub _child_wait {
+sub _sigchld {
    while (0 < (my $pid = waitpid -1, $WNOHANG)) {
       $_->($pid, $?) for (values %{ $PID_CB{$pid} || {} }),
                          (values %{ $PID_CB{0}    || {} });
    }
-
-   undef $PID_IDLE;
-}
-
-sub _sigchld {
-   # make sure we deliver these changes "synchronous" with the event loop.
-   $CHLD_DELAY_W ||= AnyEvent->timer (after => 0, cb => sub {
-      undef $CHLD_DELAY_W;
-      &_child_wait;
-   });
 }
 
 sub child {
@@ -1209,9 +1201,7 @@ sub child {
 
    $PID_CB{$pid}{$arg{cb}} = $arg{cb};
 
-   unless ($WNOHANG) {
-      $WNOHANG = eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
-   }
+   $WNOHANG ||= eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
 
    unless ($CHLD_W) {
       $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_sigchld);
@@ -1232,7 +1222,7 @@ sub AnyEvent::Base::child::DESTROY {
 }
 
 # idle emulation is done by simply using a timer, regardless
-# of whether the proces sis idle or not, and not letting
+# of whether the process is idle or not, and not letting
 # the callback use more than 50% of the time.
 sub idle {
    my (undef, %arg) = @_;
