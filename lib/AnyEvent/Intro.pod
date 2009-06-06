@@ -1,3 +1,7 @@
+=head1 NAME
+
+AnyEvent::Intro - an introductory tutorial to AnyEvent
+
 =head1 Introduction to AnyEvent
 
 This is a tutorial that will introduce you to the features of AnyEvent.

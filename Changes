@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- do not try to use F_SETFD on windows.
+
 4.41  Thu May 14 06:40:11 CEST 2009
         - work around issues in older perls (5.8.0?) when
           a signal handler is deleted from the %SIG hash.

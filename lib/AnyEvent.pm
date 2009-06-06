@@ -1,8 +1,9 @@
 =head1 NAME
 
-AnyEvent - provide framework for multiple event loops
+AnyEvent - provide framework for multiple event loops 
 
-EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event loops
+EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
+event loops.
 
 =head1 SYNOPSIS
 
@@ -1143,14 +1144,14 @@ sub signal {
          pipe $SIGPIPE_R, $SIGPIPE_W;
          fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
          fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
+
+         # not strictly required, as $^F is normally 2, but let's make sure...
+         fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+         fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
       }
 
       $SIGPIPE_R
          or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
-
-      # not strictly required, as $^F is normally 2, but let's make sure...
-      fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
-      fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
 
       $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
    }
