@@ -1,8 +1,8 @@
 NAME
     AnyEvent - provide framework for multiple event loops
 
-    EV, Event, Glib, Tk, Perl, Event::Lib, Qt, POE - various supported event
-    loops
+    EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
+    event loops.
 
 SYNOPSIS
        use AnyEvent;

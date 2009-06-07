@@ -933,7 +933,7 @@ use strict qw(vars subs);
 
 use Carp;
 
-our $VERSION = 4.41;
+our $VERSION = 4.411;
 our $MODEL;
 
 our $AUTOLOAD;

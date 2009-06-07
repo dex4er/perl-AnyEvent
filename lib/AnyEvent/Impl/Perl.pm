@@ -91,7 +91,7 @@ use Scalar::Util qw(weaken);
 use AnyEvent ();
 use AnyEvent::Util ();
 
-our $VERSION = 4.41;
+our $VERSION = 4.411;
 
 our ($NOW, $MNOW);
 

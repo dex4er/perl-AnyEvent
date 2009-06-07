@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.411 Sun Jun  7 18:48:02 CEST 2009
 	- do not try to use F_SETFD on windows.
 
 4.41  Thu May 14 06:40:11 CEST 2009
