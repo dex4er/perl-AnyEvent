@@ -60,6 +60,10 @@ sub one_event {
    Event::one_event;
 }
 
+sub loop {
+   Event::loop;
+}
+
 1;
 
 =head1 SEE ALSO

@@ -117,6 +117,10 @@ sub one_event {
    Qt::app->processOneEvent;
 }
 
+sub loop {
+   Qt::app->exec;
+}
+
 1;
 
 =head1 SEE ALSO

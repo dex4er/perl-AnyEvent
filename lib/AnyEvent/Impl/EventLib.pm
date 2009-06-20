@@ -111,6 +111,10 @@ sub one_event {
    event_one_loop;
 }
 
+sub loop {
+   event_mainloop;
+}
+
 1;
 
 =head1 SEE ALSO

@@ -133,6 +133,10 @@ sub one_event {
    Tk::DoOneEvent (0);
 }
 
+sub loop {
+   Tk::MainLoop;
+}
+
 1;
 
 =head1 SEE ALSO

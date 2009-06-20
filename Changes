@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: document ->loop, and maybe one_event.
+TODO: untainting default resolveR?
+	- implement and document AnyEvent::Impl::Perl::loop.
+
 4.411 Sun Jun  7 18:48:02 CEST 2009
 	- do not try to use F_SETFD on windows.
 

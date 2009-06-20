@@ -9,6 +9,14 @@ AnyEvent::Impl::Perl - Pure-Perl event loop and AnyEvent adaptor for itself
   
    # this module gets loaded automatically as required
 
+   # Explicit use:
+   use AnyEvent::Impl::Perl;
+   use AnyEvent;
+
+   ...
+
+   AnyEvent::Impl::Perl::loop; # run the event loop
+
 =head1 DESCRIPTION
 
 This module provides transparent support for AnyEvent in case no other
@@ -76,6 +84,20 @@ timer list will be sorted only once every 10 seconds.
 
 This should not have much of an impact unless you have hundreds or
 thousands of timers, though, or your timers have very small timeouts.
+
+=back
+
+=head1 FUNCTIONS
+
+The only user-visible function provided by this module is the C<loop>
+function:
+
+=over 4
+
+=item AnyEvent::Impl::Perl::loop
+
+Run the event loop, usually the last thing done in the main program when
+you want to use the pure-perl backend.
 
 =back
 
@@ -223,6 +245,10 @@ sub one_event {
          $$$_ && $$$_->() for @idle = grep $$$_, @idle;
       }
    }
+}
+
+sub loop {
+   one_event while 1;
 }
 
 sub io {

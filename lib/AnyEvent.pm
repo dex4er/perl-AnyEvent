@@ -1955,7 +1955,7 @@ before the first watcher gets created, e.g. with a C<BEGIN> block:
 Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
 be used to probe what backend is used and gain other information (which is
 probably even less useful to an attacker than PERL_ANYEVENT_MODEL), and
-$ENV{PERL_ANYEGENT_STRICT}.
+$ENV{PERL_ANYEVENT_STRICT}.
 
 
 =head1 BUGS

@@ -381,6 +381,10 @@ sub one_event {
    POE::Kernel->loop_do_timeslice;
 }
 
+sub loop {
+   POE::Kernel->run;
+}
+
 1;
 
 =head1 SEE ALSO

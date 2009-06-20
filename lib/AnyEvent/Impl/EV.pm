@@ -71,6 +71,10 @@ sub one_event {
    EV::loop EV::LOOP_ONESHOT;
 }
 
+sub loop {
+   EV::loop;
+}
+
 1;
 
 =head1 SEE ALSO
