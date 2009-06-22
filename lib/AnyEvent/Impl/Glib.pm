@@ -90,7 +90,7 @@ sub one_event {
 }
 
 sub loop {
-   $mainloop->run;
+   $mainloop->iteration (1) while 1; # hackish, but w ehave no mainloop
 }
 
 1;
