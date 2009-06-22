@@ -297,7 +297,7 @@ EDNS0 in all requests.
 
 =cut
 
-our $EDNS0 = $ENV{PERL_ANYEVENT_EDNS0} * 1; # set to 1 to enable (partial) edns0
+our $EDNS0 = $ENV{PERL_ANYEVENT_EDNS0}*1; # set to 1 to enable (partial) edns0
 
 our %opcode_id = (
    query  => 0,
@@ -657,7 +657,7 @@ our $RESOLVER;
 
 sub resolver() {
    $RESOLVER || do {
-      $RESOLVER = new AnyEvent::DNS;
+      $RESOLVER = new AnyEvent::DNS untaint => 1;
       $RESOLVER->os_config;
       $RESOLVER
    }
@@ -705,6 +705,11 @@ been resolved.
 The number of seconds (default: C<300>) that a query id cannot be re-used
 after a timeout. If there was no time-out then query ids can be reused
 immediately.
+
+=item untaint => $boolean
+
+When true, then the resolver will automatically untaint results, and might
+also ignore certain environment variables.
 
 =back
 
@@ -824,8 +829,9 @@ sub parse_resolv_conf {
 
 =item $resolver->os_config
 
-Tries so load and parse F</etc/resolv.conf> on portable operating systems. Tries various
-egregious hacks on windows to force the DNS servers and searchlist out of the system.
+Tries so load and parse F</etc/resolv.conf> on portable operating
+systems. Tries various egregious hacks on windows to force the DNS servers
+and searchlist out of the system.
 
 =cut
 
@@ -940,6 +946,9 @@ sub _compile {
 
 sub _feed {
    my ($self, $res) = @_;
+
+   ($res) = $res =~ /^(.*)$/s
+      if AnyEvent::TAINT && $self->{untaint};
 
    $res = dns_unpack $res
       or return;

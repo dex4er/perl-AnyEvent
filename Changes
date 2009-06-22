@@ -1,8 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: document ->loop, and maybe one_event.
-TODO: untainting default resolveR?
+TODO: iolae.pl
+	- support an "untaint" attribute for AnyEvent::DNS
+          and set it on the default resolver.
 	- implement and document AnyEvent::Impl::Perl::loop.
+        - remove all anyevent-env variables from %ENV
+          when running in tainted mode.
 
 4.411 Sun Jun  7 18:48:02 CEST 2009
 	- do not try to use F_SETFD on windows.
@@ -26,7 +30,7 @@ TODO: untainting default resolveR?
         - clip negative "after" values to 0 in AnyEvent::Impl::Event
           to avoid spamming out warning messages.
         - fix Qt timers without interval.
-        - avoid Qt zero-timeout specialcase, in old libqt's.
+        - avoid Qt zero-timeout special case, in old libqt's.
 
 4.352 Mon Apr 20 16:31:11 CEST 2009
 	- fix AnyEvent::Strict error messages for child watchers.

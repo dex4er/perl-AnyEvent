@@ -944,8 +944,11 @@ our @REGISTRY;
 our $WIN32;
 
 BEGIN {
-   my $win32 = ! ! ($^O =~ /mswin32/i);
-   eval "sub WIN32(){ $win32 }";
+   eval "sub WIN32(){ " . (($^O =~ /mswin32/i)*1) ." }";
+   eval "sub TAINT(){ " . (${^TAINT}*1) . " }";
+
+   delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
+      if ${^TAINT};
 }
 
 our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
@@ -1339,7 +1342,11 @@ so on.
 =head1 ENVIRONMENT VARIABLES
 
 The following environment variables are used by this module or its
-submodules:
+submodules.
+
+Note that AnyEvent will remove I<all> environment variables starting with
+C<PERL_ANYEVENT_> from C<%ENV> when it is loaded while taint mode is
+enabled.
 
 =over 4
 
