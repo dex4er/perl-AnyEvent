@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: document ->loop, and maybe one_event.
+4.412 Wed Jun 24 01:35:57 CEST 2009
 	- support an "untaint" attribute for AnyEvent::DNS
           and set it on the default resolver.
 	- implement and document AnyEvent::Impl::Perl::loop.
