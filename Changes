@@ -6,6 +6,7 @@ TODO: document ->loop, and maybe one_event.
 	- implement and document AnyEvent::Impl::Perl::loop.
         - remove all anyevent-env variables from %ENV
           when running in tainted mode.
+        - mention and extend the IO::Lambda benchmark.
 
 4.411 Sun Jun  7 18:48:02 CEST 2009
 	- do not try to use F_SETFD on windows.
