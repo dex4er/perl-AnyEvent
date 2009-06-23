@@ -3,6 +3,7 @@ COPYING
 Changes
 README
 Makefile.PL
+
 lib/AnyEvent.pm
 lib/AnyEvent/Intro.pod
 lib/AnyEvent/Strict.pm
@@ -18,6 +19,7 @@ lib/AnyEvent/Impl/Tk.pm
 lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Qt.pm
 lib/AnyEvent/Impl/POE.pm
+
 t/00_load.t
 t/01_basic.t
 t/02_signals.t
@@ -29,6 +31,7 @@ t/handle/01_readline.t
 t/handle/02_write.t
 t/handle/03_http_req.t
 t/handle/04_listen.t
+
 eg/bench
 eg/runbench
 eg/bench2
@@ -36,4 +39,7 @@ eg/runbench2
 eg/connect
 eg/listen
 eg/handle
+eg/ae0.pl
+eg/ae2.pl
+
 META.yml                                 Module meta-data (added by MakeMaker)

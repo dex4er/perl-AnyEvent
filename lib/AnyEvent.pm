@@ -1948,6 +1948,10 @@ slow :) L<AnyEvent::Handle> abstraction beats both POE and IO::Lambda,
 even thought it does all of DNS, tcp-connect and socket I/O in a
 non-blocking way.
 
+The two AnyEvent benchmarks can be found as F<eg/ae0.pl> and F<eg/ae2.pl>
+in the AnyEvent distribution, the remaining benchmarks are part of the
+IO::lambda distribution and were used without any changes.
+
 
 =head1 SIGNALS
 
