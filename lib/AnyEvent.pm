@@ -1368,12 +1368,12 @@ model it chooses.
 AnyEvent does not do much argument checking by default, as thorough
 argument checking is very costly. Setting this variable to a true value
 will cause AnyEvent to load C<AnyEvent::Strict> and then to thoroughly
-check the arguments passed to most method calls. If it finds any problems
+check the arguments passed to most method calls. If it finds any problems,
 it will croak.
 
 In other words, enables "strict" mode.
 
-Unlike C<use strict>, it is definitely recommended ot keep it off in
+Unlike C<use strict>, it is definitely recommended to keep it off in
 production. Keeping C<PERL_ANYEVENT_STRICT=1> in your environment while
 developing programs can be very useful, however.
 
@@ -1902,14 +1902,15 @@ Recently I was told about the benchmark in the IO::Lambda manpage, which
 could be misinterpreted to make AnyEvent look bad. In fact, the benchmark
 simply compares IO::Lambda with POE, and IO::Lambda looks better (which
 shouldn't come as a surprise to anybody). As such, the benchmark is
-fine, and shows that the AnyEvent backend from IO::Lambda isn't very
-optimal. But how would AnyEvent compare when used without the extra
+fine, and mostly shows that the AnyEvent backend from IO::Lambda isn't
+very optimal. But how would AnyEvent compare when used without the extra
 baggage? To explore this, I wrote the equivalent benchmark for AnyEvent.
 
 The benchmark itself creates an echo-server, and then, for 500 times,
 connects to the echo server, sends a line, waits for the reply, and then
 creates the next connection. This is a rather bad benchmark, as it doesn't
-test the efficiency of the framework, but it is a benchmark nevertheless.
+test the efficiency of the framework or much non-blocking I/O, but it is a
+benchmark nevertheless.
 
    name                    runtime
    Lambda/select           0.330 sec
@@ -1925,32 +1926,32 @@ test the efficiency of the framework, but it is a benchmark nevertheless.
    AnyEvent/EV/nb          0.068 sec
       +state machine       0.134 sec
 
-The benchmark is also a bit unfair (my fault) - the IO::Lambda
+The benchmark is also a bit unfair (my fault): the IO::Lambda/POE
 benchmarks actually make blocking connects and use 100% blocking I/O,
 defeating the purpose of an event-based solution. All of the newly
 written AnyEvent benchmarks use 100% non-blocking connects (using
 AnyEvent::Socket::tcp_connect and the asynchronous pure perl DNS
-resolver), so AnyEvent is at a disadvantage here as non-blocking connects
+resolver), so AnyEvent is at a disadvantage here, as non-blocking connects
 generally require a lot more bookkeeping and event handling than blocking
 connects (which involve a single syscall only).
 
 The last AnyEvent benchmark additionally uses L<AnyEvent::Handle>, which
-offers similar expressive power as POE and IO::Lambda (using conventional
-Perl syntax), which means both the echo server and the client are 100%
-non-blocking w.r.t. I/O, further placing it at a disadvantage.
+offers similar expressive power as POE and IO::Lambda, using conventional
+Perl syntax. This means that both the echo server and the client are 100%
+non-blocking, further placing it at a disadvantage.
 
-As you can see, AnyEvent + EV even beats the hand-optimised "raw sockets
-benchmark", while AnyEvent + its pure perl backend easily beats
-IO::Lambda and POE.
+As you can see, the AnyEvent + EV combination even beats the
+hand-optimised "raw sockets benchmark", while AnyEvent + its pure perl
+backend easily beats IO::Lambda and POE.
 
 And even the 100% non-blocking version written using the high-level (and
-slow :) L<AnyEvent::Handle> abstraction beats both POE and IO::Lambda,
-even thought it does all of DNS, tcp-connect and socket I/O in a
-non-blocking way.
+slow :) L<AnyEvent::Handle> abstraction beats both POE and IO::Lambda by a
+large margin, even though it does all of DNS, tcp-connect and socket I/O
+in a non-blocking way.
 
-The two AnyEvent benchmarks can be found as F<eg/ae0.pl> and F<eg/ae2.pl>
-in the AnyEvent distribution, the remaining benchmarks are part of the
-IO::lambda distribution and were used without any changes.
+The two AnyEvent benchmarks programs can be found as F<eg/ae0.pl> and
+F<eg/ae2.pl> in the AnyEvent distribution, the remaining benchmarks are
+part of the IO::lambda distribution and were used without any changes.
 
 
 =head1 SIGNALS
@@ -2019,6 +2020,10 @@ Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
 be used to probe what backend is used and gain other information (which is
 probably even less useful to an attacker than PERL_ANYEVENT_MODEL), and
 $ENV{PERL_ANYEVENT_STRICT}.
+
+Note that AnyEvent will remove I<all> environment variables starting with
+C<PERL_ANYEVENT_> from C<%ENV> when it is loaded while taint mode is
+enabled.
 
 
 =head1 BUGS
