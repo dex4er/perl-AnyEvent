@@ -143,7 +143,6 @@ our $LOOP;
 
 sub set_loop($) {
    $LOOP = $_[0];
-
    #$LOOP->enable_childmanager;
 }
 
