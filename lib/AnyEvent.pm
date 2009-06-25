@@ -1697,6 +1697,8 @@ watcher.
       Perl/Any   100000   452   4.13   0.73    0.95 pure perl implementation
    Event/Event    16000   517  32.20  31.80    0.81 Event native interface
      Event/Any    16000   590  35.85  31.55    1.06 Event + AnyEvent watchers
+   IOAsync/Any    16000   989  38.10  32.77   11.13 via IO::Async::Loop::IO_Poll
+   IOAsync/Any    16000   990  37.59  29.50   10.61 via IO::Async::Loop::Epoll
       Glib/Any    16000  1357 102.33  12.31   51.00 quadratic behaviour
         Tk/Any     2000  1860  27.20  66.31   14.00 SEGV with >> 2000 watchers
      POE/Event     2000  6328 109.99 751.67   14.02 via POE::Loop::Event
@@ -1735,6 +1737,9 @@ them active), of course, but this was not subject of this benchmark.
 
 The C<Event> module has a relatively high setup and callback invocation
 cost, but overall scores in on the third place.
+
+C<IO::Async> performs admirably well, about on par with C<Event>, even
+when using its pure perl backend.
 
 C<Glib>'s memory usage is quite a bit higher, but it features a
 faster callback invocation and overall ends up in the same class as
@@ -1822,12 +1827,14 @@ a new one that moves the timeout into the future.
 
 =head3 Results
 
-    name sockets create  request 
-      EV   20000  69.01    11.16 
-    Perl   20000  73.32    35.87 
-   Event   20000 212.62   257.32 
-    Glib   20000 651.16  1896.30 
-     POE   20000 349.67 12317.24 uses POE::Loop::Event
+     name sockets create  request 
+       EV   20000  69.01    11.16 
+     Perl   20000  73.32    35.87 
+  IOAsync   20000 157.00    98.14 epoll
+  IOAsync   20000 159.31   616.06 poll
+    Event   20000 212.62   257.32 
+     Glib   20000 651.16  1896.30 
+      POE   20000 349.67 12317.24 uses POE::Loop::Event
 
 =head3 Discussion
 
@@ -1839,6 +1846,9 @@ is relatively high, though.
 
 Perl surprisingly comes second. It is much faster than the C-based event
 loops Event and Glib.
+
+IO::Async performs very well when using its epoll backend, and still quite
+good compared to Glib when using its pure perl backend.
 
 Event suffers from high setup time as well (look at its code and you will
 understand why). Callback invocation also has a high overhead compared to

@@ -145,7 +145,18 @@ backends by default (or fix the epoll backend to work in the presence of
 fork, which admittedly is hard - EV does it for you, and also does not use
 unsafe backends by default).
 
+=item Exiting considered harmful
+
+   (in cleanup) Can't call method "parent" on an undefined value
+      at IO/Async/Loop.pm line 297 during global destruction.
+
+IO::Async just hates global destruction. Calling C<exit> will easily give
+you one such line per watcher.
+
 =back
+
+On the positive side, performance with IO::Async is quite good even in my
+very demanding eyes.
 
 =cut
 
