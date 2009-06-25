@@ -129,7 +129,7 @@ IO::Async wakes up your process every second, when you have any signal
 watchers registered. That's bad from a power savings perspective,
 especially as those wake-ups are spread randomly (imagine 20 perl
 programs on your laptop and you have a 20 Hz timer that takes your CPU
-out of its power save modethat often), and completely unnecessary, when
+out of its power save mode that often), and completely unnecessary, when
 signals are implemented properly (instead of relying on Linux-specific
 L<IO::Async::Loop::IO_Ppoll>-style hacks).
 
