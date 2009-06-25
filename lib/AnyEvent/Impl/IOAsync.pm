@@ -15,12 +15,12 @@ AnyEvent::Impl::IOAsync - AnyEvent adaptor for IO::Async
 
 =head1 DESCRIPTION
 
-This module provides transparent support for AnyEvent. Due to the rather
-sad state of L<IO::Async>, support is only available partially (only
-timers and I/O watchers are supported, signals and child watchers are
-emulated by AnyEvent itself (fighting with IO::Async, so you cannot use
-both), idle watchers are being emulated, I/O watchers need to dup their
-fh.
+This module provides support for IO::Async as AnyEvent backend. Due to
+the rather sad state of L<IO::Async>, support is only available partially
+(only timers and I/O watchers are supported, signals and child watchers
+are emulated by AnyEvent itself (fighting with IO::Async, so you cannot
+use both), idle watchers are being emulated, I/O watchers need to dup
+their fh.
 
 =head1 PROBLEMS WITH IO::Async
 
