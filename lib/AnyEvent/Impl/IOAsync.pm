@@ -144,10 +144,7 @@ our $LOOP;
 sub set_loop($) {
    $LOOP = $_[0];
 
-   # AnyEvent child watchers can safely be started after the child has exited,
-   # as long as nobody stupidly set SIGCHLD to IGNORE, but IO::Async is not so
-   # nice, so we have to enable the child manager here.
-   $LOOP->enable_childmanager;
+   #$LOOP->enable_childmanager;
 }
 
 sub timer {
