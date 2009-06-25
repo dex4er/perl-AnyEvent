@@ -133,6 +133,18 @@ out of its power save modethat often), and completely unnecessary, when
 signals are implemented properly (instead of relying on unportable
 L<IO::Async::Loop::IO_Ppoll>-style hacks).
 
+=item Unpleasant surprises on GNU/Linux
+
+When you develop your program on FreeBSD and run it on GNU/Linux, you
+might have unpleasant surprises, as IO::Async::Loop will by default use
+L<IO::Async::Loop::Epoll>, which is incompatible with C<fork>, so your
+network server will run into spurious and very hard to debug problems
+under heavy load, as IO::Async forks a lot of processes, e.g. for DNS
+resolution. It would be better if IO::Async would only load "safe"
+backends by default (or fix the epoll backend to work in the presence of
+fork, which admittedly is hard - EV does it for you, and also does not use
+unsafe backends by default).
+
 =back
 
 =cut
