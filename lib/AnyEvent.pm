@@ -394,13 +394,17 @@ There is a slight catch to child watchers, however: you usually start them
 I<after> the child process was created, and this means the process could
 have exited already (and no SIGCHLD will be sent anymore).
 
-Not all event models handle this correctly (POE doesn't), but even for
-event models that I<do> handle this correctly, they usually need to be
-loaded before the process exits (i.e. before you fork in the first place).
+Not all event models handle this correctly (neither POE nor IO::Async do,
+see their AnyEvent::Impl manpages for details), but even for event models
+that I<do> handle this correctly, they usually need to be loaded before
+the process exits (i.e. before you fork in the first place). AnyEvent's
+pure perl event loop handles all cases correctly regardless of when you
+start the watcher.
 
-This means you cannot create a child watcher as the very first thing in an
-AnyEvent program, you I<have> to create at least one watcher before you
-C<fork> the child (alternatively, you can call C<AnyEvent::detect>).
+This means you cannot create a child watcher as the very first
+thing in an AnyEvent program, you I<have> to create at least one
+watcher before you C<fork> the child (alternatively, you can call
+C<AnyEvent::detect>).
 
 Example: fork a process and wait for it
 
@@ -732,6 +736,10 @@ The known classes so far are:
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
    AnyEvent::Impl::POE       based on POE, not generic enough for full support.
 
+   # warning, support for IO::Async is only partial, as it is too broken
+   # and limited toe ven support the AnyEvent API. See AnyEvent::Impl::Async.
+   AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed (see its docs).
+
 There is no support for WxWidgets, as WxWidgets has no support for
 watching file handles. However, you can use WxWidgets through the
 POE Adaptor, as POE has a Wx backend that simply polls 20 times per
@@ -976,6 +984,13 @@ my @models = (
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
+   # IO::Async is just too broken - we would need workaorunds for its
+   # byzantine signal and broken child handling, among others.
+   # IO::Async is rather hard to detect, as it doesn't have any
+   # obvious default class.
+#   [IO::Async::            => AnyEvent::Impl::IOAsync::],  # requires special main program
+#   [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # requires special main program
+#   [IO::Async::Notifier::  => AnyEvent::Impl::IOAsync::],  # requires special main program
 );
 
 our %method = map +($_ => 1),
@@ -1077,7 +1092,7 @@ sub AUTOLOAD {
 # utility function to dup a filehandle. this is used by many backends
 # to support binding more than one watcher per filehandle (they usually
 # allow only one watcher per fd, so we dup it to get a different one).
-sub _dupfh($$$$) {
+sub _dupfh($$;$$) {
    my ($poll, $fh, $r, $w) = @_;
 
    # cygwin requires the fh mode to be matching, unix doesn't
@@ -1966,6 +1981,9 @@ A handler for C<SIGCHLD> is installed by AnyEvent's child watcher
 emulation for event loops that do not support them natively. Also, some
 event loops install a similar handler.
 
+If, when AnyEvent is loaded, SIGCHLD is set to IGNORE, then AnyEvent will
+reset it to default, to avoid losing child exit statuses.
+
 =item SIGPIPE
 
 A no-op handler is installed for C<SIGPIPE> when C<$SIG{PIPE}> is C<undef>
@@ -1986,9 +2004,11 @@ Feel free to install your own handler, or reset it to defaults.
 
 =cut
 
+undef $SIG{CHLD}
+   if $SIG{CHLD} eq 'IGNORE';
+
 $SIG{PIPE} = sub { }
    unless defined $SIG{PIPE};
-
 
 =head1 FORK
 

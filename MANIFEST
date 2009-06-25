@@ -12,13 +12,14 @@ lib/AnyEvent/Util.pm
 lib/AnyEvent/Handle.pm
 lib/AnyEvent/Socket.pm
 lib/AnyEvent/Impl/EV.pm
+lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Event.pm
-lib/AnyEvent/Impl/EventLib.pm
 lib/AnyEvent/Impl/Glib.pm
 lib/AnyEvent/Impl/Tk.pm
-lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Qt.pm
 lib/AnyEvent/Impl/POE.pm
+lib/AnyEvent/Impl/EventLib.pm
+lib/AnyEvent/Impl/IOAsync.pm
 
 t/00_load.t
 t/01_basic.t
