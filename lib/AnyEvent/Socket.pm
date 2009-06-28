@@ -176,7 +176,6 @@ sub parse_address($) {
          return &parse_ipv4 || &parse_unix
       }
    }
-
 }
 
 *aton = \&parse_address;
