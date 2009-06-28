@@ -88,17 +88,18 @@ notably works fine): On windows, you actually get two file handles you
 cannot use select on.
 
 This function gives you a pipe that actually works even on the broken
-windows platform (by creating a pair of TCP sockets, so do not expect any
-speed from that).
+windows platform (by creating a pair of TCP sockets on windows, so do not
+expect any speed from that, and using C<pipe> everywhere else).
 
-See portable_socketpair, below, for a bidirectional "pipe".
+See C<portable_socketpair>, below, for a bidirectional "pipe".
 
 Returns the empty list on any errors.
 
 =item ($fh1, $fh2) = portable_socketpair
 
 Just like C<portable_pipe>, above, but returns a bidirectional pipe
-(usually by calling socketpair to create a local loopback socket).
+(usually by calling C<socketpair> to create a local loopback socket pair,
+except on windows, where it again returns two interconnected TCP sockets).
 
 Returns the empty list on any errors.
 
@@ -153,27 +154,25 @@ sub _win32_socketpair {
 }
 
 sub portable_pipe() {
-   if (AnyEvent::WIN32) {
-      return _win32_socketpair;
-   } else {
-      my ($r, $w);
+   return _win32_socketpair
+      if AnyEvent::WIN32;
 
-      pipe $r, $w
-         or return;
+   my ($r, $w);
 
-      return ($r, $w);
-   }
+   pipe $r, $w
+      or return;
+
+   ($r, $w);
 }
 
 sub portable_socketpair() {
-   if (AnyEvent::WIN32) {
-      return _win32_socketpair;
-   } else {
-      socketpair my $fh1, my $fh2, &Socket::AF_UNIX, &Socket::SOCK_STREAM, &Socket::PF_UNSPEC
-         or return;
+   return _win32_socketpair
+      if AnyEvent::WIN32;
 
-      return ($fh1, $fh2)
-   }
+   socketpair my $fh1, my $fh2, &Socket::AF_UNIX, &Socket::SOCK_STREAM, &Socket::PF_UNSPEC
+      or return;
+
+   ($fh1, $fh2)
 }
 
 =item fork_call { CODE } @args, $cb->(@res)

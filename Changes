@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: parse ipv6 mapped addresses transparently
+	- slightly speed up portable_pipe/socketpair.
+
 4.42  Fri Jun 26 08:32:18 CEST 2009
 	- preliminary and neccesarily incomplete support for IO::Async.
 	- reset SIGCHLD to DEFAULT when AnyEvent is loaded, in

@@ -115,7 +115,7 @@ internally.
 
 POE cannot guarentee the order of callback invocation for timers, and
 usually gets it wrong. That is, if you have two timers, one timing out
-after another (all els ebeing equal), the callbacks might be called in
+after another (all else being equal), the callbacks might be called in
 reverse order.
 
 How one manages to even implement stuff that way escapes me.
@@ -124,23 +124,26 @@ How one manages to even implement stuff that way escapes me.
 
 POE offers child watchers - which is a laudable thing, as few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
-watchers: they are not generic enough (even the POE implementation itself
-isn't generic enough to let properly designed event loops such as EV use
-their child watcher instead - it insist on doing it itself the slow way).
+watchers: they are not generic enough (the POE implementation isn't even
+generic enough to let properly designed back-end use their native child
+watcher instead - it insist on doing it itself the broken way).
 
-Of course, if POE reaps an unrelated child it will also output a message
-for it that you cannot suppress (which shouldn't be too surprising at this
-point). Very professional.
+Unfortunately, POE's child handling is inherently racy: if the child
+exits before the handler is created (which is impossible to avoid in
+general, imagine the forked program to exit immediately because of a
+bug, or imagine the POE kernel being busy for a second), one has to
+wait for another event to occur, which can take an indefinite amount of
+time. Apparently POE implements a busy-waiting loop every second, but this
+is not guaranteed or documented, so in practise child status events can be
+delayed for up to a second "only".
+
+Of course, whenever POE reaps an unrelated child it will also output a
+message for it that you cannot suppress (which shouldn't be too surprising
+at this point). Very professional.
 
 As a workaround, AnyEvent::Impl::POE will take advantage of undocumented
-behaviour in POE::Kernel to catch the status of all child processes.
-
-Unfortunately, POE's child handling is racy: if the child exits before the
-handler is created (which is impossible to avoid in general), one has to
-wait for another event to occur, which can take an indefinite amount of
-time (apparently POE does a busy-waiting loop every second, but this is
-not guarenteed or documented, so in practise child status events can be
-delayed for up to a second "only" at least in the current version).
+behaviour in POE::Kernel to catch the status of all child processes, but
+it cannot guarantee delivery.
 
 How one manages to have such a glaring bug in an event loop after ten
 years of development escapes me.
