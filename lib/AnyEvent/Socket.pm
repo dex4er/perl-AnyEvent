@@ -146,7 +146,7 @@ sub parse_unix($) {
 
 }
 
-=item $ipn = parse_address $text
+=item $ipn = parse_address $ip
 
 Combines C<parse_ipv4> and C<parse_ipv6> in one function. The address
 here refers to the host address (not socket address) in network form
@@ -156,7 +156,11 @@ If the C<$text> is C<unix/>, then this function returns a special token
 recognised by the other functions in this module to mean "UNIX domain
 socket".
 
-=item $text = AnyEvent::Socket::aton $ipn
+If the C<$text> to parse is a mapped IPv4 in IPv6 address (:ffff::<ipv4>),
+then it will be treated as an IPv4 address. If you don't want that, you
+have to call C<parse_ipv4> and/or C<parse_ipv6> manually.
+
+=item $ipn = AnyEvent::Socket::aton $ip
 
 Same as C<parse_address>, but not exported (think C<Socket::inet_aton> but
 I<without> name resolution).
@@ -164,7 +168,15 @@ I<without> name resolution).
 =cut
 
 sub parse_address($) {
-   &parse_ipv4 || &parse_ipv6 || &parse_unix
+   for (&parse_ipv6) {
+      if ($_) {
+         s/^\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff//;
+         return $_;
+      } else {
+         return &parse_ipv4 || &parse_unix
+      }
+   }
+
 }
 
 *aton = \&parse_address;
@@ -261,6 +273,18 @@ sub address_family($) {
          : unpack "S", $_[0]
 }
 
+=item $text = format_ipv4 $ipn
+
+Expects a four octet string representing a binary IPv4 address and returns
+its textual format. Rarely used, see C<format_address> for a nicer
+interface.
+
+=item $text = format_ipv6 $ipn
+
+Expects a sixteen octet string representing a binary IPv6 address and
+returns its textual format. Rarely used, see C<format_address> for a
+nicer interface.
+
 =item $text = format_address $ipn
 
 Covnvert a host address in network format (e.g. 4 octets for IPv4 or 16
@@ -273,45 +297,58 @@ except it automatically detects the address type.
 
 Returns C<undef> if it cannot detect the type.
 
+If the C<$ipn> is a mapped IPv4 in IPv6 address (:ffff::<ipv4>), then just
+the contained IPv4 address will be returned. If you do not want that, you
+have to call C<format_ipv6> manually.
+
 =item $text = AnyEvent::Socket::ntoa $ipn
 
 Same as format_address, but not exported (think C<inet_ntoa>).
 
 =cut
 
-sub format_address;
+sub format_ipv4($) {
+   join ".", unpack "C4", $_[0]
+}
+
+sub format_ipv6($) {
+   if (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 eq $_[0]) {
+      return "::";
+   } elsif (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1 eq $_[0]) {
+      return "::1";
+   } elsif (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
+      # v4compatible
+      return "::" . format_ipv4 substr $_[0], 12;
+   } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
+      # v4mapped
+      return "::ffff:" . format_ipv4 substr $_[0], 12;
+   } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
+      # v4translated
+      return "::ffff:0:" . format_ipv4 substr $_[0], 12;
+   } else {
+      my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
+
+      # this is rather sucky, I admit
+      $ip =~ s/^0:(?:0:)*(0$)?/::/
+         or $ip =~ s/(:0){7}$/::/ or $ip =~ s/(:0){7}/:/
+         or $ip =~ s/(:0){6}$/::/ or $ip =~ s/(:0){6}/:/
+         or $ip =~ s/(:0){5}$/::/ or $ip =~ s/(:0){5}/:/
+         or $ip =~ s/(:0){4}$/::/ or $ip =~ s/(:0){4}/:/
+         or $ip =~ s/(:0){3}$/::/ or $ip =~ s/(:0){3}/:/
+         or $ip =~ s/(:0){2}$/::/ or $ip =~ s/(:0){2}/:/
+         or $ip =~ s/(:0){1}$/::/ or $ip =~ s/(:0){1}/:/;
+      return $ip
+   }
+}
+
 sub format_address($) {
    my $af = address_family $_[0];
    if ($af == AF_INET) {
-      return join ".", unpack "C4", $_[0]
+      return &format_ipv4;
    } elsif ($af == AF_INET6) {
-      if (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 eq $_[0]) {
-         return "::";
-      } elsif (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1 eq $_[0]) {
-         return "::1";
-      } elsif (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
-         # v4compatible
-         return "::" . format_address substr $_[0], 12;
-      } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
-         # v4mapped
-         return "::ffff:" . format_address substr $_[0], 12;
-      } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
-         # v4translated
-         return "::ffff:0:" . format_address substr $_[0], 12;
-      } else {
-         my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
-
-         # this is rather sucky, I admit
-         $ip =~ s/^0:(?:0:)*(0$)?/::/
-            or $ip =~ s/(:0){7}$/::/ or $ip =~ s/(:0){7}/:/
-            or $ip =~ s/(:0){6}$/::/ or $ip =~ s/(:0){6}/:/
-            or $ip =~ s/(:0){5}$/::/ or $ip =~ s/(:0){5}/:/
-            or $ip =~ s/(:0){4}$/::/ or $ip =~ s/(:0){4}/:/
-            or $ip =~ s/(:0){3}$/::/ or $ip =~ s/(:0){3}/:/
-            or $ip =~ s/(:0){2}$/::/ or $ip =~ s/(:0){2}/:/
-            or $ip =~ s/(:0){1}$/::/ or $ip =~ s/(:0){1}/:/;
-         return $ip
-      }
+      return (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12)
+         ? format_ipv4 substr $_[0], 12
+         : &format_ipv6;
    } elsif ($af == AF_UNIX) {
       return "unix/"
    } else {

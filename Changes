@@ -1,7 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: parse ipv6 mapped addresses transparently
 	- slightly speed up portable_pipe/socketpair.
+        - implement AnyEvent::Socket::format_ipv4/ipv6.
+        - special-case mapped ipv4 addresses in both
+          AnyEvent::Socket::format_address and parse_address,
+          to treat them just like ipv4 addresses.
 
 4.42  Fri Jun 26 08:32:18 CEST 2009
 	- preliminary and neccesarily incomplete support for IO::Async.
