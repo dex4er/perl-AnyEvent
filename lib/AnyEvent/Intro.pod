@@ -110,11 +110,16 @@ data being available on STDIN, by using a callback mechanism:
    # do something else here
 
 Looks more complicated, and surely is, but the advantage of using events
-is that your program can do something else instead of waiting for
-input. Waiting as in the first example is also called "blocking" because
-you "block" your process from executing anything else while you do so.
+is that your program can do something else instead of waiting for input
+(side note: combining AnyEvent with a thread package such as Coro can
+recoup much of the simplicity, effectively getting the best of two
+worlds).
 
-The second example avoids blocking, by only registering interest in a read
+Waiting as done in the first example is also called "blocking" the process
+because you "block"/keep your process from executing anything else while
+you do so.
+
+The second example avoids blocking by only registering interest in a read
 event, which is fast and doesn't block your process. Only when read data
 is available will the callback be called, which can then proceed to read
 the data.
@@ -124,11 +129,11 @@ The "interest" is represented by an object returned by C<< AnyEvent->io
 file handle (or other event sources) for the event you are interested in.
 
 In the example above, we create an I/O watcher by calling the C<<
-AnyEvent->io >> method. Disinterest in some event is simply expressed by
-forgetting about the watcher, for example, by C<undef>'ing the variable it
-is stored in. AnyEvent will automatically clean up the watcher if it is no
-longer used, much like Perl closes your file handles if you no longer use
-them anywhere.
+AnyEvent->io >> method. Disinterest in some event is simply expressed
+by forgetting about the watcher, for example, by C<undef>'ing the only
+variable it is stored in. AnyEvent will automatically clean up the watcher
+if it is no longer used, much like Perl closes your file handles if you no
+longer use them anywhere.
 
 =head3 A short note on callbacks
 
@@ -155,19 +160,20 @@ which often is unnecessary and leads to nonsensical or duplicated names.
 
 In Perl, one can specify behaviour much more directly by using
 I<closures>. Closures are code blocks that take a reference to the
-enclosing scope(s) when they are created. This means lexical variables in scope at the time
-of creating the closure can simply be used inside the closure:
+enclosing scope(s) when they are created. This means lexical variables in
+scope at the time of creating the closure can simply be used inside the
+closure:
 
    my $arg = ...;
 
    call_me_back_later sub { $arg->method };
 
-Under most circumstances, closures are faster, use less resources and
+Under most circumstances, closures are faster, use fewer resources and
 result in much clearer code then the traditional approach. Faster,
 because parameter passing and storing them in local variables in Perl
-is relatively slow. Less resources, because closures take references to
-existing variables without having to create new ones, and clearer code
-because it is immediately obvious that the second example calls the
+is relatively slow. Fewer resources, because closures take references
+to existing variables without having to create new ones, and clearer
+code because it is immediately obvious that the second example calls the
 C<method> method when the callback is invoked.
 
 Apart from these, the strongest argument for using closures with AnyEvent
@@ -178,12 +184,12 @@ closures are the only way to achieve that in most cases :->
 =head3 A hint on debugging
 
 AnyEvent does, by default, not do any argument checking. This can lead to
-strange and unexpected results especially if you are trying to learn yur
+strange and unexpected results especially if you are trying to learn your
 ways with AnyEvent.
 
 AnyEvent supports a special "strict" mode, off by default, which does very
-strict argument checking, at the expense of being somewhat slower. When
-developing, however, this mode is very useful.
+strict argument checking, at the expense of being somewhat slower. During
+development, however, this mode is very useful.
 
 You can enable this strict mode either by having an environment variable
 C<PERL_ANYEVENT_STRICT> with a true value in your environment:
@@ -196,12 +202,12 @@ same effect (do not do this in production, however).
 
 =head2 Condition Variables
 
-Back to the I/O watcher example: The code not yet a fully working program,
-and will not work as-is. The reason is that your callback will not be
-invoked out of the blue, you have to run the event loop. Also, event-based
-programs sometimes have to block, too, as when there simply is nothing
-else to do and everything waits for some events, it needs to block the
-process as well.
+Back to the I/O watcher example: The code is not yet a fully working
+program, and will not work as-is. The reason is that your callback will
+not be invoked out of the blue, you have to run the event loop. Also,
+event-based programs sometimes have to block, too, as when there simply is
+nothing else to do and everything waits for some events, it needs to block
+the process as well until new events arrive.
 
 In AnyEvent, this is done using condition variables. Condition variables
 are named "condition variables" because they represent a condition that is
@@ -248,9 +254,9 @@ and there is no consumer yet - let's change that right now:
 This program creates an AnyEvent condvar by calling the C<<
 AnyEvent->condvar >> method. It then creates a watcher as usual, but
 inside the callback it C<send>'s the C<$name_ready> condition variable,
-which causes anybody waiting on it to continue.
+which causes whoever is waiting on it to continue.
 
-The "anybody" in this case is the code that follows, which calls C<<
+The "whoever" in this case is the code that follows, which calls C<<
 $name_ready->recv >>: The producer calls C<send>, the consumer calls
 C<recv>.
 
@@ -342,21 +348,21 @@ to do to make the AnyEvent watcher use Gtk2 (actually Glib) - it just
 worked.
 
 Admittedly, the example is a bit silly - who would want to read names
-form standard input in a Gtk+ application. But imagine that instead of
+from standard input in a Gtk+ application. But imagine that instead of
 doing that, you would make a HTTP request in the background and display
 it's results. In fact, with event-based programming you can make many
 http-requests in parallel in your program and still provide feedback to
 the user and stay interactive.
 
-In the next part you will see how to do just that - by implementing an
+And in the next part you will see how to do just that - by implementing an
 HTTP request, on our own, with the utility modules AnyEvent comes with.
 
 Before that, however, let's briefly look at how you would write your
 program with using only AnyEvent, without ever calling some other event
 loop's run function.
 
-In the example using condition variables, we used that, and in fact, this
-is the solution:
+In the example using condition variables, we used those to start waiting
+for events, and in fact, condition variables are the solution:
 
    my $quit_program = AnyEvent->condvar;
 
@@ -364,12 +370,14 @@ is the solution:
 
    $quit_program->recv;
 
-If any of your watcher callbacks decide to quit, they can simply call
-C<< $quit_program->send >>. Of course, they could also decide not to and
+If any of your watcher callbacks decide to quit (this is often
+called an "unloop" in other frameworks), they can simply call C<<
+$quit_program->send >>. Of course, they could also decide not to and
 simply call C<exit> instead, or they could decide not to quit, ever (e.g.
 in a long-running daemon program).
 
-In that case, you can simply use:
+If you don't need some clean quit functionality and just want to run the
+event loop, you can simply do this:
 
    AnyEvent->condvar->recv;
 
@@ -411,65 +419,60 @@ AnyEvent->timer >> method:
    $cv->recv;
 
 Unlike I/O watchers, timers are only interested in the amount of seconds
-they have to wait. When that amount of time has passed, AnyEvent will
-invoke your callback.
+they have to wait. When (at least) that amount of time has passed,
+AnyEvent will invoke your callback.
 
 Unlike I/O watchers, which will call your callback as many times as there
-is data available, timers are one-shot: after they have "fired" once and
-invoked your callback, they are dead and no longer do anything.
+is data available, timers are normally one-shot: after they have "fired"
+once and invoked your callback, they are dead and no longer do anything.
 
 To get a repeating timer, such as a timer firing roughly once per second,
-you have to recreate it:
+you can specify an C<interval> parameter:
 
-   use AnyEvent;
-
-   my $time_watcher;
-
-   sub once_per_second {
-      print "tick\n";
-      
-      # (re-)create the watcher
-      $time_watcher = AnyEvent->timer (
-         after => 1,
-         cb    => \&once_per_second,
-      );
-   }
-
-   # now start the timer
-   once_per_second;
-
-Having to recreate your timer is a restriction put on AnyEvent that is
-present in most event libraries it uses. It is so annoying that some
-future version might work around this limitation, but right now, it's the
-only way to do repeating timers.
-
-Fortunately most timers aren't really repeating but specify timeouts of
-some sort.
+   my $once_per_second = AnyEvent->timer (
+      after => 0,    # first invoke ASAP
+      interval => 1, # then invoke every second
+      cb    => sub { # the callback to invoke
+         $cv->send;
+      },
+   );
 
 =head3 More esoteric sources
 
 AnyEvent also has some other, more esoteric event sources you can tap
-into: signal and child watchers.
+into: signal, child and idle watchers.
 
 Signal watchers can be used to wait for "signal events", which simply
 means your process got send a signal (such as C<SIGTERM> or C<SIGUSR1>).
 
-Process watchers wait for a child process to exit. They are useful when
-you fork a separate process and need to know when it exits, but you do not
-wait for that by blocking.
+Child-process watchers wait for a child process to exit. They are useful
+when you fork a separate process and need to know when it exits, but you
+do not wait for that by blocking.
 
-Both watcher types are described in detail in the main L<AnyEvent> manual
-page.
+Idle watchers invoke their callback when the event loop has handled all
+outstanding events, polled for new events and didn't find any, i.e., when
+your process is otherwise idle. They are useful if you want to do some
+non-trivial data processing that can be done when your program doesn't
+have anything better to do.
 
+All these watcher types are described in detail in the main L<AnyEvent>
+manual page.
+
+Sometimes you also need to know what the current time is: C<<
+AnyEvent->now >> returns the time the event toolkit uses to schedule
+relative timers, and is usually what you want. It is often cached (which
+means it can be a bit outdated). In that case, you can use the more costly
+C<< AnyEvent->time >> method which will ask your operating system for the
+current time, which is slower, but also more up to date.
 
 =head1 Network programming and AnyEvent
 
 So far you have seen how to register event watchers and handle events.
 
-This is a great foundation to write network clients and servers, and might be
-all that your module (or program) ever requires, but writing your own I/O
-buffering again and again becomes tedious, not to mention that it attracts
-errors.
+This is a great foundation to write network clients and servers, and might
+be all that your module (or program) ever requires, but writing your own
+I/O buffering again and again becomes tedious, not to mention that it
+attracts errors.
 
 While the core L<AnyEvent> module is still small and self-contained,
 the distribution comes with some very useful utility modules such as
@@ -487,9 +490,10 @@ IP addresses for log files.
 
 =head2 L<AnyEvent::Handle>
 
-This module handles non-blocking IO on file handles in an event based
-manner. It provides a wrapper object around your file handle that provides
-queueing and buffering of incoming and outgoing data for you.
+This module handles non-blocking IO on (socket-, pipe- etc.) file handles
+in an event based manner. It provides a wrapper object around your file
+handle that provides queueing and buffering of incoming and outgoing data
+for you.
 
 It also implements the most common data formats, such as text lines, or
 fixed and variable-width data blocks.
@@ -527,22 +531,15 @@ single line with a user name and then reading the finger response, as
 specified by that user. OK, RFC 1288 specifies a vastly more complex
 protocol, but it basically boils down to this:
 
-   # telnet idsoftware.com finger
-   Trying 192.246.40.37...
-   Connected to idsoftware.com (192.246.40.37).
+   # telnet kernel.org finger
+   Trying 204.152.191.37...
+   Connected to kernel.org (204.152.191.37).
    Escape character is '^]'.
-   johnc
-   Welcome to id Software's Finger Service V1.5!
-
-   [...]
-   Now on the web:
-   [...]
-
+   
+   The latest stable version of the Linux kernel is: [...]
    Connection closed by foreign host.
 
-"Now on the web..." yeah, I<was> used indeed, but at least the finger
-daemon still works, so let's write a little AnyEvent function that makes a
-finger request:
+So let's write a little AnyEvent function that makes a finger request:
 
    use AnyEvent;
    use AnyEvent::Socket;
@@ -617,13 +614,14 @@ callback. The important point is that it will always be called as soon as
 the outcome of the TCP connect is known.
 
 This style of programming is also called "continuation style": the
-"continuation" is simply the way the program continues - normally, a
-program continues at the next line after some statement (the exception
-is loops or things like C<return>). When we are interested in events,
-however, we instead specify the "continuation" of our program by passing a
-closure, which makes that closure the "continuation" of the program. The
-C<tcp_connect> call is like saying "return now, and when the connection is
-established or it failed, continue there".
+"continuation" is simply the way the program continues - normally at the
+next line after some statement (the exception is loops or things like
+C<return>). When we are interested in events, however, we instead specify
+the "continuation" of our program by passing a closure, which makes that
+closure the "continuation" of the program.
+
+The C<tcp_connect> call is like saying "return now, and when the
+connection is established or it failed, continue there".
 
 Now let's look at the callback/closure in more detail:
 
@@ -645,14 +643,16 @@ function, and most event loops continue even after a C<die>!
 
 This is why we instead C<return>, but also call C<< $cv->send >> without
 any arguments to signal to the condvar consumer that something bad has
-happened. The return value of C<< $cv->send >> is irrelevant, as is the
-return value of our callback. The return statement is simply used for the
-side effect of, well, returning immediately from the callback. Checking
-for errors and handling them this way is very common, which is why this
-compact idiom is so handy.
+happened. The return value of C<< $cv->send >> is irrelevant, as is
+the return value of our callback. The C<return> statement is simply
+used for the side effect of, well, returning immediately from the
+callback. Checking for errors and handling them this way is very common,
+which is why this compact idiom is so handy.
 
 As the next step in the finger protocol, we send the username to the
-finger daemon on the other side of our connection:
+finger daemon on the other side of our connection (the kernel.org finger
+service doesn't actually wait for a username, but the net is running out
+of finger servers fast):
 
          syswrite $fh, "$user\015\012";
 
@@ -680,9 +680,11 @@ destroy the variable and its contents, which would in turn unregister our
 watcher.
 
 To avoid that, we C<undef>ine the variable in the watcher callback. This
-means that, when the C<tcp_connect> callback returns, that perl thinks
-(quite correctly) that the read watcher is still in use - namely in the
-callback.
+means that, when the C<tcp_connect> callback returns, perl thinks (quite
+correctly) that the read watcher is still in use - namely in the callback,
+and thus keeps it alive even if nothing else in the program refers to it
+anymore (it is much like Baron Münchhausen keeping himself from dying by
+pulling himself out of a swamp).
 
 The trick, however, is that instead of:
 
@@ -711,7 +713,7 @@ C<sysread> returns either an error or end-of-file:
                if ($len <= 0) {
 
 Note that C<sysread> has the ability to append data it reads to a scalar,
-by specifying an offset, which is what we make good use of in this
+by specifying an offset, a feature of which we make good use of in this
 example.
 
 When C<sysread> indicates we are done, the callback C<undef>ines
@@ -735,11 +737,11 @@ the background, we even can run multiple sessions in parallel, like this:
 
    my $f1 = finger "trouble", "noc.dfn.de"; # check for trouble tickets
    my $f2 = finger "1736"   , "noc.dfn.de"; # fetch ticket 1736
-   my $f3 = finger "johnc", "idsoftware.com"; # finger john
+   my $f3 = finger "hpa"    , "kernel.org"; # finger hpa
 
-   print "trouble tickets:\n", $f1->recv, "\n";
+   print "trouble tickets:\n"     , $f1->recv, "\n";
    print "trouble ticket #1736:\n", $f2->recv, "\n";
-   print "john carmacks finger file: ", $f3->recv, "\n";
+   print "kernel release info: "  , $f3->recv, "\n";
 
 It doesn't look like it, but in fact all three requests run in
 parallel. The code waits for the first finger request to finish first, but
@@ -777,13 +779,14 @@ be used mainly in an event-based program you would normally prefer to pass
 a callback directly. If you write a module and expect your users to use
 it "synchronously" often (for example, a simple http-get script would not
 really care much for events), then you would use a condition variable and
-tell them "simply ->recv the data".
+tell them "simply C<< ->recv >> the data".
 
 =head3 Problems with the implementation and how to fix them
 
 To make this example more real-world-ready, we would not only implement
-some write buffering (for the paranoid), but we would also have to handle
-timeouts and maybe protocol errors.
+some write buffering (for the paranoid, or maybe denial-of-service aware
+security expert), but we would also have to handle timeouts and maybe
+protocol errors.
 
 Doing this quickly gets unwieldy, which is why we introduce
 L<AnyEvent::Handle> in the next section, which takes care of all these
@@ -792,8 +795,8 @@ details for you and let's you concentrate on the actual protocol.
 
 =head2 Implementing simple HTTP and HTTPS GET requests with AnyEvent::Handle
 
-The L<AnyEvent::Handle> module has been hyped quite a bit so far, so let's
-see what it really offers.
+The L<AnyEvent::Handle> module has been hyped quite a bit in this document
+so far, so let's see what it really offers.
 
 As finger is such a simple protocol, let's try something slightly more
 complicated: HTTP/1.0.
@@ -954,13 +957,14 @@ of the headers to the server.
 The more interesting question is why the method is called C<push_write>
 and not just write. The reason is that you can I<always> add some write
 data without blocking, and to do this, AnyEvent::Handle needs some write
-queue internally - and C<push_write> simply pushes some data at the end of
-that queue, just like Perl's C<push> pushes data at the end of an array.
+queue internally - and C<push_write> simply pushes some data onto the end
+of that queue, just like Perl's C<push> pushes data onto the end of an
+array.
 
 The deeper reason is that at some point in the future, there might
 be C<unshift_write> as well, and in any case, we will shortly meet
-C<push_read> and C<unshift_read>, and it's usually easiest if all those
-functions have some symmetry in their name.
+C<push_read> and C<unshift_read>, and it's usually easiest to remember if
+all those functions have some symmetry in their name.
 
 If C<push_write> is called with more than one argument, then you can even
 do I<formatted> I/O, which simply means your data will be transformed in
@@ -972,13 +976,14 @@ to the write queue:
 Apart from that, this pretty much summarises the write queue, there is
 little else to it.
 
-Reading the response if far more interesting:
+Reading the response is far more interesting, because it involves the more
+powerful and complex I<read queue>:
 
 =head3 The read queue
 
-The response consists of three parts: a single line of response status, a
-single paragraph of headers ended by an empty line, and the request body,
-which is simply the remaining data on that connection.
+The response consists of three parts: a single line with the response
+status, a single paragraph of headers ended by an empty line, and the
+request body, which is simply the remaining data on that connection.
 
 For the first two, we push two read requests onto the read queue:
 
@@ -994,10 +999,11 @@ For the first two, we push two read requests onto the read queue:
          $header = $line;
       });
 
-While one can simply push a single callback to the queue, I<formatted> I/O
-really comes to out advantage here, as there is a ready-made "read line"
-read type. The first read expects a single line, ended by C<\015\012> (the
-standard end-of-line marker in internet protocols).
+While one can simply push a single callback to parse the data the
+queue, I<formatted> I/O really comes to our advantage here, as there
+is a ready-made "read line" read type. The first read expects a single
+line, ended by C<\015\012> (the standard end-of-line marker in internet
+protocols).
 
 The second "line" is actually a single paragraph - instead of reading it
 line by line we tell C<push_read> that the end-of-line marker is really
@@ -1025,16 +1031,17 @@ specified when constructing the object, but doing it this way preserves
 logical ordering.
 
 The read callback simply adds the current read buffer to it's C<$body>
-variable and, most importantly, I<empties> it by assign the empty string
-to it.
+variable and, most importantly, I<empties> the buffer by assigning the
+empty string to it.
 
-After AnyEvent::Handle has been so instructed, it will now handle incoming
+After AnyEvent::Handle has been so instructed, it will handle incoming
 data according to these instructions - if all goes well, the callback will
 be invoked with the response data, if not, it will get an error.
 
-In general, you get pipelining very easy with AnyEvent::Handle: If
-you have a protocol with a request/response structure, your request
-methods/functions will all look like this (simplified):
+In general, you can implement pipelining (a semi-advanced feature of many
+protocols) very easy with AnyEvent::Handle: If you have a protocol with a
+request/response structure, your request methods/functions will all look
+like this (simplified):
 
    sub request {
 
@@ -1045,9 +1052,21 @@ methods/functions will all look like this (simplified):
       $handle->push_read (...);
    }
 
-=head3 Using it
+This means you can queue as many requests as you want, and while
+AnyEvent::Handle goes through its read queue to handle the response data,
+the other side can work on the next request - queueing the request just
+appends some data to the write queue and installs a handler to be called
+later.
 
-And here is how you would use it:
+You might ask yourself how to handle decisions you can only make I<after>
+you have received some data (such as handling a short error response or a
+long and differently-formatted response). The answer to this problem is
+C<unshift_read>, which we will introduce together with an example in the
+coming sections.
+
+=head3 Using C<http_get>
+
+Finally, here is how you would use C<http_get>:
 
    http_get "www.google.com", "/", sub {
       my ($response, $header, $body) = @_;
@@ -1068,18 +1087,18 @@ speaks HTTPS instead.
 
 HTTPS is, quite simply, a standard TLS connection (B<T>ransport B<L>ayer
 B<S>ecurity is the official name for what most people refer to as C<SSL>)
-that contains standard HTTP protocol exchanges. The other difference to
-HTTP is that it uses port C<443> instead of port C<80>.
+that contains standard HTTP protocol exchanges. The only other difference
+to HTTP is that by default it uses port C<443> instead of port C<80>.
 
-To implement these two differences we need two tiny changes, first, in the C<tcp_connect> call
-we replace C<http> by C<https>):
+To implement these two differences we need two tiny changes, first, in the
+C<tcp_connect> call we replace C<http> by C<https>):
 
       tcp_connect $host, "https", sub { ...
 
 The other change deals with TLS, which is something L<AnyEvent::Handle>
-does for us, as long as I<you> made sure that the L<Net::SSLeay> module is
-around. To enable TLS with L<AnyEvent::Handle>, we simply pass an addition
-C<tls> parameter to the call to C<AnyEvent::Handle::new>:
+does for us, as long as I<you> made sure that the L<Net::SSLeay> module
+is around. To enable TLS with L<AnyEvent::Handle>, we simply pass an
+additional C<tls> parameter to the call to C<AnyEvent::Handle::new>:
 
          tls      => "connect",
 
@@ -1090,14 +1109,16 @@ server/client relationship in TLS.
 
 That's all.
 
-Of course, all this should be handled transparently by C<http_get> after
-parsing the URL. See the part about exercising your inspiration earlier in
-this document.
+Of course, all this should be handled transparently by C<http_get>
+after parsing the URL. If you need this, see the part about exercising
+your inspiration earlier in this document. You could also use the
+L<AnyEvent::HTTP> module from CPAN, which implements all this and works
+around a lot of quirks for you, too.
 
 =head3 The read queue - revisited
 
 HTTP always uses the same structure in its responses, but many protocols
-require parsing responses different depending on the response itself.
+require parsing responses differently depending on the response itself.
 
 For example, in SMTP, you normally get a single response line:
 
@@ -1110,13 +1131,13 @@ But SMTP also supports multi-line responses:
    220 my response is longer than yours
 
 To handle this, we need C<unshift_read>. As the name (hopefully) implies,
-C<unshift_read> will not append your read request tot he end of the read
+C<unshift_read> will not append your read request to the end of the read
 queue, but instead it will prepend it to the queue.
 
-This is useful for this this situation: You push your response-line read
+This is useful in the situation above: Just push your response-line read
 request when sending the SMTP command, and when handling it, you look at
-the line to see if more is to come, and C<unshift_read> another reader,
-like this:
+the line to see if more is to come, and C<unshift_read> another reader
+callback if required, like this:
 
    my $response; # response lines end up in here
 
@@ -1172,23 +1193,25 @@ sent:
 =head3 Your own read queue handler
 
 Sometimes, your protocol doesn't play nice and uses lines or chunks of
-data, in which case you have to implement your own read parser.
+data not formatted in a way handled by AnyEvent::Handle out of the box. In
+this case you have to implement your own read parser.
 
 To make up a contorted example, imagine you are looking for an even
 number of characters followed by a colon (":"). Also imagine that
 AnyEvent::Handle had no C<regex> read type which could be used, so you'd
 had to do it manually.
 
-To implement this, you would C<push_read> (or C<unshift_read>) just a
-single code reference.
+To implement a read handler for this, you would C<push_read> (or
+C<unshift_read>) just a single code reference.
 
 This code reference will then be called each time there is (new) data
-available in the read buffer, and is expected to either eat/consume some
-of that data (and return true) or to return false to indicate that it
-wants to be called again.
+available in the read buffer, and is expected to either successfully
+eat/consume some of that data (and return true) or to return false to
+indicate that it wants to be called again.
 
-If the code reference returns true, then it will be removed from the read
-queue, otherwise it stays in front of it.
+If the code reference returns true, then it will be removed from the
+read queue (because it has parsed/consumed whatever it was supposed to
+consume), otherwise it stays in the front of it.
 
 The example above could be coded like this:
 
@@ -1209,6 +1232,29 @@ The example above could be coded like this:
       1
    });
 
+This concludes our little tutorial.
+
+=head1 Where to go from here?
+
+This introduction should have explained the key concepts between
+L<AnyEvent>, namely event watchers and condition variables,
+L<AnyEvent::Socket>, for your basic networking needs, and
+L<AnyEvent::Handle>, a nice wrapper around handles.
+
+You could either start coding stuff right away, look at those manual
+pages for the gory details, or roam CPAN for other AnyEvent modules (such
+as L<AnyEvent::IRC> or L<AnyEvent::HTTP>) to see more code examples (or
+simply to use them).
+
+If you need a protocol that doesn't have an implementation using AnyEvent,
+remember that you can mix AnyEvent with one other event framework, such as
+L<POE>, so you can always use AnyEvent for your own tasks plus modules of
+one other event framework to fill any gaps.
+
+And last not least, you could also look at L<Coro>, especially
+L<Coro::AnyEvent>, to see how you can turn event-based programming from
+callback style back to the usual imperative style (also called "inversion
+of control" - AnyEvent calls I<you>, but Coro lets I<you> call AnyEvent).
 
 =head1 Authors
 
