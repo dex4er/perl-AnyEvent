@@ -1,14 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
+4.45  Mon Jun 29 22:59:26 CEST 2009
+        - a write error could cause AnyEvent::Handle to create
+          an I/O watcher with an undefined $fh.
         - special-case mapped ipv4 addresses in both
           AnyEvent::Socket::format_address and parse_address,
           to treat them just like ipv4 addresses.
         - updated and overhauled the AnyEvent::Intro doc.
-        - a write error could cause AnyEvent::Handle to create
-          an I/O watcher with an undefined $fh.
         - implement AnyEvent::Socket::format_ipv4/ipv6.
 	- slightly speed up portable_pipe/socketpair.
-        - expand condvar ebgin/end documentation.
+        - expand condvar begin/end documentation.
 
 4.42  Fri Jun 26 08:32:18 CEST 2009
 	- preliminary and neccesarily incomplete support for IO::Async.

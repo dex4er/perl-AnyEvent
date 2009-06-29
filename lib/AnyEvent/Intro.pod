@@ -1236,10 +1236,10 @@ This concludes our little tutorial.
 
 =head1 Where to go from here?
 
-This introduction should have explained the key concepts between
-L<AnyEvent>, namely event watchers and condition variables,
-L<AnyEvent::Socket>, for your basic networking needs, and
-L<AnyEvent::Handle>, a nice wrapper around handles.
+This introduction should have explained the key concepts of L<AnyEvent>
+- event watchers and condition variables, L<AnyEvent::Socket> - basic
+networking utilities, and L<AnyEvent::Handle> - a nice wrapper around
+handles.
 
 You could either start coding stuff right away, look at those manual
 pages for the gory details, or roam CPAN for other AnyEvent modules (such
