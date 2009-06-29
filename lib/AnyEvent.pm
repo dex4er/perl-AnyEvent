@@ -601,8 +601,6 @@ user/consumer.
 
 =item $cv->end
 
-These two methods are EXPERIMENTAL and MIGHT CHANGE.
-
 These two methods can be used to combine many transactions/events into
 one. For example, a function that pings many hosts in parallel might want
 to use a condition variable for the whole process.
@@ -613,7 +611,37 @@ C<< ->end >> will decrement it.  If the counter reaches C<0> in C<< ->end
 is I<supposed> to call C<< ->send >>, but that is not required. If no
 callback was set, C<send> will be called without any arguments.
 
-Let's clarify this with the ping example:
+You can think of C<< $cv->send >> giving you an OR condition (one call
+sends), while C<< $cv->begin >> and C<< $cv->end >> giving you an AND
+condition (all C<begin> calls must be C<end>'ed before the condvar sends).
+
+Let's start with a simple example: you have two I/O watchers (for example,
+STDOUT and STDERR for a program), and you want to wait for both streams to
+close before activating a condvar:
+
+   my $cv = AnyEvent->condvar;
+
+   $cv->begin; # first watcher
+   my $w1 = AnyEvent->io (fh => $fh1, cb => sub {
+      defined sysread $fh1, my $buf, 4096
+         or $cv->end;
+   });
+
+   $cv->begin; # second watcher
+   my $w2 = AnyEvent->io (fh => $fh2, cb => sub {
+      defined sysread $fh2, my $buf, 4096
+         or $cv->end;
+   });
+
+   $cv->recv;
+
+This works because for every event source (EOF on file handle), there is
+one call to C<begin>, so the condvar waits for all calls to C<end> before
+sending.
+
+The ping example mentioned above is slightly more complicated, as the
+there are results to be passwd back, and the number of tasks that are
+begung can potentially be zero:
 
    my $cv = AnyEvent->condvar;
 
@@ -643,10 +671,11 @@ to be called once the counter reaches C<0>, and second, it ensures that
 C<send> is called even when C<no> hosts are being pinged (the loop
 doesn't execute once).
 
-This is the general pattern when you "fan out" into multiple subrequests:
-use an outer C<begin>/C<end> pair to set the callback and ensure C<end>
-is called at least once, and then, for each subrequest you start, call
-C<begin> and for each subrequest you finish, call C<end>.
+This is the general pattern when you "fan out" into multiple (but
+potentially none) subrequests: use an outer C<begin>/C<end> pair to set
+the callback and ensure C<end> is called at least once, and then, for each
+subrequest you start, call C<begin> and for each subrequest you finish,
+call C<end>.
 
 =back
 
