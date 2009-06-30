@@ -34,7 +34,6 @@ use strict;
 use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
 use AnyEvent ();
-use AnyEvent::Handle ();
 use AnyEvent::Util qw(AF_INET6);
 
 our $VERSION = 4.45;
@@ -1022,6 +1021,8 @@ sub _exec {
 
                my ($fh) = @_
                   or return &$do_retry;
+
+               require AnyEvent::Handle;
 
                my $handle; $handle = new AnyEvent::Handle
                   fh       => $fh,
