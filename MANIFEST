@@ -9,6 +9,7 @@ lib/AnyEvent/Intro.pod
 lib/AnyEvent/Strict.pm
 lib/AnyEvent/DNS.pm
 lib/AnyEvent/Util.pm
+lib/AnyEvent/TLS.pm
 lib/AnyEvent/Handle.pm
 lib/AnyEvent/Socket.pm
 lib/AnyEvent/Impl/EV.pm

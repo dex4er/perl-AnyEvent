@@ -65,9 +65,9 @@ argument.
 
 =over 4
 
-=item B<new (%args)>
+=item $handle = B<new> AnyEvent::TLS fh => $filehandle, key => value...
 
-The constructor supports these arguments (all as key => value pairs).
+The constructor supports these arguments (all as C<< key => value >> pairs).
 
 =over 4
 
@@ -239,6 +239,12 @@ This will not work for partial TLS data that could not be encoded
 yet. This data will be lost. Calling the C<stoptls> method in time might
 help.
 
+=item common_name => $string
+
+The common name used by some verification methods (most notably SSL/TLS)
+associated with this connection. Usually this is the remote hostname used
+to connect, but can be almost anything.
+
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
 When this parameter is given, it enables TLS (SSL) mode, that means
@@ -257,7 +263,12 @@ mode.
 You can also provide your own TLS connection object, but you have
 to make sure that you call either C<Net::SSLeay::set_connect_state>
 or C<Net::SSLeay::set_accept_state> on it before you pass it to
-AnyEvent::Handle.
+AnyEvent::Handle. Also, this module will take ownership of this connection
+object.
+
+At some future point, AnyEvent::Handle might switch to another TLS
+implementation, then the option to use your own session object will go
+away.
 
 B<IMPORTANT:> since Net::SSLeay "objects" are really only integers,
 passing in the wrong integer will lead to certain crash. This most often
@@ -266,11 +277,15 @@ segmentation fault.
 
 See the C<< ->starttls >> method for when need to start TLS negotiation later.
 
-=item tls_ctx => $ssl_ctx
+=item tls_ctx => $anyevent_tls
 
-Use the given C<Net::SSLeay::CTX> object to create the new TLS connection
+Use the given C<AnyEvent::TLS> object to create the new TLS connection
 (unless a connection object was specified directly). If this parameter is
 missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
+
+Instead of an object, you can also specify a hash reference with C<< key
+=> value >> pairs. Those will be passed to L<AnyEvent::TLS> to create a
+new TLS context object.
 
 =item json => JSON or JSON::XS object
 
@@ -289,32 +304,33 @@ use this functionality, as AnyEvent does not have a dependency itself.
 
 sub new {
    my $class = shift;
-
    my $self = bless { @_ }, $class;
 
    $self->{fh} or Carp::croak "mandatory argument fh is missing";
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
-      if $self->{tls};
-
    $self->{_activity} = AnyEvent->now;
    $self->_timeout;
 
-   $self->on_drain (delete $self->{on_drain}) if exists $self->{on_drain};
    $self->no_delay (delete $self->{no_delay}) if exists $self->{no_delay};
+
+   $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
+      if $self->{tls};
+
+   $self->on_drain (delete $self->{on_drain}) if exists $self->{on_drain};
 
    $self->start_read
       if $self->{on_read};
 
-   $self
+   $self->{fh} && $self
 }
 
 sub _shutdown {
    my ($self) = @_;
 
    delete @$self{qw(_tw _rw _ww fh rbuf wbuf on_read _queue)};
+   $self->{_eof} = 1; # tell starttls et. al to stop trying
 
    &_freetls;
 }
@@ -1380,12 +1396,15 @@ C<starttls>.
 The first argument is the same as the C<tls> constructor argument (either
 C<"connect">, C<"accept"> or an existing Net::SSLeay object).
 
-The second argument is the optional C<Net::SSLeay::CTX> object that is
-used when AnyEvent::Handle has to create its own TLS connection object.
+The second argument is the optional C<AnyEvent::TLS> object that is used
+when AnyEvent::Handle has to create its own TLS connection object, or
+a hash reference with C<< key => value >> pairs that will be used to
+construct a new context.
 
-The TLS connection object will end up in C<< $handle->{tls} >> after this
-call and can be used or changed to your liking. Note that the handshake
-might have already started when this function returns.
+The TLS connection object will end up in C<< $handle->{tls} >>, the TLS
+context in C<< $handle->{tls_ctx} >> after this call and can be used or
+changed to your liking. Note that the handshake might have already started
+when this function returns.
 
 If it an error to start a TLS handshake more than once per
 AnyEvent::Handle object (this is due to bugs in OpenSSL).
@@ -1399,16 +1418,18 @@ sub starttls {
 
    Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
       if $self->{tls};
-   
-   if ($ssl eq "accept") {
-      $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
-      Net::SSLeay::set_accept_state ($ssl);
-   } elsif ($ssl eq "connect") {
-      $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
-      Net::SSLeay::set_connect_state ($ssl);
-   }
 
-   $self->{tls} = $ssl;
+   $ctx ||= $self->{tls_ctx};
+
+   if ("HASH" eq ref $ctx) {
+      require AnyEvent::TLS;
+
+      local $Carp::CarpLevel = 1; # skip ourselves when creating a new context
+      $ctx = new AnyEvent::TLS %$ctx;
+   }
+   
+   $self->{tls_ctx} = $ctx || TLS_CTX ();
+   $self->{tls}     = $ssl = $self->{tls_ctx}->_get_session ($ssl, $self);
 
    # basically, this is deep magic (because SSL_read should have the same issues)
    # but the openssl maintainers basically said: "trust us, it just works".
@@ -1422,9 +1443,10 @@ sub starttls {
    # we assume that most (but not all) of this insanity only applies to non-blocking cases,
    # and we drive openssl fully in blocking mode here. Or maybe we don't - openssl seems to
    # have identity issues in that area.
-   Net::SSLeay::CTX_set_mode ($self->{tls},
-      (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
-      | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
+#   Net::SSLeay::CTX_set_mode ($ssl,
+#      (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
+#      | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
+   Net::SSLeay::CTX_set_mode ($ssl, 1|2);
 
    $self->{_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
    $self->{_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
@@ -1463,7 +1485,7 @@ sub _freetls {
 
    return unless $self->{tls};
 
-   Net::SSLeay::free (delete $self->{tls});
+   $self->{tls_ctx}->_put_session (delete $self->{tls});
    
    delete @$self{qw(_rbio _wbio _tls_wbuf)};
 }
@@ -1523,36 +1545,20 @@ sub destroy {
 
 =item AnyEvent::Handle::TLS_CTX
 
-This function creates and returns the Net::SSLeay::CTX object used by
-default for TLS mode.
+This function creates and returns the AnyEvent::TLS object used by default
+for TLS mode.
 
-The context is created like this:
-
-   Net::SSLeay::load_error_strings;
-   Net::SSLeay::SSLeay_add_ssl_algorithms;
-   Net::SSLeay::randomize;
-
-   my $CTX = Net::SSLeay::CTX_new;
-
-   Net::SSLeay::CTX_set_options $CTX, Net::SSLeay::OP_ALL
+The context is created by calling L<AnyEvent::TLS> without any arguments.
 
 =cut
 
 our $TLS_CTX;
 
 sub TLS_CTX() {
-   $TLS_CTX || do {
-      require Net::SSLeay;
+   $TLS_CTX ||= do {
+      require AnyEvent::TLS;
 
-      Net::SSLeay::load_error_strings ();
-      Net::SSLeay::SSLeay_add_ssl_algorithms ();
-      Net::SSLeay::randomize ();
-
-      $TLS_CTX = Net::SSLeay::CTX_new ();
-
-      Net::SSLeay::CTX_set_options ($TLS_CTX, Net::SSLeay::OP_ALL ());
-
-      $TLS_CTX
+      new AnyEvent::TLS
    }
 }
 
