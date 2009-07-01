@@ -4,8 +4,9 @@ no warnings;
 use strict qw(subs vars);
 
 use Carp qw(croak);
-
 use Scalar::Util ();
+
+use AnyEvent::Util ();
 
 use Net::SSLeay 1.30;
 
@@ -67,11 +68,20 @@ our %CN_SCHEME = (
    ftp     => "rfc4217", rfc4217 => "http", ftps  => "ftp" ,
 );
 
-# lots of aliase
-
-
 our $REF_IDX; # our session ex_data id
 our %VERIFY_MODE;
+
+# create temp file, populate it, and returna  guard and filename
+sub _tmpfile($) {
+   require File::Temp;
+   my ($fh, $path) = File::Temp::mkstemp ("aetlspemXXXXXX");
+   my $guard = AnyEvent::Util::guard { unlink $path };
+
+   syswrite $fh, $_[0];
+   close $fh;
+
+   ($path, $guard)
+}
 
 =item AnyEvent::TLS::init
 
@@ -209,29 +219,99 @@ peer certificates will be checked against a list of revocked certificates
 issued by the CA. The revocation lists will be expected in the C<ca_path>
 directory.
 
-This requires OpenSSL >= 0.9.7b. Check the OpenSSL documentation for more details
+This requires OpenSSL >= 0.9.7b. Check the OpenSSL documentation for more
+details.
+
+=item key_file => $path
+
+Path to the local private key file in PEM format (might be a combined
+certificate/private key file).
+
+The local certificate is used to authenticate against the peer - servers
+mandatorily need a certificate and key, clients can use certificate and
+key optionally to authenticate, e.g. for log-in purposes.
+
+The key in the file should look similar this:
+
+   -----BEGIN RSA PRIVATE KEY-----
+   ...header data
+   ... (key data in base64 encoding) ...
+   -----END RSA PRIVATE KEY-----
+
+=item key => $string
+
+The private key string in PEM format (see C<key_file>, only one of
+C<key_file> or C<key> can be specified).
+
+The idea behind being able to specify a string is to aovid blocking in
+I/O. Unfortunately, Net::SSLeay fails to implement any interface to the
+needed openssl functionality, this is currently implemented by writing to
+a temporary file.
+
+=item cert_file => $path
+
+The path to the local certificate file in PEM format (might be a combined
+certificate/private key file).
+
+The local certificate (and key) are used to authenticate against the
+peer - servers mandatorily need a certificate and key, clients can use
+certificate and key optionally to authenticate, e.g. for log-in purposes.
+
+The certificate in the file should look like this:
+
+   -----BEGIN CERTIFICATE-----
+   ... (certificate in base64 encoding) ...
+   -----END CERTIFICATE-----
+
+If the certificate file or string contain botht the certificate and
+private key, then there is no need to specify a separate C<key_file> or
+C<key>.
+
+=item cert => $string
+
+The local certificate in PEM format (might be a combined
+certificate/private key file). See C<cert_file>.
+
+The idea behind being able to specify a string is to aovid blocking in
+I/O. Unfortunately, Net::SSLeay fails to implement any interface to the
+needed openssl functionality, this is currently implemented by writing to
+a temporary file.
+
+=item cert_password => $string
+
+The certificate password - if the certificate is password-protected, then
+you can specify its password here.
+
+=item cert_password_cb => $callback->($tls)
+
+Instead of providing a password directly (which is not so recommended),
+you can also provide a password-query callback. The callback will be
+called whenever a password is required to decode a local certificate, and
+is supposed to return the password.
 
 =cut
+
+
 
 # verify_depth?
 
 # use_cert
-# key_file
-# key
-# cert_file
-# cert
 # dh_file
 # dh
 # passwd_cb
-# ca_file
-# ca_path
-# verify_mode
-# verify_callback
 # verifycn_scheme
 # verifycn_name
 # reuse_ctx
 # session_cache_size
 # session_cache
+
+#=item debug => $level
+#
+#Enable or disable sending debugging output to STDERR. This is, as
+#the name says, mostly for debugging. The default is taken from the
+#C<PERL_ANYEVENT_TLS_DEBUG> environment variable.
+#
+#=cut
 
 =item cipher_list => $string
 
@@ -275,15 +355,24 @@ sub new {
    $arg{verify_mode} ||= "none";
 
    for ($arg{verify_mode} =~ /([^\s,]+)/g) {
-      exists $VERIFY_MODE{$_}
-         or croak "verify mode '$_' not supported by AnyEvent::TLS";
+         exists $VERIFY_MODE{$_}
+      or croak "verify mode '$_' not supported by AnyEvent::TLS";
 
       $self->{verify_mode} |= $VERIFY_MODE{$_};
    }
 
+   $self->{debug} = $ENV{PERL_ANYEVENT_TLS_DEBUG}
+      if exists $ENV{PERL_ANYEVENT_TLS_DEBUG};
+
+   $self->{debug} = $arg{debug}
+      if exists $arg{debug};
+
    Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_SSLv2 ()) unless $arg{sslv2};
    Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_SSLv3 ()) if exists $arg{sslv3} && !$arg{sslv3};
    Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_TLSv1 ()) if exists $arg{tlsv1} && !$arg{tlsv1};
+
+   my $pw = $arg{cert_password};
+   Net::SSLeay::CTX_set_default_passwd_cb ($ctx, $arg{cert_password_cb} || sub { $pw });
 
    $self->{verify_cb} = $arg{verify_cb}
       if exists $arg{verify_cb};
@@ -303,6 +392,34 @@ sub new {
       }
    }
 
+   if (exists $arg{cert} or exists $arg{cert_file}) {
+      my ($g1, $g2);
+
+      if (exists $arg{cert}) {
+         croak "specifying both cert_file and cert is not allowed"
+            if exists $arg{cert_file};
+
+        ($arg{cert_file}, $g1) = _tmpfile delete $arg{cert};
+      }
+
+      if (exists $arg{key} or exists $arg{key_file}) {
+         if (exists $arg{key}) {
+            croak "specifying both key_file and key is not allowed"
+               if exists $arg{cert_file};
+           ($arg{key_file}, $g2) = _tmpfile delete $arg{key};
+         }
+      } else {
+         $arg{key_file} = $arg{cert_file};
+      }
+
+      Net::SSLeay::CTX_use_PrivateKey_file
+            ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
+         or croak "failed to load local private key (key_file or key)";
+
+      Net::SSLeay::CTX_use_certificate_file ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
+         or croak "failed to use local certificate (cert_file or cert)";
+   }
+
    if ($arg{check_crl}) {
       Net::SSLeay::OPENSSL_VERSION_NUMBER () >= 0x00090702f
          or croak "check_crl requires openssl v0.9.7b or higher";
@@ -311,6 +428,8 @@ sub new {
          Net::SSLeay::CTX_get_cert_store ($ctx),
          Net::SSLeay::X509_V_FLAG_CRL_CHECK ());
    }
+
+   Net::SSLeay::CTX_set_read_ahead ($ctx, 1);
 
    $arg{prepare}->($self)
       if $arg{prepare};
@@ -381,6 +500,10 @@ sub _get_session($$;$) {
          $self->{verify_cb} ? (sub { $self->{verify_cb}->($self, $ref, @_) }) : (sub { shift });
    }
 
+   if ($self->{debug}) {
+      #d# Net::SSLeay::set_info_callback ($session, 50000);
+   }
+
    $session
 }
 
@@ -404,6 +527,9 @@ sub _put_session($$) {
 
 sub DESTROY {
    my ($self) = @_;
+
+   # better be safe than sorry with net-ssleay
+   Net::SSLeay::CTX_set_default_passwd_cb ($self->{ctx});
 
    Net::SSLeay::CTX_free ($self->{ctx});
 }
