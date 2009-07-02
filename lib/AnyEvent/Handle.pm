@@ -329,7 +329,7 @@ sub new {
 sub _shutdown {
    my ($self) = @_;
 
-   delete @$self{qw(_tw _rw _ww fh rbuf wbuf on_read _queue)};
+   delete @$self{qw(_tw _rw _ww fh wbuf on_read _queue)};
    $self->{_eof} = 1; # tell starttls et. al to stop trying
 
    &_freetls;
