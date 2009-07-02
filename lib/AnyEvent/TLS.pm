@@ -8,7 +8,7 @@ use Scalar::Util ();
 
 use AnyEvent::Util ();
 
-use Net::SSLeay 1.30;
+use Net::SSLeay 1.33;
 
 =head1 NAME
 
@@ -45,31 +45,7 @@ work, though).
 
 =cut
 
-our %CN_SCHEME = (
-   # each tuple is [$cn_wildcards, $alt_wildcards, $check_cn]
-   # where *_wildcards is 0 for none allowed, 1 for allowed at beginning and 2 for allowed everywhere
-   # and check_cn is 0 for do not check, 1 for check when no alternate names and 2 always
-   # all of this is from IO::Socket::SSL
-
-   rfc4513 => [0, 1, 2],
-   rfc2818 => [0, 2, 1],
-   rfc3207 => [0, 0, 2], # see IO::Socket::SSL, rfc seems unclear
-   none    => [],        # do not check
-
-   ldap    => "rfc4513",                    ldaps => "ldap",
-   http    => "rfc2818",                    https => "http",
-   smtp    => "rfc3207",                    smtps => "smtp",
-
-   xmpp    => "rfc3920", rfc3920 => "http",
-   pop3    => "rfc2595", rfc2595 => "ldap", pop3s => "pop3",
-   imap    => "rfc2595", rfc2595 => "ldap", imaps => "imap",
-   acap    => "rfc2595", rfc2595 => "ldap",
-   nntp    => "rfc4642", rfc4642 => "ldap", nntps => "nntp",
-   ftp     => "rfc4217", rfc4217 => "http", ftps  => "ftp" ,
-);
-
 our $REF_IDX; # our session ex_data id
-our %VERIFY_MODE;
 
 # create temp file, populate it, and returna  guard and filename
 sub _tmpfile($) {
@@ -81,36 +57,6 @@ sub _tmpfile($) {
    close $fh;
 
    ($path, $guard)
-}
-
-=item AnyEvent::TLS::init
-
-AnyEvent::TLS does on-demand initialisation, and normally there is no need to call an initialise
-function.
-
-As initialisation might take some time (to read e.g. C</dev/urandom>), this
-could be annoying in some highly interactive programs. In that case, you can
-call C<AnyEvent::TLS::init> to make sure there will be no costly initialisation
-later. It is harmless to call C<AnyEvent::TLS::init> multiple times.
-
-=cut
-
-sub init() {
-   return if $REF_IDX;
-
-   Net::SSLeay::load_error_strings ();
-   Net::SSLeay::SSLeay_add_ssl_algorithms ();
-   Net::SSLeay::randomize ();
-
-   $REF_IDX = Net::SSLeay::get_ex_new_index (0, 0, 0, 0, 0)
-      until $REF_IDX; # Net::SSLeay uses id #0 for it's own stuff without allocating it
-
-   %VERIFY_MODE = (
-      none                 => Net::SSLeay::VERIFY_NONE (),
-      peer                 => Net::SSLeay::VERIFY_PEER (),
-      fail_if_no_peer_cert => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT (),
-      verify_client_once   => Net::SSLeay::VERIFY_CLIENT_ONCE (),
-   );
 }
 
 =item $tls = new AnyEvent::TLS key => value...
@@ -147,42 +93,84 @@ Enable or disable SSLv3 (normally I<enabled>).
 
 Enable or disable SSLv3 (normally I<enabled>).
 
-=item verify_mode => $modes
+=item verify => $enable
 
-Set the verification mode to use on peer certificates, as a
-comma-separated list of mode strings. The default of C<none> does not
-attempt any kind of verification.
+Enable or disable peer certificate checking (default is I<disabled>, which
+is I<not recommended>).
 
-The only other mode, C<peer> can be combined with one or two other
-modes that are only used for server mode: C<fail_if_no_peer_cert> (fail
-verification if no peer certificate exists) and C<verify_client_once> (do
-not verify the client certificate on each renegotiation).
+This is the "master switch" for all verify-related parameters and
+functions.
 
-See also C<ca_file>, C<ca_cert> and C<verify_cb> parameters to see how
-verification is done.
+If it is disabled, then no peer certificate verification will be done
+- the connection will be encrypted, but the peer certificate won't be
+verified against any known CAs, or whether it is still valid or not. No
+common name verification or custom verification will be done either.
 
-If neither C<ca_file> nor C<ca_cert> are provided and the verification
-mode is not C<none>, then a compiled-in default ca file and
-directory will be used.
+If enabled, then the peer certificate (required in client mode, optional
+in server mode, see C<verify_require_client_cert>) will be checked against
+its CA certificate chain - that means there must be a signing chain from
+the peer certificate to any of the CA certificates you trust locally, as
+specified by the C<ca_file> and/or C<ca_cert> parameters (or the system
+default CA repository, if those parameters are missing).
 
-Example: do peer certificate verification, and on servers, also fail
-if the client certificate cannot be verified:
+Other basic checks, such as checking the validity period, will also be
+done, as well as optional common name verification C<verify_cn>.
 
-   verify_mode => "peer,fail_if_no_peer_cert",
+An optional C<verify_cb> callback can also be set, which will be invoked
+with the verification results, and which can override the decision.
 
-=item verify_cb => $callback->($tls, $ref, $preverify_ok, $x509_store_ctx)
+=item verify_require_client_cert => $enable
 
-Provide a custom verification callback used by TLS sessions.
+Enable or disable mandatory client certificates (default is
+I<disabled>). When this mode is enabled, then a client certificate will be
+required in server mode (a server certificate is mandatory, so in client
+mode, this switch has no effect).
+
+=item verify_cb => $callback->($tls, $ref, $cn, $preverify_ok, $x509_store_ctx, $cert)
+
+Provide a custom peer verification callback used by TLS sessions,
+which is called with the result of any other verification (C<verify>,
+C<verify_cn>).
+
+This callback will only be called when verification is enabled (C<< verify
+=> 1 >>).
 
 C<$tls> is the C<AnyEvent::TLS> object associated with the session,
 while C<$ref> is whatever the user associated with the session (usually
 an L<AnyEvent::Handle> object when used by AnyEvent::Handle).
 
 C<$preverify_ok> is true iff the basic verification of the certificates
-was passed, and C<$x509_store_ctx> is the C<Net::SSLeay::X509_CTX> object.
+was successful (a valid CA chain must exist, the certificate has passed
+basic validity checks, common name verification succeeded).
+
+C<$x509_store_ctx> is the Net::SSLeay::X509_CTX> object.
+
+C<$cert> is the C<Net::SSLeay::X509> object representing the
+peer certificate, or zero if there was an error. You can call
+C<AnyEvent::TLS::certname $cert> to get a nice user-readable string to
+identify the certificate.
 
 The callback must return either C<0> to indicate failure, or C<1> to
 indicate success.
+
+=item verify_cn => $scheme | $callback->($tls, $cert, $local_cn)
+
+TLS only protects the data that is sent - it cannot automatically verify
+that you are really talking to the right peer. The reason is that
+certificates contain a "common name" (and a set of possile alternative
+"names") that needs to be checked against the peer name (usually, but not
+always, the DNS name of the server) in a protocol-dependent way.
+
+#TODO#
+
+This verification will only be done when verification is enabled (C<<
+verify => 1 >>).
+
+=item verify_client_once => $enable
+
+Enable or disable skipping the client certificate verification on
+renegotiations (default is I<disabled>, the certificate will always be
+checked). Only makes sense in server mode.
 
 =item ca_file => $path
 
@@ -194,8 +182,8 @@ certificate will look like:
    ... (CA certificate in base64 encoding) ...
    -----END CERTIFICATE-----
 
-You have to use C<AnyEvent::TLS::VERIFY_PEER> as C<verify_mode> for this
-parameter to have any effect.
+You have to enable verify mode (C<< verify => 1 >>) for this parameter to
+have any effect.
 
 =item ca_path => $path
 
@@ -209,8 +197,8 @@ details)
 The certificates specified via C<ca_file> take precedence over the ones
 found in C<ca_path>.
 
-You have to use C<AnyEvent::TLS::VERIFY_PEER> as C<verify_mode> for this
-parameter to have any effect.
+You have to enable verify mode (C<< verify => 1 >>) for this parameter to
+have any effect.
 
 =item check_crl => $enable
 
@@ -277,12 +265,10 @@ I/O. Unfortunately, Net::SSLeay fails to implement any interface to the
 needed openssl functionality, this is currently implemented by writing to
 a temporary file.
 
-=item cert_password => $string
+=item cert_password => $string | $callback->($tls)
 
 The certificate password - if the certificate is password-protected, then
 you can specify its password here.
-
-=item cert_password_cb => $callback->($tls)
 
 Instead of providing a password directly (which is not so recommended),
 you can also provide a password-query callback. The callback will be
@@ -330,6 +316,8 @@ you wish to fine-tune something...
 
 =cut
 
+sub init ();
+
 sub new {
    my ($class, %arg) = @_;
 
@@ -352,14 +340,24 @@ sub new {
       or croak "'$arg{cipher_list}' was not accepted as a valid cipher list by AnyEvent::TLS"
          if exists $arg{cipher_list};
 
-   $arg{verify_mode} ||= "none";
+   if ($arg{verify}) {
+      $self->{verify_mode} = Net::SSLeay::VERIFY_PEER ();
 
-   for ($arg{verify_mode} =~ /([^\s,]+)/g) {
-         exists $VERIFY_MODE{$_}
-      or croak "verify mode '$_' not supported by AnyEvent::TLS";
+      $self->{verify_mode} |= Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT ()
+         if $arg{verify_require_client_cert};
 
-      $self->{verify_mode} |= $VERIFY_MODE{$_};
+      $self->{verify_mode} |= Net::SSLeay::VERIFY_CLIENT_ONCE ()
+         if $arg{verify_client_once};
+
+   } else {
+      $self->{verify_mode} = Net::SSLeay::VERIFY_NONE ();
    }
+
+   $self->{verify_cn} = $arg{verify_cn}
+      if exists $arg{verify_cn};
+
+   $self->{verify_cb} = $arg{verify_cb}
+      if exists $arg{verify_cb};
 
    $self->{debug} = $ENV{PERL_ANYEVENT_TLS_DEBUG}
       if exists $ENV{PERL_ANYEVENT_TLS_DEBUG};
@@ -372,12 +370,9 @@ sub new {
    Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_TLSv1 ()) if exists $arg{tlsv1} && !$arg{tlsv1};
 
    my $pw = $arg{cert_password};
-   Net::SSLeay::CTX_set_default_passwd_cb ($ctx, $arg{cert_password_cb} || sub { $pw });
+   Net::SSLeay::CTX_set_default_passwd_cb ($ctx, ref $pw ? $pw : sub { $pw });
 
-   $self->{verify_cb} = $arg{verify_cb}
-      if exists $arg{verify_cb};
-
-   if ($arg{verify_mode}) {
+   if ($self->{verify_mode}) {
       if (exists $arg{ca_file} or exists $arg{ca_cert} or exists $arg{ca_string}) {
          # either specified: use them
          if (exists $arg{ca_file} or exists $arg{ca_cert}) {
@@ -413,11 +408,12 @@ sub new {
       }
 
       Net::SSLeay::CTX_use_PrivateKey_file
-            ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
-         or croak "failed to load local private key (key_file or key)";
+            ($ctx, $arg{key_file}, Net::SSLeay::FILETYPE_PEM ())
+         or croak "$arg{key_file}: failed to load local private key (key_file or key)";
 
-      Net::SSLeay::CTX_use_certificate_file ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
-         or croak "failed to use local certificate (cert_file or cert)";
+      Net::SSLeay::CTX_use_certificate_file
+            ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
+         or croak "$arg{cert_file}: failed to use local certificate (cert_file or cert)";
    }
 
    if ($arg{check_crl}) {
@@ -460,6 +456,41 @@ Returns the actual L<Net::SSLeay::CTX> object (just an integer).
 
 =cut
 
+sub ctx {
+   $_[0]{ctx}
+}
+
+sub verify_cn($$$);
+
+sub _verify_cn {
+   my ($self, $cn, $cert) = @_;
+
+   return 1
+      unless exists $self->{verify_cn} && "none" ne lc $self->{verify_cn};
+
+   return $self->{verify_cn}->($self, $cn, $cert)
+      if ref $self->{verify_cn};
+
+   verify_cn $cn, $cert, $self->{verify_cn}
+}
+
+sub verify {
+   my ($self, $session, $ref, $cn, $preverify_ok, $x509_store_ctx) = @_;
+
+   my ($cert, $certname);
+
+   my $cert = $x509_store_ctx
+      ? Net::SSLeay::X509_STORE_CTX_get_current_cert ($x509_store_ctx)
+      : undef;
+
+   $preverify_ok &&= $self->_verify_cn ($cn, $cert);
+
+   $preverify_ok = $self->{verify_cb}->($self, $ref, $cn, $preverify_ok, $x509_store_ctx, $cert)
+      if $self->{verify_cb};
+
+   $preverify_ok
+}
+
 #=item $ssl = $tls->_get_session ($mode[, $ref])
 #
 #Creates a new Net::SSLeay::SSL session object, puts it into C<$mode>
@@ -471,8 +502,8 @@ Returns the actual L<Net::SSLeay::CTX> object (just an integer).
 
 #our %REF_MAP;
 
-sub _get_session($$;$) {
-   my ($self, $mode, $ref) = @_;
+sub _get_session($$;$$) {
+   my ($self, $mode, $ref, $cn) = @_;
 
    my $session;
 
@@ -489,7 +520,12 @@ sub _get_session($$;$) {
 #   Scalar::Util::weaken ($REF_MAP{$ref+0} = $ref)
 #      if ref $ref;
    
+   if ($self->{debug}) {
+      #d# Net::SSLeay::set_info_callback ($session, 50000);
+   }
+
    if ($self->{verify_mode}) {
+      Scalar::Util::weaken $self;
       Scalar::Util::weaken $ref;
 
       # we have to provide a dummy callbacks as at least Net::SSLeay <= 1.35
@@ -497,11 +533,7 @@ sub _get_session($$;$) {
       Net::SSLeay::set_verify
          $session,
          $self->{verify_mode},
-         $self->{verify_cb} ? (sub { $self->{verify_cb}->($self, $ref, @_) }) : (sub { shift });
-   }
-
-   if ($self->{debug}) {
-      #d# Net::SSLeay::set_info_callback ($session, 50000);
+         sub { $self->verify ($session, $ref, $cn, @_) };
    }
 
    $session
@@ -534,6 +566,137 @@ sub DESTROY {
    Net::SSLeay::CTX_free ($self->{ctx});
 }
 
+=item AnyEvent::TLS::init
+
+AnyEvent::TLS does on-demand initialisation, and normally there is no need to call an initialise
+function.
+
+As initialisation might take some time (to read e.g. C</dev/urandom>), this
+could be annoying in some highly interactive programs. In that case, you can
+call C<AnyEvent::TLS::init> to make sure there will be no costly initialisation
+later. It is harmless to call C<AnyEvent::TLS::init> multiple times.
+
+=cut
+
+sub init() {
+   return if $REF_IDX;
+
+   Net::SSLeay::load_error_strings ();
+   Net::SSLeay::SSLeay_add_ssl_algorithms ();
+   Net::SSLeay::randomize ();
+
+   $REF_IDX = Net::SSLeay::get_ex_new_index (0, 0, 0, 0, 0)
+      until $REF_IDX; # Net::SSLeay uses id #0 for it's own stuff without allocating it
+}
+
+=item $certname = AnyEvent::TLS::certname $x509
+
+Utility function that returns a user-readable string identifying the X509
+certificate object.
+
+=cut
+
+sub certname {
+   $_[0]
+      ? Net::SSLeay::X509_NAME_oneline (Net::SSLeay::X509_get_issuer_name ($_[0]))
+        . Net::SSLeay::X509_NAME_oneline (Net::SSLeay::X509_get_subject_name ($_[0]))
+      : undef
+}
+
+our %CN_SCHEME = (
+   # each tuple is [$cn_wildcards, $alt_wildcards, $check_cn]
+   # where *_wildcards is 0 for none allowed, 1 for allowed at beginning and 2 for allowed everywhere
+   # and check_cn is 0 for do not check, 1 for check when no alternate dns names and 2 always
+   # all of this is from IO::Socket::SSL
+
+   rfc4513 => [0, 1, 2],
+   rfc2818 => [0, 2, 1],
+   rfc3207 => [0, 0, 2], # see IO::Socket::SSL, rfc seems unclear
+   none    => [],        # do not check
+
+   ldap    => "rfc4513",                    ldaps => "ldap",
+   http    => "rfc2818",                    https => "http",
+   smtp    => "rfc3207",                    smtps => "smtp",
+
+   xmpp    => "rfc3920", rfc3920 => "http",
+   pop3    => "rfc2595", rfc2595 => "ldap", pop3s => "pop3",
+   imap    => "rfc2595", rfc2595 => "ldap", imaps => "imap",
+   acap    => "rfc2595", rfc2595 => "ldap",
+   nntp    => "rfc4642", rfc4642 => "ldap", nntps => "nntp",
+   ftp     => "rfc4217", rfc4217 => "http", ftps  => "ftp" ,
+);
+
+sub idn_to_ascii($) {
+   die "IDN names not supported\n";#d#
+}
+
+sub match_cn($$$) {
+   my ($name, $cn, $type) = @_;
+
+   my $pattern;
+
+   ### IMPORTANT!
+   # we accept only a single wildcard and only for a single part of the FQDN
+   # e.g *.example.org does match www.example.org but not bla.www.example.org
+   # The RFCs are in this regard unspecific but we don't want to have to
+   # deal with certificates like *.com, *.co.uk or even *
+   # see also http://nils.toedtmann.net/pub/subjectAltName.txt
+   if ($type == 2 and $name =~m{^([^.]*)\*(.+)} ) {
+      $pattern = qr{^\Q$1\E[^.]*\Q$2\E$}i;
+   } elsif ($type == 1 and $name =~m{^\*(\..+)$} ) {
+      $pattern = qr{^[\w\-]*\Q$1\E$}i;
+   } else {
+      $pattern = qr{^\Q$name$}i;
+   }
+
+   warn "match $cn against $pattern ",0+($cn =~ $pattern),"\n";#d#
+
+   $cn =~ $pattern
+}
+
+# taken verbatim from IO::Socket::SSL, then changed to take advantage of
+# AnyEvent utilities.
+sub verify_cn($$$) {
+   my ($cn, $cert, $scheme) = @_;
+
+   while (!ref $scheme) {
+      $scheme = $CN_SCHEME{$scheme}
+         or return 1;
+   }
+
+   my $cert_cn =
+      Net::SSLeay::X509_NAME_get_text_by_NID (
+         Net::SSLeay::X509_get_subject_name ($cert), Net::SSLeay::NID_commonName ());
+
+   my @cert_alt = Net::SSLeay::X509_get_subjectAltNames ($cert);
+
+   # rfc2460 - convert to network byte order
+   my $ip = AnyEvent::Socket::parse_address $cn;
+   $cn = idn_to_ascii $cn if $cn =~ y/^a-zA-Z0-9\-_.//c;
+
+   my $alt_dns_count;
+
+   while (my ($type, $name) = splice @cert_alt, 0, 2) {
+      if ($type == Net::SSLeay::GEN_IPADD ()) {
+         # $name is already packed format (inet_xton)
+         return 1 if $ip eq $name;
+      } elsif ($type == Net::SSLeay::GEN_DNS ()) {
+         $name =~s/\s+$//;
+         $name =~s/^\s+//;
+         $alt_dns_count++;
+
+         return 1 if match_cn $name, $cn, $scheme->[1];
+      }
+   }
+
+   if ($scheme->[2] == 2
+       || ($scheme->[2] == 1 && !$alt_dns_count)) {
+      return 1 if match_cn $cert_cn, $cn, $scheme->[0];
+   }
+
+   0
+}
+
 =back
 
 =head1 BUGS
@@ -545,10 +708,11 @@ amounts of memory per TLS connection (currently at least one perl scalar).
 
 Marc Lehmann <schmorp@schmorp.de>.
 
-Some of the API and a lot of ideas/workarounds/knowledge has been taken
-from the L<IO::Socket::SSL> module. Care has been taken to keep the API
-similar to that and other modules, to the extent possible while providing
-a sensible API for AnyEvent.
+Some of the API and implementation (verify_hostname) and a lot of
+ideas/workarounds/knowledge has been taken from the L<IO::Socket::SSL>
+module. Care has been taken to keep the API similar to that and other
+modules, to the extent possible while providing a sensible API for
+AnyEvent.
 
 =cut
 

@@ -97,7 +97,7 @@ waiting for data.
 If an EOF condition has been detected but no C<on_eof> callback has been
 set, then a fatal error will be raised with C<$!> set to <0>.
 
-=item on_error => $cb->($handle, $fatal)
+=item on_error => $cb->($handle, $fatal, $message)
 
 This is the error callback, which is called when, well, some error
 occured, such as not being able to resolve the hostname, failure to
@@ -109,13 +109,19 @@ fatal errors the handle object will be shut down and will not be usable
 errors are an EOF condition with active (but unsatisifable) read watchers
 (C<EPIPE>) or I/O errors.
 
+AnyEvent::Handle tries to find an appropriate error code for you to check
+against, but in some cases (TLS errors), this does not work well. It is
+recommended to always output the C<$message> argument in human-readable
+error messages (it's usually the same as C<"$!">).
+
 Non-fatal errors can be retried by simply returning, but it is recommended
 to simply ignore this parameter and instead abondon the handle object
 when this callback is invoked. Examples of non-fatal errors are timeouts
 C<ETIMEDOUT>) or badly-formatted data (C<EBADMSG>).
 
 On callback entrance, the value of C<$!> contains the operating system
-error (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT> or C<EBADMSG>).
+error code (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT>, C<EBADMSG> or
+C<EPROTO>).
 
 While not mandatory, it is I<highly> recommended to set this callback, as
 you will not be notified of errors otherwise. The default simply calls
@@ -239,17 +245,22 @@ This will not work for partial TLS data that could not be encoded
 yet. This data will be lost. Calling the C<stoptls> method in time might
 help.
 
-=item common_name => $string
+=item peername => $string
 
-The common name used by some verification methods (most notably SSL/TLS)
-associated with this connection. Usually this is the remote hostname used
-to connect, but can be almost anything.
+A string used to identify the remote site - usually the DNS hostname used
+to create the connection.
+
+Apart from being useful in error messages, this string is also used in TLS
+common name verification (see C<verify_cn> in L<AnyEvent::TLS>).
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
 When this parameter is given, it enables TLS (SSL) mode, that means
 AnyEvent will start a TLS handshake as soon as the conenction has been
 established and will transparently encrypt/decrypt data afterwards.
+
+All TLS protocol errors will be signalled as C<EPROTO>, with an
+appropriate error message.
 
 TLS mode requires Net::SSLeay to be installed (it will be loaded
 automatically when you try to create a TLS handle): this module doesn't
@@ -336,17 +347,18 @@ sub _shutdown {
 }
 
 sub _error {
-   my ($self, $errno, $fatal) = @_;
+   my ($self, $errno, $fatal, $message) = @_;
 
    $self->_shutdown
       if $fatal;
 
    $! = $errno;
+   $message ||= "$!";
 
    if ($self->{on_error}) {
-      $self->{on_error}($self, $fatal);
+      $self->{on_error}($self, $fatal, $message);
    } elsif ($self->{fh}) {
-      Carp::croak "AnyEvent::Handle uncaught error: $!";
+      Carp::croak "AnyEvent::Handle uncaught error: $message";
    }
 }
 
@@ -668,6 +680,27 @@ register_write_type storable => sub {
 };
 
 =back
+
+=item $handle->push_shutdown
+
+Sometimes you know you want to close the socket after writing your data
+before it was actually written. One way to do that is to replace your
+C<on_drain> handler by a callback that shuts down the socket. This method
+is a shorthand for just that, and replaces the C<on_drain> callback with:
+
+   sub { shutdown $_[0]{fh}, 1 }    # for push_shutdown
+
+This simply shuts down the write side and signals an EOF condition to the
+the peer.
+
+You can rely on the normal read queue and C<on_eof> handling
+afterwards. This is the cleanest way to close a connection.
+
+=cut
+
+sub push_shutdown {
+   $_[0]->{on_drain} = sub { shutdown $_[0]{fh}, 1 };
+}
 
 =item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
 
@@ -1344,7 +1377,26 @@ sub start_read {
    }
 }
 
+our $ERROR_SYSCALL;
+our $ERROR_WANT_READ;
+our $ERROR_ZERO_RETURN;
+
+sub _tls_error {
+   my ($self, $err) = @_;
+      warn "$err,$!\n";#d#
+
+   return $self->_error ($!, 1)
+      if $err == Net::SSLeay::ERROR_SYSCALL ();
+
+   $self->_error (&Errno::EPROTO, 1,
+                  Net::SSLeay::ERR_error_string (Net::SSLeay::ERR_get_error ()));
+}
+
 # poll the write BIO and send the data if applicable
+# also decode read data if possible
+# this is basiclaly our TLS state machine
+# more efficient implementations are possible with openssl,
+# but not with the buggy and incomplete Net::SSLeay.
 sub _dotls {
    my ($self) = @_;
 
@@ -1354,6 +1406,12 @@ sub _dotls {
       while (($tmp = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
          substr $self->{_tls_wbuf}, 0, $tmp, "";
       }
+
+      $tmp = Net::SSLeay::get_error ($self->{tls}, $tmp);
+      return $self->_tls_error ($tmp)
+         if $tmp != $ERROR_WANT_READ
+            && ($tmp != $ERROR_SYSCALL || $!)
+            && $tmp != $ERROR_ZERO_RETURN;
    }
 
    while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
@@ -1370,16 +1428,10 @@ sub _dotls {
    }
 
    $tmp = Net::SSLeay::get_error ($self->{tls}, -1);
-
-   if ($tmp != Net::SSLeay::ERROR_WANT_READ ()) {
-      if ($tmp == Net::SSLeay::ERROR_SYSCALL ()) {
-         return $self->_error ($!, 1);
-      } elsif ($tmp == Net::SSLeay::ERROR_SSL ()) {
-         return $self->_error (&Errno::EIO, 1);
-      }
-
-      # all other errors are fine for our purposes
-   }
+   return $self->_tls_error ($tmp)
+      if $tmp != $ERROR_WANT_READ
+         && ($tmp != $ERROR_SYSCALL || $!)
+         && $tmp != $ERROR_ZERO_RETURN;
 
    while (length ($tmp = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $tmp;
@@ -1419,6 +1471,10 @@ sub starttls {
    Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
       if $self->{tls};
 
+   $ERROR_SYSCALL     = Net::SSLeay::ERROR_SYSCALL     ();
+   $ERROR_WANT_READ   = Net::SSLeay::ERROR_WANT_READ   ();
+   $ERROR_ZERO_RETURN = Net::SSLeay::ERROR_ZERO_RETURN ();
+
    $ctx ||= $self->{tls_ctx};
 
    if ("HASH" eq ref $ctx) {
@@ -1429,7 +1485,7 @@ sub starttls {
    }
    
    $self->{tls_ctx} = $ctx || TLS_CTX ();
-   $self->{tls}     = $ssl = $self->{tls_ctx}->_get_session ($ssl, $self);
+   $self->{tls}     = $ssl = $self->{tls_ctx}->_get_session ($ssl, $self, $self->{peername});
 
    # basically, this is deep magic (because SSL_read should have the same issues)
    # but the openssl maintainers basically said: "trust us, it just works".

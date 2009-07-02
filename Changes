@@ -3,9 +3,16 @@ Revision history for Perl extension AnyEvent.
 	- load AnyEvent::Handle only on demand in AnyEvent::DNS,
           so AnyEvent::Socket users have smaller memory footprint
           in the common case.
+        - add AnyEvent::Handle->push_shutdown method.
+        - add an additional error message parameter to AnyEvent::Handle's
+          on_error callback (for TLS, $! is still available).
         - make AnyEvent::Handle more robust against early conenction
           failures (during new), and return C<undef> in that case
           from the constructor.
+
+4.451 Fri Jul  3 00:28:58 CEST 2009
+	- do not clear rbuf when shutting down an AnyEvent::Handle
+          object - doing so breaks AnyEvent::HTTP.
 
 4.45  Mon Jun 29 22:59:26 CEST 2009
         - a write error could cause AnyEvent::Handle to create
