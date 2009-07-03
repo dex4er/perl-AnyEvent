@@ -626,12 +626,14 @@ our %CN_SCHEME = (
    ftp     => "rfc4217", rfc4217 => "http", ftps  => "ftp" ,
 );
 
-sub idn_to_ascii($) {
-   die "IDN names not supported\n";#d#
-}
-
 sub match_cn($$$) {
    my ($name, $cn, $type) = @_;
+
+   # remove leading and trailing garbage
+   for ($name, $cn) {
+      s/[\x00-\x1f]+$//;
+      s/^[\x00-\x1f]+//;
+   }
 
    my $pattern;
 
@@ -644,12 +646,13 @@ sub match_cn($$$) {
    if ($type == 2 and $name =~m{^([^.]*)\*(.+)} ) {
       $pattern = qr{^\Q$1\E[^.]*\Q$2\E$}i;
    } elsif ($type == 1 and $name =~m{^\*(\..+)$} ) {
-      $pattern = qr{^[\w\-]*\Q$1\E$}i;
+      $pattern = qr{^[^.]*\Q$1\E$}i;
    } else {
-      $pattern = qr{^\Q$name$}i;
+      $pattern = qr{^\Q$name\E$}i;
    }
 
-   warn "match $cn against $pattern ",0+($cn =~ $pattern),"\n";#d#
+#d#   Carp::cluck "oi";
+#d#   warn "$cn =~ $pattern = ", $cn =~$pattern,"\n";#d#
 
    $cn =~ $pattern
 }
@@ -672,7 +675,6 @@ sub verify_cn($$$) {
 
    # rfc2460 - convert to network byte order
    my $ip = AnyEvent::Socket::parse_address $cn;
-   $cn = idn_to_ascii $cn if $cn =~ y/^a-zA-Z0-9\-_.//c;
 
    my $alt_dns_count;
 
@@ -681,8 +683,6 @@ sub verify_cn($$$) {
          # $name is already packed format (inet_xton)
          return 1 if $ip eq $name;
       } elsif ($type == Net::SSLeay::GEN_DNS ()) {
-         $name =~s/\s+$//;
-         $name =~s/^\s+//;
          $alt_dns_count++;
 
          return 1 if match_cn $name, $cn, $scheme->[1];

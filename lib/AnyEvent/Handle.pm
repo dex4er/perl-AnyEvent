@@ -247,8 +247,8 @@ help.
 
 =item peername => $string
 
-A string used to identify the remote site - usually the DNS hostname used
-to create the connection.
+A string used to identify the remote site - usually the DNS hostname
+(I<not> IDN!) used to create the connection, rarely the IP address.
 
 Apart from being useful in error messages, this string is also used in TLS
 common name verification (see C<verify_cn> in L<AnyEvent::TLS>).
