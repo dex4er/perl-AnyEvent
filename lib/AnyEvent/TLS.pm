@@ -126,7 +126,7 @@ I<disabled>). When this mode is enabled, then a client certificate will be
 required in server mode (a server certificate is mandatory, so in client
 mode, this switch has no effect).
 
-=item verify_cb => $callback->($tls, $ref, $cn, $preverify_ok, $x509_store_ctx, $cert)
+=item verify_cb => $callback->($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert)
 
 Provide a custom peer verification callback used by TLS sessions,
 which is called with the result of any other verification (C<verify>,
@@ -138,6 +138,20 @@ This callback will only be called when verification is enabled (C<< verify
 C<$tls> is the C<AnyEvent::TLS> object associated with the session,
 while C<$ref> is whatever the user associated with the session (usually
 an L<AnyEvent::Handle> object when used by AnyEvent::Handle).
+
+C<$depth> is the current verification depth - C<$depth = 0> means the
+certificate to verify is the peer certificate, higher levels are its CA
+certificate and so on. In most cases, you can just return C<$preverify_ok>
+if the C<$depth> is non-zero:
+
+   verify_cb => sub {
+      my ($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert) = @_;
+
+      return $preverify_ok
+         if $depth;
+
+      # more verification
+   },
 
 C<$preverify_ok> is true iff the basic verification of the certificates
 was successful (a valid CA chain must exist, the certificate has passed
@@ -435,12 +449,12 @@ sub new {
 
 =item $tls = new_from_ssleay AnyEvent::TLS $ctx
 
-This constructor takes an existing L<Net::SSLeay> SSL_CTX object (which
-is just an integer) and converts it into an C<AnyEvent::TLS> object. This
-only works because AnyEvent::TLS is currently implemented using TLS. As
-this is such a horrible perl module and openssl has such an annoying
-license, this might change in the future, in which case this method might
-vanish.
+This constructor takes an existing L<Net::SSLeay> SSL_CTX object
+(which is just an integer) and converts it into an C<AnyEvent::TLS>
+object. This only works because AnyEvent::TLS is currently implemented
+using Net::SSLeay. As this is such a horrible perl module and OpenSSL has
+such an annoying license, this might change in the future, in which case
+this method might vanish.
 
 =cut
 
@@ -477,15 +491,15 @@ sub _verify_cn {
 sub verify {
    my ($self, $session, $ref, $cn, $preverify_ok, $x509_store_ctx) = @_;
 
-   my ($cert, $certname);
-
    my $cert = $x509_store_ctx
       ? Net::SSLeay::X509_STORE_CTX_get_current_cert ($x509_store_ctx)
       : undef;
+   my $depth = Net::SSLeay::X509_STORE_CTX_get_error_depth ($x509_store_ctx);
 
-   $preverify_ok &&= $self->_verify_cn ($cn, $cert);
+   $preverify_ok &&= $self->_verify_cn ($cn, $cert)
+      unless $depth;
 
-   $preverify_ok = $self->{verify_cb}->($self, $ref, $cn, $preverify_ok, $x509_store_ctx, $cert)
+   $preverify_ok = $self->{verify_cb}->($self, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert)
       if $self->{verify_cb};
 
    $preverify_ok
@@ -650,9 +664,6 @@ sub match_cn($$$) {
    } else {
       $pattern = qr{^\Q$name\E$}i;
    }
-
-#d#   Carp::cluck "oi";
-#d#   warn "$cn =~ $pattern = ", $cn =~$pattern,"\n";#d#
 
    $cn =~ $pattern
 }
