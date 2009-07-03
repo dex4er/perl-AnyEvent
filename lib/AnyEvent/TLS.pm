@@ -59,6 +59,25 @@ sub _tmpfile($) {
    ($path, $guard)
 }
 
+our %DH_PARAMS = (
+   # These are the DH parameters from "Assigned Number for SKIP Protocols"
+   # (http://www.skip-vpn.org/spec/numbers.html).
+   # (or http://web.archive.org/web/20011212141438/http://www.skip-vpn.org/spec/numbers.html#params)
+   # See there for how they were generated.
+   # Note that g might not be a generator,
+   # but this is not a problem since p is a safe prime.
+   skip512 => "MEYCQQD1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6ypUM2Zafq9AKUJsCRtMIPWak|XUGfnHy9iUsiGSa6q6Jew1XpKgVfAgEC",
+   skip1024 => "MIGHAoGBAPSI/VhOSdvNILSd5JEHNmszbDgNRR0PfIizHHxbLY7288kjwEPwpVsY|jY67VYy4XTjTNP18F1dDox0YbN4zISy1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6|ypUM2Zafq9AKUJsCRtMIPWakXUGfnHy9iUsiGSa6q6Jew1XpL3jHAgEC",
+   skip2048 => "MIIBCAKCAQEA9kJXtwh/CBdyorrWqULzBej5UxE5T7bxbrlLOCDaAadWoxTpj0BV|89AHxstDqZSt90xkhkn4DIO9ZekX1KHTUPj1WV/cdlJPPT2N286Z4VeSWc39uK50|T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb|zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX|Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT|CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==",
+   skip4096 => "MIICCAKCAgEA+hRyUsFN4VpJ1O8JLcCo/VWr19k3BCgJ4uk+d+KhehjdRqNDNyOQ|l/MOyQNQfWXPeGKmOmIig6Ev/nm6Nf9Z2B1h3R4hExf+zTiHnvVPeRBhjdQi81rt|Xeoh6TNrSBIKIHfUJWBh3va0TxxjQIs6IZOLeVNRLMqzeylWqMf49HsIXqbcokUS|Vt1BkvLdW48j8PPv5DsKRN3tloTxqDJGo9tKvj1Fuk74A+Xda1kNhB7KFlqMyN98|VETEJ6c7KpfOo30mnK30wqw3S8OtaIR/maYX72tGOno2ehFDkq3pnPtEbD2CScxc|alJC+EL7RPk5c/tgeTvCngvc1KZn92Y//EI7G9tPZtylj2b56sHtMftIoYJ9+ODM|sccD5Piz/rejE3Ome8EOOceUSCYAhXn8b3qvxVI1ddd1pED6FHRhFvLrZxFvBEM9|ERRMp5QqOaHJkM+Dxv8Cj6MqrCbfC4u+ZErxodzuusgDgvZiLF22uxMZbobFWyte|OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH|AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL|KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=",
+
+   # generated on a linux desktop with openssl using /dev/urandom - entropy_avail was >= 3600 each time
+   schmorp1024 => "MIGHAoGBAN+GjqAhNxLesSuGfDzYe6HdexXtHuxe85umshfPHfnmLSkGWl/FE27+|v+50mwY5XaNnCmo1VvGju4iTKxWoZTGgslUSc8KX197XWAXIpab8ESyg442if9Kr|vSOuu0fopwvvTOgHK8mkEWI4joU5G4/MQy+pnC5NIEVBP4HtGiTrAgEC",
+   schmorp1539 => "MIHHAoHBByJzpVGUsXysX8w/+uuXRUCL9exhAixoHkaJU5lf4noJUtp9F0yr/5rb|hF8M9mSZJ+RlPyB+Zt37GPp1WQDO1+/2yZJX9kHE3+h5JCRoR8PKc2G+ts9jhM7r|CnTQ0z0b6s12Pusf+UhQPwLust4JAYE/LPuTK8yFiVx5L2a+aZhGMVlYN/12SEtY|jRl3lGXdZj9g8E2PzTQbA9CGy5dGIvz/ENTzTVleKuQ+80bzpVEPjZL9tv43Zc+l|MFLzxuE5uwIBAg==",
+   schmorp2048 => "MIIBCAKCAQEAhR5Fn9h3Tgnc+q4o3CMkZtre3lLUyDT+1bf3aiVOt22JdDQndZLc|FeKz8AqliB3UIgNExc6oDtuG4znKPgklfOnHv/a9tl1AYQbV+QFM/E0jYl6oG8tF|Epgxezt1GCivvtu64ql0s213wr64QffNMt3hva8lNqK1PXfqp13PzzLzAVsfghrv|fMAX7/bYm1T5fAJdcah6FeZkKof+mqbs8HtRjfvrUF2npEM2WdupFu190vcwABnN|TTJheXCWv2BF2f9EEr61q3OUhSNWIThtZP+NKe2bACm1PebT0drAcaxKoMz9LjKr|y5onGs0TOuQ7JmhtZL45Zr4LwBcyTucLUwIBAg==",
+   schmorp4096 => "MIICCAKCAgEA5WwA5lQg09YRYqc/JILCd2AfBmYBkF19wmCEJB8G3JhTxv8EGvYk|xyP2ecKVUvHTG8Xw/qpW8nRqzPIyV8QRf6YFYSf33Qnx2xYhcnqOumU3nfC0SNOL|/w2q1BA9BbHtW4574P+6hOQx9ftRtbtZ2HPKBMRcAKGjpYZiKopv0+UAM4NpEC2p|bfajp7pyVLeb/Aqm/oWP3L63wPlY1SDp+XRzrOAKB+/uLGqEwV0bBaxxGL29BpOp|O2z1ALGXiDCcLs9WTn9WqUhWDzUN6fahm53rd7zxwpFCb6K2YhaK0peG95jzSUJ8|aoL0KgWuC6v5+gPJHRu0HrQIdfAdN4VchqYOKE46uNNkQl8VJGu4RjYB7lFBpRwO|g2HCsGMo2X7BRmA1st66fh+JOd1smXMZG/2ozTOooL+ixcx4spNneg4aQerWl5cb|nWXKtPCp8yPzt/zoNzL3Fon2Ses3sNgMos0M/ZbnigScDxz84Ms6V/X8Z0L4m/qX|mL42dP40tgvmgqi6BdsBzcIWeHlEcIhmGcsEBxxKEg7gjb0OjjvatpUCJhmRrGjJ|LtMkBR68qr42OBMN/PBB4KPOWNUqTauXZajfCwYdbpvV24ZhtkcRdw1zisyARBSh|aTKW/GV8iLsUzlYN27LgVEwMwnWQaoecW6eOTNKGUURC3In6XZSvVzsCAQI=",
+);
+
 =item $tls = new AnyEvent::TLS key => value...
 
 The constructor supports these arguments (all as key => value pairs).
@@ -110,8 +129,9 @@ If enabled, then the peer certificate (required in client mode, optional
 in server mode, see C<verify_require_client_cert>) will be checked against
 its CA certificate chain - that means there must be a signing chain from
 the peer certificate to any of the CA certificates you trust locally, as
-specified by the C<ca_file> and/or C<ca_cert> parameters (or the system
-default CA repository, if those parameters are missing).
+specified by the C<ca_file> and/or C<ca_path> and/or C<ca_cert> parameters
+(or the system default CA repository, if all of those parameters are
+missing).
 
 Other basic checks, such as checking the validity period, will also be
 done, as well as optional common name verification C<verify_cn>.
@@ -214,6 +234,12 @@ found in C<ca_path>.
 You have to enable verify mode (C<< verify => 1 >>) for this parameter to
 have any effect.
 
+=item ca_cert => $string
+
+In addition or instead of using C<ca_file> and/or C<ca_path>, you can
+also use C<ca_cert> to directly specify the CA certificates (there can be
+multiple) in PEM format, in a string.
+
 =item check_crl => $enable
 
 Enable or disable certificate revocation list checking. If enabled, then
@@ -289,6 +315,56 @@ you can also provide a password-query callback. The callback will be
 called whenever a password is required to decode a local certificate, and
 is supposed to return the password.
 
+=item dh_file => $path
+
+Path to a file containing Diffie-Hellman parameters in PEM format. See
+also C<dh> on how to specify them directly, or use a pre-generated set.
+
+Diffie-Hellman key exchange generates temporary encryption keys that
+are not transferred over the connection, which means that even if the
+certificate key is made public at a later time and a full dump of the
+connection exists, the key still cannot be deduced.
+
+These ciphers are only available with SSLv3 and later (which is the
+default with AnyEvent::TLS). Anonymous DH protocols are disabled by
+default, and usually not even compiled into the underlying library, as
+they provide no direct protection against man-in-the-middle attacks. The
+same is true for the common practise of self-signed certificates that you
+have to accept first, of course.
+
+=item dh => $string
+
+Specify the Diffie-Hellman parameters in PEM format directly as a string
+(see C<dh_file>), the default is C<schmorp1539> unless C<dh_file> was
+specified.
+
+AnyEvent::TLS supports supports a number of precomputed DH parameters,
+since computing them is expensive. They are:
+
+   # from "Assigned Number for SKIP Protocols"
+   skip512, skip1024, skip2048, skip4096
+
+   # from schmorp
+   schmorp1024, schmorp1539, schmorp2048, schmorp4096
+
+The default was chosen as a trade-off between security and speed, and
+should be secure for a few years. It is said that 2048 bit DH parameters
+are safe till 2030, and DH parameters shorter than 900 bits are totally
+insecure.
+
+To disable DH protocols completely, specify C<undef> as C<dh> parameter.
+
+=item dh_single_use => $enable
+
+Enables or disables "use only once" mode when using diffie-hellman key
+exchange. When enabled (default), each time a new key is exchanged a new
+diffie-hellman key is generated, which improves security as each key is
+only used once. When disabled, the key will be created as soon as the
+AnyEvent::TLS object is created and will be reused.
+
+All the DH parameters supplied with AnyEvent::TLS should be safe with
+C<dh_single_use> switched off, but YMMV.
+
 =cut
 
 
@@ -348,11 +424,55 @@ sub new {
 
    my $self = bless { ctx => $ctx }, $class; # to make sure it's destroyed if we croak
 
-   Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_ALL ());
+   my $op = Net::SSLeay::OP_ALL ();
+
+   $op |= Net::SSLeay::OP_NO_SSLv2      () unless $arg{sslv2};
+   $op |= Net::SSLeay::OP_NO_SSLv3      () if exists $arg{sslv3} && !$arg{sslv3};
+   $op |= Net::SSLeay::OP_NO_TLSv1      () if exists $arg{tlsv1} && !$arg{tlsv1};
+   $op |= Net::SSLeay::OP_SINGLE_DH_USE () if !exists $arg{dh_single_use} || $arg{dh_single_use};
+
+   Net::SSLeay::CTX_set_options ($ctx, $op);
 
    Net::SSLeay::CTX_set_cipher_list ($ctx, $arg{cipher_list})
       or croak "'$arg{cipher_list}' was not accepted as a valid cipher list by AnyEvent::TLS"
          if exists $arg{cipher_list};
+
+   my ($dh_bio, $dh_file);
+
+   if (exists $arg{dh_file}) {
+      croak
+
+      $dh_file = $arg{dh_file};
+
+      $dh_bio = Net::SSLeay::BIO_new_file ($dh_file, "r")
+         or croak "$dh_file: failed to open DH parameter file: $!";
+   } else {
+      $arg{dh} = "schmorp1539" unless exists $arg{dh};
+
+      if (defined $arg{dh}) {
+         $dh_file = "dh string";
+
+         if ($arg{dh} =~ /^\w+$/) {
+            $dh_file = "dh params $arg{dh}";
+            $arg{dh} = "-----BEGIN DH PARAMETERS-----\n"
+                     . $DH_PARAMS{$arg{dh}} . "\n"
+                     . "-----END DH PARAMETERS-----";
+            $arg{dh} =~ s/\|/\n/g;
+         }
+
+         $dh_bio = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+         Net::SSLeay::BIO_write ($dh_bio, $arg{dh});
+      }
+   }
+
+   if ($dh_bio) {
+      my $dh = Net::SSLeay::PEM_read_bio_DHparams ($dh_bio);
+      Net::SSLeay::BIO_free ($dh_bio);
+      $dh or croak "$dh_file: failed to parse DH parameters - not PEM format?";
+      my $rv = Net::SSLeay::CTX_set_tmp_dh ($ctx, $dh);
+      Net::SSLeay::DH_free ($dh);
+      $rv or croak "$dh_file: failed to set DH parameters";
+   }
 
    if ($arg{verify}) {
       $self->{verify_mode} = Net::SSLeay::VERIFY_PEER ();
@@ -379,21 +499,18 @@ sub new {
    $self->{debug} = $arg{debug}
       if exists $arg{debug};
 
-   Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_SSLv2 ()) unless $arg{sslv2};
-   Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_SSLv3 ()) if exists $arg{sslv3} && !$arg{sslv3};
-   Net::SSLeay::CTX_set_options ($ctx, Net::SSLeay::OP_NO_TLSv1 ()) if exists $arg{tlsv1} && !$arg{tlsv1};
-
    my $pw = $arg{cert_password};
    Net::SSLeay::CTX_set_default_passwd_cb ($ctx, ref $pw ? $pw : sub { $pw });
 
    if ($self->{verify_mode}) {
-      if (exists $arg{ca_file} or exists $arg{ca_cert} or exists $arg{ca_string}) {
+      if (exists $arg{ca_file} or exists $arg{ca_path} or exists $arg{ca_cert}) {
          # either specified: use them
-         if (exists $arg{ca_file} or exists $arg{ca_cert}) {
-            Net::SSLeay::CTX_load_verify_locations ($ctx, $arg{ca_file}, $arg{ca_cert});
+         if (exists $arg{ca_cert}) {
+            my ($ca_file, $g1) = _tmpfile delete $arg{ca_cert};
+            Net::SSLeay::CTX_load_verify_locations ($ctx, $ca_file, undef);
          }
-         if (exists $arg{ca_string}) {
-            # not yet implemented # TODO
+         if (exists $arg{ca_file} or exists $arg{ca_path}) {
+            Net::SSLeay::CTX_load_verify_locations ($ctx, $arg{ca_file}, $arg{ca_path});
          }
       } else {
          # else fall back to defaults
