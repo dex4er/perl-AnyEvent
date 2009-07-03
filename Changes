@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+ZERO_RETURN - stoptls?
 	- load AnyEvent::Handle only on demand in AnyEvent::DNS,
           so AnyEvent::Socket users have smaller memory footprint
           in the common case.
@@ -9,6 +10,8 @@ Revision history for Perl extension AnyEvent.
         - make AnyEvent::Handle more robust against early conenction
           failures (during new), and return C<undef> in that case
           from the constructor.
+        - AnyEvent::Handle will now try to load only JSON::XS first,
+          then fall back to JSON.
 
 4.451 Fri Jul  3 00:28:58 CEST 2009
 	- do not clear rbuf when shutting down an AnyEvent::Handle

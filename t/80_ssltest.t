@@ -9,9 +9,10 @@ use AnyEvent::Handle;
 
 {
    my $ctx = AnyEvent::Handle::TLS_CTX;
-   Net::SSLeay::CTX_use_certificate_chain_file ($ctx, $0)
+
+   Net::SSLeay::CTX_use_certificate_chain_file ($ctx->ctx, $0)
       or die "unable to set certificate chain file";
-   Net::SSLeay::CTX_use_PrivateKey_file ($ctx, $0, Net::SSLeay::FILETYPE_PEM ())
+   Net::SSLeay::CTX_use_PrivateKey_file ($ctx->ctx, $0, Net::SSLeay::FILETYPE_PEM ())
       or die "unable to set private key file";
 }
 
