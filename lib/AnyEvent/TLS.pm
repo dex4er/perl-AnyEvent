@@ -33,7 +33,7 @@ For some quick facts about SSL/TLS, see the section of the same name near
 the end of the document.
 
 A single TLS context can be used for any number of TLS connections that
-wish to use the same certificates, policy etc.
+wish to use the same certificates, policies etc.
 
 Note that this module is inherently tied to L<Net::SSLeay>, as this
 library is used to implement it. Since that perl module is rather ugly,
@@ -137,7 +137,8 @@ specified by the C<ca_file> and/or C<ca_path> and/or C<ca_cert> parameters
 missing).
 
 Other basic checks, such as checking the validity period, will also be
-done, as well as optional common name verification C<verify_cn>.
+done, as well as optional peername/hostname/common name verification
+C<verify_cn>.
 
 An optional C<verify_cb> callback can also be set, which will be invoked
 with the verification results, and which can override the decision.
@@ -192,12 +193,12 @@ indicate success.
 
 =item verify_cn => $scheme | $callback->($tls, $cert, $peername)
 
-TLS only protects the data that is sent - it cannot automatically verify
-that you are really talking to the right peer. The reason is that
-certificates contain a "common name" (and a set of possible alternative
-"names", so this should really be called verify_peername) that needs to be
-checked against the peer name (usually, but not always, the DNS name of
-the server) in a protocol-dependent way.
+TLS only protects the data that is sent - it cannot automatically
+verify that you are really talking to the right peer. The reason is
+that certificates contain a "common name" (and a set of possible
+alternative "names", so this should really be called verify_peername or
+verify_hostname) that needs to be checked against the peer name (usually,
+but not always, the DNS name of the server) in a protocol-dependent way.
 
 This can be implemented by specifying a callback that has to verify that
 the actual C<$peername> matches the given certificate in C<$cert>.
@@ -638,18 +639,18 @@ sub ctx {
    $_[0]{ctx}
 }
 
-sub verify_cn($$$);
+sub verify_hostname($$$);
 
-sub _verify_cn {
+sub _verify_hostname {
    my ($self, $cn, $cert) = @_;
 
    return 1
       unless exists $self->{verify_cn} && "none" ne lc $self->{verify_cn};
 
    return $self->{verify_cn}->($self, $cn, $cert)
-      if ref $self->{verify_cn};
+      if ref $self->{verify_cn} && "ARRAY" ne ref $self->{verify_cn};
 
-   verify_cn $cn, $cert, $self->{verify_cn}
+   verify_hostname $cn, $cert, $self->{verify_cn}
 }
 
 sub verify {
@@ -660,7 +661,7 @@ sub verify {
       : undef;
    my $depth = Net::SSLeay::X509_STORE_CTX_get_error_depth ($x509_store_ctx);
 
-   $preverify_ok &&= $self->_verify_cn ($cn, $cert)
+   $preverify_ok &&= $self->_verify_hostname ($cn, $cert)
       unless $depth;
 
    $preverify_ok = $self->{verify_cb}->($self, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert)
@@ -834,7 +835,7 @@ sub match_cn($$$) {
 
 # taken verbatim from IO::Socket::SSL, then changed to take advantage of
 # AnyEvent utilities.
-sub verify_cn($$$) {
+sub verify_hostname($$$) {
    my ($cn, $cert, $scheme) = @_;
 
    while (!ref $scheme) {
@@ -892,7 +893,7 @@ the entity behind the certificate.
 By signing, the CA basically claims that the certificate it signed really
 belongs to the identity it is supposed to be, verified according to their
 policies. For e.g. HTTPS, the CA usually makes some checks that the
-domain name mentioned in the certificate really belongs to the entity that
+hostname mentioned in the certificate really belongs to the entity that
 requested the signing.
 
 =item * CAs can be certified by other CAs.
