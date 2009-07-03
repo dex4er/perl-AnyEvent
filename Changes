@@ -1,6 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
 ZERO_RETURN - stoptls?
+        - added new module AnyEvent::TLS for easier SSL/TLS context
+          creation, with many options including hostname verification,
+          secure default configuration, lots of documentation and,
+          predefined diffie-hellman keys for perfect forward security
+          and much more. get it while it's still fresh!
+        - use AnyEvent::TLS in AnyEvent::Handle for context management.
 	- load AnyEvent::Handle only on demand in AnyEvent::DNS,
           so AnyEvent::Socket users have smaller memory footprint
           in the common case.
