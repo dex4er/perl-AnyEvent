@@ -190,15 +190,48 @@ identify the certificate.
 The callback must return either C<0> to indicate failure, or C<1> to
 indicate success.
 
-=item verify_cn => $scheme | $callback->($tls, $cert, $local_cn)
+=item verify_cn => $scheme | $callback->($tls, $cert, $peername)
 
 TLS only protects the data that is sent - it cannot automatically verify
 that you are really talking to the right peer. The reason is that
 certificates contain a "common name" (and a set of possile alternative
-"names") that needs to be checked against the peer name (usually, but not
-always, the DNS name of the server) in a protocol-dependent way.
+"names", so this should really be called verify_peername) that needs to be
+checked against the peer name (usually, but not always, the DNS name of
+the server) in a protocol-dependent way.
 
-#TODO#
+This can be implemented by specifying a callback that has to verify that
+the actual C<$peername> matches the given certificate in C<$cert>.
+
+Since this can be rather hard to implement, AnyEvent::TLS offers a variety
+of predefined "schemes" (lifted from L<IO::Socket::SSL>) that are named
+like the protocols that use them:
+
+=over 4
+
+=item ldap (rfc4513), pop3,imap,acap (rfc2995), nntp (rfc4642)
+
+Simple wildcards in subjectAltNames are possible, e.g. *.example.org
+matches www.example.org but not lala.www.example.org. If nothing from
+subjectAltNames match it checks against the common name, but there are no
+wildcards allowed.
+
+=item http (rfc2818), alias is www
+
+Extended wildcards in subjectAltNames are possible, e.g. *.example.org or
+even www*.example.org. Wildcards in the common name are not allowed. The
+common name will be only checked if no names are given in subjectAltNames.
+
+=item smtp (rfc3207)
+
+This RFC doesn't say much useful about the verification so it just assumes
+that subjectAltNames are possible, but no wildcards are possible anywhere.
+
+=back
+
+You can specify either the name of the parent protocol (recommended,
+e.g. C<http>, C<ldap>), the protocol name as usually used in URIs
+(e.g. C<https>, C<ldaps>) or the RFC (not recommended, e.g. C<rfc2995>,
+C<rfc3920>).
 
 This verification will only be done when verification is enabled (C<<
 verify => 1 >>).
