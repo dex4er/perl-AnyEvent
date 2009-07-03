@@ -27,7 +27,7 @@ our $VERSION = 4.45;
 
 This module is a helper module that implements TLS/SSL (Transport Layer
 Security/Secure Sockets Layer) contexts. A TLS context is a common set of
-configuration values for use in etsablishing TLS connections.
+configuration values for use in establishing TLS connections.
 
 For some quick facts about SSL/TLS, see the section of the same name near
 the end of the document.
@@ -37,7 +37,7 @@ wish to use the same certificates, policy etc.
 
 Note that this module is inherently tied to L<Net::SSLeay>, as this
 library is used to implement it. Since that perl module is rather ugly,
-and openssl has a rather ugly license, AnyEvent might switch TLS providers
+and OpenSSL has a rather ugly license, AnyEvent might switch TLS providers
 at some future point, at which this API will change dramatically, at least
 in the Net::SSLeay-specific parts (most constructor arguments should still
 work, though).
@@ -194,7 +194,7 @@ indicate success.
 
 TLS only protects the data that is sent - it cannot automatically verify
 that you are really talking to the right peer. The reason is that
-certificates contain a "common name" (and a set of possile alternative
+certificates contain a "common name" (and a set of possible alternative
 "names", so this should really be called verify_peername) that needs to be
 checked against the peer name (usually, but not always, the DNS name of
 the server) in a protocol-dependent way.
@@ -212,19 +212,38 @@ like the protocols that use them:
 
 Simple wildcards in subjectAltNames are possible, e.g. *.example.org
 matches www.example.org but not lala.www.example.org. If nothing from
-subjectAltNames match it checks against the common name, but there are no
-wildcards allowed.
+subjectAltNames matches, it checks against the common name, but there are
+no wildcards allowed.
 
-=item http (rfc2818), alias is www
+=item http (rfc2818)
 
 Extended wildcards in subjectAltNames are possible, e.g. *.example.org or
 even www*.example.org. Wildcards in the common name are not allowed. The
-common name will be only checked if no names are given in subjectAltNames.
+common name will be only checked if no host names are given in
+subjectAltNames.
 
 =item smtp (rfc3207)
 
-This RFC doesn't say much useful about the verification so it just assumes
-that subjectAltNames are possible, but no wildcards are possible anywhere.
+This RFC isn't very useful in determining how to do verification so it
+just assumes that subjectAltNames are possible, but no wildcards are
+possible anywhere.
+
+=item [$check_cn, $wildcards_in_alt, $wildcards_in_cn]
+
+You can also specify a scheme yourself by using an array reference with
+three integers.
+
+C<$check_cn> specifies how the common name field is used: C<0> means it
+will be completely ignored, C<1> means it will only be used if no host
+names have been found in the subjectAltNames, and C<2> means the common
+name will always be checked against the peername.
+
+C<$wildcards_in_alt> and C<$wildcards_in_cn> specify whether and where
+wildcards (C<*>) are allowed in subjectAltNames and the common name,
+respectively. C<0> means no wildcards are allowed, C<1> means they
+are allowed only as the first component (C<*.example.org>), and C<2>
+means they can be used anywhere (C<www*.example.org>), except that very
+dangerous matches will not be allowed (C<*.org> or C<*>).
 
 =back
 
@@ -279,7 +298,7 @@ multiple) in PEM format, in a string.
 =item check_crl => $enable
 
 Enable or disable certificate revocation list checking. If enabled, then
-peer certificates will be checked against a list of revocked certificates
+peer certificates will be checked against a list of revoked certificates
 issued by the CA. The revocation lists will be expected in the C<ca_path>
 directory.
 
@@ -292,7 +311,7 @@ Path to the local private key file in PEM format (might be a combined
 certificate/private key file).
 
 The local certificate is used to authenticate against the peer - servers
-mandatorily need a certificate and key, clients can use certificate and
+mandatorily need a certificate and key, clients can use a certificate and
 key optionally to authenticate, e.g. for log-in purposes.
 
 The key in the file should look similar this:
@@ -307,9 +326,9 @@ The key in the file should look similar this:
 The private key string in PEM format (see C<key_file>, only one of
 C<key_file> or C<key> can be specified).
 
-The idea behind being able to specify a string is to aovid blocking in
+The idea behind being able to specify a string is to avoid blocking in
 I/O. Unfortunately, Net::SSLeay fails to implement any interface to the
-needed openssl functionality, this is currently implemented by writing to
+needed OpenSSL functionality, this is currently implemented by writing to
 a temporary file.
 
 =item cert_file => $path
@@ -327,7 +346,7 @@ The certificate in the file should look like this:
    ... (certificate in base64 encoding) ...
    -----END CERTIFICATE-----
 
-If the certificate file or string contain botht the certificate and
+If the certificate file or string contain both the certificate and
 private key, then there is no need to specify a separate C<key_file> or
 C<key>.
 
@@ -336,9 +355,9 @@ C<key>.
 The local certificate in PEM format (might be a combined
 certificate/private key file). See C<cert_file>.
 
-The idea behind being able to specify a string is to aovid blocking in
+The idea behind being able to specify a string is to avoid blocking in
 I/O. Unfortunately, Net::SSLeay fails to implement any interface to the
-needed openssl functionality, this is currently implemented by writing to
+needed OpenSSL functionality, this is currently implemented by writing to
 a temporary file.
 
 =item cert_password => $string | $callback->($tls)
@@ -392,38 +411,14 @@ To disable DH protocols completely, specify C<undef> as C<dh> parameter.
 
 =item dh_single_use => $enable
 
-Enables or disables "use only once" mode when using diffie-hellman key
+Enables or disables "use only once" mode when using Diffie-Hellman key
 exchange. When enabled (default), each time a new key is exchanged a new
-diffie-hellman key is generated, which improves security as each key is
+Diffie-Hellman key is generated, which improves security as each key is
 only used once. When disabled, the key will be created as soon as the
 AnyEvent::TLS object is created and will be reused.
 
 All the DH parameters supplied with AnyEvent::TLS should be safe with
 C<dh_single_use> switched off, but YMMV.
-
-=cut
-
-
-
-# verify_depth?
-
-# use_cert
-# dh_file
-# dh
-# passwd_cb
-# verifycn_scheme
-# verifycn_name
-# reuse_ctx
-# session_cache_size
-# session_cache
-
-#=item debug => $level
-#
-#Enable or disable sending debugging output to STDERR. This is, as
-#the name says, mostly for debugging. The default is taken from the
-#C<PERL_ANYEVENT_TLS_DEBUG> environment variable.
-#
-#=cut
 
 =item cipher_list => $string
 
@@ -435,8 +430,24 @@ L<http://www.openssl.org/docs/apps/ciphers.html#CIPHER_STRINGS>.
 =item prepare => $coderef->($tls)
 
 If this argument is present, then it will be called with the new
-AnyEvent::TLS object after any other initialisation has bee done, in acse
+AnyEvent::TLS object after any other initialisation has bee done, in case
 you wish to fine-tune something...
+
+=cut
+
+#TODO
+# verify_depth?
+# reuse_ctx
+# session_cache_size
+# session_cache
+
+#=item debug => $level
+#
+#Enable or disable sending debugging output to STDERR. This is, as
+#the name says, mostly for debugging. The default is taken from the
+#C<PERL_ANYEVENT_TLS_DEBUG> environment variable.
+#
+#=cut
 
 =back
 
@@ -876,15 +887,15 @@ publicly as a kind of identity, while keys should really be kept private,
 as proving that you have the private key is usually interpreted as being
 the entity behind the certificate.
 
-=item * A certificate is signed by a CA (Certificate Authority)
+=item * A certificate is signed by a CA (Certificate Authority).
 
 By signing, the CA basically claims that the certificate it signed really
-belongs to the identity it is supposed to be,ong, verified according to
-their policies. For e.g. HTTPS, the CA usually makes some checks that the
-domain name mentioned in the certifiate really belongs to the entity that
+belongs to the identity it is supposed to be, verified according to their
+policies. For e.g. HTTPS, the CA usually makes some checks that the
+domain name mentioned in the certificate really belongs to the entity that
 requested the signing.
 
-=item * CAs can be certified by other CAs
+=item * CAs can be certified by other CAs.
 
 Or by themselves - a certificate that is signed by a CA that is itself is
 called a self-signed certificate, and when you find a certificate signed
@@ -905,21 +916,22 @@ it is signed directly or indirectly by such a CA), you can find out that
 the other side really is whoever he claims, according to the CA policies,
 and your belief in the integrity of the CA.
 
-=item * Verifying the certificate signing is not everything.
+=item * Verifying the certificate signature is not everything.
 
 Even when the certificate is correct, it might belong to somebody else: if
 www.attacker.com can make your computer believe that it is really called
-www.gmail.com, then it could send you the certificate for www.attacker.com
+www.mybank.com, then it could send you the certificate for www.attacker.com
 that you might trust because it is signed by a CA you trust, and intercept
-all your traffic that you think goes to www.gmail.com.
+all your traffic that you think goes to www.mybank.com.
 
-To thwart this attack vector, common name verification is used, which
-basically checks that the certificate (www.attacker.com) really belongs to
-the host you are trying to connect (www.gmail.com), which in this example
-is not the case.
+To thwart this attack vector, common name (or peer name) verification
+is used, which basically checks that the certificate (www.attacker.com)
+really belongs to the host you are trying to connect (www.mybank.com),
+which in this example is not the case.
 
 So common name verification is almost as important as checking the CA
-signing. Unfortunately, every protocol implements this differently...
+signing. Unfortunately, every protocol implements this differently, if at
+all...
 
 =item * Switching off verification is sometimes reasonable.
 
@@ -953,7 +965,7 @@ implementations are usually buggy, too, due to their age.
 data.
 
 With Diffie-Hellman ephemeral key exchange, you can lose your private
-key, but all your old connectiosn are still protected - you still need a
+key, but all your old connections are still protected - you still need a
 new key, however. Diffie-Hellman needs special set-up done by default by
 AnyEvent::TLS, but not usually other TLS implementations.
 
@@ -968,11 +980,11 @@ amounts of memory per TLS connection (currently at least one perl scalar).
 
 Marc Lehmann <schmorp@schmorp.de>.
 
-Some of the API and implementation (verify_hostname) and a lot of
-ideas/workarounds/knowledge has been taken from the L<IO::Socket::SSL>
-module. Care has been taken to keep the API similar to that and other
-modules, to the extent possible while providing a sensible API for
-AnyEvent.
+Some of the API, documentation and implementation (verify_hostname),
+and a lot of ideas/workarounds/knowledge have been taken from the
+L<IO::Socket::SSL> module. Care has been taken to keep the API similar to
+that and other modules, to the extent possible while providing a sensible
+API for AnyEvent.
 
 =cut
 
