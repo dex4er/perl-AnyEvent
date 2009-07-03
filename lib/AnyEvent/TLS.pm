@@ -25,9 +25,12 @@ our $VERSION = 4.45;
 
 =head1 DESCRIPTION
 
-This module is a helper module that implements TLS (Transport Layer
+This module is a helper module that implements TLS/SSL (Transport Layer
 Security/Secure Sockets Layer) contexts. A TLS context is a common set of
 configuration values for use in etsablishing TLS connections.
+
+For some quick facts about SSL/TLS, see the section of the same name near
+the end of the document.
 
 A single TLS context can be used for any number of TLS connections that
 wish to use the same certificates, policy etc.
@@ -824,6 +827,102 @@ sub verify_cn($$$) {
 
    0
 }
+
+=back
+
+=head1 SSL/TLS QUICK FACTS
+
+Here are some quick facts about TLS/SSL that might help you:
+
+=over 4
+
+=item * A certificate is the public key part, a key is the private key part.
+
+While not strictly true, certificates are the things you can hand around
+publicly as a kind of identity, while keys should really be kept private,
+as proving that you have the private key is usually interpreted as being
+the entity behind the certificate.
+
+=item * A certificate is signed by a CA (Certificate Authority)
+
+By signing, the CA basically claims that the certificate it signed really
+belongs to the identity it is supposed to be,ong, verified according to
+their policies. For e.g. HTTPS, the CA usually makes some checks that the
+domain name mentioned in the certifiate really belongs to the entity that
+requested the signing.
+
+=item * CAs can be certified by other CAs
+
+Or by themselves - a certificate that is signed by a CA that is itself is
+called a self-signed certificate, and when you find a certificate signed
+by another CA, which is in turn signed by another CA you trust, you have a
+trust chain of depth two.
+
+=item * "Trusting" a CA means trusting all certificates it has signed.
+
+If you "trust" a CA certificate, then all certificates signed by it are
+automatically considered trusted as well.
+
+=item * A successfully verified certificate means that you can be
+reasonably sure that whoever you are talking with really is who he claims
+he is.
+
+By verifying certificates against a number of CAs that you trust (meaning
+it is signed directly or indirectly by such a CA), you can find out that
+the other side really is whoever he claims, according to the CA policies,
+and your belief in the integrity of the CA.
+
+=item * Verifying the certificate signing is not everything.
+
+Even when the certificate is correct, it might belong to somebody else: if
+www.attacker.com can make your computer believe that it is really called
+www.gmail.com, then it could send you the certificate for www.attacker.com
+that you might trust because it is signed by a CA you trust, and intercept
+all your traffic that you think goes to www.gmail.com.
+
+To thwart this attack vector, common name verification is used, which
+basically checks that the certificate (www.attacker.com) really belongs to
+the host you are trying to connect (www.gmail.com), which in this example
+is not the case.
+
+So common name verification is almost as important as checking the CA
+signing. Unfortunately, every protocol implements this differently...
+
+=item * Switching off verification is sometimes reasonable.
+
+You can switch off verification. You still get an encrypted connection
+that is protected against eavesdropping and injection - you just lose
+protection against man in the middle attacks, i.e. somebody else with
+enough abilities to to intercept all traffic can masquerade itself as the
+other side.
+
+For many applications, switching off verification is entirely
+reasonable. Downloading random stuff from websites using HTTPS for no
+reason is such an application. Talking to your bank and entering TANs is
+not such an application.
+
+=item * A SSL/TLS server always needs a certificate/key pair to operate,
+for clients this is optional.
+
+Apart from (usually disabled) anonymous cipher suites, a server always
+needs a certificate/key pair to operate.
+
+Clients almost never use certificates, but if they do, they can be used
+to authenticate the client, just as server certificates can be used to
+authenticate the server.
+
+=item * SSL version 2 is very insecure.
+
+SSL version 2 is old and not only has it some security issues, SSLv2-only
+implementations are usually buggy, too, due to their age.
+
+=item * Sometimes, even losing your private key might not expose all your
+data.
+
+With Diffie-Hellman ephemeral key exchange, you can lose your private
+key, but all your old connectiosn are still protected - you still need a
+new key, however. Diffie-Hellman needs special set-up done by default by
+AnyEvent::TLS, but not usually other TLS implementations.
 
 =back
 
