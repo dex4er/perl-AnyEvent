@@ -1383,13 +1383,16 @@ our $ERROR_ZERO_RETURN;
 
 sub _tls_error {
    my ($self, $err) = @_;
-      warn "$err,$!\n";#d#
 
    return $self->_error ($!, 1)
       if $err == Net::SSLeay::ERROR_SYSCALL ();
 
-   $self->_error (&Errno::EPROTO, 1,
-                  Net::SSLeay::ERR_error_string (Net::SSLeay::ERR_get_error ()));
+   my $err =Net::SSLeay::ERR_error_string (Net::SSLeay::ERR_get_error ());
+
+   # reduce error string to look less scary
+   $err =~ s/^error:[0-9a-fA-F]{8}:[^:]+:([^:]+):/\L$1: /;
+
+   $self->_error (&Errno::EPROTO, 1, $err);
 }
 
 # poll the write BIO and send the data if applicable
@@ -1463,6 +1466,8 @@ AnyEvent::Handle object (this is due to bugs in OpenSSL).
 
 =cut
 
+our %TLS_CACHE; #TODO not yet documented, should we?
+
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
 
@@ -1481,7 +1486,13 @@ sub starttls {
       require AnyEvent::TLS;
 
       local $Carp::CarpLevel = 1; # skip ourselves when creating a new context
-      $ctx = new AnyEvent::TLS %$ctx;
+
+      if ($ctx->{cache}) {
+         my $key = $ctx+0;
+         $ctx = $TLS_CACHE{$key} ||= new AnyEvent::TLS %$ctx;
+      } else {
+         $ctx = new AnyEvent::TLS %$ctx;
+      }
    }
    
    $self->{tls_ctx} = $ctx || TLS_CTX ();

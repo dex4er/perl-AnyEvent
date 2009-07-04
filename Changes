@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 ZERO_RETURN - stoptls?
+	- AnyEvent::DNS did not properly follow CNAME records with
+          uppercase targets.
         - added new module AnyEvent::TLS for easier SSL/TLS context
           creation, with many options including hostname verification,
           secure default configuration, lots of documentation and,

@@ -1286,7 +1286,7 @@ sub resolve($%) {
                      or return $do_search->(); # cname chain too long
 
                   $cname = 1;
-                  $name = $rr[0][3];
+                  $name = lc $rr[0][3];
 
                } elsif ($cname) {
                   # follow the cname
