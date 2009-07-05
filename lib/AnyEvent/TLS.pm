@@ -128,7 +128,7 @@ functions.
 If it is disabled, then no peer certificate verification will be done
 - the connection will be encrypted, but the peer certificate won't be
 verified against any known CAs, or whether it is still valid or not. No
-common name verification or custom verification will be done either.
+peername verification or custom verification will be done either.
 
 If enabled, then the peer certificate (required in client mode, optional
 in server mode, see C<verify_require_client_cert>) will be checked against
@@ -140,7 +140,7 @@ missing).
 
 Other basic checks, such as checking the validity period, will also be
 done, as well as optional peername/hostname/common name verification
-C<verify_cn>.
+C<verify_peername>.
 
 An optional C<verify_cb> callback can also be set, which will be invoked
 with the verification results, and which can override the decision.
@@ -156,7 +156,7 @@ mode, this switch has no effect).
 
 Provide a custom peer verification callback used by TLS sessions,
 which is called with the result of any other verification (C<verify>,
-C<verify_cn>).
+C<verify_peername>).
 
 This callback will only be called when verification is enabled (C<< verify
 => 1 >>).
@@ -181,7 +181,7 @@ if the C<$depth> is non-zero:
 
 C<$preverify_ok> is true iff the basic verification of the certificates
 was successful (a valid CA chain must exist, the certificate has passed
-basic validity checks, common name verification succeeded).
+basic validity checks, peername verification succeeded).
 
 C<$x509_store_ctx> is the Net::SSLeay::X509_CTX> object.
 
@@ -193,14 +193,13 @@ identify the certificate.
 The callback must return either C<0> to indicate failure, or C<1> to
 indicate success.
 
-=item verify_cn => $scheme | $callback->($tls, $cert, $peername)
+=item verify_peername => $scheme | $callback->($tls, $cert, $peername)
 
-TLS only protects the data that is sent - it cannot automatically
-verify that you are really talking to the right peer. The reason is
-that certificates contain a "common name" (and a set of possible
-alternative "names", so this should really be called verify_peername or
-verify_hostname) that needs to be checked against the peer name (usually,
-but not always, the DNS name of the server) in a protocol-dependent way.
+TLS only protects the data that is sent - it cannot automatically verify
+that you are really talking to the right peer. The reason is that
+certificates contain a "common name" (and a set of possible alternative
+"names") that need to be checked against the peername (usually, but not
+always, the DNS name of the server) in a protocol-dependent way.
 
 This can be implemented by specifying a callback that has to verify that
 the actual C<$peername> matches the given certificate in C<$cert>.
@@ -236,10 +235,10 @@ possible anywhere.
 You can also specify a scheme yourself by using an array reference with
 three integers.
 
-C<$check_cn> specifies how the common name field is used: C<0> means it
-will be completely ignored, C<1> means it will only be used if no host
-names have been found in the subjectAltNames, and C<2> means the common
-name will always be checked against the peername.
+C<$check_cn> specifies if and how the common name field is used: C<0>
+means it will be completely ignored, C<1> means it will only be used if
+no host names have been found in the subjectAltNames, and C<2> means the
+common name will always be checked against the peername.
 
 C<$wildcards_in_alt> and C<$wildcards_in_cn> specify whether and where
 wildcards (C<*>) are allowed in subjectAltNames and the common name,
@@ -548,8 +547,8 @@ sub new {
       $self->{verify_mode} = Net::SSLeay::VERIFY_NONE ();
    }
 
-   $self->{verify_cn} = $arg{verify_cn}
-      if exists $arg{verify_cn};
+   $self->{verify_peername} = $arg{verify_peername}
+      if exists $arg{verify_peername};
 
    $self->{verify_cb} = $arg{verify_cb}
       if exists $arg{verify_cb};
@@ -661,12 +660,12 @@ sub _verify_hostname {
    my ($self, $cn, $cert) = @_;
 
    return 1
-      unless exists $self->{verify_cn} && "none" ne lc $self->{verify_cn};
+      unless exists $self->{verify_peername} && "none" ne lc $self->{verify_peername};
 
-   return $self->{verify_cn}->($self, $cn, $cert)
-      if ref $self->{verify_cn} && "ARRAY" ne ref $self->{verify_cn};
+   return $self->{verify_peername}->($self, $cn, $cert)
+      if ref $self->{verify_peername} && "ARRAY" ne ref $self->{verify_peername};
 
-   verify_hostname $cn, $cert, $self->{verify_cn}
+   verify_hostname $cn, $cert, $self->{verify_peername}
 }
 
 sub verify {
@@ -913,18 +912,18 @@ the entity behind the certificate.
 
 =item * A certificate is signed by a CA (Certificate Authority).
 
-By signing, the CA basically claims that the certificate it signed really
-belongs to the identity it is supposed to be, verified according to their
-policies. For e.g. HTTPS, the CA usually makes some checks that the
-hostname mentioned in the certificate really belongs to the entity that
-requested the signing.
+By signing, the CA basically claims that the certificate it signs
+really belongs to the identity name din it, verified according to the
+CA policies. For e.g. HTTPS, the CA usually makes some checks that the
+hostname mentioned in the certificate really belongs to the company/person
+that requested the signing and owns the domain.
 
 =item * CAs can be certified by other CAs.
 
-Or by themselves - a certificate that is signed by a CA that is itself is
-called a self-signed certificate, and when you find a certificate signed
-by another CA, which is in turn signed by another CA you trust, you have a
-trust chain of depth two.
+Or by themselves - a certificate that is signed by a CA that is itself
+is called a self-signed certificate, a trust chain of length zero. When
+you find a certificate signed by another CA, which is in turn signed by
+another CA you trust, you have a trust chain of depth two.
 
 =item * "Trusting" a CA means trusting all certificates it has signed.
 
@@ -944,16 +943,20 @@ and your belief in the integrity of the CA.
 
 Even when the certificate is correct, it might belong to somebody else: if
 www.attacker.com can make your computer believe that it is really called
-www.mybank.com, then it could send you the certificate for www.attacker.com
-that you might trust because it is signed by a CA you trust, and intercept
-all your traffic that you think goes to www.mybank.com.
+www.mybank.com (by making your DNS server believe this for example),
+then it could send you the certificate for www.attacker.com that your
+software trusts because it is signed by a CA you trust, and intercept
+all your traffic that you think goes to www.mybank.com. This works
+because your software sees that the certificate is correctly signed (for
+www.attacker.com) and you think you are talking to your bank.
 
-To thwart this attack vector, common name (or peer name) verification
-is used, which basically checks that the certificate (www.attacker.com)
-really belongs to the host you are trying to connect (www.mybank.com),
-which in this example is not the case.
+To thwart this attack vector, peername verification should be used, which
+basically checks that the certificate (for www.attacker.com) really
+belongs to the host you are trying to talk to (www.mybank.com), which in
+this example is not the case, as www.attacker.com (from the certificate)
+doesn't match www.mybank.com (the hostname used to create the connection).
 
-So common name verification is almost as important as checking the CA
+So peername verification is almost as important as checking the CA
 signing. Unfortunately, every protocol implements this differently, if at
 all...
 

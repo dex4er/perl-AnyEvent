@@ -251,7 +251,7 @@ A string used to identify the remote site - usually the DNS hostname
 (I<not> IDN!) used to create the connection, rarely the IP address.
 
 Apart from being useful in error messages, this string is also used in TLS
-common name verification (see C<verify_cn> in L<AnyEvent::TLS>).
+peername verification (see C<verify_peername> in L<AnyEvent::TLS>).
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
