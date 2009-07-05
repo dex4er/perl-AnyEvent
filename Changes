@@ -3,6 +3,9 @@ Revision history for Perl extension AnyEvent.
 ZERO_RETURN - stoptls?
 	- AnyEvent::DNS did not properly follow CNAME records with
           uppercase targets.
+        - AnyEvent::DNS would errornously return AAAA records
+          with v4 mapped addresses (a faulty record) as ipv4 addresses,
+          causing AnyEvent::Socket to throw an exception.
         - added new module AnyEvent::TLS for easier SSL/TLS context
           creation, with many options including hostname verification,
           secure default configuration, lots of documentation and,
@@ -20,6 +23,8 @@ ZERO_RETURN - stoptls?
           from the constructor.
         - AnyEvent::Handle will now try to load only JSON::XS first,
           then fall back to JSON.
+        - format_ipv4/format_ipv6 are now exported by default, for symmetry,
+          and because it was documented that way.
 
 4.451 Fri Jul  3 00:28:58 CEST 2009
 	- do not clear rbuf when shutting down an AnyEvent::Handle

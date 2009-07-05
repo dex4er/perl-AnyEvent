@@ -505,7 +505,7 @@ our %dec_rr = (
     13 => sub { unpack "C/a* C/a*", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_name) }, # mx
     16 => sub { unpack "(C/a*)*", $_ }, # txt
-    28 => sub { AnyEvent::Socket::format_address ($_) }, # aaaa
+    28 => sub { AnyEvent::Socket::format_ipv6 ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
     35 => sub { # naptr
        # requires perl 5.10, sorry
