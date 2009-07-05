@@ -135,7 +135,7 @@ callback will only be called when at least one octet of data is in the
 read buffer).
 
 To access (and remove data from) the read buffer, use the C<< ->rbuf >>
-method or access the C<$handle->{rbuf}> member directly. Note that you
+method or access the C<< $handle->{rbuf} >> member directly. Note that you
 must not enlarge or modify the read buffer, you can only remove data at
 the beginning from it.
 
