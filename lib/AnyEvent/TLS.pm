@@ -375,20 +375,22 @@ is supposed to return the password.
 
 =item dh_file => $path
 
-Path to a file containing Diffie-Hellman parameters in PEM format. See
-also C<dh> on how to specify them directly, or use a pre-generated set.
+Path to a file containing Diffie-Hellman parameters in PEM format, for
+use in servers. See also C<dh> on how to specify them directly, or use a
+pre-generated set.
 
 Diffie-Hellman key exchange generates temporary encryption keys that
 are not transferred over the connection, which means that even if the
-certificate key is made public at a later time and a full dump of the
+certificate key(s) are made public at a later time and a full dump of the
 connection exists, the key still cannot be deduced.
 
 These ciphers are only available with SSLv3 and later (which is the
-default with AnyEvent::TLS). Anonymous DH protocols are disabled by
-default, and usually not even compiled into the underlying library, as
-they provide no direct protection against man-in-the-middle attacks. The
-same is true for the common practise of self-signed certificates that you
-have to accept first, of course.
+default with AnyEvent::TLS), and are only used in server/accept
+mode. Anonymous DH protocols are usually disabled by default, and usually
+not even compiled into the underlying library, as they provide no direct
+protection against man-in-the-middle attacks. The same is true for the
+common practise of self-signed certificates that you have to accept first,
+of course.
 
 =item dh => $string
 
