@@ -1588,8 +1588,8 @@ sub DESTROY {
 =item $handle->destroy
 
 Shuts down the handle object as much as possible - this call ensures that
-no further callbacks will be invoked and resources will be freed as much
-as possible. You must not call any methods on the object afterwards.
+no further callbacks will be invoked and as many resources as possible
+will be freed. You must not call any methods on the object afterwards.
 
 Normally, you can just "forget" any references to an AnyEvent::Handle
 object and it will simply shut down. This works in fatal error and EOF
