@@ -42,6 +42,11 @@ at some future point, at which this API will change dramatically, at least
 in the Net::SSLeay-specific parts (most constructor arguments should still
 work, though).
 
+=head1 USAGE EXAMPLES
+
+See the L<AnyEvent::Handle> manpage, NONFREQUENTLY ASKED QUESTIONS, for
+some actual usage examples.
+
 =head1 PUBLIC METHODS AND FUNCTIONS
 
 =over 4

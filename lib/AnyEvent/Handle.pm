@@ -298,7 +298,7 @@ Instead of an object, you can also specify a hash reference with C<< key
 => value >> pairs. Those will be passed to L<AnyEvent::TLS> to create a
 new TLS context object.
 
-=item on_starttls => $cb->($handle, $success)
+=item on_starttls => $cb->($handle, $success[, $error_message])
 
 This callback will be invoked when the TLS/SSL handshake has finished. If
 C<$success> is true, then the TLS handshake succeeded, otherwise it failed
@@ -306,6 +306,16 @@ C<$success> is true, then the TLS handshake succeeded, otherwise it failed
 
 The session in C<< $handle->{tls} >> can still be examined in this
 callback, even when the handshake was not successful.
+
+TLS handshake failures will not cause C<on_error> to be invoked when this
+callback is in effect, instead, the error message will be passed to C<on_starttls>.
+
+Without this callback, handshake failures lead to C<on_error> being
+called, as normal.
+
+Note that you cannot call C<starttls> right again in this callback. If you
+need to do that, start an zero-second timer instead whose callback can
+then call C<< ->starttls >> again.
 
 =item on_stoptls => $cb->($handle)
 
@@ -351,7 +361,7 @@ sub new {
    $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
       if $self->{tls};
 
-   $self->on_drain (delete $self->{on_drain}) if exists $self->{on_drain};
+   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
 
    $self->start_read
       if $self->{on_read};
@@ -1437,7 +1447,13 @@ sub _tls_error {
    # reduce error string to look less scary
    $err =~ s/^error:[0-9a-fA-F]{8}:[^:]+:([^:]+):/\L$1: /;
 
-   $self->_error (&Errno::EPROTO, 1, $err);
+   if ($self->{_on_starttls}) {
+      (delete $self->{_on_starttls})->($self, undef, $err);
+      &_freetls;
+   } else {
+      &_freetls;
+      $self->_error (&Errno::EPROTO, 1, $err);
+   }
 }
 
 # poll the write BIO and send the data if applicable
@@ -1463,7 +1479,10 @@ sub _dotls {
 
    while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
       unless (length $tmp) {
+         $self->{_on_starttls}
+            and (delete $self->{_on_starttls})->($self, undef, "EOF during handshake"); # ???
          &_freetls;
+
          if ($self->{on_stoptls}) {
             $self->{on_stoptls}($self);
             return;
@@ -1491,7 +1510,7 @@ sub _dotls {
 
    $self->{_on_starttls}
       and Net::SSLeay::state ($self->{tls}) == Net::SSLeay::ST_OK ()
-      and (delete $self->{_on_starttls})->($self, 1);
+      and (delete $self->{_on_starttls})->($self, 1, "TLS/SSL connection established");
 }
 
 =item $handle->starttls ($tls[, $tls_ctx])
@@ -1572,7 +1591,7 @@ sub starttls {
    Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
 
    $self->{_on_starttls} = sub { $_[0]{on_starttls}(@_) }
-      if exists $self->{on_starttls};
+      if $self->{on_starttls};
 
    &_dotls; # need to trigger the initial handshake
    $self->start_read; # make sure we actually do read
@@ -1606,12 +1625,9 @@ sub _freetls {
 
    return unless $self->{tls};
 
-   $self->{_on_starttls}
-      and (delete $self->{_on_starttls})->($self, undef);
-
    $self->{tls_ctx}->_put_session (delete $self->{tls});
    
-   delete @$self{qw(_rbio _wbio _tls_wbuf)};
+   delete @$self{qw(_rbio _wbio _tls_wbuf _on_starttls)};
 }
 
 sub DESTROY {
@@ -1756,6 +1772,28 @@ written to the socket:
       warn "all data submitted to the kernel\n";
       undef $handle;
    });
+
+If you just want to queue some data and then signal EOF to the other side,
+consider using C<< ->push_shutdown >> instead.
+
+=item I want to contact a TLS/SSL server, I don't care about security.
+
+If your TLS server is a pure TLS server (e.g. HTTPS) that only speaks TLS,
+simply connect to it and then create the AnyEvent::Handle with the C<tls>
+parameter:
+
+    my $handle = new AnyEvent::Handle
+       fh  => $fh,
+       tls => "connect",
+       on_error => sub { ... };
+
+    $handle->push_write (...);
+
+=item I want to contact a TLS/SSL server, I do care about security.
+
+Then you #x##TODO#
+
+ 
 
 =back
 
