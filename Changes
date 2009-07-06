@@ -18,6 +18,7 @@ ZERO_RETURN - stoptls?
         - add AnyEvent::Handle->push_shutdown method.
         - add an additional error message parameter to AnyEvent::Handle's
           on_error callback (for TLS, $! is still available).
+        - add AnyEvent::Handle on_starttls/on_stoptls callbacks.
         - make AnyEvent::Handle more robust against early conenction
           failures (during new), and return C<undef> in that case
           from the constructor.

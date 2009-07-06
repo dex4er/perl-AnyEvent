@@ -298,6 +298,28 @@ Instead of an object, you can also specify a hash reference with C<< key
 => value >> pairs. Those will be passed to L<AnyEvent::TLS> to create a
 new TLS context object.
 
+=item on_starttls => $cb->($handle, $success)
+
+This callback will be invoked when the TLS/SSL handshake has finished. If
+C<$success> is true, then the TLS handshake succeeded, otherwise it failed
+(C<on_stoptls> will not be called in this case).
+
+The session in C<< $handle->{tls} >> can still be examined in this
+callback, even when the handshake was not successful.
+
+=item on_stoptls => $cb->($handle)
+
+When a SSLv3/TLS shutdown/close notify/EOF is detected and this callback is
+set, then it will be invoked after freeing the TLS session. If it is not,
+then a TLS shutdown condition will be treated like a normal EOF condition
+on the handle.
+
+The session in C<< $handle->{tls} >> can still be examined in this
+callback.
+
+This callback will only be called on TLS shutdowns, not when the
+underlying handle signals EOF.
+
 =item json => JSON or JSON::XS object
 
 This is the json coder object used by the C<json> read and write types.
@@ -427,6 +449,26 @@ sub no_delay {
       local $SIG{__DIE__};
       setsockopt $_[0]{fh}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, int $_[1];
    };
+}
+
+=item $handle->on_starttls ($cb)
+
+Replace the current C<on_starttls> callback (see the C<on_starttls> constructor argument).
+
+=cut
+
+sub on_starttls {
+   $_[0]{on_starttls} = $_[1];
+}
+
+=item $handle->on_stoptls ($cb)
+
+Replace the current C<on_stoptls> callback (see the C<on_stoptls> constructor argument).
+
+=cut
+
+sub on_starttls {
+   $_[0]{on_stoptls} = $_[1];
 }
 
 #############################################################################
@@ -685,8 +727,9 @@ register_write_type storable => sub {
 
 Sometimes you know you want to close the socket after writing your data
 before it was actually written. One way to do that is to replace your
-C<on_drain> handler by a callback that shuts down the socket. This method
-is a shorthand for just that, and replaces the C<on_drain> callback with:
+C<on_drain> handler by a callback that shuts down the socket (and set
+C<low_water_mark> to C<0>). This method is a shorthand for just that, and
+replaces the C<on_drain> callback with:
 
    sub { shutdown $_[0]{fh}, 1 }    # for push_shutdown
 
@@ -699,7 +742,10 @@ afterwards. This is the cleanest way to close a connection.
 =cut
 
 sub push_shutdown {
-   $_[0]->{on_drain} = sub { shutdown $_[0]{fh}, 1 };
+   my ($self) = @_;
+
+   delete $self->{low_water_mark};
+   $self->on_drain (sub { shutdown $_[0]{fh}, 1 });
 }
 
 =item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
@@ -1379,7 +1425,6 @@ sub start_read {
 
 our $ERROR_SYSCALL;
 our $ERROR_WANT_READ;
-our $ERROR_ZERO_RETURN;
 
 sub _tls_error {
    my ($self, $err) = @_;
@@ -1413,16 +1458,20 @@ sub _dotls {
       $tmp = Net::SSLeay::get_error ($self->{tls}, $tmp);
       return $self->_tls_error ($tmp)
          if $tmp != $ERROR_WANT_READ
-            && ($tmp != $ERROR_SYSCALL || $!)
-            && $tmp != $ERROR_ZERO_RETURN;
+            && ($tmp != $ERROR_SYSCALL || $!);
    }
 
    while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
       unless (length $tmp) {
-         # let's treat SSL-eof as we treat normal EOF
-         delete $self->{_rw};
-         $self->{_eof} = 1;
          &_freetls;
+         if ($self->{on_stoptls}) {
+            $self->{on_stoptls}($self);
+            return;
+         } else {
+            # let's treat SSL-eof as we treat normal EOF
+            delete $self->{_rw};
+            $self->{_eof} = 1;
+         }
       }
 
       $self->{_tls_rbuf} .= $tmp;
@@ -1433,13 +1482,16 @@ sub _dotls {
    $tmp = Net::SSLeay::get_error ($self->{tls}, -1);
    return $self->_tls_error ($tmp)
       if $tmp != $ERROR_WANT_READ
-         && ($tmp != $ERROR_SYSCALL || $!)
-         && $tmp != $ERROR_ZERO_RETURN;
+         && ($tmp != $ERROR_SYSCALL || $!);
 
    while (length ($tmp = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $tmp;
       $self->_drain_wbuf;
    }
+
+   $self->{_on_starttls}
+      and Net::SSLeay::state ($self->{tls}) == Net::SSLeay::ST_OK ()
+      and (delete $self->{_on_starttls})->($self, 1);
 }
 
 =item $handle->starttls ($tls[, $tls_ctx])
@@ -1476,9 +1528,8 @@ sub starttls {
    Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
       if $self->{tls};
 
-   $ERROR_SYSCALL     = Net::SSLeay::ERROR_SYSCALL     ();
-   $ERROR_WANT_READ   = Net::SSLeay::ERROR_WANT_READ   ();
-   $ERROR_ZERO_RETURN = Net::SSLeay::ERROR_ZERO_RETURN ();
+   $ERROR_SYSCALL   = Net::SSLeay::ERROR_SYSCALL     ();
+   $ERROR_WANT_READ = Net::SSLeay::ERROR_WANT_READ   ();
 
    $ctx ||= $self->{tls_ctx};
 
@@ -1520,6 +1571,9 @@ sub starttls {
 
    Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
 
+   $self->{_on_starttls} = sub { $_[0]{on_starttls}(@_) }
+      if exists $self->{on_starttls};
+
    &_dotls; # need to trigger the initial handshake
    $self->start_read; # make sure we actually do read
 }
@@ -1541,9 +1595,9 @@ sub stoptls {
 
       &_dotls;
 
-      # we don't give a shit. no, we do, but we can't. no...
-      # we, we... have to use openssl :/
-      &_freetls;
+#      # we don't give a shit. no, we do, but we can't. no...#d#
+#      # we, we... have to use openssl :/#d#
+#      &_freetls;#d#
    }
 }
 
@@ -1551,6 +1605,9 @@ sub _freetls {
    my ($self) = @_;
 
    return unless $self->{tls};
+
+   $self->{_on_starttls}
+      and (delete $self->{_on_starttls})->($self, undef);
 
    $self->{tls_ctx}->_put_session (delete $self->{tls});
    
