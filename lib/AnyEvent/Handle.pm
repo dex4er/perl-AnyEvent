@@ -251,7 +251,9 @@ A string used to identify the remote site - usually the DNS hostname
 (I<not> IDN!) used to create the connection, rarely the IP address.
 
 Apart from being useful in error messages, this string is also used in TLS
-peername verification (see C<verify_peername> in L<AnyEvent::TLS>).
+peername verification (see C<verify_peername> in L<AnyEvent::TLS>). This
+verification will be skipped when C<peername> is not specified or
+C<undef>.
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
@@ -1782,18 +1784,84 @@ If your TLS server is a pure TLS server (e.g. HTTPS) that only speaks TLS,
 simply connect to it and then create the AnyEvent::Handle with the C<tls>
 parameter:
 
-    my $handle = new AnyEvent::Handle
-       fh  => $fh,
-       tls => "connect",
-       on_error => sub { ... };
+   tcp_connect $host, $port, sub {
+      my ($fh) = @_;
 
-    $handle->push_write (...);
+      my $handle = new AnyEvent::Handle
+         fh  => $fh,
+         tls => "connect",
+         on_error => sub { ... };
+
+      $handle->push_write (...);
+   };
 
 =item I want to contact a TLS/SSL server, I do care about security.
 
-Then you #x##TODO#
+Then you should additionally enable certificate verification, including
+peername verification, if the protocol you use supports it (see
+L<AnyEvent::TLS>, C<verify_peername>).
 
- 
+E.g. for HTTPS:
+
+   tcp_connect $host, $port, sub {
+      my ($fh) = @_;
+
+       my $handle = new AnyEvent::Handle
+          fh       => $fh,
+          peername => $host,
+          tls      => "connect",
+          tls_ctx  => { verify => 1, verify_peername => "https" },
+          ...
+
+Note that you must specify the hostname you connected to (or whatever
+"peername" the protocol needs) as the C<peername> argument, otherwise no
+peername verification will be done.
+
+The above will use the system-dependent default set of trusted CA
+certificates. If you want to check against a specific CA, add the
+C<ca_file> (or C<ca_cert>) arguments to C<tls_ctx>:
+
+       tls_ctx  => {
+          verify          => 1,
+          verify_peername => "https",
+          ca_file         => "my-ca-cert.pem",
+       },
+
+=item I want to create a TLS/SSL server, how do I do that?
+
+Well, you first need to get a server certificate and key. You have
+three options: a) ask a CA (buy one, use cacert.org etc.) b) create a
+self-signed certificate (cheap. check the search engine of your choice,
+there are many tutorials on the net) or c) make your own CA (tinyca2 is a
+nice program for that purpose).
+
+Then create a file with your private key (in PEM format, see
+L<AnyEvent::TLS>), followed by the certificate (also in PEM format). The
+file should then look like this:
+
+   -----BEGIN RSA PRIVATE KEY-----
+   ...header data
+   ... lots of base64'y-stuff
+   -----END RSA PRIVATE KEY-----
+
+   -----BEGIN CERTIFICATE-----
+   ... lots of base64'y-stuff
+   -----END CERTIFICATE-----
+
+The important bits are the "PRIVATE KEY" and "CERTIFICATE" parts.  Then
+specify this file as C<cert_file>:
+
+   tcp_server undef, $port, sub {
+      my ($fh) = @_;
+
+      my $handle = new AnyEvent::Handle
+         fh       => $fh,
+         tls      => "accept",
+         tls_ctx  => { cert_file => "my-server-keycert.pem" },
+         ...
+
+When you have intermediate CA certificates that your clients might not
+know about, just append them to the C<cert_file>.
 
 =back
 

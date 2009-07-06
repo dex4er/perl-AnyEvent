@@ -705,6 +705,9 @@ sub verify_hostname($$$);
 
 sub _verify_hostname {
    my ($self, $cn, $cert) = @_;
+   
+   return 1
+      unless defined $cn;
 
    return 1
       unless exists $self->{verify_peername} && "none" ne lc $self->{verify_peername};
