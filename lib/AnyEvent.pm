@@ -1485,6 +1485,13 @@ The file to use instead of F</etc/resolv.conf> (or OS-specific
 configuration) in the default resolver. When set to the empty string, no
 default config will be used.
 
+=item C<PERL_ANYEVENT_CA_FILE>, C<PERL_ANYEVENT_CA_PATH>.
+
+When neither C<ca_file> nor C<ca_path> was specified during
+L<AnyEvent::TLS> context creation, and either of these environment
+variables exist, they will be used to specify CA certificate locations
+instead of a system-dependent default.
+
 =back
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE

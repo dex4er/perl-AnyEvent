@@ -141,7 +141,8 @@ its CA certificate chain - that means there must be a signing chain from
 the peer certificate to any of the CA certificates you trust locally, as
 specified by the C<ca_file> and/or C<ca_path> and/or C<ca_cert> parameters
 (or the system default CA repository, if all of those parameters are
-missing).
+missing - see also the L<AnyEvent> manpage for the description of
+PERL_ANYEVENT_CA_FILE).
 
 Other basic checks, such as checking the validity period, will also be
 done, as well as optional peername/hostname/common name verification
@@ -623,6 +624,12 @@ sub new {
          if (exists $arg{ca_file} or exists $arg{ca_path}) {
             Net::SSLeay::CTX_load_verify_locations ($ctx, $arg{ca_file}, $arg{ca_path});
          }
+      } elsif (exists $ENV{PERL_ANYEVENT_CA_FILE} or exists $ENV{PERL_ANYEVENT_CA_PATH}) {
+         Net::SSLeay::CTX_load_verify_locations (
+            $ctx,
+            $ENV{PERL_ANYEVENT_CA_FILE},
+            $ENV{PERL_ANYEVENT_CA_PATH},
+         );
       } else {
          # else fall back to defaults
          Net::SSLeay::CTX_set_default_verify_paths ($ctx);

@@ -1,7 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 	- new env variables: PERL_ANYEVENT_RESOLV_CONF,
-          PERL_ANYEVENT_MAX_OUTSTANDING_DNS.
+          PERL_ANYEVENT_MAX_OUTSTANDING_DNS, PERL_ANYEVENT_CA_FILE
+          and PERL_ANYEVENT_CA_PATH.
 
 4.8  Mon Jul  6 23:45:16 CEST 2009
 	- AnyEvent::DNS did not properly follow CNAME records with
