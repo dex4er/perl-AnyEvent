@@ -858,7 +858,7 @@ sub _drain_rbuf {
       if ($self->{on_eof}) {
          $self->{on_eof}($self)
       } else {
-         $self->_error (0, 1);
+         $self->_error (0, 1, "Unexpected end-of-file");
       }
    }
 
