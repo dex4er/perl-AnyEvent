@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-ZERO_RETURN - stoptls?
+4.8  Mon Jul  6 23:45:16 CEST 2009
 	- AnyEvent::DNS did not properly follow CNAME records with
           uppercase targets.
         - AnyEvent::DNS would errornously return AAAA records
