@@ -304,6 +304,9 @@ peer certificates will be checked against a list of revoked certificates
 issued by the CA. The revocation lists will be expected in the C<ca_path>
 directory.
 
+certificate verification will fail if this is enabled but no revocation
+list was found.
+
 This requires OpenSSL >= 0.9.7b. Check the OpenSSL documentation for more
 details.
 
@@ -356,6 +359,15 @@ Additional signing certifiates to send to the peer (in SSLv3 and newer)
 can be specified by appending them to the certificate proper: the order
 must be from issuer certificate over any intermediate CA certificates to
 the root CA.
+
+So the recommended ordering for a combined key/cert/chain file, specified
+via C<cert_file> or C<cert> looks like this:
+
+  certificate private key
+  client/server certificate
+  ca 1, signing client/server certficate
+  ca 2, signing ca 1
+  ...
 
 =item cert => $string
 
