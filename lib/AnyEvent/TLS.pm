@@ -152,47 +152,6 @@ I<disabled>). When this mode is enabled, then a client certificate will be
 required in server mode (a server certificate is mandatory, so in client
 mode, this switch has no effect).
 
-=item verify_cb => $callback->($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert)
-
-Provide a custom peer verification callback used by TLS sessions,
-which is called with the result of any other verification (C<verify>,
-C<verify_peername>).
-
-This callback will only be called when verification is enabled (C<< verify
-=> 1 >>).
-
-C<$tls> is the C<AnyEvent::TLS> object associated with the session,
-while C<$ref> is whatever the user associated with the session (usually
-an L<AnyEvent::Handle> object when used by AnyEvent::Handle).
-
-C<$depth> is the current verification depth - C<$depth = 0> means the
-certificate to verify is the peer certificate, higher levels are its CA
-certificate and so on. In most cases, you can just return C<$preverify_ok>
-if the C<$depth> is non-zero:
-
-   verify_cb => sub {
-      my ($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert) = @_;
-
-      return $preverify_ok
-         if $depth;
-
-      # more verification
-   },
-
-C<$preverify_ok> is true iff the basic verification of the certificates
-was successful (a valid CA chain must exist, the certificate has passed
-basic validity checks, peername verification succeeded).
-
-C<$x509_store_ctx> is the Net::SSLeay::X509_CTX> object.
-
-C<$cert> is the C<Net::SSLeay::X509> object representing the
-peer certificate, or zero if there was an error. You can call
-C<AnyEvent::TLS::certname $cert> to get a nice user-readable string to
-identify the certificate.
-
-The callback must return either C<0> to indicate failure, or C<1> to
-indicate success.
-
 =item verify_peername => $scheme | $callback->($tls, $cert, $peername)
 
 TLS only protects the data that is sent - it cannot automatically verify
@@ -257,6 +216,47 @@ C<rfc3920>).
 This verification will only be done when verification is enabled (C<<
 verify => 1 >>).
 
+=item verify_cb => $callback->($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert)
+
+Provide a custom peer verification callback used by TLS sessions,
+which is called with the result of any other verification (C<verify>,
+C<verify_peername>).
+
+This callback will only be called when verification is enabled (C<< verify
+=> 1 >>).
+
+C<$tls> is the C<AnyEvent::TLS> object associated with the session,
+while C<$ref> is whatever the user associated with the session (usually
+an L<AnyEvent::Handle> object when used by AnyEvent::Handle).
+
+C<$depth> is the current verification depth - C<$depth = 0> means the
+certificate to verify is the peer certificate, higher levels are its CA
+certificate and so on. In most cases, you can just return C<$preverify_ok>
+if the C<$depth> is non-zero:
+
+   verify_cb => sub {
+      my ($tls, $ref, $cn, $depth, $preverify_ok, $x509_store_ctx, $cert) = @_;
+
+      return $preverify_ok
+         if $depth;
+
+      # more verification
+   },
+
+C<$preverify_ok> is true iff the basic verification of the certificates
+was successful (a valid CA chain must exist, the certificate has passed
+basic validity checks, peername verification succeeded).
+
+C<$x509_store_ctx> is the Net::SSLeay::X509_CTX> object.
+
+C<$cert> is the C<Net::SSLeay::X509> object representing the
+peer certificate, or zero if there was an error. You can call
+C<AnyEvent::TLS::certname $cert> to get a nice user-readable string to
+identify the certificate.
+
+The callback must return either C<0> to indicate failure, or C<1> to
+indicate success.
+
 =item verify_client_once => $enable
 
 Enable or disable skipping the client certificate verification on
@@ -278,9 +278,9 @@ have any effect.
 
 =item ca_path => $path
 
-If this parameter is specified and non-empty, it will be the
-path to a directory with hashed (server) CA certificate files
-in PEM format. When the ca certificate is being verified, the
+If this parameter is specified and non-empty, it will be
+the path to a directory with hashed CA certificate files in
+PEM format. When the ca certificate is being verified, the
 certificate will be hashed and looked up in that directory (see
 L<http://www.openssl.org/docs/ssl/SSL_CTX_load_verify_locations.html> for
 details)
