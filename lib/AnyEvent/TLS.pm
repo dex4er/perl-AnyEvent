@@ -336,7 +336,7 @@ a temporary file.
 =item cert_file => $path
 
 The path to the local certificate file in PEM format (might be a combined
-certificate/private key file).
+certificate/private key file, including chained certificates).
 
 The local certificate (and key) are used to authenticate against the
 peer - servers mandatorily need a certificate and key, clients can use
@@ -351,6 +351,11 @@ The certificate in the file should look like this:
 If the certificate file or string contain both the certificate and
 private key, then there is no need to specify a separate C<key_file> or
 C<key>.
+
+Additional signing certifiates to send to the peer (in SSLv3 and newer)
+can be specified by appending them to the certificate proper: the order
+must be from issuer certificate over any intermediate CA certificates to
+the root CA.
 
 =item cert => $string
 
@@ -448,6 +453,22 @@ you wish to fine-tune something...
 
 =cut
 
+#=item trust => $trust
+#
+#Sets the expected (root) certificate use on this context, i.e. what 
+#certificates to trust. The default is C<compat>, and the following strings
+#are supported:
+#
+#   compat          any certifictae will do
+#   ssl_client      only trust client certificates
+#   ssl_server      only trust server certificates
+#   email           only trust e-mail certificates
+#   object_sign     only trust signing (CA) certificates
+#   ocsp_sign       only trust ocsp signing certs
+#   ocsp_request    only trust ocsp request certs
+
+# purpose?
+
 #TODO
 # verify_depth?
 # reuse_ctx
@@ -467,6 +488,16 @@ you wish to fine-tune something...
 =cut
 
 sub init ();
+
+#our %X509_TRUST = (
+#   compat       => 1,
+#   ssl_client   => 2,
+#   ssl_server   => 3,
+#   email        => 4,
+#   object_sign  => 5,
+#   ocsp_sign    => 6,
+#   ocsp_request => 7,
+#);
 
 sub new {
    my ($class, %arg) = @_;
@@ -605,9 +636,8 @@ sub new {
             ($ctx, $arg{key_file}, Net::SSLeay::FILETYPE_PEM ())
          or croak "$arg{key_file}: failed to load local private key (key_file or key)";
 
-      Net::SSLeay::CTX_use_certificate_file
-            ($ctx, $arg{cert_file}, Net::SSLeay::FILETYPE_PEM ())
-         or croak "$arg{cert_file}: failed to use local certificate (cert_file or cert)";
+      Net::SSLeay::CTX_use_certificate_chain_file ($ctx, $arg{cert_file})
+         or croak "$arg{cert_file}: failed to use local certificate chain (cert_file or cert)";
    }
 
    if ($arg{check_crl}) {
