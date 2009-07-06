@@ -955,7 +955,7 @@ the entity behind the certificate.
 =item * A certificate is signed by a CA (Certificate Authority).
 
 By signing, the CA basically claims that the certificate it signs
-really belongs to the identity name din it, verified according to the
+really belongs to the identity named in it, verified according to the
 CA policies. For e.g. HTTPS, the CA usually makes some checks that the
 hostname mentioned in the certificate really belongs to the company/person
 that requested the signing and owns the domain.
@@ -1007,7 +1007,7 @@ all...
 You can switch off verification. You still get an encrypted connection
 that is protected against eavesdropping and injection - you just lose
 protection against man in the middle attacks, i.e. somebody else with
-enough abilities to to intercept all traffic can masquerade itself as the
+enough abilities to to intercept all traffic can masquerade herself as the
 other side.
 
 For many applications, switching off verification is entirely
@@ -1030,13 +1030,12 @@ authenticate the server.
 SSL version 2 is old and not only has it some security issues, SSLv2-only
 implementations are usually buggy, too, due to their age.
 
-=item * Sometimes, even losing your private key might not expose all your
+=item * Sometimes, even losing your "private" key might not expose all your
 data.
 
-With Diffie-Hellman ephemeral key exchange, you can lose your private
-key, but all your old connections are still protected - you still need a
-new key, however. Diffie-Hellman needs special set-up done by default by
-AnyEvent::TLS, but not usually other TLS implementations.
+With Diffie-Hellman ephemeral key exchange, you can lose the DH parameters
+(the "keys"), but all your connections are still protected. Diffie-Hellman
+needs special set-up (done by default by AnyEvent::TLS).
 
 =back
 
