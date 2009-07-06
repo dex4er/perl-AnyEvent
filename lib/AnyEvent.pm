@@ -1473,6 +1473,18 @@ EDNS0 in its DNS requests.
 The maximum number of child processes that C<AnyEvent::Util::fork_call>
 will create in parallel.
 
+=item C<PERL_ANYEVENT_MAX_OUTSTANDING_DNS>
+
+The default value for the C<max_outstanding> parameter for the default DNS
+resolver - this is the maximum number of parallel DNS requests that are
+sent to the DNS server.
+
+=item C<PERL_ANYEVENT_RESOLV_CONF>
+
+The file to use instead of F</etc/resolv.conf> (or OS-specific
+configuration) in the default resolver. When set to the empty string, no
+default config will be used.
+
 =back
 
 =head1 SUPPLYING YOUR OWN EVENT MODEL INTERFACE

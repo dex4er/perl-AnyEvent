@@ -31,6 +31,7 @@ package AnyEvent::DNS;
 no warnings;
 use strict;
 
+use Carp ();
 use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
 use AnyEvent ();
@@ -650,14 +651,31 @@ calls.
 Unless you have special needs, prefer this function over creating your own
 resolver object.
 
+The resolver is created with the following parameters:
+
+   untaint          enabled
+   max_outstanding  $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}
+
+C<os_config> will be used for OS-specific configuration, unless
+C<$ENV{PERL_ANYEVENT_RESOLV_CONF}> is specified, in which case that file
+gets parsed.
+
 =cut
 
 our $RESOLVER;
 
 sub resolver() {
    $RESOLVER || do {
-      $RESOLVER = new AnyEvent::DNS untaint => 1;
-      $RESOLVER->os_config;
+      $RESOLVER = new AnyEvent::DNS
+         untaint         => 1,
+         exists $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}
+            ? (max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 1) : (),
+      ;
+
+      exists $ENV{PERL_ANYEVENT_RESOLV_CONF}
+         ? length $ENV{PERL_ANYEVENT_RESOLV_CONF} && $RESOLVER->_parse_resolv_conf_file ($ENV{PERL_ANYEVENT_RESOLV_CONF})
+         : $RESOLVER->os_config;
+
       $RESOLVER
    }
 }
@@ -769,7 +787,7 @@ sub new {
    $self
 }
 
-=item $resolver->parse_resolv_conv ($string)
+=item $resolver->parse_resolv_conf ($string)
 
 Parses the given string as if it were a F<resolv.conf> file. The following
 directives are supported (but not necessarily implemented).
@@ -826,6 +844,16 @@ sub parse_resolv_conf {
    $self->_compile;
 }
 
+sub _parse_resolv_conf_file {
+   my ($self, $resolv_conf) = @_;
+
+   open my $fh, "<:perlio", $resolv_conf
+      or Carp::croak "$resolv_conf: $!";
+
+   local $/;
+   $self->parse_resolv_conf (<$fh>);
+}
+
 =item $resolver->os_config
 
 Tries so load and parse F</etc/resolv.conf> on portable operating
@@ -840,7 +868,7 @@ sub os_config {
    $self->{server} = [];
    $self->{search} = [];
 
-   if (AnyEvent::WIN32 || $^O =~ /cygwin/i) {
+   if ((AnyEvent::WIN32 || $^O =~ /cygwin/i)) {
       no strict 'refs';
 
       # there are many options to find the current nameservers etc. on windows
@@ -884,12 +912,10 @@ sub os_config {
          $self->_compile;
       }
    } else {
-      # try resolv.conf everywhere
+      # try resolv.conf everywhere else
 
-      if (open my $fh, "</etc/resolv.conf") {
-         local $/;
-         $self->parse_resolv_conf (<$fh>);
-      }
+      $self->_parse_resolv_conf_file ("/etc/resolv.conf")
+         if -e "/etc/resolv.conf";
    }
 }
 
