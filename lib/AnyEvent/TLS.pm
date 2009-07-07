@@ -20,8 +20,39 @@ our $VERSION = 4.8;
 
 =head1 SYNOPSIS
 
+   # via AnyEvent::Handle
+
    use AnyEvent;
    use AnyEvent::Handle;
+   use AnyEvent::Socket;
+
+   # ssl-connect
+   tcp_connect $host, $port, sub {
+      my ($fh) = @_;
+
+       my $handle = new AnyEvent::Handle
+          fh       => $fh,
+          peername => $host,
+          tls      => "connect",
+          tls_ctx  => { verify => 1, verify_peername => "https" },
+          ...
+
+   # ssl-server
+   tcp_server undef, $port, sub {
+      my ($fh) = @_;
+
+      my $handle = new AnyEvent::Handle
+         fh       => $fh,
+         tls      => "accept",
+         tls_ctx  => { cert_file => "my-server-keycert.pem" },
+         ...
+
+   # directly
+
+   my $tls = new AnyEvent::TLS
+      verify => 1,
+      verify_peername => "ldaps",
+      ca_file => "/etc/cacertificates.pem";
 
 =head1 DESCRIPTION
 
