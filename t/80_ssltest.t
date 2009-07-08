@@ -6,15 +6,9 @@ use strict qw(vars subs);
 
 use AnyEvent::Socket;
 use AnyEvent::Handle;
+use AnyEvent::TLS;
 
-{
-   my $ctx = AnyEvent::Handle::TLS_CTX;
-
-   Net::SSLeay::CTX_use_certificate_chain_file ($ctx->ctx, $0)
-      or die "unable to set certificate chain file";
-   Net::SSLeay::CTX_use_PrivateKey_file ($ctx->ctx, $0, Net::SSLeay::FILETYPE_PEM ())
-      or die "unable to set private key file";
-}
+my $ctx = new AnyEvent::TLS cert_file => $0;
 
 for my $mode (1..5) {
    my $server_done = AnyEvent->condvar;
@@ -31,6 +25,7 @@ for my $mode (1..5) {
 
       my $hd; $hd = new AnyEvent::Handle
          tls      => "accept",
+         tls_ctx  => $ctx,
          fh       => $fh,
          timeout  => 8,
          on_error => sub {
@@ -92,6 +87,7 @@ for my $mode (1..5) {
 
       my $hd; $hd = new AnyEvent::Handle
          tls      => "connect",
+         tls_ctx  => $ctx,
          fh       => $fh,
          timeout  => 8,
          on_error => sub {
@@ -164,6 +160,15 @@ for my $mode (1..5) {
 }
 
 __END__
+-----BEGIN RSA PRIVATE KEY-----
+MIIBOwIBAAJBAL3Qbshr1ENmAzHxIRIvUaIG8+PCjc7xdXLBm+asBPMu0APQVQXJ
+RTL3DueRUB51hAgSPgzSnj+ryZVzdcDER+UCAwEAAQJAGRftDWHz9dUOpxORo63N
+xPXWWE3oIWuac0lVKvGi1eMoI4UCW/Y7qM4rXsUXqasUo3mxV24+QqJHDQid1qi6
+AQIhAN5BtiqfjFjb97uUbdE6aiqE+nSG0eXlkeHKNpBNtiUxAiEA2qHNZ5fcQTqT
+4qlnYhbI+g6bTwuR7QnzzGTlHUGxsPUCIQDLfvTw37Zb4cNYb1WBPW/ZUHoU2SAz
+01cXmdMNmumL8QIhAJMGTENl9FBJPDopAcUM3YqLWBYICdIF51WEZC8QhpYhAiBe
+KcoNT51hv3pKK8oZtPJGsKFjmGVVnZeNNzyQmt/YWw==
+-----END RSA PRIVATE KEY-----
 -----BEGIN CERTIFICATE-----
 MIIDJjCCAtCgAwIBAgIJAJ3NPnD6z5+2MA0GCSqGSIb3DQEBBQUAMIGWMQswCQYD
 VQQGEwJYTjETMBEGA1UECBMKU29tZS1TdGF0ZTESMBAGA1UEBxMJU29tZS1DaXR5
@@ -183,15 +188,6 @@ BgkqhkiG9w0BCQEWEnNvbWVAZW1haWwuaW52YWxpZIIJAJ3NPnD6z5+2MAwGA1Ud
 EwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADQQA48HjY23liyBMmh3cNo9TC+/bu/G3E
 oT5npm3+Lh6VA/4kKMyMu2mP31BToTZfl7vUcBJCQBhPFYOiPd/HnwzW
 -----END CERTIFICATE-----
------BEGIN RSA PRIVATE KEY-----
-MIIBOwIBAAJBAL3Qbshr1ENmAzHxIRIvUaIG8+PCjc7xdXLBm+asBPMu0APQVQXJ
-RTL3DueRUB51hAgSPgzSnj+ryZVzdcDER+UCAwEAAQJAGRftDWHz9dUOpxORo63N
-xPXWWE3oIWuac0lVKvGi1eMoI4UCW/Y7qM4rXsUXqasUo3mxV24+QqJHDQid1qi6
-AQIhAN5BtiqfjFjb97uUbdE6aiqE+nSG0eXlkeHKNpBNtiUxAiEA2qHNZ5fcQTqT
-4qlnYhbI+g6bTwuR7QnzzGTlHUGxsPUCIQDLfvTw37Zb4cNYb1WBPW/ZUHoU2SAz
-01cXmdMNmumL8QIhAJMGTENl9FBJPDopAcUM3YqLWBYICdIF51WEZC8QhpYhAiBe
-KcoNT51hv3pKK8oZtPJGsKFjmGVVnZeNNzyQmt/YWw==
------END RSA PRIVATE KEY-----
 
 
 

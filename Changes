@@ -7,6 +7,8 @@ Revision history for Perl extension AnyEvent.
           PERL_ANYEVENT_MAX_OUTSTANDING_DNS, PERL_ANYEVENT_CA_FILE
           and PERL_ANYEVENT_CA_PATH.
         - provide a sensible synopsis section for AnyEvent::TLS.
+        - added simple io watcher test to testsuite, using a
+          portable_socketpair.
 
 4.8  Mon Jul  6 23:45:16 CEST 2009
 	- AnyEvent::DNS did not properly follow CNAME records with
