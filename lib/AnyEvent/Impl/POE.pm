@@ -287,22 +287,18 @@ EOF
 sub io {
    my ($class, %arg) = @_;
 
-   # cygwin requires the fh mode to be matching, unix doesn't
+   # POE itself might do the right thing, but some POE backends don't,
+   # so do the safe thing, it's not as if this will slow us down
+   # any further *g*
    my ($fh, $pee) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, "select_read", "select_write";
 
    my $cb = $arg{cb};
 
    my $session = POE::Session->create (
       inline_states => {
-         _start => sub {
-            $_[KERNEL]->$pee ($fh => "ready");
-         },
-         ready => sub {
-            $cb->();
-         },
-         stop => sub {
-            $_[KERNEL]->$pee ($fh);
-         },
+         _start => sub { $_[KERNEL]->$pee ($fh => "ready") },
+         ready  => sub { $cb->() },
+         stop   => sub { $_[KERNEL]->$pee ($fh) },
       },
    );
    bless \\$session, "AnyEvent::Impl::POE"

@@ -255,6 +255,7 @@ sub io {
    my ($class, %arg) = @_;
 
    my $fd = fileno $arg{fh};
+   defined $fd or $fd = $arg{fh};
 
    my $self = bless [
       $fd,

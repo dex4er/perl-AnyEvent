@@ -41,17 +41,23 @@ use Glib ();
 
 our $mainloop = Glib::MainContext->default;
 
+my %io_cond = (
+   r => ["in" , "hup"],
+   w => ["out", "hup"],
+);
+
 sub io {
    my ($class, %arg) = @_;
    
    my $cb = $arg{cb};
+   my $fd = fileno $arg{fh};
+   defined $fd or $fd = $arg{fh};
 
-   my @cond;
-   # some glibs need hup, others error with it, YMMV
-   push @cond, "in",  "hup" if $arg{poll} eq "r";
-   push @cond, "out", "hup" if $arg{poll} eq "w";
+   my $source = add_watch Glib::IO
+      $fd,
+      $io_cond{$arg{poll}},
+      sub { &$cb; 1 };
 
-   my $source = add_watch Glib::IO fileno $arg{fh}, \@cond, sub { &$cb; 1 };
    bless \\$source, $class
 }
 
@@ -90,7 +96,8 @@ sub one_event {
 }
 
 sub loop {
-   $mainloop->iteration (1) while 1; # hackish, but w ehave no mainloop
+   # hackish, but we do not have a mainloop, just a maincontext
+   $mainloop->iteration (1) while 1;
 }
 
 1;

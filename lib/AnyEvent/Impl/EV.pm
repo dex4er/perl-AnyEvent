@@ -37,12 +37,10 @@ sub timer {
 sub io {
    my ($class, %arg) = @_;
 
-   my $cb = $arg{cb};
-
    EV::io
-      fileno $arg{fh},
+      $arg{fh},
       $arg{poll} eq "r" ? EV::READ : EV::WRITE,
-      $cb
+      $arg{cb}
 }
 
 sub signal {

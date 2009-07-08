@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- support file descriptors in addition to file handles
+          in AnyEvent->io.
 	- new env variables: PERL_ANYEVENT_RESOLV_CONF,
           PERL_ANYEVENT_MAX_OUTSTANDING_DNS, PERL_ANYEVENT_CA_FILE
           and PERL_ANYEVENT_CA_PATH.

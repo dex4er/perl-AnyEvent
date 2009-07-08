@@ -24,10 +24,14 @@ L<AnyEvent>). However, this module can be loaded at any time.
 package AnyEvent::Strict;
 
 no warnings; # *sigh*
+use strict qw(vars subs);
 
 use Carp qw(croak);
+use Fcntl ();
 
 use AnyEvent ();
+
+our @ISA;
 
 AnyEvent::post_detect {
    # assume the first ISA member is the implementation
@@ -45,15 +49,21 @@ sub io {
       or croak "AnyEvent->io called with illegal cb argument '$arg{cb}'";
    delete $arg{cb};
  
-   defined fileno $arg{fh}
-      or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
-   -f $arg{fh}
-      and croak "AnyEvent->io called with fh argument pointing to a file";
-   delete $arg{fh};
- 
    $arg{poll} =~ /^[rw]$/
       or croak "AnyEvent->io called with illegal poll argument '$arg{poll}'";
+
+   if (defined fileno $arg{fh} or ref $arg{fh} or $arg{fh} !~ /^\s*\d+\s*$/) {
+      defined fileno $arg{fh}
+         or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
+   } else {
+      $arg{fh} = AnyEvent::_dupfh $arg{poll}, $arg{fh};
+   }
+
+   -f $arg{fh}
+      and croak "AnyEvent->io called with fh argument pointing to a file";
+
    delete $arg{poll};
+   delete $arg{fh};
  
    croak "AnyEvent->io called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
