@@ -870,9 +870,9 @@ exit cleanly.
 =head1 OTHER MODULES
 
 The following is a non-exhaustive list of additional modules that use
-AnyEvent and can therefore be mixed easily with other AnyEvent modules
-in the same program. Some of the modules come with AnyEvent, some are
-available via CPAN.
+AnyEvent as a client and can therefore be mixed easily with other AnyEvent
+modules and other event loops in the same program. Some of the modules
+come with AnyEvent, most are available via CPAN.
 
 =over 4
 
@@ -891,7 +891,7 @@ connections or tcp servers, with IPv6 and SRV record support and more.
 
 Provide read and write buffers, manages watchers for reads and writes,
 supports raw and formatted I/O, I/O queued and fully transparent and
-non-blocking SSL/TLS.
+non-blocking SSL/TLS (via L<AnyEvent::TLS>.
 
 =item L<AnyEvent::DNS>
 
@@ -929,18 +929,19 @@ L<BDB> and AnyEvent together.
 
 A non-blocking interface to gpsd, a daemon delivering GPS information.
 
-=item L<AnyEvent::IGS>
-
-A non-blocking interface to the Internet Go Server protocol (used by
-L<App::IGS>).
-
 =item L<AnyEvent::IRC>
 
 AnyEvent based IRC client module family (replacing the older Net::IRC3).
 
-=item L<Net::XMPP2>
+=item L<AnyEvent::XMPP>
 
-AnyEvent based XMPP (Jabber protocol) module family.
+AnyEvent based XMPP (Jabber protocol) module family (replacing the older
+Net::XMPP2>.
+
+=item L<AnyEvent::IGS>
+
+A non-blocking interface to the Internet Go Server protocol (used by
+L<App::IGS>).
 
 =item L<Net::FCP>
 
@@ -954,10 +955,6 @@ High level API for event-based execution flow control.
 =item L<Coro>
 
 Has special support for AnyEvent via L<Coro::AnyEvent>.
-
-=item L<IO::Lambda>
-
-The lambda approach to I/O - don't ask, look there. Can use AnyEvent.
 
 =back
 
@@ -2121,16 +2118,18 @@ L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
 Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
 L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
-L<AnyEvent::Impl::POE>.
+L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>.
 
 Non-blocking file handles, sockets, TCP clients and
-servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>.
+servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
 
 Asynchronous DNS: L<AnyEvent::DNS>.
 
-Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>, L<Coro::Event>,
+Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>,
+L<Coro::Event>,
 
-Nontrivial usage examples: L<Net::FCP>, L<Net::XMPP2>, L<AnyEvent::DNS>.
+Nontrivial usage examples: L<AnyEvent::GPSD>, L<AnyEvent::XMPP>,
+L<AnyEvent::HTTP>.
 
 
 =head1 AUTHOR
