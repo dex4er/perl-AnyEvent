@@ -178,9 +178,9 @@ declared.
 You can create an I/O watcher by calling the C<< AnyEvent->io >> method
 with the following mandatory key-value pairs as arguments:
 
-C<fh> is the Perl I<file handle> (I<not> file descriptor) to watch
-for events (AnyEvent might or might not keep a reference to this file
-handle). Note that only file handles pointing to things for which
+C<fh> is the Perl I<file handle> (I<not> file descriptor, see below) to
+watch for events (AnyEvent might or might not keep a reference to this
+file handle). Note that only file handles pointing to things for which
 non-blocking operation makes sense are allowed. This includes sockets,
 most character devices, pipes, fifos and so on, but not for example files
 or block devices.
@@ -210,6 +210,29 @@ watcher.
       warn "read: $input\n";
       undef $w;
    });
+
+=head3 GETTING A FILE HANDLE FROM A FILE DESCRIPTOR
+
+It is not uncommon to only have a file descriptor, while AnyEvent requires
+a Perl file handle.
+
+There are basically two methods to convert a file descriptor into a file handle. If you own
+the file descriptor, you can open it with C<&=>, as in:
+
+   open my $fh, "<&=$fileno" or die "xxx: §!";
+
+This will "own" the file descriptor, meaning that when C<$fh> is
+destroyed, it will automatically close the C<$fileno>. Also, note that
+the open mode (read, write, read/write) must correspond with how the
+underlying file descriptor was opened.
+
+In many cases, taking over the file descriptor is now what you want, in
+which case the only alternative is to dup the file descriptor:
+
+   open my $fh, "<&$fileno" or die "xxx: $!";
+
+This has the advantage of not closing the file descriptor and the
+disadvantage of making a slow copy.
 
 =head2 TIME WATCHERS
 
