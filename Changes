@@ -9,6 +9,8 @@ Revision history for Perl extension AnyEvent.
         - provide a sensible synopsis section for AnyEvent::TLS.
         - added simple io watcher test to testsuite, using a
           portable_socketpair.
+        - tried to improve the stability of the Event::Lib backend,
+          YMMV.
 
 4.8  Mon Jul  6 23:45:16 CEST 2009
 	- AnyEvent::DNS did not properly follow CNAME records with

@@ -61,7 +61,7 @@ sub io {
    # event_new errornously takes a reference to fh and cb instead of making a copy
    # fortunately, going through %arg/_dupfh already makes a copy, so it happpens to work
    my $w = event_new $fh, $mode | EV_PERSIST, $arg{cb};
-   $w->add;
+   event_add $w;
    bless \\$w, $class
 }
 
@@ -73,10 +73,10 @@ sub timer {
 
    my $w; $w = timer_new
                   $ival
-                     ? sub { $w->add ($ival); &$cb }
-                     : sub { $w->remove; undef $w; &$cb };
+                     ? sub { event_add $w, $ival; &$cb }
+                     : sub { undef $w           ; &$cb };
 
-   $w->add ($arg{after} || 1e-10); # work around 0-bug in Event::Lib
+   event_add $w, $arg{after} || 1e-10; # work around 0-bug in Event::Lib
 
    bless \\$w, $class
 }
@@ -97,7 +97,7 @@ sub signal {
    my ($class, %arg) = @_;
 
    my $w = signal_new $sigidx{$arg{signal}}, $arg{cb};
-   $w->add;
+   event_add $w;
    bless \\$w, $class
 }
 
