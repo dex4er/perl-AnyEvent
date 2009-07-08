@@ -589,7 +589,7 @@ sub _drain_wbuf {
       my $cb = sub {
          my $len = syswrite $self->{fh}, $self->{wbuf};
 
-         if ($len >= 0) {
+         if (defined $len) {
             substr $self->{wbuf}, 0, $len, "";
 
             $self->{_activity} = AnyEvent->now;

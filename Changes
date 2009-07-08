@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 4.801
+        - AnyEvent::Handle didn't properly diagnose write errors
+          (it expected -1 from syswrite, how lame... :).
 	- support file descriptors in addition to file handles
           in AnyEvent->io.
 	- new env variables: PERL_ANYEVENT_RESOLV_CONF,
