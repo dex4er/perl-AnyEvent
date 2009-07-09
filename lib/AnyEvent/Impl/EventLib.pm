@@ -48,6 +48,7 @@ use strict;
 
 use Carp ();
 use AnyEvent ();
+use AnyEvent::Util ();
 use Event::Lib;
 
 sub io {
@@ -81,22 +82,10 @@ sub timer {
    bless \\$w, $class
 }
 
-my %sigidx;
-
-# horrid way to get signal name to value mapping
-eval {
-   local $SIG{__DIE__};
-   require POSIX;
-
-   for (keys %SIG) {
-      eval "\$sigidx{$_} = &POSIX::SIG$_";
-   }
-};
-
 sub signal {
    my ($class, %arg) = @_;
 
-   my $w = signal_new $sigidx{$arg{signal}}, $arg{cb};
+   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $arg{cb};
    event_add $w;
    bless \\$w, $class
 }

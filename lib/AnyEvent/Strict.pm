@@ -23,12 +23,14 @@ L<AnyEvent>). However, this module can be loaded at any time.
 
 package AnyEvent::Strict;
 
-use common::sense;
+no warnings;
+use strict qw(vars subs);
 
 use Carp qw(croak);
 use Fcntl ();
 
 use AnyEvent ();
+use AnyEvent::Util ();
 
 our @ISA;
 
@@ -100,7 +102,7 @@ sub signal {
       or croak "AnyEvent->signal called with illegal cb argument '$arg{cb}'";
    delete $arg{cb};
  
-   eval "require POSIX; 0 < &POSIX::SIG$arg{signal}"
+   defined AnyEvent::Util::sig2num $arg{signal}
       or croak "AnyEvent->signal called with illegal signal name '$arg{signal}'";
    delete $arg{signal};
  

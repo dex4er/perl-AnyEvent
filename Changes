@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+	- use Config module instead of POSIX module to detect signal names
+          in AnyEvent::Strict and AnyEvent::Impl::EventLib, as the POSIX
+          module doesn't even have all POSIX signals :/.
+
 4.81 Thu Jul  9 10:30:30 CEST 2009
         - AnyEvent::Handle didn't properly diagnose write errors
           (it expected -1 from syswrite, how lame... :).

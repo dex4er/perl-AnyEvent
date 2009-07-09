@@ -42,11 +42,6 @@ BEGIN {
 }
 
 BEGIN {
-   # TODO remove this once not used anymore
-   *socket_inet_aton = \&Socket::inet_aton; # take a copy, in case Coro::LWP overrides it
-}
-
-BEGIN {
    my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
 
    # uhoh
@@ -418,6 +413,23 @@ BEGIN {
          bless \(my $cb = shift), "AnyEvent::Util::guard"
       }
    }
+}
+
+#############################################################################
+
+our %SIGNAME2NUM;
+
+sub sig2num($) {
+   return shift if $_[0] > 0;
+
+   unless (scalar keys %SIGNAME2NUM) {
+      require Config;
+
+      @SIGNAME2NUM{ split ' ', $Config::Config{sig_name} }
+                  = split ' ', $Config::Config{sig_num};
+   }
+
+   $SIGNAME2NUM{+shift}
 }
 
 1;
