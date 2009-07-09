@@ -811,27 +811,47 @@ in which case everything will be automatic.
 
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 
+These are not normally required to use AnyEvent, but can be useful to
+write AnyEvent extension modules.
+
 =over 4
 
 =item $AnyEvent::MODEL
 
-Contains C<undef> until the first watcher is being created. Then it
-contains the event model that is being used, which is the name of the
-Perl class implementing the model. This class is usually one of the
-C<AnyEvent::Impl:xxx> modules, but can be any other class in the case
-AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
+Contains C<undef> until the first watcher is being created, before the
+backend has been autodetected.
+
+Afterwards it contains the event model that is being used, which is the
+name of the Perl class implementing the model. This class is usually one
+of the C<AnyEvent::Impl:xxx> modules, but can be any other class in the
+case AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode> it
+will be C<urxvt::anyevent>).
 
 =item AnyEvent::detect
 
 Returns C<$AnyEvent::MODEL>, forcing autodetection of the event model
 if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
-runtime.
+runtime, and not e.g. while initialising of your module.
+
+If you need to do some initialisation before AnyEvent watchers are
+created, use C<post_detect>.
 
 =item $guard = AnyEvent::post_detect { BLOCK }
 
 Arranges for the code block to be executed as soon as the event model is
 autodetected (or immediately if this has already happened).
+
+The block will be executed I<after> the actual backend has been detected
+(C<$AnyEvent::MODEL> is set), but I<before> any watchers have been
+created, so it is possible to e.g. patch C<@AnyEvent::ISA> or do
+other initialisations - see the sources of L<AnyEvent::Strict> or
+L<AnyEvent::AIO> to see how this is used.
+
+The most common usage is to create some global watchers, without forcing
+event module detection too early, for example, L<AnyEvent::AIO> creates
+and installs the global L<IO::AIO> watcher in a C<post_detect> block to
+avoid autodetecting the event module at load time.
 
 If called in scalar or list context, then it creates and returns an object
 that automatically removes the callback again when it is destroyed. See
@@ -844,10 +864,16 @@ before or after loading AnyEvent), then they will called directly after
 the event loop has been chosen.
 
 You should check C<$AnyEvent::MODEL> before adding to this array, though:
-if it contains a true value then the event loop has already been detected,
-and the array will be ignored.
+if it is defined then the event loop has already been detected, and the
+array will be ignored.
 
-Best use C<AnyEvent::post_detect { BLOCK }> instead.
+Best use C<AnyEvent::post_detect { BLOCK }> when your application allows
+it,as it takes care of these details.
+
+This variable is mainly useful for modules that can do something useful
+when AnyEvent is used and thus want to know when it is initialised, but do
+not need to even load it by default. This array provides the means to hook
+into AnyEvent passively, without loading it.
 
 =back
 
