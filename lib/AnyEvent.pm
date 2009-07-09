@@ -742,6 +742,73 @@ is guaranteed not to block.
 
 =back
 
+=head1 SUPPORTED EVENT LOOPS/BACKENDS
+
+The available backend classes are (every class has its own manpage):
+
+=over 4
+
+=item Backends that are autoprobed when no other event loop can be found.
+
+EV is the preferred backend when no other event loop seems to be in
+use. If EV is not installed, then AnyEvent will try Event, and, failing
+that, will fall back to its own pure-perl implementation, which is
+available everywhere as it comes with AnyEvent itself.
+
+   AnyEvent::Impl::EV        based on EV (interface to libev, best choice).
+   AnyEvent::Impl::Event     based on Event, very stable, few glitches.
+   AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
+
+=item Backends that are transparently being picked up when they are used.
+
+These will be used when they are currently loaded when the first watcher
+is created, in which case it is assumed that the application is using
+them. This means that AnyEvent will automatically pick the right backend
+when the main program loads an event module before anything starts to
+create watchers. Nothing special needs to be done by the main program.
+
+   AnyEvent::Impl::Glib      based on Glib, slow but very stable.
+   AnyEvent::Impl::Tk        based on Tk, very broken.
+   AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
+   AnyEvent::Impl::POE       based on POE, very slow, some limitations.
+
+=item Backends with special needs.
+
+Qt requires the Qt::Application to be instantiated first, but will
+otherwise be picked up automatically. As long as the main program
+instantiates the application before any AnyEvent watchers are created,
+everything should just work.
+
+   AnyEvent::Impl::Qt        based on Qt.
+
+Support for IO::Async can only be partial, as it is too broken and
+architecturally limited to even support the AnyEvent API. It also
+is the only event loop that needs the loop to be set explicitly, so
+it can only be used by a main program knowing about AnyEvent. See
+L<AnyEvent::Impl::Async> for the gory details.
+
+   AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed.
+
+=item Event loops that are indirectly supported via other backends.
+
+Some event loops can be supported via other modules:
+
+There is no direct support for WxWidgets (L<Wx>) or L<Prima>.
+
+B<WxWidgets> has no support for watching file handles. However, you can
+use WxWidgets through the POE adaptor, as POE has a Wx backend that simply
+polls 20 times per second, which was considered to be too horrible to even
+consider for AnyEvent.
+
+B<Prima> is not supported as nobody seems to be using it, but it has a POE
+backend, so it can be supported through POE.
+
+AnyEvent knows about both L<Prima> and L<Wx>, however, and will try to
+load L<POE> when detecting them, in the hope that POE will pick them up,
+in which case everything will be automatic.
+
+=back
+
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 
 =over 4
@@ -753,31 +820,6 @@ contains the event model that is being used, which is the name of the
 Perl class implementing the model. This class is usually one of the
 C<AnyEvent::Impl:xxx> modules, but can be any other class in the case
 AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode>).
-
-The known classes so far are:
-
-   AnyEvent::Impl::EV        based on EV (an interface to libev, best choice).
-   AnyEvent::Impl::Event     based on Event, second best choice.
-   AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
-   AnyEvent::Impl::Glib      based on Glib, third-best choice.
-   AnyEvent::Impl::Tk        based on Tk, very bad choice.
-   AnyEvent::Impl::Qt        based on Qt, cannot be autoprobed (see its docs).
-   AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
-   AnyEvent::Impl::POE       based on POE, not generic enough for full support.
-
-   # warning, support for IO::Async is only partial, as it is too broken
-   # and limited toe ven support the AnyEvent API. See AnyEvent::Impl::Async.
-   AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed (see its docs).
-
-There is no support for WxWidgets, as WxWidgets has no support for
-watching file handles. However, you can use WxWidgets through the
-POE Adaptor, as POE has a Wx backend that simply polls 20 times per
-second, which was considered to be too horrible to even consider for
-AnyEvent. Likewise, other POE backends can be used by AnyEvent by using
-it's adaptor.
-
-AnyEvent knows about L<Prima> and L<Wx> and will try to use L<POE> when
-autodetecting them.
 
 =item AnyEvent::detect
 
@@ -1003,14 +1045,14 @@ my @models = (
    # everything below here will not be autoprobed
    # as the pureperl backend should work everywhere
    # and is usually faster
-   [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
    [Glib::                 => AnyEvent::Impl::Glib::],     # becomes extremely slow with many watchers
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
-   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
+   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
-   # IO::Async is just too broken - we would need workaorunds for its
+   # IO::Async is just too broken - we would need workarounds for its
    # byzantine signal and broken child handling, among others.
    # IO::Async is rather hard to detect, as it doesn't have any
    # obvious default class.

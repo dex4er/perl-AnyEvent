@@ -67,6 +67,12 @@ EOF
    exit 0;
 });
 
+my $inter = AnyEvent->timer (after => 4, cb => sub {
+   print "not ok 5 # inter\n";#d# temporary
+   print "not ok 6 # inter\n";#d# temporary
+   $cv2->send;
+});
+
 $cv2->wait;
 
 print "ok 7\n";
