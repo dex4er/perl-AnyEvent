@@ -3,8 +3,7 @@ BEGIN { print "1..18\n" }
 
 use AnyEvent;
 use AnyEvent::Util;
-use AnyEvent::Impl::IOAsync;
-use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
+use AnyEvent::Impl::IOAsync; use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
 
 print "ok 1\n";
 

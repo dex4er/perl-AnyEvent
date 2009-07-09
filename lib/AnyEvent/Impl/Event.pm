@@ -33,22 +33,26 @@ sub io {
    my ($class, %arg) = @_;
    $arg{fd} = delete $arg{fh};
    $arg{poll} .= "e" if AnyEvent::WIN32; # work around windows connect bug
+   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
    bless \(Event->io (%arg)), $class
 }
 
 sub timer {
    my ($class, %arg) = @_;
    $arg{after} = 0 if $arg{after} < 0;
+   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
    bless \Event->timer (%arg, repeat => $arg{interval}), $class
 }
 
 sub signal {
    my ($class, %arg) = @_;
+   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
    bless \Event->signal (%arg), $class
 }
 
 sub idle {
    my ($class, %arg) = @_;
+   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
    bless \Event->idle (repeat => 1, min => 0, %arg), $class
 }
 

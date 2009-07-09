@@ -292,7 +292,7 @@ sub io {
    # any further *g*
    my ($fh, $pee) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, "select_read", "select_write";
 
-   my $cb = $arg{cb};
+   my $cb = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
 
    my $session = POE::Session->create (
       inline_states => {
@@ -307,9 +307,9 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
 
-   my $after = $arg{after};
-   my $ival  = $arg{interval};
-   my $cb    = $arg{cb};
+   my $after = delete $arg{after};
+   my $ival  = delete $arg{interval};
+   my $cb    = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
 
    my $session = POE::Session->create (
       inline_states => {
@@ -328,7 +328,7 @@ sub timer {
 sub signal {
    my ($class, %arg) = @_;
    my $signal = delete $arg{signal};
-   my $cb     = delete $arg{cb};
+   my $cb     = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
@@ -351,7 +351,7 @@ sub signal {
 sub child {
    my ($class, %arg) = @_;
    my $pid = delete $arg{pid};
-   my $cb  = delete $arg{cb};
+   my $cb  = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {

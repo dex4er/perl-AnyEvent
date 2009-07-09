@@ -4,8 +4,7 @@ BEGIN {
 }
 
 use AnyEvent;
-use AnyEvent::Impl::IOAsync;
-use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
+use AnyEvent::Impl::IOAsync; use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
 
 print "ok 1\n";
 

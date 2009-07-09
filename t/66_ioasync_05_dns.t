@@ -4,9 +4,7 @@ BEGIN { print "1..5\n" }
 # we avoid complicated tests here because some systems will
 # not have working DNS
 
-use AnyEvent::Impl::IOAsync;
-use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
-
+use AnyEvent::Impl::IOAsync; use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
 use AnyEvent::DNS;
 
 print "ok 1\n";

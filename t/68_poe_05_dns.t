@@ -1,11 +1,10 @@
 $|=1;
-$^W=0;
 BEGIN { print "1..5\n" }
 
 # we avoid complicated tests here because some systems will
 # not have working DNS
 
-use AnyEvent::Impl::POE;
+use AnyEvent::Impl::POE; $^W = 0;
 use AnyEvent::DNS;
 
 print "ok 1\n";

@@ -66,7 +66,7 @@ print "ok 1\n";
    my $cv = AnyEvent->condvar;
 
    print "ok 19\n";
-   my $t = AnyEvent->timer (after => 0, cb => sub { &$cv });
+   my $t = AnyEvent->timer (after => 0, cb => $cv);
 
    print "ok 20\n";
    $cv->recv;

@@ -1,5 +1,4 @@
 $|=1;
-BEGIN { unless (eval "require EV") { print "1..0 # skip because EV isn't installed"; exit } }
 BEGIN {
    print "1..5\n";
 }

@@ -1,11 +1,10 @@
 $|=1;
-$^W=0;
 BEGIN {
    print "1..5\n";
 }
 
 use AnyEvent;
-use AnyEvent::Impl::POE;
+use AnyEvent::Impl::POE; $^W = 0;
 
 print "ok 1\n";
 
