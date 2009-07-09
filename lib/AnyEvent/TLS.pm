@@ -16,7 +16,7 @@ AnyEvent::TLS - SSLv2/SSLv3/TLSv1 contexts for use in AnyEvent::Handle
 
 =cut
 
-our $VERSION = 4.8;
+our $VERSION = 4.81;
 
 =head1 SYNOPSIS
 
