@@ -51,6 +51,20 @@ use AnyEvent ();
 use AnyEvent::Util ();
 use Event::Lib;
 
+# Event::Lib doesn't always take a reference to the callback, so closures
+# cause memory corruption and segfaults. it also has an issue actually
+# calling callbacks, so this exists as workaround.
+sub ccb {
+   # Event:Lib accesses $_[0] after the callback, when it might be freed,
+   # so we keep it referenced until after the callback. This still accesses
+   # a freed scalar, but at least it'll not crash.
+   my $keep_it = $_[0];
+
+   $_[2]();
+}
+
+my $ccb = \&ccb;
+
 sub io {
    my ($class, %arg) = @_;
 
@@ -61,7 +75,7 @@ sub io {
 
    # event_new errornously takes a reference to fh and cb instead of making a copy
    # fortunately, going through %arg/_dupfh already makes a copy, so it happpens to work
-   my $w = event_new $fh, $mode | EV_PERSIST, $arg{cb};
+   my $w = event_new $fh, $mode | EV_PERSIST, $ccb, $arg{cb};
    event_add $w;
    bless \\$w, $class
 }
@@ -72,7 +86,7 @@ sub timer {
    my $ival = $arg{interval};
    my $cb   = $arg{cb};
 
-   my $w; $w = timer_new
+   my $w; $w = timer_new $ccb,
                   $ival
                      ? sub { event_add $w, $ival; &$cb }
                      : sub { undef $w           ; &$cb };
@@ -85,7 +99,7 @@ sub timer {
 sub signal {
    my ($class, %arg) = @_;
 
-   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $arg{cb};
+   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $ccb, $arg{cb};
    event_add $w;
    bless \\$w, $class
 }

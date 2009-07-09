@@ -117,7 +117,7 @@ our $VERSION = 4.81;
 
 our ($NOW, $MNOW);
 
-sub MAXWAIT() { 1000 } # never sleep for longer than this many seconds
+sub MAXWAIT() { 10 } # never sleep for longer than this many seconds
 
 BEGIN {
    local $SIG{__DIE__};

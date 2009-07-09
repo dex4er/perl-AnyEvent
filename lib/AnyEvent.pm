@@ -2102,8 +2102,8 @@ A handler for C<SIGCHLD> is installed by AnyEvent's child watcher
 emulation for event loops that do not support them natively. Also, some
 event loops install a similar handler.
 
-If, when AnyEvent is loaded, SIGCHLD is set to IGNORE, then AnyEvent will
-reset it to default, to avoid losing child exit statuses.
+Additionally, when AnyEvent is loaded and SIGCHLD is set to IGNORE, then
+AnyEvent will reset it to default, to avoid losing child exit statuses.
 
 =item SIGPIPE
 
