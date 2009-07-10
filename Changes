@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.82 Sat Jul 11 00:34:55 CEST 2009
 	- POE and Event backends didn't accept some callable objects as 
           callbacks.
 	- use Config module instead of POSIX module to detect signal names

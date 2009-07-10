@@ -1588,8 +1588,9 @@ SIGNALS
         emulation for event loops that do not support them natively. Also,
         some event loops install a similar handler.
 
-        If, when AnyEvent is loaded, SIGCHLD is set to IGNORE, then AnyEvent
-        will reset it to default, to avoid losing child exit statuses.
+        Additionally, when AnyEvent is loaded and SIGCHLD is set to IGNORE,
+        then AnyEvent will reset it to default, to avoid losing child exit
+        statuses.
 
     SIGPIPE
         A no-op handler is installed for "SIGPIPE" when $SIG{PIPE} is
