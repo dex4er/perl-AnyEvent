@@ -57,8 +57,8 @@ Worse, IO::Async does not let you install multiple child watchers, does
 not let you watch for any child, and apparently an interface to unregister
 child watchers has been forgotten as well.
 
-As a result, AnyEvent::Impl::IOAsync has to fall back on it's own
-child management, which makes it impossible to watch for childs via
+As a result, AnyEvent::Impl::IOAsync has to fall back on it's own child
+management, which makes it impossible to watch for child processes via
 both AnyEvent and IO::Async. Hooking and Patching IO::Async has been
 considered, but is considerable work.
 
@@ -119,9 +119,9 @@ watcher, but C<detach_child> forks a subprocess and so on).
 
 IO::Async has weird checks - passing in a callable reference is sometimes
 forbidden (of course, this is checked on every invocation, not when the
-callback is registered, so you have no idea which watcher it caused),
-as the code checks explicitly for code references, disallowing callable
-objects.
+callback is registered, so you have no idea where in your code you passed
+it in), as the code checks explicitly for code references, disallowing
+callable objects.
 
 =item Environmentally unfriendly
 
