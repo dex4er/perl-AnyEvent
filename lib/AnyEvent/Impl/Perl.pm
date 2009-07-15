@@ -40,8 +40,8 @@ This event loop has been optimised for the following use cases:
 =item monotonic clock is available
 
 This module will use the POSIX monotonic clock option (if it can be
-detected at runtime) or the POSIX C<times> function (if the resolution is
-better than 100Hz), in which case it will not suffer adversely from time
+detected at runtime) or the POSIX C<times> function (if the resolution
+is at least 100Hz), in which case it will not suffer adversely from time
 jumps.
 
 If no monotonic clock is available, this module will not attempt to

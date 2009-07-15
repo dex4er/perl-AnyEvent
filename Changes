@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: implement getprotobyname
 	- ignore possible spurious wake-ups.
 
 4.82 Sat Jul 11 00:34:55 CEST 2009
