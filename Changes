@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- ignore possible spurious wake-ups.
+
 4.82 Sat Jul 11 00:34:55 CEST 2009
 	- POE and Event backends didn't accept some callable objects as 
           callbacks.

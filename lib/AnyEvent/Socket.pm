@@ -789,12 +789,11 @@ sub tcp_connect($$$;$) {
          # called when the connect was successful, which,
          # in theory, could be the case immediately (but never is in practise)
          $state{connected} = sub {
-            delete $state{ww};
-            delete $state{to};
-
             # we are connected, or maybe there was an error
             if (my $sin = getpeername $state{fh}) {
                my ($port, $host) = unpack_sockaddr $sin;
+
+               delete $state{ww}; delete $state{to};
 
                my $guard = guard { %state = () };
 
@@ -805,6 +804,11 @@ sub tcp_connect($$$;$) {
             } else {
                # dummy read to fetch real error code
                sysread $state{fh}, my $buf, 1 if $! == &Errno::ENOTCONN;
+
+               return if $! == &Errno::EAGAIN; # skip spurious wake-ups
+
+               delete $state{ww}; delete $state{to};
+
                $state{next}();
             }
          };
@@ -818,6 +822,7 @@ sub tcp_connect($$$;$) {
                   || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
                   || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
             $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $state{connected});
+            $state{connected}->();#d#
          } else {
             $state{next}();
          }
