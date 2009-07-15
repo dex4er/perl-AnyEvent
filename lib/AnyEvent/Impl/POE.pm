@@ -148,6 +148,10 @@ it cannot guarantee delivery.
 How one manages to have such a glaring bug in an event loop after ten
 years of development escapes me.
 
+(There are more annoying bugs, for example, POE runs C<waitpid>
+unconditionally on finalizing, so your program will hang until all child
+processes have exited.)
+
 =item Documentation Quality
 
 At the time of this writing, POE was in its tenth year. Still, its
