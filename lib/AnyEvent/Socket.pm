@@ -716,6 +716,7 @@ to 15 seconds.
             fh     => $fh,
             on_error => sub {
                warn "error $_[2]\n";
+               $_[0]->destroy;
             },
             on_eof => sub {
                $handle->destroy; # destroy handle

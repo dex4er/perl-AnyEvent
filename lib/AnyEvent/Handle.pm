@@ -28,7 +28,9 @@ our $VERSION = 4.82;
    my $hdl; $hdl = new AnyEvent::Handle
       fh => \*STDIN,
       on_error => sub {
-         warn "got error $_[2]\n";
+         my ($hdl, $fatal, $msg) = @_;
+         warn "got error $msg\n";
+         $hdl->destroy;
          $cv->send;
       );
 
@@ -390,7 +392,7 @@ sub _error {
 
    if ($self->{on_error}) {
       $self->{on_error}($self, $fatal, $message);
-      $self->destroy;
+      $self->destroy if $fatal;
    } elsif ($self->{fh}) {
       $self->destroy;
       Carp::croak "AnyEvent::Handle uncaught error: $message";

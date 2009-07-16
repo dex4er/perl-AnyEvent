@@ -4,6 +4,8 @@ TODO: implement getprotobyname
         - AnyEvent::Handle will now call ->destroy on itself after
           executing the on_error callback, instead of doing some
           half-baked internal shutdown, for fatal errors.
+        - clarify on_eof behaviour w.r.t. the read queue and
+          on_read callbacks.
 	- ignore some possible spurious wake-ups in tcp_connect.
 
 4.82 Sat Jul 11 00:34:55 CEST 2009
