@@ -1,8 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: implement getprotobyname
+	- implement AnyEvent::Socket::getprotobyname.
 	- AnyEvent::CondVar's will now detect recursive blocking
-          waits and will croak.
+          waits and will croak, as too many people fall into
+          this trap.
         - AnyEvent::Handle will now call ->destroy on itself after
           executing the on_error callback, instead of doing some
           half-baked internal shutdown, for fatal errors.

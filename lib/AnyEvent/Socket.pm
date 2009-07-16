@@ -49,6 +49,7 @@ use AnyEvent::DNS ();
 use base 'Exporter';
 
 our @EXPORT = qw(
+   getprotobyname
    parse_hostport
    parse_ipv4 parse_ipv6
    parse_ip parse_address
@@ -180,6 +181,32 @@ sub parse_address($) {
 }
 
 *aton = \&parse_address;
+
+=item ($name, $aliases, $proto) = getprotobyname $name
+
+Works like the builtin function of the same name, except it tries hard to
+work even on broken platforms (well, that's windows), where getprotobyname
+is traditionally very unreliable.
+
+=cut
+
+# microsoft can't even get getprotobyname working (the etc/protocols file
+# gets lost fairly often on windows), so we have to hardcode some common
+# protocol numbers ourselves.
+our %PROTO_BYNAME;
+
+$PROTO_BYNAME{tcp}  = Socket::IPPROTO_TCP () if defined &Socket::IPPROTO_TCP;
+$PROTO_BYNAME{udp}  = Socket::IPPROTO_UDP () if defined &Socket::IPPROTO_UDP;
+$PROTO_BYNAME{icmp} = Socket::IPPROTO_ICMP() if defined &Socket::IPPROTO_ICMP;
+
+sub getprotobyname($) {
+   my $name = lc shift;
+
+   defined (my $proton = $PROTO_BYNAME{$name} || (getprotobyname $name)[2])
+      or return;
+
+   ($name, uc $name, $proton)
+}
 
 =item ($host, $service) = parse_hostport $string[, $default_service]
 
@@ -501,15 +528,6 @@ Example:
 
 =cut
 
-# microsoft can't even get getprotobyname working (the etc/protocols file
-# gets lost fairly often on windows), so we have to hardcode some common
-# protocol numbers ourselves.
-our %PROTO_BYNAME;
-
-$PROTO_BYNAME{tcp}  = &Socket::IPPROTO_TCP  if defined &Socket::IPPROTO_TCP;
-$PROTO_BYNAME{udp}  = &Socket::IPPROTO_UDP  if defined &Socket::IPPROTO_UDP;
-$PROTO_BYNAME{icmp} = &Socket::IPPROTO_ICMP if defined &Socket::IPPROTO_ICMP;
-
 sub resolve_sockaddr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
 
@@ -535,7 +553,7 @@ sub resolve_sockaddr($$$$$$) {
    $proto ||= "tcp";
    $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
 
-   my $proton = $PROTO_BYNAME{lc $proto} || (getprotobyname $proto)[2]
+   my $proton = getprotobyname $proto
       or Carp::croak "$proto: protocol unknown";
 
    my $port;
