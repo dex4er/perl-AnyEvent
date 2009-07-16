@@ -714,8 +714,11 @@ to 15 seconds.
          my $handle; # avoid direct assignment so on_eof has it in scope.
          $handle = new AnyEvent::Handle
             fh     => $fh,
+            on_error => sub {
+               warn "error $_[2]\n";
+            },
             on_eof => sub {
-               undef $handle; # keep it alive till eof
+               $handle->destroy; # destroy handle
                warn "done.\n";
             };
 
@@ -782,7 +785,7 @@ sub tcp_connect($$$;$) {
          $timeout ||= 30 if AnyEvent::WIN32;
 
          $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
-            $! = &Errno::ETIMEDOUT;
+            $! = Errno::ETIMEDOUT;
             $state{next}();
          }) if $timeout;
 
@@ -803,9 +806,9 @@ sub tcp_connect($$$;$) {
                });
             } else {
                # dummy read to fetch real error code
-               sysread $state{fh}, my $buf, 1 if $! == &Errno::ENOTCONN;
+               sysread $state{fh}, my $buf, 1 if $! == Errno::ENOTCONN;
 
-               return if $! == &Errno::EAGAIN; # skip spurious wake-ups
+               return if $! == Errno::EAGAIN; # skip spurious wake-ups
 
                delete $state{ww}; delete $state{to};
 
@@ -816,19 +819,18 @@ sub tcp_connect($$$;$) {
          # now connect       
          if (connect $state{fh}, $sockaddr) {
             $state{connected}->();
-         } elsif ($! == &Errno::EINPROGRESS # POSIX
-                  || $! == &Errno::EWOULDBLOCK
+         } elsif ($! == Errno::EINPROGRESS # POSIX
+                  || $! == Errno::EWOULDBLOCK
                   # WSAEINPROGRESS intentionally not checked - it means something else entirely
                   || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
                   || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
             $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $state{connected});
-            $state{connected}->();#d#
          } else {
             $state{next}();
          }
       };
 
-      $! = &Errno::ENXIO;
+      $! = Errno::ENXIO;
       $state{next}();
    };
 
