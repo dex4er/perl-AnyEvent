@@ -1074,8 +1074,8 @@ my @models = (
    [Glib::                 => AnyEvent::Impl::Glib::],     # becomes extremely slow with many watchers
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
    [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
-   [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
    # IO::Async is just too broken - we would need workarounds for its
