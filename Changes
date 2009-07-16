@@ -1,7 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: implement getprotobyname
-	- ignore possible spurious wake-ups.
+        - AnyEvent::Handle will now call ->destroy on itself after
+          executing the on_error callback, instead of doing some
+          half-baked internal shutdown, for fatal errors.
+	- ignore some possible spurious wake-ups in tcp_connect.
 
 4.82 Sat Jul 11 00:34:55 CEST 2009
 	- POE and Event backends didn't accept some callable objects as 

@@ -25,21 +25,20 @@ our $VERSION = 4.82;
 
    my $cv = AnyEvent->condvar;
 
-   my $handle =
-      AnyEvent::Handle->new (
-         fh => \*STDIN,
-         on_eof => sub {
-            $cv->send;
-         },
+   my $hdl; $hdl = new AnyEvent::Handle
+      fh => \*STDIN,
+      on_error => sub {
+         warn "got error $_[2]\n";
+         $cv->send;
       );
 
    # send some request line
-   $handle->push_write ("getinfo\015\012");
+   $hdl->push_write ("getinfo\015\012");
 
    # read the response line
-   $handle->push_read (line => sub {
-      my ($handle, $line) = @_;
-      warn "read line <$line>\n";
+   $hdl->push_read (line => sub {
+      my ($hdl, $line) = @_;
+      warn "got line <$line>\n";
       $cv->send;
    });
 
@@ -104,10 +103,10 @@ occured, such as not being able to resolve the hostname, failure to
 connect or a read error.
 
 Some errors are fatal (which is indicated by C<$fatal> being true). On
-fatal errors the handle object will be shut down and will not be usable
-(but you are free to look at the current C<< ->rbuf >>). Examples of fatal
-errors are an EOF condition with active (but unsatisifable) read watchers
-(C<EPIPE>) or I/O errors.
+fatal errors the handle object will be destroyed (by a call to C<< ->
+destroy >>) after invoking the error callback (which means you are free to
+examine the handle object). Examples of fatal errors are an EOF condition
+with active (but unsatisifable) read watchers (C<EPIPE>) or I/O errors.
 
 AnyEvent::Handle tries to find an appropriate error code for you to check
 against, but in some cases (TLS errors), this does not work well. It is
@@ -371,27 +370,26 @@ sub new {
    $self->{fh} && $self
 }
 
-sub _shutdown {
-   my ($self) = @_;
-
-   delete @$self{qw(_tw _rw _ww fh wbuf on_read _queue)};
-   $self->{_eof} = 1; # tell starttls et. al to stop trying
-
-   &_freetls;
-}
+#sub _shutdown {
+#   my ($self) = @_;
+#
+#   delete @$self{qw(_tw _rw _ww fh wbuf on_read _queue)};
+#   $self->{_eof} = 1; # tell starttls et. al to stop trying
+#
+#   &_freetls;
+#}
 
 sub _error {
    my ($self, $errno, $fatal, $message) = @_;
-
-   $self->_shutdown
-      if $fatal;
 
    $! = $errno;
    $message ||= "$!";
 
    if ($self->{on_error}) {
       $self->{on_error}($self, $fatal, $message);
+      $self->destroy;
    } elsif ($self->{fh}) {
+      $self->destroy;
       Carp::croak "AnyEvent::Handle uncaught error: $message";
    }
 }
@@ -1673,6 +1671,11 @@ callback, so when you want to destroy the AnyEvent::Handle object from
 within such an callback. You I<MUST> call C<< ->destroy >> explicitly in
 that case.
 
+Destroying the handle object in this way has the advantage that callbacks
+will be removed as well, so if those are the only reference holders (as
+is common), then one doesn't need to do anything special to break any
+reference cycles.
+
 The handle might still linger in the background and write out remaining
 data, as specified by the C<linger> option, however.
 
@@ -1749,7 +1752,6 @@ will be in C<$_[0]{rbuf}>:
    $handle->on_eof (undef);
    $handle->on_error (sub {
       my $data = delete $_[0]{rbuf};
-      undef $handle;
    });
 
 The reason to use C<on_error> is that TCP connections, due to latencies

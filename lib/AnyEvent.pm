@@ -1121,9 +1121,9 @@ sub detect() {
          my $model = "AnyEvent::Impl::$1";
          if (eval "require $model") {
             $MODEL = $model;
-            warn "AnyEvent: loaded model '$model' (forced by \$PERL_ANYEVENT_MODEL), using it.\n" if $verbose > 1;
+            warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $verbose > 1;
          } else {
-            warn "AnyEvent: unable to load model '$model' (from \$PERL_ANYEVENT_MODEL):\n$@" if $verbose;
+            warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $verbose;
          }
       }
 
