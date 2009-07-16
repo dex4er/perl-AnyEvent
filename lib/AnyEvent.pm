@@ -465,15 +465,16 @@ If you are familiar with some event loops you will know that all of them
 require you to run some blocking "loop", "run" or similar function that
 will actively watch for new events and call your callbacks.
 
-AnyEvent is different, it expects somebody else to run the event loop and
-will only block when necessary (usually when told by the user).
+AnyEvent is slightly different: it expects somebody else to run the event
+loop and will only block when necessary (usually when told by the user).
 
 The instrument to do that is called a "condition variable", so called
 because they represent a condition that must become true.
 
+Now is probably a good time to look at the examples further below.
+
 Condition variables can be created by calling the C<< AnyEvent->condvar
 >> method, usually without arguments. The only argument pair allowed is
-
 C<cb>, which specifies a callback to be called when the condition variable
 becomes true, with the condition variable as the first argument (but not
 the results).
@@ -532,11 +533,11 @@ Example: wait for a timer.
    );
 
    # this "blocks" (while handling events) till the callback
-   # calls send
+   # calls -<send
    $result_ready->recv;
 
-Example: wait for a timer, but take advantage of the fact that
-condition variables are also code references.
+Example: wait for a timer, but take advantage of the fact that condition
+variables are also callable directly.
 
    my $done = AnyEvent->condvar;
    my $delay = AnyEvent->timer (after => 5, cb => $done);
@@ -552,7 +553,7 @@ the main program:
 
    my @info = $couchdb->info->recv;
 
-And this is how you would just ste a callback to be called whenever the
+And this is how you would just set a callback to be called whenever the
 results are available:
 
    $couchdb->info->cb (sub {
@@ -580,14 +581,9 @@ immediately from within send.
 Any arguments passed to the C<send> call will be returned by all
 future C<< ->recv >> calls.
 
-Condition variables are overloaded so one can call them directly
-(as a code reference). Calling them directly is the same as calling
-C<send>. Note, however, that many C-based event loops do not handle
-overloading, so as tempting as it may be, passing a condition variable
-instead of a callback does not work. Both the pure perl and EV loops
-support overloading, however, as well as all functions that use perl to
-invoke a callback (as in L<AnyEvent::Socket> and L<AnyEvent::DNS> for
-example).
+Condition variables are overloaded so one can call them directly (as if
+they were a code reference). Calling them directly is the same as calling
+C<send>.
 
 =item $cv->croak ($error)
 
@@ -595,7 +591,11 @@ Similar to send, but causes all call's to C<< ->recv >> to invoke
 C<Carp::croak> with the given error message/object/scalar.
 
 This can be used to signal any errors to the condition variable
-user/consumer.
+user/consumer. Doing it this way instead of calling C<croak> directly
+delays the error detetcion, but has the overwhelmign advantage that it
+diagnoses the error at the place where the result is expected, and not
+deep in some event clalback without connection to the actual code causing
+the problem.
 
 =item $cv->begin ([group callback])
 
@@ -701,24 +701,20 @@ function will call C<croak>.
 In list context, all parameters passed to C<send> will be returned,
 in scalar context only the first one will be returned.
 
+Note that doing a blocking wait in a callback is not supported by any
+event loop, that is, recursive invocation of a blocking C<< ->recv
+>> is not allowed, and the C<recv> call will C<croak> if such a
+condition is detected. This condition can be slightly loosened by using
+L<Coro::AnyEvent>, which allows you to do a blocking C<< ->recv >> from
+any thread that doesn't run the event loop itself.
+
 Not all event models support a blocking wait - some die in that case
 (programs might want to do that to stay interactive), so I<if you are
-using this from a module, never require a blocking wait>, but let the
+using this from a module, never require a blocking wait>. Instead, let the
 caller decide whether the call will block or not (for example, by coupling
 condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
 while still supporting blocking waits if the caller so desires).
-
-Another reason I<never> to C<< ->recv >> in a module is that you cannot
-sensibly have two C<< ->recv >>'s in parallel, as that would require
-multiple interpreters or coroutines/threads, none of which C<AnyEvent>
-can supply.
-
-The L<Coro> module, however, I<can> and I<does> supply coroutines and, in
-fact, L<Coro::AnyEvent> replaces AnyEvent's condvars by coroutine-safe
-versions and also integrates coroutines into AnyEvent, making blocking
-C<< ->recv >> calls perfectly safe as long as they are done from another
-coroutine (one that doesn't run the event loop).
 
 You can ensure that C<< -recv >> never blocks by setting a callback and
 only calling C<< ->recv >> from within that callback (or at a later
@@ -1033,7 +1029,7 @@ package AnyEvent;
 no warnings;
 use strict qw(vars subs);
 
-use Carp;
+use Carp ();
 
 our $VERSION = 4.82;
 our $MODEL;
@@ -1175,7 +1171,7 @@ sub AUTOLOAD {
    (my $func = $AUTOLOAD) =~ s/.*://;
 
    $method{$func}
-      or croak "$func: not a valid method for AnyEvent objects";
+      or Carp::croak "$func: not a valid method for AnyEvent objects";
 
    detect unless $MODEL;
 
@@ -1378,6 +1374,8 @@ use overload
    '&{}'    => sub { my $self = shift; sub { $self->send (@_) } },
    fallback => 1;
 
+our $WAITING;
+
 sub _send {
    # nop
 }
@@ -1399,6 +1397,11 @@ sub ready {
 }
 
 sub _wait {
+   $WAITING
+      and !$_[0]{_ae_sent}
+      and Carp::croak "AnyEvent::CondVar: recursive blocking wait detected";
+
+   local $WAITING = 1;
    AnyEvent->one_event while !$_[0]{_ae_sent};
 }
 

@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: implement getprotobyname
+	- AnyEvent::CondVar's will now detect recursive blocking
+          waits and will croak.
         - AnyEvent::Handle will now call ->destroy on itself after
           executing the on_error callback, instead of doing some
           half-baked internal shutdown, for fatal errors.
