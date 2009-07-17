@@ -381,6 +381,13 @@ sub _enc_name($) {
    pack "(C/a*)*", (split /\./, shift), ""
 }
 
+if ($[ < 5.008) {
+   # special slower 5.6 version
+   *_enc_name = sub {
+      join "", map +(pack "C/a*", $_), (split /\./, shift), ""
+   };
+}
+
 sub _enc_qd() {
    (_enc_name $_->[0]) . pack "nn",
      ($_->[1] > 0 ? $_->[1] : $type_id {$_->[1]}),
@@ -847,7 +854,7 @@ sub parse_resolv_conf {
 sub _parse_resolv_conf_file {
    my ($self, $resolv_conf) = @_;
 
-   open my $fh, "<:perlio", $resolv_conf
+   open my $fh, "<", $resolv_conf
       or Carp::croak "$resolv_conf: $!";
 
    local $/;
@@ -1079,7 +1086,7 @@ sub _exec {
       
       my $sa = AnyEvent::Socket::pack_sockaddr (DOMAIN_PORT, $server);
 
-      my $fh = AF_INET == Socket::sockaddr_family ($sa)
+      my $fh = AF_INET == AnyEvent::Socket::sockaddr_family ($sa)
                ? $self->{fh4} : $self->{fh6}
          or return &$do_retry;
 

@@ -421,11 +421,21 @@ sub inet_aton {
    }
 }
 
+BEGIN {
+   *sockaddr_family = $Socket::VERSION >= 1.75
+      ? \&Socket::sockaddr_family
+      : # for 5.6.x, we need to do something much more horrible
+        (Socket::pack_sockaddr_in 0x5555, "\x55\x55\x55\x55"
+           | eval { Socket::pack_sockaddr_un "U" }) =~ /^\x00/
+           ? sub { unpack "xC", $_[0] }
+           : sub { unpack "S" , $_[0] };
+}
+
 # check for broken platforms with extra field in sockaddr structure
 # kind of a rfc vs. bsd issue, as usual (ok, normally it's a
 # unix vs. bsd issue, a iso C vs. bsd issue or simply a
-# correctness vs. bsd issue.
-my $pack_family = (0x55 == Socket::sockaddr_family "\x55\x55")
+# correctness vs. bsd issue.)
+my $pack_family = 0x55 == sockaddr_family ("\x55\x55")
                   ? "xC" : "S";
 
 =item $sa = AnyEvent::Socket::pack_sockaddr $service, $host
@@ -471,7 +481,7 @@ module (C<format_address> converts it to C<unix/>).
 =cut
 
 sub unpack_sockaddr($) {
-   my $af = Socket::sockaddr_family $_[0];
+   my $af = sockaddr_family $_[0];
 
    if ($af == AF_INET) {
       Socket::unpack_sockaddr_in $_[0]

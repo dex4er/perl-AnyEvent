@@ -1186,9 +1186,9 @@ sub _dupfh($$;$$) {
    my ($poll, $fh, $r, $w) = @_;
 
    # cygwin requires the fh mode to be matching, unix doesn't
-   my ($rw, $mode) = $poll eq "r" ? ($r, "<") : ($w, ">");
+   my ($rw, $mode) = $poll eq "r" ? ($r, "<&") : ($w, ">&");
 
-   open my $fh2, "$mode&", $fh
+   open my $fh2, $mode, $fh
       or die "AnyEvent->io: cannot dup() filehandle in mode '$poll': $!,";
 
    # we assume CLOEXEC is already set by perl in all important cases
