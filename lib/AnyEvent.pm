@@ -1043,8 +1043,15 @@ Has special support for AnyEvent via L<Coro::AnyEvent>.
 
 package AnyEvent;
 
-no warnings;
-use strict qw(vars subs);
+# basically a tuned-down version of common::sense
+sub common_sense {
+   # no warnings
+   ${^WARNING_BITS} ^= ${^WARNING_BITS};
+   # use strict vars subs
+   $^H |= 0x00000600;
+}
+
+BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
@@ -1132,7 +1139,6 @@ sub AnyEvent::Util::postdetect::DESTROY {
 
 sub detect() {
    unless ($MODEL) {
-      no strict 'refs';
       local $SIG{__DIE__};
 
       if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z]+)$/) {
@@ -1388,7 +1394,10 @@ sub child {
 
    $PID_CB{$pid}{$arg{cb}} = $arg{cb};
 
-   $WNOHANG ||= eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
+   # WNOHANG is almost cetrainly 1 everywhere
+   $WNOHANG ||= $^O =~ /^(?:openbsd|netbsd|linux|freebsd|cygwin|MSWin32)$/
+                ? 1
+                : eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
 
    unless ($CHLD_W) {
       $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_sigchld);
@@ -1450,9 +1459,15 @@ our @ISA = AnyEvent::CondVar::Base::;
 
 package AnyEvent::CondVar::Base;
 
-use overload
-   '&{}'    => sub { my $self = shift; sub { $self->send (@_) } },
-   fallback => 1;
+#use overload
+#   '&{}'    => sub { my $self = shift; sub { $self->send (@_) } },
+#   fallback => 1;
+
+# save 300+ kilobytes by dirtily hardcoding overloading
+${"AnyEvent::CondVar::Base::OVERLOAD"}{dummy}++; # Register with magic by touching.
+*{'AnyEvent::CondVar::Base::()'}   = sub { }; # "Make it findable via fetchmethod."
+*{'AnyEvent::CondVar::Base::(&{}'} = sub { my $self = shift; sub { $self->send (@_) } }; # &{}
+${'AnyEvent::CondVar::Base::()'}   = 1; # fallback
 
 our $WAITING;
 
@@ -1563,9 +1578,10 @@ it will croak.
 
 In other words, enables "strict" mode.
 
-Unlike C<use strict>, it is definitely recommended to keep it off in
-production. Keeping C<PERL_ANYEVENT_STRICT=1> in your environment while
-developing programs can be very useful, however.
+Unlike C<use strict> (or it's modern cousin, C<< use L<common::sense>
+>>, it is definitely recommended to keep it off in production. Keeping
+C<PERL_ANYEVENT_STRICT=1> in your environment while developing programs
+can be very useful, however.
 
 =item C<PERL_ANYEVENT_MODEL>
 
