@@ -363,10 +363,23 @@ that it might take a while until the signal gets handled by the process,
 but it is guaranteed not to interrupt any other callbacks.
 
 The main advantage of using these watchers is that you can share a signal
-between multiple watchers.
+between multiple watchers, and AnyEvent will ensure that signals will not
+interrupt your program at bad times.
 
-This watcher might use C<%SIG>, so programs overwriting those signals
-directly will likely not work correctly.
+This watcher might use C<%SIG> (depending on the event loop used),
+so programs overwriting those signals directly will likely not work
+correctly.
+
+Also note that many event loops (e.g. Glib, Tk, Qt, IO::Async) do not
+support attaching callbacks to signals, which is a pity, as you cannot do
+race-free signal handling in perl. AnyEvent will try to do it's best, but
+in some cases, signals will be delayed. The maximum time a signal might
+be delayed is specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10
+seconds). This variable can be changed only before the first signal
+watcher is created, and should be left alone otherwise. Higher values
+will cause fewer spurious wake-ups, which is better for power and CPU
+saving. All these problems can be avoided by installing the optional
+L<Async::Interrupt> module.
 
 Example: exit on SIGINT
 
@@ -405,6 +418,10 @@ This means you cannot create a child watcher as the very first
 thing in an AnyEvent program, you I<have> to create at least one
 watcher before you C<fork> the child (alternatively, you can call
 C<AnyEvent::detect>).
+
+As most event loops do not support waiting for child events, they will be
+emulated by AnyEvent in most cases, in which the latency and race problems
+mentioned in the description of signal watchers apply.
 
 Example: fork a process and wait for it
 
@@ -1041,15 +1058,20 @@ our @REGISTRY;
 
 our $WIN32;
 
+our $VERBOSE;
+
 BEGIN {
    eval "sub WIN32(){ " . (($^O =~ /mswin32/i)*1) ." }";
    eval "sub TAINT(){ " . (${^TAINT}*1) . " }";
 
    delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
       if ${^TAINT};
+
+   $VERBOSE = $ENV{PERL_ANYEVENT_VERBOSE}*1;
+
 }
 
-our $verbose = $ENV{PERL_ANYEVENT_VERBOSE}*1;
+our $MAX_SIGNAL_LATENCY = 10;
 
 our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 
@@ -1117,9 +1139,9 @@ sub detect() {
          my $model = "AnyEvent::Impl::$1";
          if (eval "require $model") {
             $MODEL = $model;
-            warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $verbose > 1;
+            warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $VERBOSE >= 2;
          } else {
-            warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $verbose;
+            warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $VERBOSE;
          }
       }
 
@@ -1130,7 +1152,7 @@ sub detect() {
             if (${"$package\::VERSION"} > 0) {
                if (eval "require $model") {
                   $MODEL = $model;
-                  warn "AnyEvent: autodetected model '$model', using it.\n" if $verbose > 1;
+                  warn "AnyEvent: autodetected model '$model', using it.\n" if $VERBOSE >= 2;
                   last;
                }
             }
@@ -1145,7 +1167,7 @@ sub detect() {
                    and ${"$package\::VERSION"} > 0
                    and eval "require $model") {
                   $MODEL = $model;
-                  warn "AnyEvent: autoprobed model '$model', using it.\n" if $verbose > 1;
+                  warn "AnyEvent: autoprobed model '$model', using it.\n" if $VERBOSE >= 2;
                   last;
                }
             }
@@ -1200,13 +1222,18 @@ package AnyEvent::Base;
 
 # default implementations for many methods
 
-BEGIN {
+sub _time {
+   # probe for availability of Time::HiRes
    if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
+      warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
       *_time = \&Time::HiRes::time;
       # if (eval "use POSIX (); (POSIX::times())...
    } else {
+      warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
       *_time = sub { time }; # epic fail
    }
+
+   &_time
 }
 
 sub time { _time }
@@ -1221,10 +1248,15 @@ sub condvar {
 
 # default implementation for ->signal
 
+our $HAVE_ASYNC_INTERRUPT;
 our ($SIGPIPE_R, $SIGPIPE_W, %SIG_CB, %SIG_EV, $SIG_IO);
+our (%SIG_ASY, %SIG_ASY_W);
+our ($SIG_COUNT, $SIG_TW);
 
 sub _signal_exec {
-   sysread $SIGPIPE_R, my $dummy, 4;
+   $HAVE_ASYNC_INTERRUPT
+      ? $SIGPIPE_R->drain
+      : sysread $SIGPIPE_R, my $dummy, 9;
 
    while (%SIG_EV) {
       for (keys %SIG_EV) {
@@ -1234,10 +1266,62 @@ sub _signal_exec {
    }
 }
 
-sub signal {
+sub _signal {
    my (undef, %arg) = @_;
 
-   unless ($SIGPIPE_R) {
+   my $signal = uc $arg{signal}
+      or Carp::croak "required option 'signal' is missing";
+
+   $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+
+   if ($HAVE_ASYNC_INTERRUPT) {
+      # async::interrupt
+
+      $SIG_ASY{$signal} ||= do {
+         my $asy = new Async::Interrupt
+            cb     => sub { undef $SIG_EV{$signal} },
+            signal => $signal,
+            pipe   => [$SIGPIPE_R->filenos],
+         ;
+         $asy->pipe_autodrain (0);
+
+         $asy
+      };
+
+   } else {
+      # pure perl
+
+      $SIG{$signal} ||= sub {
+         local $!;
+         syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
+         undef $SIG_EV{$signal};
+      };
+
+      # can't do signal processing without introducing races in pure perl,
+      # so limit the signal latency.
+      ++$SIG_COUNT;
+      $SIG_TW ||= AnyEvent->timer (
+         after    => $MAX_SIGNAL_LATENCY,
+         interval => $MAX_SIGNAL_LATENCY,
+         cb       => sub { }, # just for the PERL_ASYNC_CHECK
+      );
+   }
+
+   bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
+}
+
+sub signal {
+   # probe for availability of Async::Interrupt
+   if (!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT} && eval "use Async::Interrupt 0.6 (); 1") {
+      warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
+
+      $HAVE_ASYNC_INTERRUPT = 1;
+      $SIGPIPE_R = new Async::Interrupt::EventPipe;
+      $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R->fileno, poll => "r", cb => \&_signal_exec);
+
+   } else {
+      warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
+
       require Fcntl;
 
       if (AnyEvent::WIN32) {
@@ -1262,28 +1346,23 @@ sub signal {
       $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
    }
 
-   my $signal = uc $arg{signal}
-      or Carp::croak "required option 'signal' is missing";
-
-   $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
-   $SIG{$signal} ||= sub {
-      local $!;
-      syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
-      undef $SIG_EV{$signal};
-   };
-
-   bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
+   *signal = \&_signal;
+   &signal
 }
 
 sub AnyEvent::Base::signal::DESTROY {
    my ($signal, $cb) = @{$_[0]};
+
+   undef $SIG_TW
+      unless --$SIG_COUNT;
 
    delete $SIG_CB{$signal}{$cb};
 
    # delete doesn't work with older perls - they then
    # print weird messages, or just unconditionally exit
    # instead of getting the default action.
-   undef $SIG{$signal} unless keys %{ $SIG_CB{$signal} };
+   undef $SIG{$signal}
+      unless keys %{ $SIG_CB{$signal} };
 }
 
 # default implementation for ->child
@@ -1295,8 +1374,9 @@ our $WNOHANG;
 
 sub _sigchld {
    while (0 < (my $pid = waitpid -1, $WNOHANG)) {
-      $_->($pid, $?) for (values %{ $PID_CB{$pid} || {} }),
-                         (values %{ $PID_CB{0}    || {} });
+      $_->($pid, $?)
+         for values %{ $PID_CB{$pid} || {} },
+             values %{ $PID_CB{0}    || {} };
    }
 }
 
@@ -2134,6 +2214,79 @@ undef $SIG{CHLD}
 $SIG{PIPE} = sub { }
    unless defined $SIG{PIPE};
 
+=head1 RECOMMENDED/OPTIONAL MODULES
+
+One of AnyEvent's main goals is to be 100% Pure-Perl(tm): only perl (and
+it's built-in modules) are required to use it.
+
+That does not mean that AnyEvent won't take advantage of some additional
+modules if they are installed.
+
+This section epxlains which additional modules will be used, and how they
+affect AnyEvent's operetion.
+
+=over 4
+
+=item L<Async::Interrupt>
+
+This slightly arcane module is used to implement fast signal handling: To
+my knowledge, there is no way to do completely race-free and quick
+signal handling in pure perl. To ensure that signals still get
+delivered, AnyEvent will start an interval timer to wake up perl (and
+catch the signals) with soemd elay (default is 10 seconds, look for
+C<$AnyEvent::MAX_SIGNAL_LATENCY>).
+
+If this module is available, then it will be used to implement signal
+catching, which means that signals will not be delayed, and the event loop
+will not be interrupted regularly, which is more efficient (And good for
+battery life on laptops).
+
+This affects not just the pure-perl event loop, but also other event loops
+that have no signal handling on their own (e.g. Glib, Tk, Qt).
+
+=item L<EV>
+
+This module isn't really "optional", as it is simply one of the backend
+event loops that AnyEvent can use. However, it is simply the best event
+loop available in terms of features, speed and stability: It supports
+the AnyEvent API optimally, implements all the watcher types in XS, does
+automatic timer adjustments even when no monotonic clock is available,
+can take avdantage of advanced kernel interfaces such as C<epoll> and
+C<kqueue>, and is the fastest backend I<by far>. You can even embed
+L<Glib>/L<Gtk2> in it (or vice versa, see L<EV::Glib> and L<Glib::EV>).
+
+=item L<Guard>
+
+The guard module, when used, will be used to implement
+C<AnyEvent::Util::guard>. This speeds up guards considerably (and uses a
+lot less memory), but otherwise doesn't affect guard operation much. It is
+purely used for performance.
+
+=item L<JSON> and L<JSON::XS>
+
+This module is required when you want to read or write JSON data via
+L<AnyEvent::Handle>. It is also written in pure-perl, but can take
+advantage of the ulta-high-speed L<JSON::XS> module when it is installed.
+
+In fact, L<AnyEvent::Handle> will use L<JSON::XS> by default if it is
+installed.
+
+=item L<Net::SSLeay>
+
+Implementing TLS/SSL in Perl is certainly interesting, but not very
+worthwhile: If this module is installed, then L<AnyEvent::Handle> (with
+the help of L<AnyEvent::TLS>), gains the ability to do TLS/SSL.
+
+=item L<Time::HiRes>
+
+This module is part of perl since release 5.008. It will be used when the
+chosen event library does not come with a timing source on it's own. The
+pure-perl event loop (L<AnyEvent::Impl::Perl>) will additionally use it to
+try to use a monotonic clock for timing stability.
+
+=back
+
+
 =head1 FORK
 
 Most event libraries are not fork-safe. The ones who are usually are
@@ -2141,7 +2294,8 @@ because they rely on inefficient but fork-safe C<select> or C<poll>
 calls. Only L<EV> is fully fork-aware.
 
 If you have to fork, you must either do so I<before> creating your first
-watcher OR you must not use AnyEvent at all in the child.
+watcher OR you must not use AnyEvent at all in the child OR you must do
+something completely out of the scope of AnyEvent.
 
 
 =head1 SECURITY CONSIDERATIONS

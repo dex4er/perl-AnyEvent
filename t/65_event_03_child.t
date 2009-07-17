@@ -24,6 +24,8 @@ use POSIX ();
 use AnyEvent;
 use AnyEvent::Impl::Event;
 
+$AnyEvent::MAX_SIGNAL_LATENCY = 1;
+
 print "ok 1\n";
 
 AnyEvent::detect; # force-load event model

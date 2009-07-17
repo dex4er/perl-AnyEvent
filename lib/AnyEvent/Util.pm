@@ -390,10 +390,13 @@ guard.
 
 =cut
 
-BEGIN {
-   if (eval "use Guard 0.5; 1") {
+sub guard(&) {
+   if (!$ENV{PERL_ANYEVENT_AVOID_GUARD} && eval "use Guard 0.5 (); 1") {
+      warn "AnyEvent::Util: using Guard module to implement guards.\n" if $AnyEvent::VERBOSE >= 8;
       *guard = \&Guard::guard;
    } else {
+      warn "AnyEvent::Util: using pure-perl guard implementation.\n" if $AnyEvent::VERBOSE >= 8;
+
       *AnyEvent::Util::guard::DESTROY = sub {
          local $@;
 
@@ -413,6 +416,8 @@ BEGIN {
          bless \(my $cb = shift), "AnyEvent::Util::guard"
       }
    }
+
+   goto &guard;
 }
 
 #############################################################################

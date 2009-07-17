@@ -117,7 +117,7 @@ our $VERSION = 4.83;
 
 our ($NOW, $MNOW);
 
-sub MAXWAIT() { 10 } # never sleep for longer than this many seconds
+sub MAXWAIT() { 3600 } # never sleep for longer than this many seconds
 
 BEGIN {
    local $SIG{__DIE__};
@@ -126,14 +126,14 @@ BEGIN {
    my $round; # actual granularity
 
    if ($time_hires && eval "&Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC)") {
-      warn "AnyEvent::Impl::Perl using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::verbose >= 8;
+      warn "AnyEvent::Impl::Perl: using CLOCK_MONOTONIC as timebase.\n" if $AnyEvent::VERBOSE >= 8;
       *_update_clock = sub {
          $NOW  = &Time::HiRes::time;
          $MNOW = Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC);
       };
 
    } elsif (100 <= $clk_tck && $clk_tck <= 1000000 && "use POSIX (); (POSIX::times())[0] != -1") { # -1 is also a valid return value :/
-      warn "AnyEvent::Impl::Perl using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::verbose >= 8;
+      warn "AnyEvent::Impl::Perl: using POSIX::times (monotonic) as timebase.\n" if $AnyEvent::VERBOSE >= 8;
       my $HZ1 = 1 / $clk_tck;
 
       my $last = (POSIX::times ())[0];
@@ -151,7 +151,7 @@ BEGIN {
       $round = $HZ1;
 
    } elsif (eval "use Time::HiRes (); 1") {
-      warn "AnyEvent::Impl::Perl using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::verbose >= 8;
+      warn "AnyEvent::Impl::Perl: using Time::HiRes::time (non-monotonic) clock as timebase.\n" if $AnyEvent::VERBOSE >= 8;
       *_update_clock = sub {
          $NOW = $MNOW = &Time::HiRes::time;
       };

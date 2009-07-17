@@ -24,6 +24,8 @@ use POSIX ();
 use AnyEvent;
 use AnyEvent::Impl::IOAsync; use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
 
+$AnyEvent::MAX_SIGNAL_LATENCY = 1;
+
 print "ok 1\n";
 
 AnyEvent::detect; # force-load event model
