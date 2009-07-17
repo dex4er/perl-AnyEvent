@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.83 Fri Jul 17 16:56:26 CEST 2009
 	- implement AnyEvent::Socket::getprotobyname.
 	- AnyEvent::CondVar's will now detect recursive blocking
           waits and will croak, as too many people fall into
