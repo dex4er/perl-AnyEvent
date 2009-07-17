@@ -23,13 +23,10 @@ L<AnyEvent>). However, this module can be loaded at any time.
 
 package AnyEvent::Strict;
 
-no warnings; # *sigh*
-use strict qw(vars subs);
-
 use Carp qw(croak);
 use Fcntl ();
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
 
 our @ISA;

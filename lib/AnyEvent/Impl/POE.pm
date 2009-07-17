@@ -273,10 +273,7 @@ POE knows about the nature of the beast!
 
 package AnyEvent::Impl::POE;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use POE;
 
 # if POE is already running

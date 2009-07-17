@@ -1568,6 +1568,9 @@ C<PERL_ANYEVENT_MODEL>.
 When set to C<2> or higher, cause AnyEvent to report to STDERR which event
 model it chooses.
 
+When set to C<8> or higher, then AnyEvent will report extra information on
+which optional modules it loads and how it implements certain features.
+
 =item C<PERL_ANYEVENT_STRICT>
 
 AnyEvent does not do much argument checking by default, as thorough
@@ -1653,6 +1656,11 @@ When neither C<ca_file> nor C<ca_path> was specified during
 L<AnyEvent::TLS> context creation, and either of these environment
 variables exist, they will be used to specify CA certificate locations
 instead of a system-dependent default.
+
+=item C<PERL_ANYEVENT_AVOID_GUARD> and C<PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT>
+
+When these are set to C<1>, then the respective modules are not
+loaded. Mostly good for testing AnyEvent itself.
 
 =back
 

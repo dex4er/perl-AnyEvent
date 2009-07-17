@@ -20,26 +20,18 @@ by default.
 
 package AnyEvent::Util;
 
-no warnings;
-use strict;
-
 use Carp ();
 use Errno ();
 use Socket ();
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use base 'Exporter';
 
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpair);
-our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL WSAWOULDBLOCK);
+our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL);
 
 our $VERSION = 4.83;
-
-BEGIN {
-   my $posix = 1 * eval { local $SIG{__DIE__}; require POSIX };
-   eval "sub POSIX() { $posix }";
-}
 
 BEGIN {
    my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
@@ -62,15 +54,21 @@ BEGIN {
 BEGIN {
    # broken windows perls use undocumented error codes...
    if (AnyEvent::WIN32) {
+      require Errno;
       eval "sub WSAEINVAL()      { 10022 }";
       eval "sub WSAEWOULDBLOCK() { 10035 }";
-      eval "sub WSAWOULDBLOCK() { 10035 }"; # TODO remove here and from @export_ok
       eval "sub WSAEINPROGRESS() { 10036 }";
+
+      # Errno in win32 is buggy and doesn't provide the POSIX
+      # error codes as documented, so we substitute by patching Errno.
+      eval "sub Errno::EBADMSG() { " . Errno::EDOM   () . " }";
+      eval "sub Errno::EPROTO()  { " . Errno::ESPIPE () . " }";
+      push @Errno::EXPORT_OK, qw(EBADMSG EPROTO);
+      push @{ $Errno::EXPORT_TAGS{POSIX} }, qw(EBADMSG EPROTO);
    } else {
       # these should never match any errno value
       eval "sub WSAEINVAL()      { -1e99 }";
       eval "sub WSAEWOULDBLOCK() { -1e99 }";
-      eval "sub WSAWOULDBLOCK() { -1e99 }"; # TODO
       eval "sub WSAEINPROGRESS() { -1e99 }";
    }
 }

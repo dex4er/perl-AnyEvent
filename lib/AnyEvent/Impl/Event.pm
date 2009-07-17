@@ -22,11 +22,7 @@ even with many watchers.
 
 package AnyEvent::Impl::Event;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Event qw(unloop); # we have to import something to make Event use Time::HiRes
 
 sub io {

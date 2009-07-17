@@ -28,13 +28,10 @@ virtual circuit mode for large responses.
 
 package AnyEvent::DNS;
 
-no warnings;
-use strict;
-
 use Carp ();
 use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(AF_INET6);
 
 our $VERSION = 4.83;

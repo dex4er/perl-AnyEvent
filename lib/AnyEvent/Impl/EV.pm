@@ -19,9 +19,7 @@ creating the first AnyEvent watcher.
 
 package AnyEvent::Impl::EV;
 
-no warnings;
-use strict;
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use EV 3.44;
 
 sub time       { EV::time       }

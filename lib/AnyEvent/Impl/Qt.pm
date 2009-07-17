@@ -74,12 +74,9 @@ sub cb {
 
 package AnyEvent::Impl::Qt;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Qt;
+
 use AnyEvent::Impl::Qt::Timer;
 use AnyEvent::Impl::Qt::Io;
 

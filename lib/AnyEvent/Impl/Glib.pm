@@ -34,9 +34,7 @@ This module uses the default Glib main context for all its watchers.
 
 package AnyEvent::Impl::Glib;
 
-no warnings;
-use strict;
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Glib ();
 
 our $mainloop = Glib::MainContext->default;

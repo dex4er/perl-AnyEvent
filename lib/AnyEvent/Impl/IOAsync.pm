@@ -162,12 +162,10 @@ very demanding eyes.
 
 package AnyEvent::Impl::IOAsync;
 
-use strict;
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use Time::HiRes;
 use Scalar::Util;
-
-use AnyEvent;
 
 use IO::Async::Loop; # not strictly required...
 use IO::Async::Handle;

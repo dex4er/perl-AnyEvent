@@ -105,12 +105,9 @@ you want to use the pure-perl backend.
 
 package AnyEvent::Impl::Perl;
 
-no warnings;
-use strict qw(vars subs);
-
 use Scalar::Util qw(weaken);
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
 
 our $VERSION = 4.83;

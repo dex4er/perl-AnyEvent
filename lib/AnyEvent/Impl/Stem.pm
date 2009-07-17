@@ -19,7 +19,7 @@ creating the first AnyEvent watcher.
 
 package AnyEvent::Impl::Stem;
 
-use strict;
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use Stem::Event;
 use Stem::Class; #???

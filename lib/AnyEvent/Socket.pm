@@ -35,14 +35,11 @@ by default.
 
 package AnyEvent::Socket;
 
-no warnings;
-use strict;
-
 use Carp ();
 use Errno ();
 use Socket qw(AF_INET AF_UNIX SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
 use AnyEvent::DNS ();
 

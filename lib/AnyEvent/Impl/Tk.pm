@@ -50,11 +50,7 @@ version of AnyEvent) and can be accessed as C<$AnyEvent::Impl::Tk::mw>.
 
 package AnyEvent::Impl::Tk;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Tk ();
 
 our $mw = new MainWindow;

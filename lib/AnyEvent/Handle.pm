@@ -1,14 +1,11 @@
 package AnyEvent::Handle;
 
-no warnings;
-use strict qw(subs vars);
-
-use AnyEvent ();
-use AnyEvent::Util qw(WSAEWOULDBLOCK);
 use Scalar::Util ();
 use Carp ();
-use Fcntl ();
 use Errno qw(EAGAIN EINTR);
+
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
+use AnyEvent::Util qw(WSAEWOULDBLOCK);
 
 =head1 NAME
 

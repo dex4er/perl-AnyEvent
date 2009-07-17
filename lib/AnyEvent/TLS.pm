@@ -1,11 +1,9 @@
 package AnyEvent::TLS;
 
-no warnings;
-use strict qw(subs vars);
-
 use Carp qw(croak);
 use Scalar::Util ();
 
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
 
 use Net::SSLeay 1.33;

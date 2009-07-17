@@ -43,12 +43,9 @@ Avoid Event::Lib if you can.
 
 package AnyEvent::Impl::EventLib;
 
-no warnings;
-use strict;
-
-use Carp ();
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
+
 use Event::Lib;
 
 # Event::Lib doesn't always take a reference to the callback, so closures
