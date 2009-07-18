@@ -1,5 +1,7 @@
 use POSIX ();
 
+no warnings;
+
 use AnyEvent;
 use AnyEvent::Impl::Perl;
 
@@ -19,56 +21,61 @@ EOF
    }
 }
 
-$| = 1; print "1..7\n";
+$| = 1; print "1..50\n";
 
-$AnyEvent::MAX_SIGNAL_LATENCY = 1;
+for my $it ("", 1, 2, 3, 4) {
+   $AnyEvent::MAX_SIGNAL_LATENCY = 1;
 
-print "ok 1\n";
+   print "ok ${it}1\n";
 
-AnyEvent::detect; # force-load event model
+   AnyEvent::detect; # force-load event model
 
-my $pid = fork;
+   my $pid = fork;
 
-defined $pid or die "unable to fork";
+   defined $pid or die "unable to fork";
 
 # work around Tk bug until it has been fixed.
 #my $timer = AnyEvent->timer (after => 2, cb => sub { });
 
-my $cv = AnyEvent->condvar;
+   my $cv = AnyEvent->condvar;
 
-unless ($pid) {
-   print "ok 2\n";
-   POSIX::_exit 3;
-}
+   unless ($pid) {
+      print "ok ${it}2\n";
+      POSIX::_exit 3;
+   }
 
-my $w = AnyEvent->child (pid => $pid, cb => sub {
-   print $pid == $_[0] ? "" : "not ", "ok 3\ # $pid == $_[0]\n";
-   print 3 == ($_[1] >> 8) ? "" : "not ", "ok 4 # 3 == $_[1] >> 8 ($_[1])\n";
-   $cv->broadcast;
-});
+   my $w = AnyEvent->child (pid => $pid, cb => sub {
+      print $pid == $_[0] ? "" : "not ", "ok ${it}3\ # $pid == $_[0]\n";
+      print 3 == ($_[1] >> 8) ? "" : "not ", "ok ${it}4 # 3 == $_[1] >> 8 ($_[1])\n";
+      $cv->broadcast;
+   });
 
-$cv->wait;
+   $cv->wait;
 
-my $pid2 = fork || POSIX::_exit 7;
+   my $pid2 = fork || POSIX::_exit 7;
 
-my $cv2 = AnyEvent->condvar;
+   my $cv2 = AnyEvent->condvar;
 
-my $w2 = AnyEvent->child (pid => 0, cb => sub {
-   print $pid2 == $_[0] ? "" : "not ", "ok 5 # $pid2 == $_[0]\n";
-   print 7 == ($_[1] >> 8) ? "" : "not ", "ok 6 # 7 == $_[1] >> 8 ($_[1])\n";
-   $cv2->broadcast;
-});
+   my $w2 = AnyEvent->child (pid => 0, cb => sub {
+      print $pid2 == $_[0] ? "" : "not ", "ok ${it}5 # $pid2 == $_[0]\n";
+      print 7 == ($_[1] >> 8) ? "" : "not ", "ok ${it}6 # 7 == $_[1] >> 8 ($_[1])\n";
+      $cv2->broadcast;
+   });
 
-my $error = AnyEvent->timer (after => 5, cb => sub {
-   print <<EOF;
+   my $error = AnyEvent->timer (after => 5, cb => sub {
+      print <<EOF;
 Bail out! No child exit detected. This is either a bug in AnyEvent or a bug in your Perl (mostly some windows distributions suffer from that): child watchers might not work properly on this platform. You can force installation of this module if you do not rely on child watchers, or you could upgrade to a working version of Perl for your platform.\n";
 EOF
-   exit 0;
-});
+      exit 0;
+   });
 
-$cv2->wait;
+   $cv2->wait;
 
-print "ok 7\n";
+   print "ok ${it}7\n";
+   print "ok ${it}8\n";
+   print "ok ${it}9\n";
+   print "ok ", $it*10+10, "\n";
+}
 
 
 

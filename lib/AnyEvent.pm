@@ -1055,7 +1055,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = 4.83;
+our $VERSION = 4.85;
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1364,10 +1364,12 @@ sub AnyEvent::Base::signal::DESTROY {
 
    delete $SIG_CB{$signal}{$cb};
 
-   # delete doesn't work with older perls - they then
-   # print weird messages, or just unconditionally exit
-   # instead of getting the default action.
-   undef $SIG{$signal}
+   $HAVE_ASYNC_INTERRUPT
+      ? delete $SIG_ASY{$signal}
+      : # delete doesn't work with older perls - they then
+        # print weird messages, or just unconditionally exit
+        # instead of getting the default action.
+        undef $SIG{$signal}
       unless keys %{ $SIG_CB{$signal} };
 }
 

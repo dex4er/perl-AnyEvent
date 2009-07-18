@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+4.85 Sat Jul 18 06:16:14 CEST 2009
         - nail the signal race problem in perl once and for all
           (see $AnyEvent::MAX_SIGNAL_LATENCY).
         - take advantage of Async::Interrupt if it is available.

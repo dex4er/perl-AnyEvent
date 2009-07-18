@@ -352,10 +352,23 @@ WATCHERS
     process, but it is guaranteed not to interrupt any other callbacks.
 
     The main advantage of using these watchers is that you can share a
-    signal between multiple watchers.
+    signal between multiple watchers, and AnyEvent will ensure that signals
+    will not interrupt your program at bad times.
 
-    This watcher might use %SIG, so programs overwriting those signals
-    directly will likely not work correctly.
+    This watcher might use %SIG (depending on the event loop used), so
+    programs overwriting those signals directly will likely not work
+    correctly.
+
+    Also note that many event loops (e.g. Glib, Tk, Qt, IO::Async) do not
+    support attaching callbacks to signals, which is a pity, as you cannot
+    do race-free signal handling in perl. AnyEvent will try to do it's best,
+    but in some cases, signals will be delayed. The maximum time a signal
+    might be delayed is specified in $AnyEvent::MAX_SIGNAL_LATENCY (default:
+    10 seconds). This variable can be changed only before the first signal
+    watcher is created, and should be left alone otherwise. Higher values
+    will cause fewer spurious wake-ups, which is better for power and CPU
+    saving. All these problems can be avoided by installing the optional
+    Async::Interrupt module.
 
     Example: exit on SIGINT
 
@@ -392,6 +405,10 @@ WATCHERS
     This means you cannot create a child watcher as the very first thing in
     an AnyEvent program, you *have* to create at least one watcher before
     you "fork" the child (alternatively, you can call "AnyEvent::detect").
+
+    As most event loops do not support waiting for child events, they will
+    be emulated by AnyEvent in most cases, in which the latency and race
+    problems mentioned in the description of signal watchers apply.
 
     Example: fork a process and wait for it
 
@@ -993,6 +1010,10 @@ ENVIRONMENT VARIABLES
         When set to 2 or higher, cause AnyEvent to report to STDERR which
         event model it chooses.
 
+        When set to 8 or higher, then AnyEvent will report extra information
+        on which optional modules it loads and how it implements certain
+        features.
+
     "PERL_ANYEVENT_STRICT"
         AnyEvent does not do much argument checking by default, as thorough
         argument checking is very costly. Setting this variable to a true
@@ -1002,9 +1023,10 @@ ENVIRONMENT VARIABLES
 
         In other words, enables "strict" mode.
 
-        Unlike "use strict", it is definitely recommended to keep it off in
-        production. Keeping "PERL_ANYEVENT_STRICT=1" in your environment
-        while developing programs can be very useful, however.
+        Unlike "use strict" (or it's modern cousin, "use common::sense", it
+        is definitely recommended to keep it off in production. Keeping
+        "PERL_ANYEVENT_STRICT=1" in your environment while developing
+        programs can be very useful, however.
 
     "PERL_ANYEVENT_MODEL"
         This can be used to specify the event model to be used by AnyEvent,
@@ -1071,6 +1093,10 @@ ENVIRONMENT VARIABLES
         AnyEvent::TLS context creation, and either of these environment
         variables exist, they will be used to specify CA certificate
         locations instead of a system-dependent default.
+
+    "PERL_ANYEVENT_AVOID_GUARD" and "PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT"
+        When these are set to 1, then the respective modules are not loaded.
+        Mostly good for testing AnyEvent itself.
 
 SUPPLYING YOUR OWN EVENT MODEL INTERFACE
     This is an advanced topic that you do not normally need to use AnyEvent
@@ -1605,13 +1631,77 @@ SIGNALS
 
         Feel free to install your own handler, or reset it to defaults.
 
+RECOMMENDED/OPTIONAL MODULES
+    One of AnyEvent's main goals is to be 100% Pure-Perl(tm): only perl (and
+    it's built-in modules) are required to use it.
+
+    That does not mean that AnyEvent won't take advantage of some additional
+    modules if they are installed.
+
+    This section epxlains which additional modules will be used, and how
+    they affect AnyEvent's operetion.
+
+    Async::Interrupt
+        This slightly arcane module is used to implement fast signal
+        handling: To my knowledge, there is no way to do completely
+        race-free and quick signal handling in pure perl. To ensure that
+        signals still get delivered, AnyEvent will start an interval timer
+        to wake up perl (and catch the signals) with soemd elay (default is
+        10 seconds, look for $AnyEvent::MAX_SIGNAL_LATENCY).
+
+        If this module is available, then it will be used to implement
+        signal catching, which means that signals will not be delayed, and
+        the event loop will not be interrupted regularly, which is more
+        efficient (And good for battery life on laptops).
+
+        This affects not just the pure-perl event loop, but also other event
+        loops that have no signal handling on their own (e.g. Glib, Tk, Qt).
+
+    EV  This module isn't really "optional", as it is simply one of the
+        backend event loops that AnyEvent can use. However, it is simply the
+        best event loop available in terms of features, speed and stability:
+        It supports the AnyEvent API optimally, implements all the watcher
+        types in XS, does automatic timer adjustments even when no monotonic
+        clock is available, can take avdantage of advanced kernel interfaces
+        such as "epoll" and "kqueue", and is the fastest backend *by far*.
+        You can even embed Glib/Gtk2 in it (or vice versa, see EV::Glib and
+        Glib::EV).
+
+    Guard
+        The guard module, when used, will be used to implement
+        "AnyEvent::Util::guard". This speeds up guards considerably (and
+        uses a lot less memory), but otherwise doesn't affect guard
+        operation much. It is purely used for performance.
+
+    JSON and JSON::XS
+        This module is required when you want to read or write JSON data via
+        AnyEvent::Handle. It is also written in pure-perl, but can take
+        advantage of the ulta-high-speed JSON::XS module when it is
+        installed.
+
+        In fact, AnyEvent::Handle will use JSON::XS by default if it is
+        installed.
+
+    Net::SSLeay
+        Implementing TLS/SSL in Perl is certainly interesting, but not very
+        worthwhile: If this module is installed, then AnyEvent::Handle (with
+        the help of AnyEvent::TLS), gains the ability to do TLS/SSL.
+
+    Time::HiRes
+        This module is part of perl since release 5.008. It will be used
+        when the chosen event library does not come with a timing source on
+        it's own. The pure-perl event loop (AnyEvent::Impl::Perl) will
+        additionally use it to try to use a monotonic clock for timing
+        stability.
+
 FORK
     Most event libraries are not fork-safe. The ones who are usually are
     because they rely on inefficient but fork-safe "select" or "poll" calls.
     Only EV is fully fork-aware.
 
     If you have to fork, you must either do so *before* creating your first
-    watcher OR you must not use AnyEvent at all in the child.
+    watcher OR you must not use AnyEvent at all in the child OR you must do
+    something completely out of the scope of AnyEvent.
 
 SECURITY CONSIDERATIONS
     AnyEvent can be forced to load any event model via
