@@ -1,11 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: Event seems to have some racy signal handling.
-
 	- work around signal handling races in Event and (...) Event::Lib.
+        - try to align signal-race timer to full-second boundaries.
+        - work around Tk not liking negative timeouts.
         - don't complain of different grades of environmental unfriendlyness
           in IO::ASync.
-        - try to align signal-race timer to full-second boundaries.
 
 4.85 Sat Jul 18 06:16:14 CEST 2009
         - nail the signal race problem in perl once and for all

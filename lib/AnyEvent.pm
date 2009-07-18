@@ -2315,7 +2315,7 @@ purely used for performance.
 
 This module is required when you want to read or write JSON data via
 L<AnyEvent::Handle>. It is also written in pure-perl, but can take
-advantage of the ulta-high-speed L<JSON::XS> module when it is installed.
+advantage of the ultra-high-speed L<JSON::XS> module when it is installed.
 
 In fact, L<AnyEvent::Handle> will use L<JSON::XS> by default if it is
 installed.

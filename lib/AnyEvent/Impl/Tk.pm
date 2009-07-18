@@ -85,6 +85,7 @@ sub AnyEvent::Impl::Tk::io::DESTROY {
 sub timer {
    my (undef, %arg) = @_;
    
+   my $after = $arg{after} < 0 ? 0 : $arg{after} * 1000;
    my $cb = $arg{cb};
    my $id;
 
@@ -94,10 +95,10 @@ sub timer {
          $id = Tk::after $mw, $ival, [$_[0], $_[0]];
          &$cb;
       };
-      $id = Tk::after $mw, $arg{after} * 1000, [$rcb, $rcb];
+      $id = Tk::after $mw, $after, [$rcb, $rcb];
    } else {
       # tk blesses $cb, thus the extra indirection
-      $id = Tk::after $mw, $arg{after} * 1000, sub { &$cb };
+      $id = Tk::after $mw, $after, sub { &$cb };
    }
 
    bless \\$id, "AnyEvent::Impl::Tk::after"
