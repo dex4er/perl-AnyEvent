@@ -123,16 +123,6 @@ callback is registered, so you have no idea where in your code you passed
 it in), as the code checks explicitly for code references, disallowing
 callable objects.
 
-=item Environmentally unfriendly
-
-IO::Async wakes up your process every second, when you have any signal
-watchers registered. That's bad from a power savings perspective,
-especially as those wake-ups are spread randomly (imagine 20 perl
-programs on your laptop and you have a 20 Hz timer that takes your CPU
-out of its power save mode that often), and completely unnecessary, when
-signals are implemented properly (instead of relying on Linux-specific
-L<IO::Async::Loop::IO_Ppoll>-style hacks).
-
 =item Unpleasant surprises on GNU/Linux
 
 When you develop your program on FreeBSD and run it on GNU/Linux, you

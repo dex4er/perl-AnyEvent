@@ -16,7 +16,8 @@ do anything to make Event work with AnyEvent except by loading Event before
 creating the first AnyEvent watcher.
 
 The event module is reasonably efficient and generally works correctly
-even with many watchers.
+even with many watchers, except that it's signal handling is inherently
+racy and requires the wake-up-frequently workaround.
 
 =cut
 
@@ -26,33 +27,41 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Event qw(unloop); # we have to import something to make Event use Time::HiRes
 
 sub io {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
    $arg{fd} = delete $arg{fh};
    $arg{poll} .= "e" if AnyEvent::WIN32; # work around windows connect bug
    my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
-   bless \(Event->io (%arg)), $class
+   bless \(Event->io (%arg)), __PACKAGE__
 }
 
 sub timer {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
    $arg{after} = 0 if $arg{after} < 0;
    my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
-   bless \Event->timer (%arg, repeat => $arg{interval}), $class
-}
-
-sub signal {
-   my ($class, %arg) = @_;
-   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
-   bless \Event->signal (%arg), $class
+   bless \Event->timer (%arg, repeat => $arg{interval}), __PACKAGE__
 }
 
 sub idle {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
    my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
-   bless \Event->idle (repeat => 1, min => 0, %arg), $class
+   bless \Event->idle (repeat => 1, min => 0, %arg), __PACKAGE__
 }
 
 sub DESTROY {
+   ${$_[0]}->cancel;
+}
+
+sub signal {
+   my (undef, %arg) = @_;
+   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
+   my $w = Event->signal (%arg);
+
+   AnyEvent::Base::_sig_add;
+   bless \$w, "AnyEvent::Impl::Event::signal"
+}
+
+sub AnyEvent::Impl::Event::signal::DESTROY {
+   AnyEvent::Base::_sig_del;
    ${$_[0]}->cancel;
 }
 

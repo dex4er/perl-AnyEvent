@@ -1272,6 +1272,25 @@ sub _signal_exec {
    }
 }
 
+# install a dumym wakeupw atcher to reduce signal catching latency
+sub _sig_add() {
+   unless ($SIG_COUNT++) {
+      # try to align timer on a full-second boundary, if possible
+      my $NOW = AnyEvent->now;
+
+      $SIG_TW = AnyEvent->timer (
+         after    => $MAX_SIGNAL_LATENCY - ($NOW - int $NOW),
+         interval => $MAX_SIGNAL_LATENCY,
+         cb       => sub { }, # just for the PERL_ASYNC_CHECK
+      );
+   }
+}
+
+sub _sig_del {
+   undef $SIG_TW
+      unless --$SIG_COUNT;
+}
+
 sub _signal {
    my (undef, %arg) = @_;
 
@@ -1305,12 +1324,7 @@ sub _signal {
 
       # can't do signal processing without introducing races in pure perl,
       # so limit the signal latency.
-      ++$SIG_COUNT;
-      $SIG_TW ||= AnyEvent->timer (
-         after    => $MAX_SIGNAL_LATENCY,
-         interval => $MAX_SIGNAL_LATENCY,
-         cb       => sub { }, # just for the PERL_ASYNC_CHECK
-      );
+      _sig_add;
    }
 
    bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
@@ -1359,8 +1373,7 @@ sub signal {
 sub AnyEvent::Base::signal::DESTROY {
    my ($signal, $cb) = @{$_[0]};
 
-   undef $SIG_TW
-      unless --$SIG_COUNT;
+   _sig_del;
 
    delete $SIG_CB{$signal}{$cb};
 

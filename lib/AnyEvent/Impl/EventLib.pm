@@ -63,7 +63,7 @@ sub ccb {
 my $ccb = \&ccb;
 
 sub io {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
 
    # work around these bugs in Event::Lib:
    # - adding a callback might destroy other callbacks
@@ -74,11 +74,11 @@ sub io {
    # fortunately, going through %arg/_dupfh already makes a copy, so it happpens to work
    my $w = event_new $fh, $mode | EV_PERSIST, $ccb, $arg{cb};
    event_add $w;
-   bless \\$w, $class
+   bless \\$w, __PACKAGE__
 }
 
 sub timer {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
 
    my $ival = $arg{interval};
    my $cb   = $arg{cb};
@@ -90,20 +90,26 @@ sub timer {
 
    event_add $w, $arg{after} || 1e-10; # work around 0-bug in Event::Lib
 
-   bless \\$w, $class
-}
-
-sub signal {
-   my ($class, %arg) = @_;
-
-   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $ccb, $arg{cb};
-   event_add $w;
-   bless \\$w, $class
+   bless \\$w, __PACKAGE__
 }
 
 sub DESTROY {
    local $@;
+   ${${$_[0]}}->remove;
+}
 
+sub signal {
+   my (undef, %arg) = @_;
+
+   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $ccb, $arg{cb};
+   event_add $w;
+   AnyEvent::Base::_sig_add;
+   bless \\$w, "AnyEvent::Impl::EventLib::signal"
+}
+
+sub AnyEvent::Impl::EventLib::signal::DESTROY {
+   AnyEvent::Base::_sig_del;
+   local $@;
    ${${$_[0]}}->remove;
 }
 

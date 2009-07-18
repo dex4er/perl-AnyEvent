@@ -23,9 +23,9 @@ EOF
 
 $| = 1; print "1..50\n";
 
-for my $it ("", 1, 2, 3, 4) {
-   $AnyEvent::MAX_SIGNAL_LATENCY = 1;
+$AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
 
+for my $it ("", 1, 2, 3, 4) {
    print "ok ${it}1\n";
 
    AnyEvent::detect; # force-load event model
