@@ -1,5 +1,4 @@
-$|=1;
-BEGIN { print "1..19\n" }
+$| = 1; print "1..19\n";
 
 no warnings; # nazis
 

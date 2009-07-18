@@ -1,7 +1,5 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: _AVOID_, _VERBOSE_
-	- improve perl 5.6 compatibility of the core event loop.
         - nail the signal race problem in perl once and for all
           (see $AnyEvent::MAX_SIGNAL_LATENCY).
         - take advantage of Async::Interrupt if it is available.
@@ -10,8 +8,10 @@ TODO: _AVOID_, _VERBOSE_
           documentation.
         - reduce memory usage considerably (and reduce startup penalty)
           by not using "strict", "warnings" and "overload" modules.
-        - work around buggy windows perls and provide EBADMSG and EPROTO
-          ourselves.
+        - work around buggy windows/openbsd perls and provide EBADMSG
+          and EPROTO ourselves when missing.
+	- improve perl 5.6 compatibility of the core event loop.
+        - made Net::SSLeay version 1.33 a soft requirement.
 
 4.83 Fri Jul 17 16:56:26 CEST 2009
 	- implement AnyEvent::Socket::getprotobyname.

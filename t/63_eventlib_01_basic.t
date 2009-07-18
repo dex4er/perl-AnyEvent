@@ -1,8 +1,7 @@
-$|=1;
-BEGIN { print "1..6\n" }
-
 use AnyEvent;
-use AnyEvent::Impl::EventLib;
+BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not found}), exit 0) } 
+
+$| = 1; print "1..6\n";
 
 print "ok 1\n";
 

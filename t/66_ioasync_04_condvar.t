@@ -1,10 +1,7 @@
-$|=1;
-BEGIN {
-   print "1..21\n"
-}
-
 use AnyEvent;
-use AnyEvent::Impl::IOAsync; use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
+BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not found}), exit 0) } use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
+
+$| = 1; print "1..21\n";
 
 print "ok 1\n";
 

@@ -54,22 +54,30 @@ BEGIN {
 BEGIN {
    # broken windows perls use undocumented error codes...
    if (AnyEvent::WIN32) {
-      require Errno;
-      eval "sub WSAEINVAL()      { 10022 }";
-      eval "sub WSAEWOULDBLOCK() { 10035 }";
-      eval "sub WSAEINPROGRESS() { 10036 }";
-
-      # Errno in win32 is buggy and doesn't provide the POSIX
-      # error codes as documented, so we substitute by patching Errno.
-      eval "sub Errno::EBADMSG() { " . Errno::EDOM   () . " }";
-      eval "sub Errno::EPROTO()  { " . Errno::ESPIPE () . " }";
-      push @Errno::EXPORT_OK, qw(EBADMSG EPROTO);
-      push @{ $Errno::EXPORT_TAGS{POSIX} }, qw(EBADMSG EPROTO);
+      eval "sub WSAEINVAL      () { 10022 }";
+      eval "sub WSAEWOULDBLOCK () { 10035 }";
+      eval "sub WSAEINPROGRESS () { 10036 }";
    } else {
       # these should never match any errno value
-      eval "sub WSAEINVAL()      { -1e99 }";
-      eval "sub WSAEWOULDBLOCK() { -1e99 }";
-      eval "sub WSAEINPROGRESS() { -1e99 }";
+      eval "sub WSAEINVAL      () { -1e99 }";
+      eval "sub WSAEWOULDBLOCK () { -1e99 }";
+      eval "sub WSAEINPROGRESS () { -1e99 }";
+   }
+
+   # fix buggy Errno on some non-POSIX platforms
+   # such as openbsd and windows.
+   my %ERR = (
+      EBADMSG => Errno::EDOM   (),
+      EPROTO  => Errno::ESPIPE (),
+   );
+
+   while (my ($k, $v) = each %ERR) {
+      next if eval "Errno::$k ()";
+      warn "AnyEvent::Util: broken Errno module, adding Errno::$k.\n" if $AnyEvent::VERBOSE >= 8;
+
+      eval "sub Errno::$k () { $v }";
+      push @Errno::EXPORT_OK, $k;
+      push @{ $Errno::EXPORT_TAGS{POSIX} }, $k;
    }
 }
 

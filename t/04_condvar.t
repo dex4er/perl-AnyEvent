@@ -1,10 +1,7 @@
-$|=1;
-BEGIN {
-   print "1..21\n"
-}
-
 use AnyEvent;
 use AnyEvent::Impl::Perl;
+
+$| = 1; print "1..21\n";
 
 print "ok 1\n";
 

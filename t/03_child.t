@@ -1,3 +1,8 @@
+use POSIX ();
+
+use AnyEvent;
+use AnyEvent::Impl::Perl;
+
 BEGIN {
    # check for broken perls
    if ($^O =~ /mswin32/i) {
@@ -14,15 +19,7 @@ EOF
    }
 }
 
-BEGIN {
-   $|=1;
-   print "1..7\n"
-}
-
-use POSIX ();
-
-use AnyEvent;
-use AnyEvent::Impl::Perl;
+$| = 1; print "1..7\n";
 
 $AnyEvent::MAX_SIGNAL_LATENCY = 1;
 

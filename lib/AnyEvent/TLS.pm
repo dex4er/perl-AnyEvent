@@ -6,7 +6,7 @@ use Scalar::Util ();
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
 
-use Net::SSLeay 1.33;
+use Net::SSLeay;
 
 =head1 NAME
 
@@ -867,6 +867,9 @@ later. It is harmless to call C<AnyEvent::TLS::init> multiple times.
 
 sub init() {
    return if $REF_IDX;
+
+   warn "AnyEvent::TLS: Net::SSLeay versions older than 1.33 might malfunction.\n"
+      if $AnyEvent::VERBOSE && $Net::SSLeay::VERSION < 1.33;
 
    Net::SSLeay::load_error_strings ();
    Net::SSLeay::SSLeay_add_ssl_algorithms ();

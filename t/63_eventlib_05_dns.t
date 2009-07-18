@@ -1,11 +1,10 @@
-$|=1;
-BEGIN { print "1..5\n" }
-
 # we avoid complicated tests here because some systems will
 # not have working DNS
 
-use AnyEvent::Impl::EventLib;
+BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not found}), exit 0) } 
 use AnyEvent::DNS;
+
+$| = 1; print "1..5\n";
 
 print "ok 1\n";
 

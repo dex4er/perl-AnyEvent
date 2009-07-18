@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+BEGIN { eval "use Net::SSLeay (); 1" or ((print "1..0 # SKIP no Net::SSLeay\n"), exit 0) }
+
 use Test::More tests => 410;
 
 use strict qw(vars subs);
