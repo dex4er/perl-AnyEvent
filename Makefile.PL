@@ -7,14 +7,16 @@ print <<EOF;
 ***
 *** The EV module is recommended for even better performance, unless you
 *** have to use one of the other adaptors (Event, Glib, Tk, etc.).
+*** The Async::Interrupt module is highly recommended to efficiently avoid
+*** race conditions in/with other event loops.
 ***
 *** This module does not have ANY dependencies, even if it might look
 *** otherwise. If you are building a distribution package or have
 *** difficulties installing this package due to dependencies, report this
 *** to the packager as a bug.
 ***
-*** This module is guaranteed to stay pure-perl and still be full-featured
-*** and performant, even without any optionally recommended modules.
+*** This module is guaranteed to stay 100% pure-perl, full-featured
+*** and performant, even without any of the optional modules.
 ***
 
 EOF

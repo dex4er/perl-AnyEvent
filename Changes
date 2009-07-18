@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: Event seems to have some racy signal handling.
+
 4.85 Sat Jul 18 06:16:14 CEST 2009
         - nail the signal race problem in perl once and for all
           (see $AnyEvent::MAX_SIGNAL_LATENCY).
