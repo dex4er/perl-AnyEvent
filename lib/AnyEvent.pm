@@ -370,8 +370,14 @@ This watcher might use C<%SIG> (depending on the event loop used),
 so programs overwriting those signals directly will likely not work
 correctly.
 
-Also note that many event loops (e.g. Glib, Tk, Qt, IO::Async) do not
-support attaching callbacks to signals, which is a pity, as you cannot do
+Example: exit on SIGINT
+
+   my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+
+=head3 Signal Races, Delays and Workarounds
+
+Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
+callbacks to signals in a generic way, which is a pity, as you cannot do
 race-free signal handling in perl. AnyEvent will try to do it's best, but
 in some cases, signals will be delayed. The maximum time a signal might
 be delayed is specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10
@@ -379,11 +385,10 @@ seconds). This variable can be changed only before the first signal
 watcher is created, and should be left alone otherwise. Higher values
 will cause fewer spurious wake-ups, which is better for power and CPU
 saving. All these problems can be avoided by installing the optional
-L<Async::Interrupt> module.
-
-Example: exit on SIGINT
-
-   my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+L<Async::Interrupt> module. This will not work with inherently broken
+event loops such as L<Event> or L<Event::Lib> (and not with L<POE>
+currently, as POE does it's own workaround with one-second latency). With
+those, you just have to suffer the delays.
 
 =head2 CHILD PROCESS WATCHERS
 
@@ -2272,7 +2277,7 @@ This slightly arcane module is used to implement fast signal handling: To
 my knowledge, there is no way to do completely race-free and quick
 signal handling in pure perl. To ensure that signals still get
 delivered, AnyEvent will start an interval timer to wake up perl (and
-catch the signals) with soemd elay (default is 10 seconds, look for
+catch the signals) with some delay (default is 10 seconds, look for
 C<$AnyEvent::MAX_SIGNAL_LATENCY>).
 
 If this module is available, then it will be used to implement signal
@@ -2282,6 +2287,11 @@ battery life on laptops).
 
 This affects not just the pure-perl event loop, but also other event loops
 that have no signal handling on their own (e.g. Glib, Tk, Qt).
+
+Some event loops (POE, Event, Event::Lib) offer signal watchers natively,
+and either employ their own workarounds (POE) or use AnyEvent's workaround
+(using C<$AnyEvent::MAX_SIGNAL_LATENCY>). Installing L<Async::Interrupt>
+does nothing for those backends.
 
 =item L<EV>
 
