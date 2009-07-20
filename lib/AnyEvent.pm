@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent - provide framework for multiple event loops 
+AnyEvent - events independent of event loop implementation
 
 EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
 event loops.
@@ -42,6 +42,14 @@ event loops.
 This manpage is mainly a reference manual. If you are interested
 in a tutorial or some gentle introduction, have a look at the
 L<AnyEvent::Intro> manpage.
+
+=head1 SUPPORT
+
+There is a mailinglist for discussing all things AnyEvent, and an IRC
+channel, too.
+
+See the AnyEvent project page at the B<Schmorpforge Ta-Sa Software
+Respository>, at L<http://anyevent.schmorp.de>, for more info.
 
 =head1 WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
