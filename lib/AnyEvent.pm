@@ -519,7 +519,8 @@ optionally wait for them. They can also be called merge points - points
 in time where multiple outstanding events have been processed. And yet
 another way to call them is transactions - each condition variable can be
 used to represent a transaction, which finishes at some point and delivers
-a result.
+a result. And yet some people know them as "futures" - a promise to
+compute/deliver something that you can wait for.
 
 Condition variables are very useful to signal that something has finished,
 for example, if you write a module that does asynchronous http requests,
