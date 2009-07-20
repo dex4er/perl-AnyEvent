@@ -1,6 +1,6 @@
 use AnyEvent;
 use AnyEvent::Util;
-BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not found}), exit 0) } 
+BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not loadable}), exit 0) } 
 
 $| = 1; print "1..18\n";
 

@@ -1,5 +1,5 @@
 use AnyEvent;
-BEGIN { eval q{use AnyEvent::Impl::POE;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::POE not found}), exit 0) } $^W = 0;
+BEGIN { eval q{use AnyEvent::Impl::POE;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::POE not loadable}), exit 0) } $^W = 0;
 
 $| = 1; print "1..6\n";
 

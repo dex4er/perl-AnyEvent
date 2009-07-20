@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+4.86 Mon Jul 20 23:52:29 CEST 2009
+	- since the verbose warning is not enough, explicitly document
+          that versions before 1.33 of Net::SSLeay are not secure.
 	- work around signal handling races in Event and (...) Event::Lib.
         - try to align signal-race timer to full-second boundaries.
         - work around Tk not liking negative timeouts.

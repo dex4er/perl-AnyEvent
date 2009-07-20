@@ -1,5 +1,5 @@
 NAME
-    AnyEvent - provide framework for multiple event loops
+    AnyEvent - events independent of event loop implementation
 
     EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
     event loops.
@@ -39,6 +39,13 @@ INTRODUCTION/TUTORIAL
     This manpage is mainly a reference manual. If you are interested in a
     tutorial or some gentle introduction, have a look at the AnyEvent::Intro
     manpage.
+
+SUPPORT
+    There is a mailinglist for discussing all things AnyEvent, and an IRC
+    channel, too.
+
+    See the AnyEvent project page at the Schmorpforge Ta-Sa Software
+    Respository, at <http://anyevent.schmorp.de>, for more info.
 
 WHY YOU SHOULD USE THIS MODULE (OR NOT)
     Glib, POE, IO::Async, Event... CPAN offers event models by the dozen
@@ -359,20 +366,24 @@ WATCHERS
     programs overwriting those signals directly will likely not work
     correctly.
 
-    Also note that many event loops (e.g. Glib, Tk, Qt, IO::Async) do not
-    support attaching callbacks to signals, which is a pity, as you cannot
-    do race-free signal handling in perl. AnyEvent will try to do it's best,
+    Example: exit on SIGINT
+
+       my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+
+   Signal Races, Delays and Workarounds
+    Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
+    callbacks to signals in a generic way, which is a pity, as you cannot do
+    race-free signal handling in perl. AnyEvent will try to do it's best,
     but in some cases, signals will be delayed. The maximum time a signal
     might be delayed is specified in $AnyEvent::MAX_SIGNAL_LATENCY (default:
     10 seconds). This variable can be changed only before the first signal
     watcher is created, and should be left alone otherwise. Higher values
     will cause fewer spurious wake-ups, which is better for power and CPU
     saving. All these problems can be avoided by installing the optional
-    Async::Interrupt module.
-
-    Example: exit on SIGINT
-
-       my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
+    Async::Interrupt module. This will not work with inherently broken event
+    loops such as Event or Event::Lib (and not with POE currently, as POE
+    does it's own workaround with one-second latency). With those, you just
+    have to suffer the delays.
 
   CHILD PROCESS WATCHERS
     You can also watch on a child process exit and catch its exit status.
@@ -492,7 +503,8 @@ WATCHERS
     in time where multiple outstanding events have been processed. And yet
     another way to call them is transactions - each condition variable can
     be used to represent a transaction, which finishes at some point and
-    delivers a result.
+    delivers a result. And yet some people know them as "futures" - a
+    promise to compute/deliver something that you can wait for.
 
     Condition variables are very useful to signal that something has
     finished, for example, if you write a module that does asynchronous http
@@ -1646,7 +1658,7 @@ RECOMMENDED/OPTIONAL MODULES
         handling: To my knowledge, there is no way to do completely
         race-free and quick signal handling in pure perl. To ensure that
         signals still get delivered, AnyEvent will start an interval timer
-        to wake up perl (and catch the signals) with soemd elay (default is
+        to wake up perl (and catch the signals) with some delay (default is
         10 seconds, look for $AnyEvent::MAX_SIGNAL_LATENCY).
 
         If this module is available, then it will be used to implement
@@ -1656,6 +1668,11 @@ RECOMMENDED/OPTIONAL MODULES
 
         This affects not just the pure-perl event loop, but also other event
         loops that have no signal handling on their own (e.g. Glib, Tk, Qt).
+
+        Some event loops (POE, Event, Event::Lib) offer signal watchers
+        natively, and either employ their own workarounds (POE) or use
+        AnyEvent's workaround (using $AnyEvent::MAX_SIGNAL_LATENCY).
+        Installing Async::Interrupt does nothing for those backends.
 
     EV  This module isn't really "optional", as it is simply one of the
         backend event loops that AnyEvent can use. However, it is simply the
@@ -1676,7 +1693,7 @@ RECOMMENDED/OPTIONAL MODULES
     JSON and JSON::XS
         This module is required when you want to read or write JSON data via
         AnyEvent::Handle. It is also written in pure-perl, but can take
-        advantage of the ulta-high-speed JSON::XS module when it is
+        advantage of the ultra-high-speed JSON::XS module when it is
         installed.
 
         In fact, AnyEvent::Handle will use JSON::XS by default if it is

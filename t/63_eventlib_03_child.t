@@ -2,9 +2,6 @@ use POSIX ();
 
 no warnings;
 
-use AnyEvent;
-BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not found}), exit 0) } 
-
 BEGIN {
    # check for broken perls
    if ($^O =~ /mswin32/i) {
@@ -14,12 +11,15 @@ BEGIN {
 
       unless ($ok) {
          print <<EOF;
-1..0 # Your perl interpreter is badly BROKEN. Child watchers will not work, ever. Try upgrading to a newer perl or a working perl (cygwin's perl is known to work). If that is not an option, you should be able to use the remaining functionality of AnyEvent, but child watchers WILL NOT WORK.
+1..0 # SKIP Your perl interpreter is badly BROKEN. Child watchers will not work, ever. Try upgrading to a newer perl or a working perl (cygwin's perl is known to work). If that is not an option, you should be able to use the remaining functionality of AnyEvent, but child watchers WILL NOT WORK.
 EOF
          exit 0;
       }
    }
 }
+
+use AnyEvent;
+BEGIN { eval q{use AnyEvent::Impl::EventLib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EventLib not loadable}), exit 0) } 
 
 $| = 1; print "1..50\n";
 

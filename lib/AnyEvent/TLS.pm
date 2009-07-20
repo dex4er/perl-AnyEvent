@@ -14,7 +14,7 @@ AnyEvent::TLS - SSLv2/SSLv3/TLSv1 contexts for use in AnyEvent::Handle
 
 =cut
 
-our $VERSION = 4.85;
+our $VERSION = 4.86;
 
 =head1 SYNOPSIS
 
@@ -70,6 +70,12 @@ and OpenSSL has a rather ugly license, AnyEvent might switch TLS providers
 at some future point, at which this API will change dramatically, at least
 in the Net::SSLeay-specific parts (most constructor arguments should still
 work, though).
+
+Although this module does not require a specific version of Net::SSLeay,
+many features will gradually stop working, or bugs will be introduced with
+old versions (verification might succeed when it shouldn't - this is a
+real security issue). Version 1.35 is recommended, 1.33 should work, 1.32
+might, and older versions are yours to keep.
 
 =head1 USAGE EXAMPLES
 
