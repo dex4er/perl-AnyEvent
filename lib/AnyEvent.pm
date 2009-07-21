@@ -881,8 +881,25 @@ and installs the global L<IO::AIO> watcher in a C<post_detect> block to
 avoid autodetecting the event module at load time.
 
 If called in scalar or list context, then it creates and returns an object
-that automatically removes the callback again when it is destroyed. See
-L<Coro::BDB> for a case where this is useful.
+that automatically removes the callback again when it is destroyed (or
+C<undef> when the hook was immediately executed). See L<AnyEvent::AIO> for
+a case where this is useful.
+
+Example: Create a watcher for the IO::AIO module and store it in
+C<$WATCHER>. Only do so after the event loop is initialised, though.
+
+   our WATCHER;
+
+   my $guard = AnyEvent::post_detect {
+      $WATCHER = AnyEvent->io (fh => IO::AIO::poll_fileno, poll => 'r', cb => \&IO::AIO::poll_cb);
+   };
+
+   # the ||= is important in case post_detect immediately runs the block,
+   # as to not clobber the newly-created watcher. assigning both watcher and
+   # post_detect guard to the same variable has the advantage of users being
+   # able to just C<undef $WATCHER> if the watcher causes them grief.
+
+   $WATCHER ||= $guard;
 
 =item @AnyEvent::post_detect
 
