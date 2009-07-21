@@ -1154,7 +1154,7 @@ sub post_detect(&) {
    if ($MODEL) {
       $cb->();
 
-      1
+      undef
    } else {
       push @post_detect, $cb;
 
