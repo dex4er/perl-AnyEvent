@@ -806,6 +806,8 @@ sub _get_session($$;$$) {
 
       Net::SSLeay::set_options ($session, eval { Net::SSLeay::OP_NO_TICKET () })
          unless $self->{session_ticket};
+   } else {
+      croak "'$mode': unsupported TLS mode (must be either 'connect' or 'accept')"
    }
 
 #   # associate data

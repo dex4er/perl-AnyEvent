@@ -1521,6 +1521,10 @@ Instead of starting TLS negotiation immediately when the AnyEvent::Handle
 object is created, you can also do that at a later time by calling
 C<starttls>.
 
+Starting TLS is currently an asynchronous operation - when you push some
+write data and then call C<< ->starttls >> then TLS negotiation will start
+immediately, after which the queued write data is then sent.
+
 The first argument is the same as the C<tls> constructor argument (either
 C<"connect">, C<"accept"> or an existing Net::SSLeay object).
 
@@ -1554,10 +1558,10 @@ sub starttls {
 
    $ctx ||= $self->{tls_ctx};
 
+   local $Carp::CarpLevel = 1; # skip ourselves when creating a new context or session
+
    if ("HASH" eq ref $ctx) {
       require AnyEvent::TLS;
-
-      local $Carp::CarpLevel = 1; # skip ourselves when creating a new context
 
       if ($ctx->{cache}) {
          my $key = $ctx+0;

@@ -1,6 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: maybe support "peerip" verificstion, i.e. getpeername diretcly as
+additional peername?
+
 	- do not attempt to linger when there is no longer a valid fh.
+        - enforce tls mode to be either accept or connect, do not simply
+          segfault in Net::SSLeay.
 
 4.86 Mon Jul 20 23:52:29 CEST 2009
 	- since the verbose warning is not enough, explicitly document
