@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- do not attempt to linger when there is no longer a valid fh.
+
 4.86 Mon Jul 20 23:52:29 CEST 2009
 	- since the verbose warning is not enough, explicitly document
           that versions before 1.33 of Net::SSLeay are not secure.

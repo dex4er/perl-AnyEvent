@@ -1639,7 +1639,7 @@ sub DESTROY {
 
    my $linger = exists $self->{linger} ? $self->{linger} : 3600;
 
-   if ($linger && length $self->{wbuf}) {
+   if ($linger && length $self->{wbuf} && $self->{fh}) {
       my $fh   = delete $self->{fh};
       my $wbuf = delete $self->{wbuf};
 
