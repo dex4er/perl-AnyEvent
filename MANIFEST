@@ -21,6 +21,7 @@ lib/AnyEvent/Impl/Qt.pm
 lib/AnyEvent/Impl/POE.pm
 lib/AnyEvent/Impl/EventLib.pm
 lib/AnyEvent/Impl/IOAsync.pm
+lib/AnyEvent/Impl/Irssi.pm
 
 t/00_load.t
 t/01_basic.t

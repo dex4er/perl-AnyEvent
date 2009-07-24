@@ -71,11 +71,20 @@ The constructor supports these arguments (all as C<< key => value >> pairs).
 
 =item fh => $filehandle [MANDATORY]
 
-The filehandle this L<AnyEvent::Handle> object will operate on.
+#=item fh => $filehandle [C<fh> or C<connect> MANDATORY]
 
+The filehandle this L<AnyEvent::Handle> object will operate on.
 NOTE: The filehandle will be set to non-blocking mode (using
 C<AnyEvent::Util::fh_nonblocking>) by the constructor and needs to stay in
 that mode.
+
+#=item connect => [$host, $service]
+#
+# You have to specify either this parameter, or C<connect>, below.
+#Try to connect to the specified host and service (port), using
+#C<AnyEvent::Socket::tcp_connect>.
+#
+#When this 
 
 =item on_eof => $cb->($handle)
 

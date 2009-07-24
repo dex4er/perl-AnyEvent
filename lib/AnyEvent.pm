@@ -402,10 +402,11 @@ those, you just have to suffer the delays.
 
 You can also watch on a child process exit and catch its exit status.
 
-The child process is specified by the C<pid> argument (if set to C<0>, it
-watches for any child process exit). The watcher will triggered only when
-the child process has finished and an exit status is available, not on
-any trace events (stopped/continued).
+The child process is specified by the C<pid> argument (one some backends,
+using C<0> watches for any child process exit, on others this will
+croak). The watcher will be triggered only when the child process has
+finished and an exit status is available, not on any trace events
+(stopped/continued).
 
 The callback will be called with the pid and exit status (as returned by
 waitpid), so unlike other watcher types, you I<can> rely on child watcher
@@ -798,6 +799,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::Tk        based on Tk, very broken.
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
    AnyEvent::Impl::POE       based on POE, very slow, some limitations.
+   AnyEvent::Impl::Irssi     used when running within irssi.
 
 =item Backends with special needs.
 
@@ -1121,14 +1123,15 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 }
 
 my @models = (
-   [EV::                   => AnyEvent::Impl::EV::],
-   [Event::                => AnyEvent::Impl::Event::],
-   [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl::],
-   # everything below here will not be autoprobed
+   [EV::                   => AnyEvent::Impl::EV::   , 1],
+   [Event::                => AnyEvent::Impl::Event::, 1],
+   [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl:: , 1],
+   # everything below here will not (normally) be autoprobed
    # as the pureperl backend should work everywhere
    # and is usually faster
-   [Glib::                 => AnyEvent::Impl::Glib::],     # becomes extremely slow with many watchers
+   [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
+   [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package
    [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
@@ -1138,9 +1141,9 @@ my @models = (
    # byzantine signal and broken child handling, among others.
    # IO::Async is rather hard to detect, as it doesn't have any
    # obvious default class.
-#   [IO::Async::            => AnyEvent::Impl::IOAsync::],  # requires special main program
-#   [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # requires special main program
-#   [IO::Async::Notifier::  => AnyEvent::Impl::IOAsync::],  # requires special main program
+#   [0, IO::Async::            => AnyEvent::Impl::IOAsync::],  # requires special main program
+#   [0, IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # requires special main program
+#   [0, IO::Async::Notifier::  => AnyEvent::Impl::IOAsync::],  # requires special main program
 );
 
 our %method = map +($_ => 1),
@@ -1196,15 +1199,17 @@ sub detect() {
          }
 
          unless ($MODEL) {
-            # try to load a model
-
+            # try to autoload a model
             for (@REGISTRY, @models) {
-               my ($package, $model) = @$_;
-               if (eval "require $package"
-                   and ${"$package\::VERSION"} > 0
-                   and eval "require $model") {
+               my ($package, $model, $autoload) = @$_;
+               if (
+                  $autoload
+                  and eval "require $package"
+                  and ${"$package\::VERSION"} > 0
+                  and eval "require $model"
+               ) {
                   $MODEL = $model;
-                  warn "AnyEvent: autoprobed model '$model', using it.\n" if $VERBOSE >= 2;
+                  warn "AnyEvent: autoloaded model '$model', using it.\n" if $VERBOSE >= 2;
                   last;
                }
             }
@@ -1424,12 +1429,19 @@ our $CHLD_W;
 our $CHLD_DELAY_W;
 our $WNOHANG;
 
+sub _emit_childstatus($$) {
+   my (undef, $rpid, $rstatus) = @_;
+
+   $_->($rpid, $rstatus)
+      for values %{ $PID_CB{$rpid} || {} },
+          values %{ $PID_CB{0}     || {} };
+}
+
 sub _sigchld {
-   while (0 < (my $pid = waitpid -1, $WNOHANG)) {
-      $_->($pid, $?)
-         for values %{ $PID_CB{$pid} || {} },
-             values %{ $PID_CB{0}    || {} };
-   }
+   my $pid;
+
+   AnyEvent->_emit_childstatus ($pid, $?)
+      while ($pid = waitpid -1, $WNOHANG) > 0;
 }
 
 sub child {
@@ -2418,7 +2430,7 @@ L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
 Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
 L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
-L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>.
+L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>, L<Anyevent::Impl::Irssi>.
 
 Non-blocking file handles, sockets, TCP clients and
 servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
