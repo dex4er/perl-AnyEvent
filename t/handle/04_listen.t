@@ -40,25 +40,22 @@ my $w = tcp_server undef, undef,
       0
    };
 
-my $clhdl;
-my $wc = tcp_connect localhost => $port, sub {
-   my ($fh) = @_
-      or die "connect: $!";
+my $clhdl; $clhdl = AnyEvent::Handle->new (
+   connect => [localhost => $port],
+   on_eof => sub { $cv->broadcast },
+);
 
-   $clhdl = AnyEvent::Handle->new (fh => $fh, on_eof => sub { $cv->broadcast });
+$clhdl->push_write ("TEST\015\012");
+$clhdl->push_read (line => sub {
+   my ($clhdl, $line) = @_;
 
-   $clhdl->push_write ("TEST\015\012");
-   $clhdl->push_read (line => sub {
-      my ($clhdl, $line) = @_;
+   if ($line eq 'BLABLABLA') {
+      print "ok 2 - client received response\n";
+   } else {
+      print "not ok 2 - client received bad response\n";
+   }
 
-      if ($line eq 'BLABLABLA') {
-         print "ok 2 - client received response\n";
-      } else {
-         print "not ok 2 - client received bad response\n";
-      }
-
-      $cv->broadcast;
-   });
-};
+   $cv->broadcast;
+});
 
 $cv->wait;

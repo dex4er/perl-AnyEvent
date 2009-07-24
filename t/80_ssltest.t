@@ -82,80 +82,77 @@ for my $mode (1..5) {
       $server_port->send ($_[2]);
    };
 
-   tcp_connect "localhost", $server_port->recv, sub {
-      my ($fh) = @_;
+   my $hd; $hd = new AnyEvent::Handle
+      connect    => ["localhost", $server_port->recv],
+      tls        => "connect",
+      tls_ctx    => $ctx,
+      timeout    => 8,
+      on_connect => sub {
+         ok (1, "client_connect $mode");
+      },
+      on_error   => sub {
+         ok (0, "client_error <$!>");
+         $client_done->send; undef $hd;
+      },
+      on_eof     => sub {
+         ok (1, "client_eof");
+         $client_done->send; undef $hd;
+      };
 
-      ok (1, "client_connect $mode");
-
-      my $hd; $hd = new AnyEvent::Handle
-         tls      => "connect",
-         tls_ctx  => $ctx,
-         fh       => $fh,
-         timeout  => 8,
-         on_error => sub {
-            ok (0, "client_error <$!>");
-            $client_done->send; undef $hd;
-         },
-         on_eof   => sub {
-            ok (1, "client_eof");
-            $client_done->send; undef $hd;
-         };
-
-      if ($mode == 1) {
-         $hd->push_write ("1\n");
+   if ($mode == 1) {
+      $hd->push_write ("1\n");
+      $hd->on_drain (sub {
+         ok (1, "client_drain");
+         $client_done->send; undef $hd;
+      });
+   } elsif ($mode == 2) {
+      $hd->push_read (line => sub {
+         ok ($_[1] eq "2", "line 2 <$_[1]>");
+      });
+   } elsif ($mode == 3) {
+      $hd->push_write ("3\n");
+      $hd->push_read (line => sub {
+         ok ($_[1] eq "4", "line 4 <$_[1]>");
+      });
+   } elsif ($mode == 4) {
+      $hd->push_read (line => sub {
+         ok ($_[1] eq "5", "line 5 <$_[1]>");
+         $hd->push_write ("6\n");
          $hd->on_drain (sub {
             ok (1, "client_drain");
             $client_done->send; undef $hd;
          });
-      } elsif ($mode == 2) {
+      });
+   } elsif ($mode == 5) {
+      # some randomly-sized blocks
+      srand 0;
+      my $cnt = 64;
+      my $block; $block = sub {
+         my $len = (16 << int rand 14) - 16 + int rand 32;
+         ok (1, "write $len");
+         $hd->push_write ("$len\n");
+         $hd->push_write (packstring => "N", "\x00" x $len);
+      };
+
+      for my $i (1..$cnt) {
          $hd->push_read (line => sub {
-            ok ($_[1] eq "2", "line 2 <$_[1]>");
-         });
-      } elsif ($mode == 3) {
-         $hd->push_write ("3\n");
-         $hd->push_read (line => sub {
-            ok ($_[1] eq "4", "line 4 <$_[1]>");
-         });
-      } elsif ($mode == 4) {
-         $hd->push_read (line => sub {
-            ok ($_[1] eq "5", "line 5 <$_[1]>");
-            $hd->push_write ("6\n");
-            $hd->on_drain (sub {
-               ok (1, "client_drain");
-               $client_done->send; undef $hd;
+            my $len = $_[1];
+            ok (1, "client block $len/1");
+            $hd->unshift_read (packstring => "N", sub {
+               ok ($len == length $_[1], "client block $len/2");
+
+               if ($i != $cnt) {
+                  $block->();
+               } else {
+                  ok (1, "client_drain");
+                  $client_done->send; undef $hd;
+               }
             });
          });
-      } elsif ($mode == 5) {
-         # some randomly-sized blocks
-         srand 0;
-         my $cnt = 64;
-         my $block; $block = sub {
-            my $len = (16 << int rand 14) - 16 + int rand 32;
-            ok (1, "write $len");
-            $hd->push_write ("$len\n");
-            $hd->push_write (packstring => "N", "\x00" x $len);
-         };
-
-         for my $i (1..$cnt) {
-            $hd->push_read (line => sub {
-               my $len = $_[1];
-               ok (1, "client block $len/1");
-               $hd->unshift_read (packstring => "N", sub {
-                  ok ($len == length $_[1], "client block $len/2");
-
-                  if ($i != $cnt) {
-                     $block->();
-                  } else {
-                     ok (1, "client_drain");
-                     $client_done->send; undef $hd;
-                  }
-               });
-            });
-         }
-
-         $block->();
       }
-   };
+
+      $block->();
+   }
 
    $server_done->recv;
    $client_done->recv;

@@ -86,6 +86,9 @@ default C<peername>.
 
 You have to specify either this parameter, or C<fh>, above.
 
+It is possible to push requests on the read and write queues, and modify
+properties of the stream, even while AnyEvent::Handle is connecting.
+
 When this parameter is specified, then the C<on_prepare>,
 C<on_connect_error> and C<on_connect> callbacks will be called under the
 appropriate circumstances:
@@ -480,6 +483,8 @@ sub _start {
 
    $self->start_read
       if $self->{on_read} || @{ $self->{_queue} };
+
+   $self->_drain_wbuf;
 }
 
 #sub _shutdown {
@@ -742,10 +747,9 @@ sub push_write {
 
    if ($self->{tls}) {
       $self->{_tls_wbuf} .= $_[0];
-
-      &_dotls ($self);
+      &_dotls ($self)    if $self->{fh};
    } else {
-      $self->{wbuf} .= $_[0];
+      $self->{wbuf}      .= $_[0];
       $self->_drain_wbuf if $self->{fh};
    }
 }
@@ -1651,25 +1655,32 @@ context in C<< $handle->{tls_ctx} >> after this call and can be used or
 changed to your liking. Note that the handshake might have already started
 when this function returns.
 
-If it an error to start a TLS handshake more than once per
-AnyEvent::Handle object (this is due to bugs in OpenSSL).
+Due to bugs in OpenSSL, it might or might not be possible to do multiple
+handshakes on the same stream. Best do not attempt to use the stream after
+stopping TLS.
 
 =cut
 
 our %TLS_CACHE; #TODO not yet documented, should we?
 
 sub starttls {
-   my ($self, $ssl, $ctx) = @_;
+   my ($self, $tls, $ctx) = @_;
+
+   Carp::croak "It is an error to call starttls on an AnyEvent::Handle object while TLS is already active, caught"
+      if $self->{tls};
+
+   $self->{tls}     = $tls;
+   $self->{tls_ctx} = $ctx if @_ > 2;
+
+   return unless $self->{fh};
 
    require Net::SSLeay;
-
-   Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
-      if $self->{tls};
 
    $ERROR_SYSCALL   = Net::SSLeay::ERROR_SYSCALL     ();
    $ERROR_WANT_READ = Net::SSLeay::ERROR_WANT_READ   ();
 
-   $ctx ||= $self->{tls_ctx};
+   $tls = $self->{tls};
+   $ctx = $self->{tls_ctx};
 
    local $Carp::CarpLevel = 1; # skip ourselves when creating a new context or session
 
@@ -1685,7 +1696,7 @@ sub starttls {
    }
    
    $self->{tls_ctx} = $ctx || TLS_CTX ();
-   $self->{tls}     = $ssl = $self->{tls_ctx}->_get_session ($ssl, $self, $self->{peername});
+   $self->{tls}     = $tls = $self->{tls_ctx}->_get_session ($tls, $self, $self->{peername});
 
    # basically, this is deep magic (because SSL_read should have the same issues)
    # but the openssl maintainers basically said: "trust us, it just works".
@@ -1702,12 +1713,12 @@ sub starttls {
 #   Net::SSLeay::CTX_set_mode ($ssl,
 #      (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
 #      | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
-   Net::SSLeay::CTX_set_mode ($ssl, 1|2);
+   Net::SSLeay::CTX_set_mode ($tls, 1|2);
 
    $self->{_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
    $self->{_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
 
-   Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
+   Net::SSLeay::set_bio ($tls, $self->{_rbio}, $self->{_wbio});
 
    $self->{_on_starttls} = sub { $_[0]{on_starttls}(@_) }
       if $self->{on_starttls};
@@ -1720,8 +1731,8 @@ sub starttls {
 
 Shuts down the SSL connection - this makes a proper EOF handshake by
 sending a close notify to the other side, but since OpenSSL doesn't
-support non-blocking shut downs, it is not possible to re-use the stream
-afterwards.
+support non-blocking shut downs, it is not guarenteed that you can re-use
+the stream afterwards.
 
 =cut
 
@@ -1744,7 +1755,8 @@ sub _freetls {
 
    return unless $self->{tls};
 
-   $self->{tls_ctx}->_put_session (delete $self->{tls});
+   $self->{tls_ctx}->_put_session (delete $self->{tls})
+      if ref $self->{tls};
    
    delete @$self{qw(_rbio _wbio _tls_wbuf _on_starttls)};
 }

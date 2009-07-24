@@ -18,49 +18,43 @@ my $cv = AnyEvent->condvar;
 
 my $rbytes;
 
-my $hdl;
-my $wo = tcp_connect 'www.google.com', 80, sub {
-   my ($fh) = @_;
-
-   $hdl =
-      AnyEvent::Handle->new (
-         fh => $fh,
-         on_error => sub {
-            warn "socket error: $!";
-            $cv->broadcast;
-         },
-         on_eof => sub {
-            my ($hdl) = @_;
-
-            if ($rbytes !~ /<\/html>/i) {
-               print "not ";
-            }
-
-            print "ok 2 - received HTML page\n";
-
-            $cv->broadcast
-         }
-      );
-
-   $hdl->push_read (chunk => 10, sub {
-      my ($hdl, $data) = @_;
-
-      unless (substr ($data, 0, 4) eq 'HTTP') {
-         print "not ";
-      }
-
-      print "ok 1 - received 'HTTP'\n";
-
-      $hdl->on_read (sub {
+my $hdl; $hdl =
+   AnyEvent::Handle->new (
+      connect => ['www.google.com', 80],
+      on_error => sub {
+         warn "socket error: $!";
+         $cv->broadcast;
+      },
+      on_eof => sub {
          my ($hdl) = @_;
-         $rbytes .= $hdl->rbuf;
-         $hdl->rbuf = '';
-         return 1;
-      });
+
+         if ($rbytes !~ /<\/html>/i) {
+            print "not ";
+         }
+
+         print "ok 2 - received HTML page\n";
+
+         $cv->broadcast;
+      }
+   );
+
+$hdl->push_read (chunk => 10, sub {
+   my ($hdl, $data) = @_;
+
+   unless (substr ($data, 0, 4) eq 'HTTP') {
+      print "not ";
+   }
+
+   print "ok 1 - received 'HTTP'\n";
+
+   $hdl->on_read (sub {
+      my ($hdl) = @_;
+      $rbytes .= $hdl->rbuf;
+      $hdl->rbuf = '';
+      return 1;
    });
+});
 
-   $hdl->push_write ("GET http://www.google.com/ HTTP/1.0\015\012\015\012");
-
-};
+$hdl->push_write ("GET http://www.google.com/ HTTP/1.0\015\012\015\012");
 
 $cv->wait;

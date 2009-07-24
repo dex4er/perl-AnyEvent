@@ -6,6 +6,8 @@ additional peername?
 	- do not attempt to linger when there is no longer a valid fh.
         - enforce tls mode to be either accept or connect, do not simply
           segfault in Net::SSLeay.
+        - AnyEvent::Handle can now call tcp_connect itself (new parameters
+          connetc, on_prepare, on_connect and on_connect_error).
 	- add AnyEvent::Impl::Irssi backend.
 
 4.86 Mon Jul 20 23:52:29 CEST 2009
