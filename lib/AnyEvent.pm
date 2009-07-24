@@ -2,8 +2,8 @@
 
 AnyEvent - events independent of event loop implementation
 
-EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
-event loops.
+EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, IO::Async, Qt and POE are
+various supported event loops/environments.
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ There is a mailinglist for discussing all things AnyEvent, and an IRC
 channel, too.
 
 See the AnyEvent project page at the B<Schmorpforge Ta-Sa Software
-Respository>, at L<http://anyevent.schmorp.de>, for more info.
+Repository>, at L<http://anyevent.schmorp.de>, for more info.
 
 =head1 WHY YOU SHOULD USE THIS MODULE (OR NOT)
 

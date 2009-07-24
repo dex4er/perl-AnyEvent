@@ -187,7 +187,7 @@ AnyEvent does, by default, not do any argument checking. This can lead to
 strange and unexpected results especially if you are trying to learn your
 ways with AnyEvent.
 
-AnyEvent supports a special "strict" mode, off by default, which does very
+AnyEvent supports a special "strict" mode - off by default - which does very
 strict argument checking, at the expense of being somewhat slower. During
 development, however, this mode is very useful.
 
@@ -835,44 +835,39 @@ So, here is how you would do it with C<AnyEvent::Handle>:
    sub http_get {
       my ($host, $uri, $cb) = @_;
 
-      tcp_connect $host, "http", sub {
-         my ($fh) = @_
-            or $cb->("HTTP/1.0 500 $!");
+      # store results here
+      my ($response, $header, $body);
 
-         # store results here
-         my ($response, $header, $body);
+      my $handle; $handle = new AnyEvent::Handle
+         connect  => [$host => 'http'],
+         on_error => sub {
+            $cb->("HTTP/1.0 500 $!");
+            $handle->destroy; # explicitly destroy handle
+         },
+         on_eof   => sub {
+            $cb->($response, $header, $body);
+            $handle->destroy; # explicitly destroy handle
+         };
 
-         my $handle; $handle = new AnyEvent::Handle
-            fh       => $fh,
-            on_error => sub {
-               undef $handle;
-               $cb->("HTTP/1.0 500 $!");
-            },
-            on_eof   => sub {
-               undef $handle; # keep it alive till eof
-               $cb->($response, $header, $body);
-            };
+      $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
 
-         $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+      # now fetch response status line
+      $handle->push_read (line => sub {
+         my ($handle, $line) = @_;
+         $response = $line;
+      });
 
-         # now fetch response status line
-         $handle->push_read (line => sub {
-            my ($handle, $line) = @_;
-            $response = $line;
-         });
+      # then the headers
+      $handle->push_read (line => "\015\012\015\012", sub {
+         my ($handle, $line) = @_;
+         $header = $line;
+      });
 
-         # then the headers
-         $handle->push_read (line => "\015\012\015\012", sub {
-            my ($handle, $line) = @_;
-            $header = $line;
-         });
-
-         # and finally handle any remaining data as body
-         $handle->on_read (sub {
-            $body .= $_[0]->rbuf;
-            $_[0]->rbuf = "";
-         });
-      };
+      # and finally handle any remaining data as body
+      $handle->on_read (sub {
+         $body .= $_[0]->rbuf;
+         $_[0]->rbuf = "";
+      });
    }
 
 And now let's go through it step by step. First, as usual, the overall
@@ -881,9 +876,15 @@ C<http_get> function structure:
    sub http_get {
       my ($host, $uri, $cb) = @_;
 
-      tcp_connect $host, "http", sub {
-         ...
-      };
+      # store results here
+      my ($response, $header, $body);
+
+      my $handle; $handle = new AnyEvent::Handle
+         ... create handle object
+
+      ... push data to write
+
+      ... push what to expect to read queue
    }
 
 Unlike in the finger example, this time the caller has to pass a callback
@@ -893,16 +894,28 @@ C<URI> module to parse a URL and separate it into those parts, but that is
 left to the inspired reader :)
 
 Since everything else is left to the caller, all C<http_get> does it to
-initiate the connection with C<tcp_connect> and leave everything else to
-it's callback.
+initiate the connection by creating the AnyEvent::Handle object (which
+calls C<tcp_connect> for us) and leave everything else to it's callback.
 
-The first thing the callback does is check for connection errors and
-declare some variables:
+The handle object is created, unsurprisingly, by calling the C<new>
+method of L<AnyEvent::Handle>:
 
-      my ($fh) = @_
-         or $cb->("HTTP/1.0 500 $!");
+      my $handle; $handle = new AnyEvent::Handle
+         connect  => [$host => 'http'],
+         on_error => sub {
+            $cb->("HTTP/1.0 500 $!");
+            $handle->destroy; # explicitly destroy handle
+         },
+         on_eof   => sub {
+            $cb->($response, $header, $body);
+            $handle->destroy; # explicitly destroy handle
+         };
 
-      my ($response, $header, $body);
+The C<connect> argument tells AnyEvent::Handle to call C<tcp_connect> for
+the specified host and service/port.
+
+The C<on_error> callback will be called on any unexpected error, such as a
+refused connection, or unexpected connection while reading the header.
 
 Instead of having an extra mechanism to signal errors, connection errors
 are signalled by crafting a special "response status line", like this:
@@ -913,42 +926,28 @@ This means the caller cannot distinguish (easily) between
 locally-generated errors and server errors, but it simplifies error
 handling for the caller a lot.
 
-The next step finally involves L<AnyEvent::Handle>, namely it creates the
-handle object:
+The error callback also destroys the handle explicitly, because we are not
+interested in continuing after any errors. In AnyEvent::Handle callbacks
+you have to call C<destroy> explicitly to destroy a handle. Outside of
+those callbacks you cna just forget the object reference and it will be
+automatically cleaned up.
 
-      my $handle; $handle = new AnyEvent::Handle
-         fh       => $fh,
-         on_error => sub {
-            undef $handle;
-            $cb->("HTTP/1.0 500 $!");
-         },
-         on_eof   => sub {
-            undef $handle; # keep it alive till eof
-            $cb->($response, $header, $body);
-         };
+Last not least, we set an C<on_eof> callback that is called when the
+other side indicates it has stopped writing data, which we will use to
+gracefully shut down the handle and report the results. This callback is
+only called when the read queue is empty - if the read queue expects some
+data and the handle gets an EOF from the other side this will be an error
+- after all, you did expect more to come.
 
-The constructor expects a file handle, which gets passed via the C<fh>
+If you wanted to write a server using AnyEvent::Handle, you would use
+C<tcp_accept> and then create the AnyEvent::Handle with the C<fh>
 argument.
-
-The remaining two argument pairs specify two callbacks to be called on
-any errors (C<on_error>) and in the case of a normal connection close
-(C<on_eof>).
-
-In the first case, we C<undef>ine the handle object and pass the error to
-the callback provided by the callback - done.
-
-In the second case we assume everything went fine and pass the results
-gobbled up so far to the caller-provided callback. This is not quite
-perfect, as when the server "cleanly" closes the connection in the middle
-of sending headers we might wrongly report this as an "OK" to the caller,
-but then, HTTP doesn't support a perfect mechanism that would detect such
-problems in all cases, so we don't bother either.
 
 =head3 The write queue
 
 The next line sends the actual request:
 
-      $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+   $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
 
 No headers will be sent (this is fine for simple requests), so the whole
 request is just a single line followed by an empty line to signal the end
@@ -964,7 +963,15 @@ array.
 The deeper reason is that at some point in the future, there might
 be C<unshift_write> as well, and in any case, we will shortly meet
 C<push_read> and C<unshift_read>, and it's usually easiest to remember if
-all those functions have some symmetry in their name.
+all those functions have some symmetry in their name. So C<push> is used
+as the opposite of C<unshift> in AnyEvent::Handle, not as the opposite of
+C<pull> - just like in Perl.
+
+Note that we call C<push_write> right after creating the AnyEvent::Handle
+object, before it has had time to actually connect to the server. This is
+fine, pushing the read and write requests will simply queue them in the
+handle object until the connection has been established. Alternatively, we
+could do this "on demand" in the C<on_connect> callback.
 
 If C<push_write> is called with more than one argument, then you can even
 do I<formatted> I/O, which simply means your data will be transformed in
@@ -987,17 +994,17 @@ request body, which is simply the remaining data on that connection.
 
 For the first two, we push two read requests onto the read queue:
 
-      # now fetch response status line
-      $handle->push_read (line => sub {
-         my ($handle, $line) = @_;
-         $response = $line;
-      });
+   # now fetch response status line
+   $handle->push_read (line => sub {
+      my ($handle, $line) = @_;
+      $response = $line;
+   });
 
-      # then the headers
-      $handle->push_read (line => "\015\012\015\012", sub {
-         my ($handle, $line) = @_;
-         $header = $line;
-      });
+   # then the headers
+   $handle->push_read (line => "\015\012\015\012", sub {
+      my ($handle, $line) = @_;
+      $header = $line;
+   });
 
 While one can simply push a single callback to parse the data the
 queue, I<formatted> I/O really comes to our advantage here, as there
@@ -1018,11 +1025,11 @@ many requests as we want, and AnyEvent::Handle will handle them in order.
 There is, however, no read type for "the remaining data". For that, we
 install our own C<on_read> callback:
 
-      # and finally handle any remaining data as body
-      $handle->on_read (sub {
-         $body .= $_[0]->rbuf;
-         $_[0]->rbuf = "";
-      });
+   # and finally handle any remaining data as body
+   $handle->on_read (sub {
+      $body .= $_[0]->rbuf;
+      $_[0]->rbuf = "";
+   });
 
 This callback is invoked every time data arrives and the read queue is
 empty - which in this example will only be the case when both response and
@@ -1091,9 +1098,10 @@ that contains standard HTTP protocol exchanges. The only other difference
 to HTTP is that by default it uses port C<443> instead of port C<80>.
 
 To implement these two differences we need two tiny changes, first, in the
-C<tcp_connect> call we replace C<http> by C<https>):
+C<connect> parameter, we replace C<http> by C<https> to connect to the
+https port:
 
-      tcp_connect $host, "https", sub { ...
+         connect  => [$host => 'https'],
 
 The other change deals with TLS, which is something L<AnyEvent::Handle>
 does for us, as long as I<you> made sure that the L<Net::SSLeay> module
