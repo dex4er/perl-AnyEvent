@@ -72,7 +72,7 @@ sub init {
    close DATA;
 }
 
-Irssi::command "/script exec -permanent AnyEvent::Impl::Irssi::init 'AnyEvent adaptor'";
+Irssi::command "/script exec -permanent AnyEvent::Impl::Irssi::init 'AnyEvent adaptor, see man AnyEvent'";
 
 1;
 
