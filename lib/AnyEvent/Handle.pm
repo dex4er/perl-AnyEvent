@@ -103,6 +103,10 @@ prepare the file handle with parameters required for the actual connect
 (as opposed to settings that can be changed when the connection is already
 established).
 
+The return value of this callback should be the connect timeout value in
+seconds (or C<0>, or C<undef>, or the empty list, to indicate the default
+timeout is to be used).
+
 =item on_connect => $cb->($handle, $host, $port, $retry->())
 
 This callback is called when a connection has been successfully established.
@@ -446,15 +450,16 @@ sub new {
                         $self->{on_connect_error}($self, "$!");
                         $self->destroy;
                      } else {
-                        $self->fatal ($!, 1);
+                        $self->_error ($!, 1);
                      }
                   }
                },
                sub {
                   local $self->{fh} = $_[0];
 
-                  $self->{on_prepare}->($self)
-                     if $self->{on_prepare};
+                  $self->{on_prepare}
+                     ?  $self->{on_prepare}->($self)
+                     : ()
                }
             );
       }
