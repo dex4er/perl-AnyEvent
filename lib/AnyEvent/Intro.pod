@@ -7,7 +7,7 @@ AnyEvent::Intro - an introductory tutorial to AnyEvent
 This is a tutorial that will introduce you to the features of AnyEvent.
 
 The first part introduces the core AnyEvent module (after swamping you a
-bit in evangelism), which might already provide all you ever need. If you
+bit in evangelism), which might already provide all you ever need: If you
 are only interested in AnyEvent's event handling capabilities, read no
 further.
 
@@ -25,57 +25,63 @@ programming. Typically such frameworks are an all-or-nothing thing: If you
 use one such framework, you can't (easily, or even at all) use another in
 the same program.
 
-AnyEvent is different - it is a thin abstraction layer above all kinds
-of event loops. Its main purpose is to move the choice of the underlying
-framework (the event loop) from the module author to the program author
-using the module.
+AnyEvent is different - it is a thin abstraction layer on top of other of
+event loops, just like DBI is an abstraction of many different database
+APIs. Its main purpose is to move the choice of the underlying framework
+(the event loop) from the module author to the program author using the
+module.
 
 That means you can write code that uses events to control what it
 does, without forcing other code in the same program to use the same
 underlying framework as you do - i.e. you can create a Perl module
 that is event-based using AnyEvent, and users of that module can still
-choose between using L<Gtk2>, L<Tk>, L<Event> or no event loop at
-all: AnyEvent comes with its own event loop implementation, so your
-code works regardless of other modules that might or might not be
-installed. The latter is important, as AnyEvent does not have any
-dependencies to other modules, which makes it easy to install, for
-example, when you lack a C compiler.
+choose between using L<Gtk2>, L<Tk>, L<Event> (or run inside Irssi or
+rxvt-unicode) or any other supported event loop. AnyEvent even comes with
+its own pure-perl event loop implementation, so your code works regardless
+of other modules that might or might not be installed. The latter is
+important, as AnyEvent does not have any hard dependencies to other
+modules, which makes it easy to install, for example, when you lack a C
+compiler. No mater what environment, AnyEvent will just cope with it.
 
-A typical problem with Perl modules such as L<Net::IRC> is that they
-come with their own event loop: In L<Net::IRC>, the program who uses it
-needs to start the event loop of L<Net::IRC>. That means that one cannot
-integrate this module into a L<Gtk2> GUI for instance, as that module,
-too, enforces the use of its own event loop (namely L<Glib>).
+A typical limitation of existing Perl modules such as L<Net::IRC> is that
+they come with their own event loop: In L<Net::IRC>, the program who uses
+it needs to start the event loop of L<Net::IRC>. That means that one
+cannot integrate this module into a L<Gtk2> GUI for instance, as that
+module, too, enforces the use of its own event loop (namely L<Glib>).
 
-Another example is L<LWP>: it provides no event interface at all. It's a
-pure blocking HTTP (and FTP etc.) client library, which usually means that
-you either have to start a thread or have to fork for a HTTP request, or
-use L<Coro::LWP>, if you want to do something else while waiting for the
-request to finish.
+Another example is L<LWP>: it provides no event interface at all. It's
+a pure blocking HTTP (and FTP etc.) client library, which usually means
+that you either have to start another process or have to fork for a HTTP
+request, or use threads (e.g. L<Coro::LWP>), if you want to do something
+else while waiting for the request to finish.
 
-The motivation behind these designs is often that a module doesn't want to
-depend on some complicated XS-module (Net::IRC), or that it doesn't want
-to force the user to use some specific event loop at all (LWP).
+The motivation behind these designs is often that a module doesn't want
+to depend on some complicated XS-module (Net::IRC), or that it doesn't
+want to force the user to use some specific event loop at all (LWP), out
+of fear of severly limiting the usefulness of the module: If your module
+requires Glib, it will not run in a Tk program.
 
-L<AnyEvent> solves this dilemma, by B<not> forcing module authors to either
+L<AnyEvent> solves this dilemma, by B<not> forcing module authors to
+either:
 
 =over 4
 
-=item - write their own event loop (because guarantees to offer one
-everywhere - even on windows).
+=item - write their own event loop (because it guarantees the availability
+of an event loop everywhere - even on windows with no extra modules
+installed).
 
-=item - choose one fixed event loop (because AnyEvent works with all
-important event loops available for Perl, and adding others is trivial).
+=item - choose one specific event loop (because AnyEvent works with most
+event loops available for Perl).
 
 =back
 
-If the module author uses L<AnyEvent> for all his event needs (IO events,
-timers, signals, ...) then all other modules can just use his module and
-don't have to choose an event loop or adapt to his event loop. The choice
-of the event loop is ultimately made by the program author who uses all
-the modules and writes the main program. And even there he doesn't have to
-choose, he can just let L<AnyEvent> choose the best available event loop
-for him.
+If the module author uses L<AnyEvent> for all his (or her) event needs
+(IO events, timers, signals, ...) then all other modules can just use
+his module and don't have to choose an event loop or adapt to his event
+loop. The choice of the event loop is ultimately made by the program
+author who uses all the modules and writes the main program. And even
+there he doesn't have to choose, he can just let L<AnyEvent> choose the
+most efficient event loop available on the system.
 
 Read more about this in the main documentation of the L<AnyEvent> module.
 
