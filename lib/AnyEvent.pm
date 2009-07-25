@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent - events independent of event loop implementation
+AnyEvent - the DBI of event loop programming
 
 EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, IO::Async, Qt and POE are
 various supported event loops/environments.
