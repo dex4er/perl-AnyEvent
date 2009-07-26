@@ -1,3 +1,12 @@
+BEGIN {
+   unless (exists $SIG{USR1}) {
+      print <<EOF;
+1..0 # SKIP Broken perl detected, skipping tests.
+EOF
+      exit 0;
+   }
+}
+
 use AnyEvent;
 BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not loadable}), exit 0) } use IO::Async::Loop; AnyEvent::Impl::IOAsync::set_loop new IO::Async::Loop;
 

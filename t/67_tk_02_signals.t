@@ -1,3 +1,12 @@
+BEGIN {
+   unless (exists $SIG{USR1}) {
+      print <<EOF;
+1..0 # SKIP Broken perl detected, skipping tests.
+EOF
+      exit 0;
+   }
+}
+
 use AnyEvent;
 BEGIN { eval q{use AnyEvent::Impl::Tk;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::Tk not loadable}), exit 0) } 
 
