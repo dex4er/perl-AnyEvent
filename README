@@ -1,8 +1,8 @@
 NAME
-    AnyEvent - events independent of event loop implementation
+    AnyEvent - the DBI of event loop programming
 
-    EV, Event, Glib, Tk, Perl, Event::Lib, Qt and POE are various supported
-    event loops.
+    EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, IO::Async, Qt and POE are
+    various supported event loops/environments.
 
 SYNOPSIS
        use AnyEvent;
@@ -45,7 +45,7 @@ SUPPORT
     channel, too.
 
     See the AnyEvent project page at the Schmorpforge Ta-Sa Software
-    Respository, at <http://anyevent.schmorp.de>, for more info.
+    Repository, at <http://anyevent.schmorp.de>, for more info.
 
 WHY YOU SHOULD USE THIS MODULE (OR NOT)
     Glib, POE, IO::Async, Event... CPAN offers event models by the dozen
@@ -388,10 +388,11 @@ WATCHERS
   CHILD PROCESS WATCHERS
     You can also watch on a child process exit and catch its exit status.
 
-    The child process is specified by the "pid" argument (if set to 0, it
-    watches for any child process exit). The watcher will triggered only
-    when the child process has finished and an exit status is available, not
-    on any trace events (stopped/continued).
+    The child process is specified by the "pid" argument (one some backends,
+    using 0 watches for any child process exit, on others this will croak).
+    The watcher will be triggered only when the child process has finished
+    and an exit status is available, not on any trace events
+    (stopped/continued).
 
     The callback will be called with the pid and exit status (as returned by
     waitpid), so unlike other watcher types, you *can* rely on child watcher
@@ -762,6 +763,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::Tk        based on Tk, very broken.
            AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
            AnyEvent::Impl::POE       based on POE, very slow, some limitations.
+           AnyEvent::Impl::Irssi     used when running within irssi.
 
     Backends with special needs.
         Qt requires the Qt::Application to be instantiated first, but will
@@ -836,7 +838,24 @@ GLOBAL VARIABLES AND FUNCTIONS
 
         If called in scalar or list context, then it creates and returns an
         object that automatically removes the callback again when it is
-        destroyed. See Coro::BDB for a case where this is useful.
+        destroyed (or "undef" when the hook was immediately executed). See
+        AnyEvent::AIO for a case where this is useful.
+
+        Example: Create a watcher for the IO::AIO module and store it in
+        $WATCHER. Only do so after the event loop is initialised, though.
+
+           our WATCHER;
+
+           my $guard = AnyEvent::post_detect {
+              $WATCHER = AnyEvent->io (fh => IO::AIO::poll_fileno, poll => 'r', cb => \&IO::AIO::poll_cb);
+           };
+
+           # the ||= is important in case post_detect immediately runs the block,
+           # as to not clobber the newly-created watcher. assigning both watcher and
+           # post_detect guard to the same variable has the advantage of users being
+           # able to just C<undef $WATCHER> if the watcher causes them grief.
+
+           $WATCHER ||= $guard;
 
     @AnyEvent::post_detect
         If there are any code references in this array (you can "push" to it
@@ -1760,7 +1779,7 @@ SEE ALSO
     Implementations: AnyEvent::Impl::EV, AnyEvent::Impl::Event,
     AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,
     AnyEvent::Impl::EventLib, AnyEvent::Impl::Qt, AnyEvent::Impl::POE,
-    AnyEvent::Impl::IOAsync.
+    AnyEvent::Impl::IOAsync, Anyevent::Impl::Irssi.
 
     Non-blocking file handles, sockets, TCP clients and servers:
     AnyEvent::Handle, AnyEvent::Socket, AnyEvent::TLS.

@@ -14,7 +14,7 @@ AnyEvent::TLS - SSLv2/SSLv3/TLSv1 contexts for use in AnyEvent::Handle
 
 =cut
 
-our $VERSION = 4.86;
+our $VERSION = 4.87;
 
 =head1 SYNOPSIS
 
@@ -24,18 +24,14 @@ our $VERSION = 4.86;
    use AnyEvent::Handle;
    use AnyEvent::Socket;
 
-   # ssl-connect
-   tcp_connect $host, $port, sub {
-      my ($fh) = @_;
+   # simple https-client
+   my $handle = new AnyEvent::Handle
+      connect  => [$host, $port],
+      tls      => "connect",
+      tls_ctx  => { verify => 1, verify_peername => "https" },
+      ...
 
-       my $handle = new AnyEvent::Handle
-          fh       => $fh,
-          peername => $host,
-          tls      => "connect",
-          tls_ctx  => { verify => 1, verify_peername => "https" },
-          ...
-
-   # ssl-server
+   # simple ssl-server
    tcp_server undef, $port, sub {
       my ($fh) = @_;
 

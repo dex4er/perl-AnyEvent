@@ -1088,7 +1088,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = 4.86;
+our $VERSION = 4.87;
 our $MODEL;
 
 our $AUTOLOAD;
