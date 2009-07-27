@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+	- re-bless the handle into a dummy package after calling
+          AnyEvent::Handle::destroy, so the user does not need to check
+          for errors after every push_write etc.
+
 4.87 Sun Jul 26 02:06:16 CEST 2009
 	- do not attempt to linger when there is no longer a valid fh.
         - enforce tls mode to be either accept or connect, do not simply

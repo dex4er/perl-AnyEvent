@@ -1799,7 +1799,9 @@ sub DESTROY {
 
 Shuts down the handle object as much as possible - this call ensures that
 no further callbacks will be invoked and as many resources as possible
-will be freed. You must not call any methods on the object afterwards.
+will be freed. Any method you will call on the handle object after
+destroying it in this way will be silently ignored (and it will return the
+empty list).
 
 Normally, you can just "forget" any references to an AnyEvent::Handle
 object and it will simply shut down. This works in fatal error and EOF
@@ -1826,12 +1828,8 @@ sub destroy {
    bless $self, "AnyEvent::Handle::destroyed";
 }
 
-{
-   package AnyEvent::Handle::destroyed;
-
-   sub AUTOLOAD {
-      #nop
-   }
+sub AnyEvent::Handle::destroyed::AUTOLOAD {
+   #nop
 }
 
 =item AnyEvent::Handle::TLS_CTX
