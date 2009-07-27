@@ -1823,6 +1823,15 @@ sub destroy {
 
    $self->DESTROY;
    %$self = ();
+   bless $self, "AnyEvent::Handle::destroyed";
+}
+
+{
+   package AnyEvent::Handle::destroyed;
+
+   sub AUTOLOAD {
+      #nop
+   }
 }
 
 =item AnyEvent::Handle::TLS_CTX
