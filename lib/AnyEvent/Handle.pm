@@ -996,16 +996,17 @@ sub _drain_rbuf {
    while () {
       # we need to use a separate tls read buffer, as we must not receive data while
       # we are draining the buffer, and this can only happen with TLS.
-      $self->{rbuf} .= delete $self->{_tls_rbuf} if exists $self->{_tls_rbuf};
+      $self->{rbuf} .= delete $self->{_tls_rbuf}
+         if exists $self->{_tls_rbuf};
 
       my $len = length $self->{rbuf};
 
       if (my $cb = shift @{ $self->{_queue} }) {
          unless ($cb->($self)) {
-            if ($self->{_eof}) {
-               # no progress can be made (not enough data and no data forthcoming)
-               $self->_error (Errno::EPIPE, 1), return;
-            }
+            # no progress can be made
+            # (not enough data and no data forthcoming)
+            $self->_error (Errno::EPIPE, 1), return
+               if $self->{_eof};
 
             unshift @{ $self->{_queue} }, $cb;
             last;
@@ -1035,11 +1036,11 @@ sub _drain_rbuf {
    }
 
    if ($self->{_eof}) {
-      if ($self->{on_eof}) {
-         $self->{on_eof}($self)
-      } else {
-         $self->_error (0, 1, "Unexpected end-of-file");
-      }
+      $self->{on_eof}
+         ? $self->{on_eof}($self)
+         : $self->_error (0, 1, "Unexpected end-of-file");
+
+      return;
    }
 
    # may need to restart read watcher
