@@ -13,7 +13,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.88;
+our $VERSION = 4.881;
 
 =head1 SYNOPSIS
 
@@ -983,7 +983,7 @@ sub _drain_rbuf {
    my ($self) = @_;
 
    # avoid recursion
-   return if exists $self->{_skip_drain_rbuf};
+   return if $self->{_skip_drain_rbuf};
    local $self->{_skip_drain_rbuf} = 1;
 
    if (
