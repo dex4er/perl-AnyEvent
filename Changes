@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- normalise signal numbers to names when using the ae's
+          signal handling, but do not document this (yet).
+
 4.881 Tue Jul 28 12:51:53 CEST 2009
 	- work around a bug in local in pre-5.10 perls, causing
           AnyEvent::Handle to recurse when it should not

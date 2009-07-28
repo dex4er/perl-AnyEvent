@@ -1308,7 +1308,7 @@ sub _signal_exec {
    }
 }
 
-# install a dumym wakeupw atcher to reduce signal catching latency
+# install a dummy wakeup watcher to reduce signal catching latency
 sub _sig_add() {
    unless ($SIG_COUNT++) {
       # try to align timer on a full-second boundary, if possible
@@ -1333,10 +1333,11 @@ sub _signal {
    my $signal = uc $arg{signal}
       or Carp::croak "required option 'signal' is missing";
 
-   $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
-
    if ($HAVE_ASYNC_INTERRUPT) {
       # async::interrupt
+
+      $signal = Async::Interrupt::sig2num ($signal);
+      $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
       $SIG_ASY{$signal} ||= do {
          my $asy = new Async::Interrupt
@@ -1351,6 +1352,10 @@ sub _signal {
 
    } else {
       # pure perl
+
+      # AE::Util has been loaded in signal
+      $signal = AnyEvent::Util::sig2name ($signal);
+      $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
       $SIG{$signal} ||= sub {
          local $!;
@@ -1368,7 +1373,7 @@ sub _signal {
 
 sub signal {
    # probe for availability of Async::Interrupt
-   if (!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT} && eval "use Async::Interrupt 0.6 (); 1") {
+   if (!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT} && eval "use Async::Interrupt 1.0 (); 1") {
       warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
 
       $HAVE_ASYNC_INTERRUPT = 1;

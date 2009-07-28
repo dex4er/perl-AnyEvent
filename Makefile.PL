@@ -37,7 +37,7 @@ WriteMakefile(
            "JSON::XS"         => 2.2,
            "EV"               => 3.05,
            "Guard"            => 1.02,
-           "Async::Interrupt" => 0.6,
+           "Async::Interrupt" => 1.0,
         }
     },
 );
