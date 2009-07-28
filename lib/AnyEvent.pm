@@ -1339,16 +1339,12 @@ sub _signal {
       $signal = Async::Interrupt::sig2num ($signal);
       $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
-      $SIG_ASY{$signal} ||= do {
-         my $asy = new Async::Interrupt
-            cb     => sub { undef $SIG_EV{$signal} },
-            signal => $signal,
-            pipe   => [$SIGPIPE_R->filenos],
-         ;
-         $asy->pipe_autodrain (0);
-
-         $asy
-      };
+      $SIG_ASY{$signal} ||= new Async::Interrupt
+         cb             => sub { undef $SIG_EV{$signal} },
+         signal         => $signal,
+         pipe           => [$SIGPIPE_R->filenos],
+         pipe_autodrain => 0,
+      ;
 
    } else {
       # pure perl
