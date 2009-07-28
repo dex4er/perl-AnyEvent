@@ -1,8 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+4.88 Tue Jul 28 04:04:37 CEST 2009
 	- re-bless the handle into a dummy package after calling
           AnyEvent::Handle::destroy, so the user does not need to check
           for errors after every push_write etc.
+        - do not attempt to run t/02_signals.t on obviously broken
+          platforms.
 
 4.87 Sun Jul 26 02:06:16 CEST 2009
 	- do not attempt to linger when there is no longer a valid fh.
@@ -20,7 +23,7 @@ Revision history for Perl extension AnyEvent.
         - try to align signal-race timer to full-second boundaries.
         - work around Tk not liking negative timeouts.
         - don't complain of different grades of environmental unfriendlyness
-          in IO::ASync.
+          in IO::Async.
 
 4.85 Sat Jul 18 06:16:14 CEST 2009
         - nail the signal race problem in perl once and for all

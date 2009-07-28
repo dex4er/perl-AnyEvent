@@ -34,7 +34,7 @@ use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(AF_INET6);
 
-our $VERSION = 4.87;
+our $VERSION = 4.88;
 
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
 
