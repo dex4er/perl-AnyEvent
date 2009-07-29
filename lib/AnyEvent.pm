@@ -1291,6 +1291,15 @@ sub condvar {
 # default implementation for ->signal
 
 our $HAVE_ASYNC_INTERRUPT;
+
+sub _have_async_interrupt() {
+   $HAVE_ASYNC_INTERRUPT = 1*(!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT}
+                              && eval "use Async::Interrupt 1.0 (); 1")
+      unless defined $HAVE_ASYNC_INTERRUPT;
+
+   $HAVE_ASYNC_INTERRUPT
+}
+
 our ($SIGPIPE_R, $SIGPIPE_W, %SIG_CB, %SIG_EV, $SIG_IO);
 our (%SIG_ASY, %SIG_ASY_W);
 our ($SIG_COUNT, $SIG_TW);
@@ -1327,6 +1336,33 @@ sub _sig_del {
       unless --$SIG_COUNT;
 }
 
+our %SIGNAME2NUM;
+our @SIGNUM2NAME;
+our $_sig_name_init; $_sig_name_init = sub {
+   undef $_sig_name_init;
+
+   if (_have_async_interrupt) {
+      *sig2num  = \&Async::Interrupt::sig2num;
+      *sig2name = \&Async::Interrupt::sig2name;
+   } else {
+      require Config;
+
+      @SIGNAME2NUM{ split ' ', $Config::Config{sig_name} }
+                  = split ' ', $Config::Config{sig_num};
+      @SIGNUM2NAME[values %SIGNAME2NUM] = keys %SIGNAME2NUM;
+
+      *sig2num = sub($) {
+         $_[0] > 0 ? shift : $SIGNAME2NUM{+shift}
+      };
+      *sig2name = sub ($) {
+         $_[0] > 0 ? $SIGNUM2NAME[+shift] : shift
+      };
+   }
+};
+
+sub sig2num ($) { &$_sig_name_init; &sig2num  }
+sub sig2name($) { &$_sig_name_init; &sig2name }
+
 sub _signal {
    my (undef, %arg) = @_;
 
@@ -1336,7 +1372,7 @@ sub _signal {
    if ($HAVE_ASYNC_INTERRUPT) {
       # async::interrupt
 
-      $signal = Async::Interrupt::sig2num ($signal);
+      $signal = sig2num $signal;
       $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
       $SIG_ASY{$signal} ||= new Async::Interrupt
@@ -1350,7 +1386,7 @@ sub _signal {
       # pure perl
 
       # AE::Util has been loaded in signal
-      $signal = AnyEvent::Util::sig2name ($signal);
+      $signal = sig2name $signal;
       $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
       $SIG{$signal} ||= sub {
@@ -1369,10 +1405,9 @@ sub _signal {
 
 sub signal {
    # probe for availability of Async::Interrupt
-   if (!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT} && eval "use Async::Interrupt 1.0 (); 1") {
+   if (_have_async_interrupt) {
       warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
 
-      $HAVE_ASYNC_INTERRUPT = 1;
       $SIGPIPE_R = new Async::Interrupt::EventPipe;
       $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R->fileno, poll => "r", cb => \&_signal_exec);
 
