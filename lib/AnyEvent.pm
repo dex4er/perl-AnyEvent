@@ -1336,8 +1336,6 @@ sub _sig_del {
       unless --$SIG_COUNT;
 }
 
-our %SIGNAME2NUM;
-our @SIGNUM2NAME;
 our $_sig_name_init; $_sig_name_init = sub {
    undef $_sig_name_init;
 
@@ -1347,15 +1345,18 @@ our $_sig_name_init; $_sig_name_init = sub {
    } else {
       require Config;
 
-      @SIGNAME2NUM{ split ' ', $Config::Config{sig_name} }
-                  = split ' ', $Config::Config{sig_num};
-      @SIGNUM2NAME[values %SIGNAME2NUM] = keys %SIGNAME2NUM;
+      my %signame2num;
+      @signame2num{ split ' ', $Config::Config{sig_name} }
+                     = split ' ', $Config::Config{sig_num};
+
+      my @signum2name;
+      @signum2name[values %signame2num] = keys %signame2num;
 
       *sig2num = sub($) {
-         $_[0] > 0 ? shift : $SIGNAME2NUM{+shift}
+         $_[0] > 0 ? shift : $signame2num{+shift}
       };
       *sig2name = sub ($) {
-         $_[0] > 0 ? $SIGNUM2NAME[+shift] : shift
+         $_[0] > 0 ? $signum2name[+shift] : shift
       };
    }
 };

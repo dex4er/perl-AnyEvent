@@ -44,7 +44,6 @@ Avoid Event::Lib if you can.
 package AnyEvent::Impl::EventLib;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
-use AnyEvent::Util ();
 
 use Event::Lib;
 
@@ -101,7 +100,7 @@ sub DESTROY {
 sub signal {
    my (undef, %arg) = @_;
 
-   my $w = signal_new AnyEvent::Util::sig2num $arg{signal}, $ccb, $arg{cb};
+   my $w = signal_new AnyEvent::Base::sig2num $arg{signal}, $ccb, $arg{cb};
    event_add $w;
    AnyEvent::Base::_sig_add;
    bless \\$w, "AnyEvent::Impl::EventLib::signal"

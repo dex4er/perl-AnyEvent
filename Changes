@@ -1,6 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: release a:i 1.0
+TODO: ae::strict should chekc for signal names (enforced)
 	- normalise signal numbers to names when using the ae's
           signal handling, but do not document this (yet).
 

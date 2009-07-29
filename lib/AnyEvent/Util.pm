@@ -426,33 +426,6 @@ sub guard(&) {
    goto &guard;
 }
 
-#############################################################################
-
-our %SIGNAME2NUM;
-our @SIGNUM2NAME;
-
-sub _siginit {
-   unless (scalar keys %SIGNAME2NUM) {
-      require Config;
-
-      @SIGNAME2NUM{ split ' ', $Config::Config{sig_name} }
-                  = split ' ', $Config::Config{sig_num};
-   }
-   @SIGNUM2NAME[values %SIGNAME2NUM] = keys %SIGNAME2NUM;
-}
-
-sub sig2num($) {
-   $_[0] > 0
-      ? shift
-      : scalar (@SIGNUM2NAME || _siginit, $SIGNAME2NUM{+shift})
-}
-
-sub sig2name($) {
-   $_[0] == 0
-      ? shift
-      : scalar (@SIGNUM2NAME || _siginit, $SIGNUM2NAME[+shift])
-}
-
 1;
 
 =back
