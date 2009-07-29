@@ -65,7 +65,7 @@ sub timer {
    my $cb   = $arg{cb};
    my $ival = $arg{interval} * 1000;
 
-   my $source; $source = add Glib::Timeout $arg{after} * 1000,
+   my $source; $source = add Glib::Timeout $arg{after} < 0 ? 0 : $arg{after} * 1000,
       $ival ? sub {
                 remove Glib::Source $source;
                 $source = add Glib::Timeout $ival, sub { &$cb; 1 };

@@ -1337,126 +1337,130 @@ sub _sig_del {
 }
 
 our $_sig_name_init; $_sig_name_init = sub {
-   undef $_sig_name_init;
+   eval q{ # poor man's autoloading
+      undef $_sig_name_init;
 
-   if (_have_async_interrupt) {
-      *sig2num  = \&Async::Interrupt::sig2num;
-      *sig2name = \&Async::Interrupt::sig2name;
-   } else {
-      require Config;
+      if (_have_async_interrupt) {
+         *sig2num  = \&Async::Interrupt::sig2num;
+         *sig2name = \&Async::Interrupt::sig2name;
+      } else {
+         require Config;
 
-      my %signame2num;
-      @signame2num{ split ' ', $Config::Config{sig_name} }
-                     = split ' ', $Config::Config{sig_num};
+         my %signame2num;
+         @signame2num{ split ' ', $Config::Config{sig_name} }
+                        = split ' ', $Config::Config{sig_num};
 
-      my @signum2name;
-      @signum2name[values %signame2num] = keys %signame2num;
+         my @signum2name;
+         @signum2name[values %signame2num] = keys %signame2num;
 
-      *sig2num = sub($) {
-         $_[0] > 0 ? shift : $signame2num{+shift}
-      };
-      *sig2name = sub ($) {
-         $_[0] > 0 ? $signum2name[+shift] : shift
-      };
-   }
+         *sig2num = sub($) {
+            $_[0] > 0 ? shift : $signame2num{+shift}
+         };
+         *sig2name = sub ($) {
+            $_[0] > 0 ? $signum2name[+shift] : shift
+         };
+      }
+   };
+   die if $@;
 };
 
 sub sig2num ($) { &$_sig_name_init; &sig2num  }
 sub sig2name($) { &$_sig_name_init; &sig2name }
 
-sub _signal {
-   my (undef, %arg) = @_;
-
-   my $signal = uc $arg{signal}
-      or Carp::croak "required option 'signal' is missing";
-
-   if ($HAVE_ASYNC_INTERRUPT) {
-      # async::interrupt
-
-      $signal = sig2num $signal;
-      $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
-
-      $SIG_ASY{$signal} ||= new Async::Interrupt
-         cb             => sub { undef $SIG_EV{$signal} },
-         signal         => $signal,
-         pipe           => [$SIGPIPE_R->filenos],
-         pipe_autodrain => 0,
-      ;
-
-   } else {
-      # pure perl
-
-      # AE::Util has been loaded in signal
-      $signal = sig2name $signal;
-      $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
-
-      $SIG{$signal} ||= sub {
-         local $!;
-         syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
-         undef $SIG_EV{$signal};
-      };
-
-      # can't do signal processing without introducing races in pure perl,
-      # so limit the signal latency.
-      _sig_add;
-   }
-
-   bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
-}
-
 sub signal {
-   # probe for availability of Async::Interrupt
-   if (_have_async_interrupt) {
-      warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
+   eval q{ # poor man's autoloading {}
+      # probe for availability of Async::Interrupt 
+      if (_have_async_interrupt) {
+         warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
 
-      $SIGPIPE_R = new Async::Interrupt::EventPipe;
-      $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R->fileno, poll => "r", cb => \&_signal_exec);
+         $SIGPIPE_R = new Async::Interrupt::EventPipe;
+         $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R->fileno, poll => "r", cb => \&_signal_exec);
 
-   } else {
-      warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
-
-      require Fcntl;
-
-      if (AnyEvent::WIN32) {
-         require AnyEvent::Util;
-
-         ($SIGPIPE_R, $SIGPIPE_W) = AnyEvent::Util::portable_pipe ();
-         AnyEvent::Util::fh_nonblocking ($SIGPIPE_R) if $SIGPIPE_R;
-         AnyEvent::Util::fh_nonblocking ($SIGPIPE_W) if $SIGPIPE_W; # just in case
       } else {
-         pipe $SIGPIPE_R, $SIGPIPE_W;
-         fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
-         fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
+         warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
 
-         # not strictly required, as $^F is normally 2, but let's make sure...
-         fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
-         fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+         require Fcntl;
+
+         if (AnyEvent::WIN32) {
+            require AnyEvent::Util;
+
+            ($SIGPIPE_R, $SIGPIPE_W) = AnyEvent::Util::portable_pipe ();
+            AnyEvent::Util::fh_nonblocking ($SIGPIPE_R, 1) if $SIGPIPE_R;
+            AnyEvent::Util::fh_nonblocking ($SIGPIPE_W, 1) if $SIGPIPE_W; # just in case
+         } else {
+            pipe $SIGPIPE_R, $SIGPIPE_W;
+            fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
+            fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
+
+            # not strictly required, as $^F is normally 2, but let's make sure...
+            fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+            fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+         }
+
+         $SIGPIPE_R
+            or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
+
+         $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
       }
 
-      $SIGPIPE_R
-         or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
+      *signal = sub {
+         my (undef, %arg) = @_;
 
-      $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
-   }
+         my $signal = uc $arg{signal}
+            or Carp::croak "required option 'signal' is missing";
 
-   *signal = \&_signal;
+         if ($HAVE_ASYNC_INTERRUPT) {
+            # async::interrupt
+
+            $signal = sig2num $signal;
+            $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+
+            $SIG_ASY{$signal} ||= new Async::Interrupt
+               cb             => sub { undef $SIG_EV{$signal} },
+               signal         => $signal,
+               pipe           => [$SIGPIPE_R->filenos],
+               pipe_autodrain => 0,
+            ;
+
+         } else {
+            # pure perl
+
+            # AE::Util has been loaded in signal
+            $signal = sig2name $signal;
+            $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+
+            $SIG{$signal} ||= sub {
+               local $!;
+               syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
+               undef $SIG_EV{$signal};
+            };
+
+            # can't do signal processing without introducing races in pure perl,
+            # so limit the signal latency.
+            _sig_add;
+         }
+
+         bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
+      };
+
+      *AnyEvent::Base::signal::DESTROY = sub {
+         my ($signal, $cb) = @{$_[0]};
+
+         _sig_del;
+
+         delete $SIG_CB{$signal}{$cb};
+
+         $HAVE_ASYNC_INTERRUPT
+            ? delete $SIG_ASY{$signal}
+            : # delete doesn't work with older perls - they then
+              # print weird messages, or just unconditionally exit
+              # instead of getting the default action.
+              undef $SIG{$signal}
+            unless keys %{ $SIG_CB{$signal} };
+      };
+   };
+   die if $@;
    &signal
-}
-
-sub AnyEvent::Base::signal::DESTROY {
-   my ($signal, $cb) = @{$_[0]};
-
-   _sig_del;
-
-   delete $SIG_CB{$signal}{$cb};
-
-   $HAVE_ASYNC_INTERRUPT
-      ? delete $SIG_ASY{$signal}
-      : # delete doesn't work with older perls - they then
-        # print weird messages, or just unconditionally exit
-        # instead of getting the default action.
-        undef $SIG{$signal}
-      unless keys %{ $SIG_CB{$signal} };
 }
 
 # default implementation for ->child
