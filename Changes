@@ -1,7 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: release a:i 1.0
-TODO: ae::strict should chekc for signal names (enforced)
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.
 	- normalise signal numbers to names when using the ae's
@@ -9,7 +8,9 @@ TODO: ae::strict should chekc for signal names (enforced)
         - pure perl signal emulation did not properly set nonblocking
           mode on the signal pipe on win32 (this is unlikely to have caused
           any issues).
-        - reduce memory footprint int ypical cases by ~50kb by
+        - AnyEvent::Strict now checks that a signal was specified
+          by name (not name or number).
+        - reduce memory footprint in typical cases by ~50kb by
           only compiling signal code when necessary.
 
 4.881 Tue Jul 28 12:51:53 CEST 2009
