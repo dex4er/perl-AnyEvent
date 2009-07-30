@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: release a:i 1.0
+4.9
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.
 	- normalise signal numbers to names when using the ae's

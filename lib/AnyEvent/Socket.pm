@@ -229,7 +229,7 @@ C<parse_unix>).
 It also supports defaulting the service name in a simple way by using
 C<$default_service> if no service was detected. If neither a service was
 detected nor a default was specified, then this function returns the
-empty list. The same happens when a parse error weas detected, such as a
+empty list. The same happens when a parse error was detected, such as a
 hostname with a colon in it (the function is rather conservative, though).
 
 Example:
