@@ -183,6 +183,12 @@ declared.
 
 =head2 I/O WATCHERS
 
+   $w = AnyEvent->io (
+      fh   => <filehandle_or_fileno>,
+      poll => <"r" or "w">,
+      cb   => <callback>,
+   );
+
 You can create an I/O watcher by calling the C<< AnyEvent->io >> method
 with the following mandatory key-value pairs as arguments:
 
@@ -220,6 +226,14 @@ watcher.
    });
 
 =head2 TIME WATCHERS
+
+   $w = AnyEvent->timer (after => <seconds>, cb => <callback>);
+
+   $w = AnyEvent->timer (
+      after    => <fractional_seconds>,
+      interval => <fractional_seconds>,
+      cb       => <callback>,
+   );
 
 You can create a time watcher by calling the C<< AnyEvent->timer >>
 method with the following mandatory arguments:
@@ -357,6 +371,8 @@ Note that updating the time I<might> cause some events to be handled.
 
 =head2 SIGNAL WATCHERS
 
+   $w = AnyEvent->signal (signal => <uppercase_signal_name>, cb => <callback>);
+
 You can watch for signals using a signal watcher, C<signal> is the signal
 I<name> in uppercase and without any C<SIG> prefix, C<cb> is the Perl
 callback to be invoked whenever a signal occurs.
@@ -399,6 +415,8 @@ currently, as POE does it's own workaround with one-second latency). With
 those, you just have to suffer the delays.
 
 =head2 CHILD PROCESS WATCHERS
+
+   $w = AnyEvent->child (pid => <process id>, cb => <callback>);
 
 You can also watch on a child process exit and catch its exit status.
 
@@ -457,6 +475,8 @@ Example: fork a process and wait for it
 
 =head2 IDLE WATCHERS
 
+   $w = AnyEvent->idle (cb => <callback>);
+
 Sometimes there is a need to do something, but it is not so important
 to do it instantly, but only when there is nothing better to do. This
 "nothing better to do" is usually defined to be "no other events need
@@ -491,6 +511,11 @@ program is otherwise idle:
    });
 
 =head2 CONDITION VARIABLES
+
+   $cv = AnyEvent->condvar;
+
+   $cv->send (<list>);
+   my @res = $cv->recv;
 
 If you are familiar with some event loops you will know that all of them
 require you to run some blocking "loop", "run" or similar function that
@@ -1624,6 +1649,48 @@ sub end {
 # undocumented/compatibility with pre-3.4
 *broadcast = \&send;
 *wait      = \&_wait;
+
+#############################################################################
+# "new" API, currently only emulation of it
+#############################################################################
+
+package AE;
+
+sub io($$$) {
+   AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
+}
+
+sub timer($$$) {
+   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2]);
+}
+
+sub signal($$) {
+   AnyEvent->signal (signal => $_[0], cb => $_[1]);
+}
+
+sub child($$) {
+   AnyEvent->child (pid => $_[0], cb => $_[1]);
+}
+
+sub idle($) {
+   AnyEvent->idle (cb => $_[0]);
+}
+
+sub cv() {
+   AnyEvent->condvar
+}
+
+sub now() {
+   AnyEvent->now
+}
+
+sub now_update() {
+   AnyEvent->now_update
+}
+
+sub time() {
+   AnyEvent->time
+}
 
 =head1 ERROR AND EXCEPTION HANDLING
 
