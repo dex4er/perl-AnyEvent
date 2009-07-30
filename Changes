@@ -8,6 +8,7 @@ TODO: release a:i 1.0
         - pure perl signal emulation did not properly set nonblocking
           mode on the signal pipe on win32 (this is unlikely to have caused
           any issues).
+        - new module: AnyEvent::Debug.
         - AnyEvent::Strict now checks that a signal was specified
           by name (not name or number).
         - reduce memory footprint in typical cases by ~50kb by
