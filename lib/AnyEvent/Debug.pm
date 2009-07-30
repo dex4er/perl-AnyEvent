@@ -86,9 +86,9 @@ sub shell($$) {
    AnyEvent::Socket::tcp_server $_[0], $_[1], sub {
       my ($fh, $host, $port) = @_;
 
-      syswrite $fh, "Welcome, $host:$port\015\012> ";
+      syswrite $fh, "Welcome, $host:$port!\015\012> ";
       my $rbuf;
-      my $rw; $rw = AnyEvent->io (fh => $fh, poll => "r", cb => sub {
+      my $rw; $rw = AE::io $fh, 0, sub {
          my $len = sysread $fh, $rbuf, 1024, length $rbuf;
 
          if (defined $len ? $len == 0 : $! != Errno::EAGAIN) {
@@ -125,7 +125,7 @@ sub shell($$) {
                AnyEvent::Util::fh_nonblocking $fh, 1;
             }
          }
-      });
+      };
    }
 }
 

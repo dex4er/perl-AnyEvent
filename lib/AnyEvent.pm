@@ -401,18 +401,22 @@ Example: exit on SIGINT
 =head3 Signal Races, Delays and Workarounds
 
 Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
-callbacks to signals in a generic way, which is a pity, as you cannot do
-race-free signal handling in perl. AnyEvent will try to do it's best, but
-in some cases, signals will be delayed. The maximum time a signal might
-be delayed is specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10
-seconds). This variable can be changed only before the first signal
-watcher is created, and should be left alone otherwise. Higher values
+callbacks to signals in a generic way, which is a pity, as you cannot
+do race-free signal handling in perl, requiring C libraries for
+this. AnyEvent will try to do it's best, which means in some cases,
+signals will be delayed. The maximum time a signal might be delayed is
+specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10 seconds). This
+variable can be changed only before the first signal watcher is created,
+and should be left alone otherwise. This variable determines how often
+AnyEvent polls for signals (in case a wake-up was missed). Higher values
 will cause fewer spurious wake-ups, which is better for power and CPU
-saving. All these problems can be avoided by installing the optional
-L<Async::Interrupt> module. This will not work with inherently broken
-event loops such as L<Event> or L<Event::Lib> (and not with L<POE>
-currently, as POE does it's own workaround with one-second latency). With
-those, you just have to suffer the delays.
+saving.
+
+All these problems can be avoided by installing the optional
+L<Async::Interrupt> module, which works with most event loops. It will not
+work with inherently broken event loops such as L<Event> or L<Event::Lib>
+(and not with L<POE> currently, as POE does it's own workaround with
+one-second latency). For those, you just have to suffer the delays.
 
 =head2 CHILD PROCESS WATCHERS
 

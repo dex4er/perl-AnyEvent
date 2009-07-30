@@ -4,6 +4,7 @@ Changes
 README
 Makefile.PL
 
+lib/AE.pm
 lib/AnyEvent.pm
 lib/AnyEvent/Intro.pod
 lib/AnyEvent/Strict.pm
