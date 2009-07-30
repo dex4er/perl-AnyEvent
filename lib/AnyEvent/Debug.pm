@@ -86,7 +86,7 @@ sub shell($$) {
    AnyEvent::Socket::tcp_server $_[0], $_[1], sub {
       my ($fh, $host, $port) = @_;
 
-      syswrite $fh, "Welcome, $host:$port!\015\012> ";
+      syswrite $fh, "Welcome, $host:$port\015\012> ";
       my $rbuf;
       my $rw; $rw = AnyEvent->io (fh => $fh, poll => "r", cb => sub {
          my $len = sysread $fh, $rbuf, 1024, length $rbuf;
