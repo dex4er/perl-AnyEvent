@@ -3,6 +3,8 @@ Revision history for Perl extension AnyEvent.
 4.9
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.
+        - check rbuf_max condition only after trying to consume
+          data.
 	- normalise signal numbers to names when using the ae's
           signal handling, but do not document this (yet).
         - pure perl signal emulation did not properly set nonblocking

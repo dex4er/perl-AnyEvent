@@ -996,13 +996,6 @@ sub _drain_rbuf {
    return if $self->{_skip_drain_rbuf};
    local $self->{_skip_drain_rbuf} = 1;
 
-   if (
-      defined $self->{rbuf_max}
-      && $self->{rbuf_max} < length $self->{rbuf}
-   ) {
-      $self->_error (Errno::ENOSPC, 1), return;
-   }
-
    while () {
       # we need to use a separate tls read buffer, as we must not receive data while
       # we are draining the buffer, and this can only happen with TLS.
@@ -1051,6 +1044,13 @@ sub _drain_rbuf {
          : $self->_error (0, 1, "Unexpected end-of-file");
 
       return;
+   }
+
+   if (
+      defined $self->{rbuf_max}
+      && $self->{rbuf_max} < length $self->{rbuf}
+   ) {
+      $self->_error (Errno::ENOSPC, 1), return;
    }
 
    # may need to restart read watcher
