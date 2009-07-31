@@ -604,6 +604,16 @@ sub on_starttls {
    $_[0]{on_stoptls} = $_[1];
 }
 
+=item $handle->rbuf_max ($max_octets)
+
+Configures the C<rbuf_max> setting (C<undef> disables it).
+
+=cut
+
+sub rbuf_max {
+   $_[0]{rbuf_max} = $_[1];
+}
+
 #############################################################################
 
 =item $handle->timeout ($seconds)

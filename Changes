@@ -13,6 +13,7 @@ Revision history for Perl extension AnyEvent.
           by name (not name or number).
         - reduce memory footprint in typical cases by ~50kb by
           only compiling signal code when necessary.
+        - add AnyEvent::Handle->rbuf_max.
         - grab the AE namespace for future new API, implement stubs for
           said future/alternative API.
 
