@@ -3,6 +3,8 @@ Revision history for Perl extension AnyEvent.
 4.9
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.
+        - call condvar callback immediately  when it is set
+          after the condition is already signalled.
         - check rbuf_max condition only after trying to consume
           data.
 	- normalise signal numbers to names when using the ae's
@@ -18,6 +20,7 @@ Revision history for Perl extension AnyEvent.
         - add AnyEvent::Handle->rbuf_max.
         - grab the AE namespace for future new API, implement stubs for
           said future/alternative API.
+        - new function: AnyEvent::Socket::format_hostport.
 
 4.881 Tue Jul 28 12:51:53 CEST 2009
 	- work around a bug in local in pre-5.10 perls, causing

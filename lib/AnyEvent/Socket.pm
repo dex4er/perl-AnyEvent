@@ -47,7 +47,7 @@ use base 'Exporter';
 
 our @EXPORT = qw(
    getprotobyname
-   parse_hostport
+   parse_hostport format_hostport
    parse_ipv4 parse_ipv6
    parse_ip parse_address
    format_ipv4 format_ipv6
@@ -280,6 +280,22 @@ sub parse_hostport($;$) {
    return if $host =~ /:/ && !parse_ipv6 $host;
 
    ($host, $port)
+}
+
+=item $string = format_hostport $host, $port
+
+Takes a host (in textual form) and a port and formats in unambigiously in
+a way that C<parse_hostport> can parse it again. C<$port> can be C<undef>.
+
+=cut
+
+sub format_hostport($;$) {
+   my ($host, $port) = @_;
+
+   $port = ":$port"  if length $port;
+   $host = "[$host]" if $host =~ /:/;
+
+   "$host$port"
 }
 
 =item $sa_family = address_family $ipn

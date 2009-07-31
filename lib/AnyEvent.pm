@@ -1642,6 +1642,7 @@ sub cb {
       and $cv->{_ae_cb} = shift
       and $cv->{_ae_sent}
       and (delete $cv->{_ae_cb})->($cv);
+
    $cv->{_ae_cb}
 }
 
