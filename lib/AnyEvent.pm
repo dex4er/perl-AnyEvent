@@ -792,10 +792,10 @@ C<croak> have been called.
 This is a mutator function that returns the callback set and optionally
 replaces it before doing so.
 
-The callback will be called when the condition becomes "true", i.e. when
-C<send> or C<croak> are called, with the only argument being the condition
-variable itself. Calling C<recv> inside the callback or at any later time
-is guaranteed not to block.
+The callback will be called when the condition becomes (or already was)
+"true", i.e. when C<send> or C<croak> are called (or were called), with
+the only argument being the condition variable itself. Calling C<recv>
+inside the callback or at any later time is guaranteed not to block.
 
 =back
 
@@ -1636,8 +1636,13 @@ sub recv {
 }
 
 sub cb {
-   $_[0]{_ae_cb} = $_[1] if @_ > 1;
-   $_[0]{_ae_cb}
+   my $cv = shift;
+
+   @_
+      and $cv->{_ae_cb} = shift
+      and $cv->{_ae_sent}
+      and (delete $cv->{_ae_cb})->($cv);
+   $cv->{_ae_cb}
 }
 
 sub begin {
