@@ -53,8 +53,12 @@ sub DESTROY {
 
 sub signal {
    my (undef, %arg) = @_;
-   my $cb = $arg{cb}; $arg{cb} = sub { &$cb }; # event doesn't like callable objects
-   my $w = Event->signal (%arg);
+
+   my $cb = $arg{cb};
+   my $w = Event->signal (
+      signal => AnyEvent::Base::sig2name $arg{signal},
+      cb     => sub { &$cb }, # event doesn't like callable objects
+   );
 
    AnyEvent::Base::_sig_add;
    bless \$w, "AnyEvent::Impl::Event::signal"

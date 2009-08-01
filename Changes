@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-4.9
+4.9  Sat Aug  1 11:07:01 CEST 2009
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.
         - call condvar callback immediately  when it is set

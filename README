@@ -175,6 +175,12 @@ WATCHERS
     declared.
 
   I/O WATCHERS
+       $w = AnyEvent->io (
+          fh   => <filehandle_or_fileno>,
+          poll => <"r" or "w">,
+          cb   => <callback>,
+       );
+
     You can create an I/O watcher by calling the "AnyEvent->io" method with
     the following mandatory key-value pairs as arguments:
 
@@ -212,6 +218,14 @@ WATCHERS
        });
 
   TIME WATCHERS
+       $w = AnyEvent->timer (after => <seconds>, cb => <callback>);
+
+       $w = AnyEvent->timer (
+          after    => <fractional_seconds>,
+          interval => <fractional_seconds>,
+          cb       => <callback>,
+       );
+
     You can create a time watcher by calling the "AnyEvent->timer" method
     with the following mandatory arguments:
 
@@ -345,6 +359,8 @@ WATCHERS
         Note that updating the time *might* cause some events to be handled.
 
   SIGNAL WATCHERS
+       $w = AnyEvent->signal (signal => <uppercase_signal_name>, cb => <callback>);
+
     You can watch for signals using a signal watcher, "signal" is the signal
     *name* in uppercase and without any "SIG" prefix, "cb" is the Perl
     callback to be invoked whenever a signal occurs.
@@ -373,19 +389,25 @@ WATCHERS
    Signal Races, Delays and Workarounds
     Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
     callbacks to signals in a generic way, which is a pity, as you cannot do
-    race-free signal handling in perl. AnyEvent will try to do it's best,
-    but in some cases, signals will be delayed. The maximum time a signal
-    might be delayed is specified in $AnyEvent::MAX_SIGNAL_LATENCY (default:
-    10 seconds). This variable can be changed only before the first signal
-    watcher is created, and should be left alone otherwise. Higher values
+    race-free signal handling in perl, requiring C libraries for this.
+    AnyEvent will try to do it's best, which means in some cases, signals
+    will be delayed. The maximum time a signal might be delayed is specified
+    in $AnyEvent::MAX_SIGNAL_LATENCY (default: 10 seconds). This variable
+    can be changed only before the first signal watcher is created, and
+    should be left alone otherwise. This variable determines how often
+    AnyEvent polls for signals (in case a wake-up was missed). Higher values
     will cause fewer spurious wake-ups, which is better for power and CPU
-    saving. All these problems can be avoided by installing the optional
-    Async::Interrupt module. This will not work with inherently broken event
-    loops such as Event or Event::Lib (and not with POE currently, as POE
-    does it's own workaround with one-second latency). With those, you just
-    have to suffer the delays.
+    saving.
+
+    All these problems can be avoided by installing the optional
+    Async::Interrupt module, which works with most event loops. It will not
+    work with inherently broken event loops such as Event or Event::Lib (and
+    not with POE currently, as POE does it's own workaround with one-second
+    latency). For those, you just have to suffer the delays.
 
   CHILD PROCESS WATCHERS
+       $w = AnyEvent->child (pid => <process id>, cb => <callback>);
+
     You can also watch on a child process exit and catch its exit status.
 
     The child process is specified by the "pid" argument (one some backends,
@@ -441,6 +463,8 @@ WATCHERS
        $done->recv;
 
   IDLE WATCHERS
+       $w = AnyEvent->idle (cb => <callback>);
+
     Sometimes there is a need to do something, but it is not so important to
     do it instantly, but only when there is nothing better to do. This
     "nothing better to do" is usually defined to be "no other events need
@@ -475,6 +499,11 @@ WATCHERS
        });
 
   CONDITION VARIABLES
+       $cv = AnyEvent->condvar;
+
+       $cv->send (<list>);
+       my @res = $cv->recv;
+
     If you are familiar with some event loops you will know that all of them
     require you to run some blocking "loop", "run" or similar function that
     will actively watch for new events and call your callbacks.
@@ -733,10 +762,11 @@ WATCHERS
         This is a mutator function that returns the callback set and
         optionally replaces it before doing so.
 
-        The callback will be called when the condition becomes "true", i.e.
-        when "send" or "croak" are called, with the only argument being the
-        condition variable itself. Calling "recv" inside the callback or at
-        any later time is guaranteed not to block.
+        The callback will be called when the condition becomes (or already
+        was) "true", i.e. when "send" or "croak" are called (or were
+        called), with the only argument being the condition variable itself.
+        Calling "recv" inside the callback or at any later time is
+        guaranteed not to block.
 
 SUPPORTED EVENT LOOPS/BACKENDS
     The available backend classes are (every class has its own manpage):

@@ -62,9 +62,9 @@ sub signal {
    my ($class, %arg) = @_;
 
    my $stem = new Stem::Event::Signal
-         object => (bless \\$arg{cb}),
-         method => "invoke",
-         signal => $arg{signal};
+      object => (bless \\$arg{cb}),
+      method => "invoke",
+      signal => AnyEvent::Base::sig2name $arg{signal};
 
    $stem->start;
 

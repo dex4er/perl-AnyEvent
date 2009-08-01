@@ -342,7 +342,7 @@ sub timer {
 
 sub signal {
    my ($class, %arg) = @_;
-   my $signal = delete $arg{signal};
+   my $signal = AnyEvent::Base::sig2name delete $arg{signal};
    my $cb     = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
    my $session = POE::Session->create (
       inline_states => {
