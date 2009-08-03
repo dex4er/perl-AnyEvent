@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: Danga::Socket backend.
+
 4.9  Sat Aug  1 11:07:01 CEST 2009
 	- Glib silently fails when registering a timeout with
           a negative value, so avoid that.

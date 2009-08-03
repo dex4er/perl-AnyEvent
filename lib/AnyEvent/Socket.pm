@@ -829,7 +829,8 @@ sub tcp_connect($$$;$) {
          }) if $timeout;
 
          # called when the connect was successful, which,
-         # in theory, could be the case immediately (but never is in practise)
+         # in theory, could be the case immediately
+         # (but only happens in special cases)
          $state{connected} = sub {
             # we are connected, or maybe there was an error
             if (my $sin = getpeername $state{fh}) {
