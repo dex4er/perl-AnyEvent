@@ -1,6 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: Danga::Socket backend.
+TODO: delay tcp_connect
+
+	- AE::Handle did not properly free the TLS session, causing bigger
+          memory leaks in Net::SSLeay than expected (reported by toaster).
 
 4.9  Sat Aug  1 11:07:01 CEST 2009
 	- Glib silently fails when registering a timeout with

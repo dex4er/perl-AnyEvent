@@ -1772,7 +1772,7 @@ sub _freetls {
    return unless $self->{tls};
 
    $self->{tls_ctx}->_put_session (delete $self->{tls})
-      if ref $self->{tls};
+      if $self->{tls} > 0;
    
    delete @$self{qw(_rbio _wbio _tls_wbuf _on_starttls)};
 }
