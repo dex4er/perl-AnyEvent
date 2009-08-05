@@ -13,7 +13,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.9;
+our $VERSION = 4.901;
 
 =head1 SYNOPSIS
 
@@ -1733,6 +1733,8 @@ sub starttls {
 
    $self->{_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
    $self->{_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
+
+   Net::SSLeay::BIO_write ($self->{_rbio}, delete $self->{rbuf});
 
    Net::SSLeay::set_bio ($tls, $self->{_rbio}, $self->{_wbio});
 
