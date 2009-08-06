@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- hackishly provide fast AE:: interface when EV is the backend.
+
 4.91 Thu Aug  6 15:42:45 CEST 2009
 	- AE::Handle::starttls could get out of sync when the read buffer
           already contains some TLS handshake.
