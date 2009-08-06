@@ -58,7 +58,18 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.901;
+our $VERSION = 4.91;
+
+# used in cases where we may return immediately but want the
+# caller to do stuff first
+sub _postpone {
+   my ($cb, @args) = @_;
+
+   my $w; $w = AE::timer 0, 0, sub {
+      undef $w;
+      $cb->(@args);
+   };
+}
 
 =item $ipn = parse_ipv4 $dotted_quad
 
@@ -693,21 +704,24 @@ In either case, it will create a list of target hosts (e.g. for multihomed
 hosts or hosts with both IPv4 and IPv6 addresses) and try to connect to
 each in turn.
 
-After the connection is established (but never before the C<tcp_connect>
-fucntion itself returns), then the C<$connect_cb> will be invoked with
-the socket file handle (in non-blocking mode) as first and the peer host
-(as a textual IP address) and peer port as second and third arguments,
-respectively. The fourth argument is a code reference that you can call
-if, for some reason, you don't like this connection, which will cause
-C<tcp_connect> to try the next one (or call your callback without any
-arguments if there are no more connections). In most cases, you can simply
-ignore this argument.
+After the connection is established, then the C<$connect_cb> will be
+invoked with the socket file handle (in non-blocking mode) as first and
+the peer host (as a textual IP address) and peer port as second and third
+arguments, respectively. The fourth argument is a code reference that you
+can call if, for some reason, you don't like this connection, which will
+cause C<tcp_connect> to try the next one (or call your callback without
+any arguments if there are no more connections). In most cases, you can
+simply ignore this argument.
 
    $cb->($filehandle, $host, $port, $retry)
 
 If the connect is unsuccessful, then the C<$connect_cb> will be invoked
 without any arguments and C<$!> will be set appropriately (with C<ENXIO>
 indicating a DNS resolution failure).
+
+The callback will I<never> be invoked before C<tcp_connect> returns, even
+if C<tcp_connect> was able to connect immediately (e.g. on unix domain
+sockets).
 
 The file handle is perfect for being plugged into L<AnyEvent::Handle>, but
 can be used as a normal perl file handle as well.
@@ -794,17 +808,6 @@ Example: connect to a UNIX domain socket.
 
 =cut
 
-# used in cases where we may return immediately but want the
-# caller to do stuff first
-sub _delayed_call {
-   my ($cb, @args) = @_;
-
-   my $w; $w = AE::timer 0, 0, sub {
-      undef $w;
-      $cb->(@args);
-   };
-}
-
 sub tcp_connect($$$;$) {
    my ($host, $port, $connect, $prepare) = @_;
 
@@ -821,7 +824,7 @@ sub tcp_connect($$$;$) {
          return unless exists $state{fh};
 
          my $target = shift @target
-            or return (%state = (), _delayed_call $connect);
+            or return (%state = (), _postpone $connect);
 
          my ($domain, $type, $proto, $sockaddr) = @$target;
 

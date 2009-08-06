@@ -1117,7 +1117,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = 4.901;
+our $VERSION = 4.91;
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1289,6 +1289,48 @@ sub _dupfh($$;$$) {
    ($fh2, $rw)
 }
 
+#############################################################################
+# "new" API, currently only emulation of it
+#############################################################################
+
+package AE;
+
+sub io($$$) {
+   AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
+}
+
+sub timer($$$) {
+   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2]);
+}
+
+sub signal($$) {
+   AnyEvent->signal (signal => $_[0], cb => $_[1]);
+}
+
+sub child($$) {
+   AnyEvent->child (pid => $_[0], cb => $_[1]);
+}
+
+sub idle($) {
+   AnyEvent->idle (cb => $_[0]);
+}
+
+sub cv(;&) {
+   AnyEvent->condvar (@_ ? (cb => $_[0]) : ())
+}
+
+sub now() {
+   AnyEvent->now
+}
+
+sub now_update() {
+   AnyEvent->now_update
+}
+
+sub time() {
+   AnyEvent->time
+}
+
 package AnyEvent::Base;
 
 # default implementations for many methods
@@ -1350,13 +1392,13 @@ sub _signal_exec {
 sub _sig_add() {
    unless ($SIG_COUNT++) {
       # try to align timer on a full-second boundary, if possible
-      my $NOW = AnyEvent->now;
+      my $NOW = AE::now;
 
-      $SIG_TW = AnyEvent->timer (
-         after    => $MAX_SIGNAL_LATENCY - ($NOW - int $NOW),
-         interval => $MAX_SIGNAL_LATENCY,
-         cb       => sub { }, # just for the PERL_ASYNC_CHECK
-      );
+      $SIG_TW = AE::timer
+         $MAX_SIGNAL_LATENCY - ($NOW - int $NOW),
+         $MAX_SIGNAL_LATENCY,
+         sub { } # just for the PERL_ASYNC_CHECK
+      ;
    }
 }
 
@@ -1403,7 +1445,7 @@ sub signal {
          warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
 
          $SIGPIPE_R = new Async::Interrupt::EventPipe;
-         $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R->fileno, poll => "r", cb => \&_signal_exec);
+         $SIG_IO = AE::io $SIGPIPE_R->fileno, 0, \&_signal_exec;
 
       } else {
          warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
@@ -1429,7 +1471,7 @@ sub signal {
          $SIGPIPE_R
             or Carp::croak "AnyEvent: unable to create a signal reporting pipe: $!\n";
 
-         $SIG_IO = AnyEvent->io (fh => $SIGPIPE_R, poll => "r", cb => \&_signal_exec);
+         $SIG_IO = AE::io $SIGPIPE_R, 0, \&_signal_exec;
       }
 
       *signal = sub {
@@ -1528,7 +1570,7 @@ sub child {
                 : eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
 
    unless ($CHLD_W) {
-      $CHLD_W = AnyEvent->signal (signal => 'CHLD', cb => \&_sigchld);
+      $CHLD_W = AE::signal CHLD => \&_sigchld;
       # child could be a zombie already, so make at least one round
       &_sigchld;
    }
@@ -1564,7 +1606,7 @@ sub idle {
          $w = 0.0001 if $w < 0.0001;
          $w = 5      if $w > 5;
 
-         $w = AnyEvent->timer (after => $w, cb => $rcb);
+         $w = AE::timer $w, 0, $rcb;
       } else {
          # clean up...
          undef $w;
@@ -1572,7 +1614,7 @@ sub idle {
       }
    };
 
-   $w = AnyEvent->timer (after => 0.05, cb => $rcb);
+   $w = AE::timer 0.05, 0, $rcb;
 
    bless \\$cb, "AnyEvent::Base::idle"
 }
@@ -1659,48 +1701,6 @@ sub end {
 # undocumented/compatibility with pre-3.4
 *broadcast = \&send;
 *wait      = \&_wait;
-
-#############################################################################
-# "new" API, currently only emulation of it
-#############################################################################
-
-package AE;
-
-sub io($$$) {
-   AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
-}
-
-sub timer($$$) {
-   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2]);
-}
-
-sub signal($$) {
-   AnyEvent->signal (signal => $_[0], cb => $_[1]);
-}
-
-sub child($$) {
-   AnyEvent->child (pid => $_[0], cb => $_[1]);
-}
-
-sub idle($) {
-   AnyEvent->idle (cb => $_[0]);
-}
-
-sub cv(;&) {
-   AnyEvent->condvar (@_ ? (cb => $_[0]) : ())
-}
-
-sub now() {
-   AnyEvent->now
-}
-
-sub now_update() {
-   AnyEvent->now_update
-}
-
-sub time() {
-   AnyEvent->time
-}
 
 =head1 ERROR AND EXCEPTION HANDLING
 

@@ -1,15 +1,13 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: Danga::Socket backend.
-
-TODO: delay tcp_connect
-4.901
+4.91 Thu Aug  6 15:42:45 CEST 2009
 	- AE::Handle::starttls could get out of sync when the read buffer
           already contains some TLS handshake.
 	- AE::Handle did not properly free the TLS session, causing bigger
           memory leaks in Net::SSLeay than expected (reported by toaster).
         - AE::Socket::tcp_connect will now artificially delay invoking
           the callback to avoid returning after invoking the callback.
+        - convert many internal watcher uses to AE API.
 
 4.9  Sat Aug  1 11:07:01 CEST 2009
 	- Glib silently fails when registering a timeout with
