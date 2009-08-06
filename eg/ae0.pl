@@ -20,12 +20,12 @@ my $serv_sock = IO::Socket::INET-> new(
         ReuseAddr => 1,
 );
 
-my $serv_w = AnyEvent->io (fh => $serv_sock, poll => "r", cb => sub {
+my $serv_w = AE::io $serv_sock, 0, sub {
    accept my $fh, $serv_sock
       or return;
    sysread $serv_sock, my $buf, 512;
    syswrite $serv_sock, $buf;
-});
+};
 
 my $t = time;
 my $connections;
@@ -36,12 +36,12 @@ sub _make_connection {
          my ($fh) = @_
             or die "tcp_connect: $!";
          syswrite $fh, "can write $connections\n";
-         my $w; $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub {
+         my $w; $w = AE::io $fh, 0, sub {
             sysread $fh, my $buf, 512;
             undef $fh;
             undef $w;
             &_make_connection;
-         });
+         };
       };
    } else {
       $t = time - $t;
@@ -51,5 +51,5 @@ sub _make_connection {
 };
 
 _make_connection;
-AnyEvent->loop;
+AnyEvent->condvar->recv;
 

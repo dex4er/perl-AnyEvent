@@ -9,7 +9,7 @@ my $cv = AnyEvent->condvar;
 my $ae_fh =
     AnyEvent::Handle->new (
        fh => \*STDIN,
-       on_eof => sub { $cv->broadcast }
+       on_error => sub { $cv->broadcast }
     );
 
 $ae_fh->push_read (line => sub {

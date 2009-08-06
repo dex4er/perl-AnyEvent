@@ -27,7 +27,7 @@ tcp_server undef, $port, sub {
 my $t = time;
 
 for my $connections (1..$CYCLES) {
-   my $cv = AnyEvent->condvar;
+   my $cv = AE::cv;
 
    tcp_connect "127.0.0.1", $port, sub {
       my ($fh) = @_
