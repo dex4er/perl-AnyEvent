@@ -764,11 +764,11 @@ sub new {
 
       AnyEvent::Util::fh_nonblocking $fh4, 1;
       $self->{fh4} = $fh4;
-      $self->{rw4} = AnyEvent->io (fh => $fh4, poll => "r", cb => sub {
+      $self->{rw4} = AE::io $fh4, 0, sub {
          if (my $peer = recv $fh4, my $pkt, MAX_PKT, 0) {
             $wself->_recv ($pkt, $peer);
          }
-      });
+      };
    }
 
    if (AF_INET6 && socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0) {
@@ -776,11 +776,11 @@ sub new {
 
       $self->{fh6} = $fh6;
       AnyEvent::Util::fh_nonblocking $fh6, 1;
-      $self->{rw6} = AnyEvent->io (fh => $fh6, poll => "r", cb => sub {
+      $self->{rw6} = AE::io $fh6, 0, sub {
          if (my $peer = recv $fh6, my $pkt, MAX_PKT, 0) {
             $wself->_recv ($pkt, $peer);
          }
-      });
+      };
    }
 
    $got_socket
@@ -1036,7 +1036,7 @@ sub _exec {
 
       my ($server, $timeout) = @$retry_cfg;
       
-      $self->{id}{$req->[2]} = [AnyEvent->timer (after => $timeout, cb => sub {
+      $self->{id}{$req->[2]} = [(AE::timer $timeout, 0, sub {
          $NOW = time;
 
          # timeout, try next
@@ -1108,10 +1108,10 @@ sub _scheduler {
 
       if (@{ $self->{reuse_q} } >= 30000) {
          # we ran out of ID's, wait a bit
-         $self->{reuse_to} ||= AnyEvent->timer (after => $self->{reuse_q}[0][0] - $NOW, cb => sub {
+         $self->{reuse_to} ||= AE::timer $self->{reuse_q}[0][0] - $NOW, 0, sub {
             delete $self->{reuse_to};
             $self->_scheduler;
-         });
+         };
          last;
       }
 

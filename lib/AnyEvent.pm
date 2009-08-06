@@ -1686,8 +1686,8 @@ sub idle($) {
    AnyEvent->idle (cb => $_[0]);
 }
 
-sub cv() {
-   AnyEvent->condvar
+sub cv(;&) {
+   AnyEvent->condvar (@_ ? (cb => $_[0]) : ())
 }
 
 sub now() {

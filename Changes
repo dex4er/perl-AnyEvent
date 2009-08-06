@@ -8,6 +8,8 @@ TODO: delay tcp_connect
           already contains some TLS handshake.
 	- AE::Handle did not properly free the TLS session, causing bigger
           memory leaks in Net::SSLeay than expected (reported by toaster).
+        - AE::Socket::tcp_connect will now artificially delay invoking
+          the callback to avoid returning after invoking the callback.
 
 4.9  Sat Aug  1 11:07:01 CEST 2009
 	- Glib silently fails when registering a timeout with

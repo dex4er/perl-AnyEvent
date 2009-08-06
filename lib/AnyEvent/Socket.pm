@@ -595,7 +595,7 @@ sub resolve_sockaddr($$$$$$) {
    # resolve a records / provide sockaddr structures
    my $resolve = sub {
       my @res;
-      my $cv = AnyEvent->condvar (cb => sub {
+      my $cv = AE::cv {
          $cb->(
             map $_->[2],
             sort {
@@ -604,7 +604,7 @@ sub resolve_sockaddr($$$$$$) {
             }
             @res
          )
-      });
+      };
 
       $cv->begin;
       for my $idx (0 .. $#target) {
@@ -693,7 +693,8 @@ In either case, it will create a list of target hosts (e.g. for multihomed
 hosts or hosts with both IPv4 and IPv6 addresses) and try to connect to
 each in turn.
 
-If the connect is successful, then the C<$connect_cb> will be invoked with
+After the connection is established (but never before the C<tcp_connect>
+fucntion itself returns), then the C<$connect_cb> will be invoked with
 the socket file handle (in non-blocking mode) as first and the peer host
 (as a textual IP address) and peer port as second and third arguments,
 respectively. The fourth argument is a code reference that you can call
@@ -793,6 +794,17 @@ Example: connect to a UNIX domain socket.
 
 =cut
 
+# used in cases where we may return immediately but want the
+# caller to do stuff first
+sub _delayed_call {
+   my ($cb, @args) = @_;
+
+   my $w; $w = AE::timer 0, 0, sub {
+      undef $w;
+      $cb->(@args);
+   };
+}
+
 sub tcp_connect($$$;$) {
    my ($host, $port, $connect, $prepare) = @_;
 
@@ -809,7 +821,7 @@ sub tcp_connect($$$;$) {
          return unless exists $state{fh};
 
          my $target = shift @target
-            or return (%state = (), $connect->());
+            or return (%state = (), _delayed_call $connect);
 
          my ($domain, $type, $proto, $sockaddr) = @$target;
 
@@ -823,48 +835,44 @@ sub tcp_connect($$$;$) {
 
          $timeout ||= 30 if AnyEvent::WIN32;
 
-         $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
+         $state{to} = AE::timer $timeout, 0, sub {
             $! = Errno::ETIMEDOUT;
             $state{next}();
-         }) if $timeout;
-
-         # called when the connect was successful, which,
-         # in theory, could be the case immediately
-         # (but only happens in special cases)
-         $state{connected} = sub {
-            # we are connected, or maybe there was an error
-            if (my $sin = getpeername $state{fh}) {
-               my ($port, $host) = unpack_sockaddr $sin;
-
-               delete $state{ww}; delete $state{to};
-
-               my $guard = guard { %state = () };
-
-               $connect->(delete $state{fh}, format_address $host, $port, sub {
-                  $guard->cancel;
-                  $state{next}();
-               });
-            } else {
-               # dummy read to fetch real error code
-               sysread $state{fh}, my $buf, 1 if $! == Errno::ENOTCONN;
-
-               return if $! == Errno::EAGAIN; # skip spurious wake-ups
-
-               delete $state{ww}; delete $state{to};
-
-               $state{next}();
-            }
-         };
+         } if $timeout;
 
          # now connect       
-         if (connect $state{fh}, $sockaddr) {
-            $state{connected}->();
-         } elsif ($! == Errno::EINPROGRESS # POSIX
-                  || $! == Errno::EWOULDBLOCK
-                  # WSAEINPROGRESS intentionally not checked - it means something else entirely
-                  || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
-                  || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
-            $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $state{connected});
+         if (
+            (connect $state{fh}, $sockaddr)
+            || ($! == Errno::EINPROGRESS # POSIX
+                || $! == Errno::EWOULDBLOCK
+                # WSAEINPROGRESS intentionally not checked - it means something else entirely
+                || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
+                || $! == AnyEvent::Util::WSAEWOULDBLOCK)
+         ) {
+            $state{ww} = AE::io $state{fh}, 1, sub {
+               # we are connected, or maybe there was an error
+               if (my $sin = getpeername $state{fh}) {
+                  my ($port, $host) = unpack_sockaddr $sin;
+
+                  delete $state{ww}; delete $state{to};
+
+                  my $guard = guard { %state = () };
+
+                  $connect->(delete $state{fh}, format_address $host, $port, sub {
+                     $guard->cancel;
+                     $state{next}();
+                  });
+               } else {
+                  # dummy read to fetch real error code
+                  sysread $state{fh}, my $buf, 1 if $! == Errno::ENOTCONN;
+
+                  return if $! == Errno::EAGAIN; # skip spurious wake-ups
+
+                  delete $state{ww}; delete $state{to};
+
+                  $state{next}();
+               }
+            };
          } else {
             $state{next}();
          }
@@ -998,7 +1006,7 @@ sub tcp_server($$$;$) {
    listen $state{fh}, $len
       or Carp::croak "listen: $!";
 
-   $state{aw} = AnyEvent->io (fh => $state{fh}, poll => 'r', cb => sub {
+   $state{aw} = AE::io $state{fh}, 0, sub {
       # this closure keeps $state alive
       while (my $peer = accept my $fh, $state{fh}) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
@@ -1006,7 +1014,7 @@ sub tcp_server($$$;$) {
          my ($service, $host) = unpack_sockaddr $peer;
          $accept->($fh, format_address $host, $service);
       }
-   });
+   };
 
    defined wantarray
       ? guard { %state = () } # clear fh and watcher, which breaks the circular dependency
