@@ -476,7 +476,7 @@ sub _start {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   $self->{_activity} = AnyEvent->now;
+   $self->{_activity} = AE::now;
    $self->_timeout;
 
    $self->no_delay (delete $self->{no_delay}) if exists $self->{no_delay};
@@ -636,7 +636,7 @@ sub _timeout {
    my ($self) = @_;
 
    if ($self->{timeout} && $self->{fh}) {
-      my $NOW = AnyEvent->now;
+      my $NOW = AE::now;
 
       # when would the timeout trigger?
       my $after = $self->{_activity} + $self->{timeout} - $NOW;
@@ -661,10 +661,10 @@ sub _timeout {
       Scalar::Util::weaken $self;
       return unless $self; # ->error could have destroyed $self
 
-      $self->{_tw} ||= AnyEvent->timer (after => $after, cb => sub {
+      $self->{_tw} ||= AE::timer $after, 0, sub {
          delete $self->{_tw};
          $self->_timeout;
-      });
+      };
    } else {
       delete $self->{_tw};
    }
@@ -724,7 +724,7 @@ sub _drain_wbuf {
          if (defined $len) {
             substr $self->{wbuf}, 0, $len, "";
 
-            $self->{_activity} = AnyEvent->now;
+            $self->{_activity} = AE::now;
 
             $self->{on_drain}($self)
                if $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf})
@@ -740,7 +740,7 @@ sub _drain_wbuf {
       $cb->() unless $self->{autocork};
 
       # if still data left in wbuf, we need to poll
-      $self->{_ww} = AnyEvent->io (fh => $self->{fh}, poll => "w", cb => $cb)
+      $self->{_ww} = AE::io $self->{fh}, 1, $cb
          if length $self->{wbuf};
    };
 }
@@ -1542,12 +1542,12 @@ sub start_read {
    unless ($self->{_rw} || $self->{_eof}) {
       Scalar::Util::weaken $self;
 
-      $self->{_rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
+      $self->{_rw} = AE::io $self->{fh}, 0, sub {
          my $rbuf = \($self->{tls} ? my $buf : $self->{rbuf});
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
-            $self->{_activity} = AnyEvent->now;
+            $self->{_activity} = AE::now;
 
             if ($self->{tls}) {
                Net::SSLeay::BIO_write ($self->{_rbio}, $$rbuf);
@@ -1565,7 +1565,7 @@ sub start_read {
          } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
             return $self->_error ($!, 1);
          }
-      });
+      };
    }
 }
 
@@ -1793,7 +1793,7 @@ sub DESTROY {
 
       my @linger;
 
-      push @linger, AnyEvent->io (fh => $fh, poll => "w", cb => sub {
+      push @linger, AE::io $fh, 1, sub {
          my $len = syswrite $fh, $wbuf, length $wbuf;
 
          if ($len > 0) {
@@ -1801,10 +1801,10 @@ sub DESTROY {
          } else {
             @linger = (); # end
          }
-      });
-      push @linger, AnyEvent->timer (after => $linger, cb => sub {
+      };
+      push @linger, AE::timer $linger, 0, sub {
          @linger = ();
-      });
+      };
    }
 }
 
