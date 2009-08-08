@@ -626,6 +626,7 @@ sub timeout {
    my ($self, $timeout) = @_;
 
    $self->{timeout} = $timeout;
+   delete $self->{_tw};
    $self->_timeout;
 }
 
