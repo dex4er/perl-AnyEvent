@@ -668,9 +668,10 @@ to use a condition variable for the whole process.
 
 Every call to C<< ->begin >> will increment a counter, and every call to
 C<< ->end >> will decrement it.  If the counter reaches C<0> in C<< ->end
->>, the (last) callback passed to C<begin> will be executed. That callback
-is I<supposed> to call C<< ->send >>, but that is not required. If no
-callback was set, C<send> will be called without any arguments.
+>>, the (last) callback passed to C<begin> will be executed, passing the
+condvar as first argument. That callback is I<supposed> to call C<< ->send
+>>, but that is not required. If no group callback was set, C<send> will
+be called without any arguments.
 
 You can think of C<< $cv->send >> giving you an OR condition (one call
 sends), while C<< $cv->begin >> and C<< $cv->end >> giving you an AND
@@ -707,7 +708,7 @@ begung can potentially be zero:
    my $cv = AnyEvent->condvar;
 
    my %result;
-   $cv->begin (sub { $cv->send (\%result) });
+   $cv->begin (sub { shift->send (\%result) });
 
    for my $host (@list_of_hosts) {
       $cv->begin;
