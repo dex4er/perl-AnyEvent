@@ -248,16 +248,16 @@ sub loop {
    one_event while 1;
 }
 
-sub io {
-   my ($class, %arg) = @_;
+sub AE::io($$$) {
+   my ($fd, $write, $cb) = @_;
 
-   my $fd = fileno $arg{fh};
-   defined $fd or $fd = $arg{fh};
+   defined ($fd = fileno $fd)
+      or $fd = $_[0];
 
    my $self = bless [
       $fd,
-      $arg{poll} eq "w",
-      $arg{cb},
+      $write,
+      $cb,
       # q-idx
    ], "AnyEvent::Impl::Perl::io";
 
@@ -273,6 +273,12 @@ sub io {
    weaken $q->[-1];
 
    $self
+}
+
+sub io {
+   my (undef, %arg) = @_;
+
+   AE::io $arg{fh}, $arg{poll} eq "w", $arg{cb}
 }
 
 sub AnyEvent::Impl::Perl::io::DESTROY {
@@ -297,24 +303,21 @@ sub AnyEvent::Impl::Perl::io::DESTROY {
    }
 }
 
-sub timer {
-   my ($class, %arg) = @_;
+sub AE::timer {
+   my ($after, $interval, $cb) = @_;
    
    my $self;
 
-   if ($arg{interval}) {
-      my $cb   = $arg{cb};
-      my $ival = $arg{interval};
-
-      $self = [$MNOW + $arg{after} , sub {
-         $_[0][0] = $MNOW + $ival;
+   if ($interval) {
+      $self = [$MNOW + $after , sub {
+         $_[0][0] = $MNOW + $interval;
          push @timer, $_[0];
          weaken $timer[-1];
          $need_sort = $_[0][0] if $_[0][0] < $need_sort;
          &$cb;
       }];
    } else {
-      $self = [$MNOW + $arg{after}, $arg{cb}];
+      $self = [$MNOW + $after, $cb];
    }
 
    push @timer, $self;
@@ -324,8 +327,14 @@ sub timer {
    $self
 }
 
+sub timer {
+   my (undef, %arg) = @_;
+
+   AE::timer $arg{after}, $arg{interval}, $arg{cb}
+}
+
 sub idle {
-   my ($class, %arg) = @_;
+   my (undef, %arg) = @_;
 
    push @idle, \\$arg{cb};
    weaken ${$idle[-1]};

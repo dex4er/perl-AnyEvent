@@ -8,6 +8,10 @@ Revision history for Perl extension AnyEvent.
         - probe for Guard module when AnyEvent::Util is loaded, not at
           runtime (Event doesn't like eval "use" from callbacks, and it avoids
           exporting the probe function).
+        - Impl::IOAsync's io watchers did not use the filehandle emulation
+          code to work around it's watcher limits.
+        - work around IO::Async's problems with overloaded objects.
+        - try to disable wearnings inside IO::Async, it's just too buggy.
         - do no longer use Event by default, only EV or Perl, Event is too buggy.
 	- hackishly provide fast AE:: interface when EV is the backend.
         - inherit VERSION from AnyEvent::VERSION in most modules.

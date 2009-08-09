@@ -26,13 +26,17 @@ sub time       { EV::time       }
 sub now        { EV::now        }
 sub now_update { EV::now_update }
 
+*AE::timer = \&EV::timer;
+
 sub timer {
    my ($class, %arg) = @_;
 
    EV::timer $arg{after}, $arg{interval}, $arg{cb}
 }
 
-*AE::timer = \&EV::timer;
+*AE::io = defined &EV::_ae_io
+   ? \&EV::_ae_io
+   : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 
 sub io {
    my ($class, %arg) = @_;
@@ -42,10 +46,6 @@ sub io {
       $arg{poll} eq "r" ? EV::READ : EV::WRITE,
       $arg{cb}
 }
-
-*AE::io = sub($$$) {
-   EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2]
-};
 
 sub signal {
    my ($class, %arg) = @_;

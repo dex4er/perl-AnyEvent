@@ -1170,9 +1170,10 @@ my @models = (
    # byzantine signal and broken child handling, among others.
    # IO::Async is rather hard to detect, as it doesn't have any
    # obvious default class.
-#   [0, IO::Async::            => AnyEvent::Impl::IOAsync::],  # requires special main program
-#   [0, IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # requires special main program
-#   [0, IO::Async::Notifier::  => AnyEvent::Impl::IOAsync::],  # requires special main program
+   [IO::Async::               => AnyEvent::Impl::IOAsync::], # requires special main program
+   [IO::Async::Loop::         => AnyEvent::Impl::IOAsync::], # requires special main program
+   [IO::Async::Notifier::     => AnyEvent::Impl::IOAsync::], # requires special main program
+   [AnyEvent::Impl::IOAsync:: => AnyEvent::Impl::IOAsync::], # requires special main program
 );
 
 our %method = map +($_ => 1),
@@ -1302,19 +1303,19 @@ sub io($$$) {
 }
 
 sub timer($$$) {
-   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2]);
+   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2])
 }
 
 sub signal($$) {
-   AnyEvent->signal (signal => $_[0], cb => $_[1]);
+   AnyEvent->signal (signal => $_[0], cb => $_[1])
 }
 
 sub child($$) {
-   AnyEvent->child (pid => $_[0], cb => $_[1]);
+   AnyEvent->child (pid => $_[0], cb => $_[1])
 }
 
 sub idle($) {
-   AnyEvent->idle (cb => $_[0]);
+   AnyEvent->idle (cb => $_[0])
 }
 
 sub cv(;&) {

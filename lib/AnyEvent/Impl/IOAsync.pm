@@ -143,6 +143,11 @@ unsafe backends by default).
 IO::Async just hates global destruction. Calling C<exit> will easily give
 you one such line per watcher.
 
+The problem is that L<IO::Async::Loop> is istelf not warning-free, but
+actually enables warnings for itself.
+
+(Ok, the real bug is of course perl's broken destructor).
+
 =back
 
 On the positive side, performance with IO::Async is quite good even in my
@@ -157,9 +162,17 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Time::HiRes;
 use Scalar::Util;
 
-use IO::Async::Loop; # not strictly required...
+BEGIN {
+   # IO::Async enables warnings but is itself not warning-free, we
+   # try our best to silence it.
+   require warnings;
+   local *warnings::import = sub { };
+   require IO::Async::Loop;
+}
+
 use IO::Async::Handle;
 
+our $VERSION = $AnyEvent::VERSION;
 our $LOOP;
 
 sub set_loop($) {
@@ -170,11 +183,12 @@ sub set_loop($) {
 sub timer {
    my ($class, %arg) = @_;
    
+   # IO::Async has problems with overloaded objects
+   my $cb = $arg{cb};
+
    my $id;
 
    if (my $ival = $arg{interval}) {
-      my $cb = $arg{cb};
-
       my $ival_cb; $ival_cb = sub {
          $id = $LOOP->enqueue_timer (delay => $ival, code => $ival_cb);
          &$cb;
@@ -186,7 +200,7 @@ sub timer {
       Scalar::Util::weaken $ival_cb;
 
    } else {
-      $id = $LOOP->enqueue_timer (delay => $arg{after}, code => $arg{cb});
+      $id = $LOOP->enqueue_timer (delay => $arg{after}, code => sub { &$cb });
    }
 
    bless \\$id, "AnyEvent::Impl::IOAsync::timer"
@@ -207,8 +221,8 @@ sub io {
    # I just love undocumented and illogical interfaces...
    my $id = new IO::Async::Handle
       $arg{poll} eq "r"
-         ? (read_handle  => $arg{fh}, on_read_ready  => $arg{cb})
-         : (write_handle => $arg{fh}, on_write_ready => $arg{cb}, want_writeready => 1),
+         ? (read_handle  => $fh, on_read_ready  => $arg{cb})
+         : (write_handle => $fh, on_write_ready => $arg{cb}, want_writeready => 1),
    ;
    $LOOP->add ($id);
 
