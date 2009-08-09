@@ -259,7 +259,7 @@ sub _fork_schedule {
 
          my $buf;
 
-         my $ww; $ww = AnyEvent->io (fh => $r, poll => 'r', cb => sub {
+         my $ww; $ww = AE::io $r, 0, sub {
             my $len = sysread $r, $buf, 65536, length $buf;
 
             if ($len <= 0) {
@@ -280,7 +280,7 @@ sub _fork_schedule {
                # clean up the pid
                waitpid $pid, 0;
             }
-         });
+         };
 
       } elsif (defined $pid) {
          # child
