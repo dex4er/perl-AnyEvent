@@ -11,7 +11,8 @@ AE - simpler/faster/newer/cooler AnyEvent API
 This module documents the new simpler AnyEvent API.
 
 The rationale for the new API is that experience with L<EV> shows that
-this API actually "works", despite it's lack of extensibility.
+this API actually "works", despite it's lack of extensibility, leading to
+a shorter, easier and faster API.
 
 The main difference to AnyEvent is that instead of method calls, function
 calls are used, and that no named arguments are used.
@@ -31,7 +32,7 @@ still.
 
 Note that the C<AE> API is an alternative to, not the future version of,
 the AnyEvent API. Both APIs can be used interchangably and and there are
-no plans to "switch", so if in doubt, use L<AnyEvent>'s API.
+no plans to "switch", so if in doubt, use the L<AnyEvent> API.
 
 As the AE API is complementary, not everything in the AnyEvent API is
 available, so you still need to use AnyEvent for the finer stuff. Also,
