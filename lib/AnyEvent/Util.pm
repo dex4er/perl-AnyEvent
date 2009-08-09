@@ -396,34 +396,30 @@ guard.
 
 =cut
 
-sub guard(&) {
-   if (!$ENV{PERL_ANYEVENT_AVOID_GUARD} && eval "use Guard 0.5 (); 1") {
-      warn "AnyEvent::Util: using Guard module to implement guards.\n" if $AnyEvent::VERBOSE >= 8;
-      *guard = \&Guard::guard;
-   } else {
-      warn "AnyEvent::Util: using pure-perl guard implementation.\n" if $AnyEvent::VERBOSE >= 8;
+if (!$ENV{PERL_ANYEVENT_AVOID_GUARD} && eval { require Guard; $Guard::VERSION >= 0.5 }) {
+   warn "AnyEvent::Util: using Guard module to implement guards.\n" if $AnyEvent::VERBOSE >= 8;
+   *guard = \&Guard::guard;
+} else {
+   warn "AnyEvent::Util: using pure-perl guard implementation.\n" if $AnyEvent::VERBOSE >= 8;
 
-      *AnyEvent::Util::guard::DESTROY = sub {
-         local $@;
+   *AnyEvent::Util::guard::DESTROY = sub {
+      local $@;
 
-         eval {
-            local $SIG{__DIE__};
-            ${$_[0]}->();
-         };
-
-         warn "runtime error in AnyEvent::guard callback: $@" if $@;
+      eval {
+         local $SIG{__DIE__};
+         ${$_[0]}->();
       };
 
-      *AnyEvent::Util::guard::cancel = sub ($) {
-         ${$_[0]} = sub { };
-      };
+      warn "runtime error in AnyEvent::guard callback: $@" if $@;
+   };
 
-      *guard = sub (&) {
-         bless \(my $cb = shift), "AnyEvent::Util::guard"
-      }
+   *AnyEvent::Util::guard::cancel = sub ($) {
+      ${$_[0]} = sub { };
+   };
+
+   *guard = sub (&) {
+      bless \(my $cb = shift), "AnyEvent::Util::guard"
    }
-
-   goto &guard;
 }
 
 1;

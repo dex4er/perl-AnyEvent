@@ -5,6 +5,9 @@ Revision history for Perl extension AnyEvent.
           in AnyEvent::Handle.
         - AE::Handle now has separate and independent read and write timeout
           settings.
+        - probe for Guard module when AnyEvent::Util is loaded, not at
+          runtime (Event doesn't like eval "use" from callbacks, and it avoids
+          exporting the probe function).
 	- hackishly provide fast AE:: interface when EV is the backend.
         - inherit VERSION from AnyEvent::VERSION in most modules.
 
