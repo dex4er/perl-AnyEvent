@@ -31,7 +31,7 @@ use base 'Exporter';
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpair);
 our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL);
 
-our $VERSION = 4.92;
+our $VERSION = $AnyEvent::VERSION;
 
 BEGIN {
    my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };

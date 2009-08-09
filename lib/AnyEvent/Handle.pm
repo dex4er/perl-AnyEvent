@@ -2,10 +2,6 @@
 
 AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
-=cut
-
-our $VERSION = 4.92;
-
 =head1 SYNOPSIS
 
    use AnyEvent;
@@ -63,6 +59,8 @@ use Errno qw(EAGAIN EINTR);
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(WSAEWOULDBLOCK);
+
+our $VERSION = $AnyEvent::VERSION;
 
 =head1 METHODS
 

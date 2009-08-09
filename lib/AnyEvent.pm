@@ -1295,6 +1295,8 @@ sub _dupfh($$;$$) {
 
 package AE;
 
+our $VERSION = $AnyEvent::VERSION;
+
 sub io($$$) {
    AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
 }

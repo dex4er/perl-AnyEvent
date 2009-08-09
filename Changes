@@ -6,6 +6,7 @@ Revision history for Perl extension AnyEvent.
         - AE::Handle now has separate and independent read and write timeout
           settings.
 	- hackishly provide fast AE:: interface when EV is the backend.
+        - inherit VERSION from AnyEvent::VERSION in most modules.
 
 4.91 Thu Aug  6 15:42:45 CEST 2009
 	- AE::Handle::starttls could get out of sync when the read buffer

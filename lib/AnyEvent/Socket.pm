@@ -58,7 +58,7 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.92;
+our $VERSION = $AnyEvent::VERSION;
 
 # used in cases where we may return immediately but want the
 # caller to do stuff first
