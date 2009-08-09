@@ -8,6 +8,7 @@ Revision history for Perl extension AnyEvent.
         - probe for Guard module when AnyEvent::Util is loaded, not at
           runtime (Event doesn't like eval "use" from callbacks, and it avoids
           exporting the probe function).
+        - do no longer use Event by default, only EV or Perl, Event is too buggy.
 	- hackishly provide fast AE:: interface when EV is the backend.
         - inherit VERSION from AnyEvent::VERSION in most modules.
 

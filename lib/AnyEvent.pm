@@ -808,12 +808,11 @@ The available backend classes are (every class has its own manpage):
 =item Backends that are autoprobed when no other event loop can be found.
 
 EV is the preferred backend when no other event loop seems to be in
-use. If EV is not installed, then AnyEvent will try Event, and, failing
-that, will fall back to its own pure-perl implementation, which is
-available everywhere as it comes with AnyEvent itself.
+use. If EV is not installed, then AnyEvent will fall back to its own
+pure-perl implementation, which is available everywhere as it comes with
+AnyEvent itself.
 
    AnyEvent::Impl::EV        based on EV (interface to libev, best choice).
-   AnyEvent::Impl::Event     based on Event, very stable, few glitches.
    AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
 
 =item Backends that are transparently being picked up when they are used.
@@ -824,6 +823,7 @@ them. This means that AnyEvent will automatically pick the right backend
 when the main program loads an event module before anything starts to
 create watchers. Nothing special needs to be done by the main program.
 
+   AnyEvent::Impl::Event     based on Event, very stable, few glitches.
    AnyEvent::Impl::Glib      based on Glib, slow but very stable.
    AnyEvent::Impl::Tk        based on Tk, very broken.
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
@@ -1153,11 +1153,11 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 
 my @models = (
    [EV::                   => AnyEvent::Impl::EV::   , 1],
-   [Event::                => AnyEvent::Impl::Event::, 1],
    [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl:: , 1],
    # everything below here will not (normally) be autoprobed
    # as the pureperl backend should work everywhere
    # and is usually faster
+   [Event::                => AnyEvent::Impl::Event::, 1],
    [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
    [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package

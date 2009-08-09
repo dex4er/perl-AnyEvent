@@ -419,7 +419,7 @@ if (!$ENV{PERL_ANYEVENT_AVOID_GUARD} && eval { require Guard; $Guard::VERSION >=
 
    *guard = sub (&) {
       bless \(my $cb = shift), "AnyEvent::Util::guard"
-   }
+   };
 }
 
 1;
