@@ -42,13 +42,3 @@ WriteMakefile(
     },
 );
 
-sub MY::postamble {
-   <<EOF;
-
-# set \$VERSION in all modules
-setver:
-	\$(PERL) -pi -e 's/^(\\s*(our\\s*)?\\\$\$VERSION\\s*=\\s*).*\$\$/\$\${1}\$(VERSION);/' \$(TO_INST_PM)
-
-EOF
-}
-

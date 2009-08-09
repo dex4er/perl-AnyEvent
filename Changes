@@ -1,6 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
-4.92
+5.0  Sun Aug  9 17:32:09 CEST 2009
+	- officially introduce and document the AE API.
         - lowering the timeout at runtime did not have immediate effect
           in AnyEvent::Handle.
         - AE::Handle now has separate and independent read and write timeout
@@ -13,7 +14,7 @@ Revision history for Perl extension AnyEvent.
         - work around IO::Async's problems with overloaded objects.
         - try to disable wearnings inside IO::Async, it's just too buggy.
         - do no longer use Event by default, only EV or Perl, Event is too buggy.
-	- hackishly provide fast AE:: interface when EV is the backend.
+	- hackishly provide fast AE:: interface when EV or Perl is the backend.
         - inherit VERSION from AnyEvent::VERSION in most modules.
 
 4.91 Thu Aug  6 15:42:45 CEST 2009
