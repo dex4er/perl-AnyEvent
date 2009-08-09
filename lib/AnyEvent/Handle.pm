@@ -1,19 +1,10 @@
-package AnyEvent::Handle;
-
-use Scalar::Util ();
-use Carp ();
-use Errno qw(EAGAIN EINTR);
-
-use AnyEvent (); BEGIN { AnyEvent::common_sense }
-use AnyEvent::Util qw(WSAEWOULDBLOCK);
-
 =head1 NAME
 
 AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.91;
+our $VERSION = 4.92;
 
 =head1 SYNOPSIS
 
@@ -60,6 +51,18 @@ C<on_error> callback.
 
 All callbacks will be invoked with the handle object as their first
 argument.
+
+=cut
+
+package AnyEvent::Handle;
+
+use Scalar::Util ();
+use List::Util ();
+use Carp ();
+use Errno qw(EAGAIN EINTR);
+
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
+use AnyEvent::Util qw(WSAEWOULDBLOCK);
 
 =head1 METHODS
 
@@ -218,10 +221,21 @@ the file when the write queue becomes empty.
 
 =item timeout => $fractional_seconds
 
-If non-zero, then this enables an "inactivity" timeout: whenever this many
-seconds pass without a successful read or write on the underlying file
-handle, the C<on_timeout> callback will be invoked (and if that one is
-missing, a non-fatal C<ETIMEDOUT> error will be raised).
+=item rtimeout => $fractional_seconds
+
+=item wtimeout => $fractional_seconds
+
+If non-zero, then these enables an "inactivity" timeout: whenever this
+many seconds pass without a successful read or write on the underlying
+file handle (or a call to C<timeout_reset>), the C<on_timeout> callback
+will be invoked (and if that one is missing, a non-fatal C<ETIMEDOUT>
+error will be raised).
+
+There are three variants of the timeouts that work fully independent
+of each other, for both read and write, just read, and just write:
+C<timeout>, C<rtimeout> and C<wtimeout>, with corresponding callbacks
+C<on_timeout>, C<on_rtimeout> and C<on_wtimeout>, and reset functions
+C<timeout_reset>, C<rtimeout_reset>, and C<wtimeout_reset>.
 
 Note that timeout processing is also active when you currently do not have
 any outstanding read or write requests: If you plan to keep the connection
@@ -476,8 +490,13 @@ sub _start {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   $self->{_activity} = AE::now;
-   $self->_timeout;
+   $self->{_activity}  =
+   $self->{_ractivity} =
+   $self->{_wactivity} = AE::now;
+
+   $self->timeout  (delete $self->{timeout} ) if $self->{timeout};
+   $self->rtimeout (delete $self->{rtimeout}) if $self->{rtimeout};
+   $self->wtimeout (delete $self->{wtimeout}) if $self->{wtimeout};
 
    $self->no_delay (delete $self->{no_delay}) if exists $self->{no_delay};
 
@@ -546,15 +565,17 @@ sub on_eof {
 
 =item $handle->on_timeout ($cb)
 
-Replace the current C<on_timeout> callback, or disables the callback (but
-not the timeout) if C<$cb> = C<undef>. See the C<timeout> constructor
-argument and method.
+=item $handle->on_rtimeout ($cb)
+
+=item $handle->on_wtimeout ($cb)
+
+Replace the current C<on_timeout>, C<on_rtimeout> or C<on_wtimeout>
+callback, or disables the callback (but not the timeout) if C<$cb> =
+C<undef>. See the C<timeout> constructor argument and method.
 
 =cut
 
-sub on_timeout {
-   $_[0]{on_timeout} = $_[1];
-}
+# see below
 
 =item $handle->autocork ($boolean)
 
@@ -618,55 +639,85 @@ sub rbuf_max {
 
 =item $handle->timeout ($seconds)
 
+=item $handle->rtimeout ($seconds)
+
+=item $handle->wtimeout ($seconds)
+
 Configures (or disables) the inactivity timeout.
+
+=item $handle->timeout_reset
+
+=item $handle->rtimeout_reset
+
+=item $handle->wtimeout_reset
+
+Reset the activity timeout, as if data was received or sent.
+
+These methods are cheap to call.
 
 =cut
 
-sub timeout {
-   my ($self, $timeout) = @_;
+for my $dir ("", "r", "w") {
+   my $timeout    = "${dir}timeout";
+   my $tw         = "_${dir}tw";
+   my $on_timeout = "on_${dir}timeout";
+   my $activity   = "_${dir}activity";
+   my $cb;
 
-   $self->{timeout} = $timeout;
-   delete $self->{_tw};
-   $self->_timeout;
-}
+   *$on_timeout = sub {
+      $_[0]{$on_timeout} = $_[1];
+   };
 
-# reset the timeout watcher, as neccessary
-# also check for time-outs
-sub _timeout {
-   my ($self) = @_;
+   *$timeout = sub {
+      my ($self, $new_value) = @_;
 
-   if ($self->{timeout} && $self->{fh}) {
-      my $NOW = AE::now;
+      $self->{$timeout} = $new_value;
+      delete $self->{$tw}; &$cb;
+   };
 
-      # when would the timeout trigger?
-      my $after = $self->{_activity} + $self->{timeout} - $NOW;
+   *{"${dir}timeout_reset"} = sub {
+      $_[0]{$activity} = AE::now;
+   };
 
-      # now or in the past already?
-      if ($after <= 0) {
-         $self->{_activity} = $NOW;
+   # main workhorse:
+   # reset the timeout watcher, as neccessary
+   # also check for time-outs
+   $cb = sub {
+      my ($self) = @_;
 
-         if ($self->{on_timeout}) {
-            $self->{on_timeout}($self);
-         } else {
-            $self->_error (Errno::ETIMEDOUT);
+      if ($self->{$timeout} && $self->{fh}) {
+         my $NOW = AE::now;
+
+         # when would the timeout trigger?
+         my $after = $self->{$activity} + $self->{$timeout} - $NOW;
+
+         # now or in the past already?
+         if ($after <= 0) {
+            $self->{$activity} = $NOW;
+
+            if ($self->{$on_timeout}) {
+               $self->{$on_timeout}($self);
+            } else {
+               $self->_error (Errno::ETIMEDOUT);
+            }
+
+            # callback could have changed timeout value, optimise
+            return unless $self->{$timeout};
+
+            # calculate new after
+            $after = $self->{$timeout};
          }
 
-         # callback could have changed timeout value, optimise
-         return unless $self->{timeout};
+         Scalar::Util::weaken $self;
+         return unless $self; # ->error could have destroyed $self
 
-         # calculate new after
-         $after = $self->{timeout};
+         $self->{$tw} ||= AE::timer $after, 0, sub {
+            delete $self->{$tw};
+            $cb->($self);
+         };
+      } else {
+         delete $self->{$tw};
       }
-
-      Scalar::Util::weaken $self;
-      return unless $self; # ->error could have destroyed $self
-
-      $self->{_tw} ||= AE::timer $after, 0, sub {
-         delete $self->{_tw};
-         $self->_timeout;
-      };
-   } else {
-      delete $self->{_tw};
    }
 }
 
@@ -724,7 +775,7 @@ sub _drain_wbuf {
          if (defined $len) {
             substr $self->{wbuf}, 0, $len, "";
 
-            $self->{_activity} = AE::now;
+            $self->{_activity} = $self->{_wactivity} = AE::now;
 
             $self->{on_drain}($self)
                if $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf})
@@ -1547,7 +1598,7 @@ sub start_read {
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
-            $self->{_activity} = AE::now;
+            $self->{_activity} = $self->{_ractivity} = AE::now;
 
             if ($self->{tls}) {
                Net::SSLeay::BIO_write ($self->{_rbio}, $$rbuf);

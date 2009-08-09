@@ -1,7 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+4.92
         - lowering the timeout at runtime did not have immediate effect
           in AnyEvent::Handle.
+        - AE::Handle now has separate and independent read and write timeout
+          settings.
 	- hackishly provide fast AE:: interface when EV is the backend.
 
 4.91 Thu Aug  6 15:42:45 CEST 2009

@@ -58,7 +58,7 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.91;
+our $VERSION = 4.92;
 
 # used in cases where we may return immediately but want the
 # caller to do stuff first
