@@ -65,10 +65,6 @@ sub child {
    }
 }
 
-*AE::child = sub($$) {
-   EV::child $_[0], 0, $_[1]
-};
-
 sub idle {
    my ($class, %arg) = @_;
 
