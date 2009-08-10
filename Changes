@@ -2,6 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 5.01 Mon Aug 10 03:16:32 CEST 2009
 	- last release broke EV child watchers :/.
+        - fixed wrong documentation in AE::Socket.
 
 5.0  Sun Aug  9 17:32:09 CEST 2009
 	- officially introduce and document the AE API.
