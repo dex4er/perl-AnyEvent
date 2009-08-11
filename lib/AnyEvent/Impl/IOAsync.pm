@@ -24,7 +24,7 @@ their fh.
 
 =head1 PROBLEMS WITH IO::Async
 
-There have been multiple attemtps at providing an AnyEvent interface to
+There have been multiple attempts at providing an AnyEvent interface to
 IO::Async, and the effort is ongoing. Supporting IO::Async is hard. Here's
 why:
 
@@ -143,10 +143,11 @@ unsafe backends by default).
 IO::Async just hates global destruction. Calling C<exit> will easily give
 you one such line per watcher.
 
-The problem is that L<IO::Async::Loop> is istelf not warning-free, but
+The problem is that L<IO::Async::Loop> is itself not warning-free, but
 actually enables warnings for itself.
 
-(Ok, the real bug is of course perl's broken destructor).
+(Ok, the real bug is of course perl's broken mark & sweep garbage
+collector that corrupts data structures).
 
 =back
 
