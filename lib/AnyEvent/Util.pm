@@ -560,8 +560,8 @@ in the callback and print key and certificate.
       "3>", \my $key,
       "2>", "/dev/null";
 
-   $cv->cb )sub {
-      shift->recv or die "openssl failed";
+   $cv->cb (sub {
+      shift->recv and die "openssl failed";
 
       print "$key\n$cert\n";
    });

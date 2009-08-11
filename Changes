@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-
+5.1  Tue Aug 11 03:17:32 CEST 2009
         - tcp_connect now reports the correct error in $!, not an unrelated
           one (was broken since 4.91).
         - AE::Handle did not properly clear rtimeout/wtimeout watchers
