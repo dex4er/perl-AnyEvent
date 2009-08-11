@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+        - fixed a bug in run_cmd with input from filename.
+
 5.1  Tue Aug 11 03:17:32 CEST 2009
         - tcp_connect now reports the correct error in $!, not an unrelated
           one (was broken since 4.91).

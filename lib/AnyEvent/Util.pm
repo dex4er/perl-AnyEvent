@@ -652,7 +652,7 @@ sub run_cmd {
             $redir{$fd} = $pr;
          } else {
             push @exe, sub {
-               open my $fh, "<", $type
+               open my $fh, "<", $ob
                   or POSIX::_exit (125);
                $redir{$fd} = $fh;
             };
