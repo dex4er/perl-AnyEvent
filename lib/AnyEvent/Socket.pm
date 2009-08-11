@@ -63,10 +63,11 @@ our $VERSION = $AnyEvent::VERSION;
 # used in cases where we may return immediately but want the
 # caller to do stuff first
 sub _postpone {
-   my ($cb, @args) = @_;
+   my ($cb, @args) = (@_, $!);
 
    my $w; $w = AE::timer 0, 0, sub {
       undef $w;
+      $! = pop @args;
       $cb->(@args);
    };
 }

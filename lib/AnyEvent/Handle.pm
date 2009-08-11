@@ -452,7 +452,7 @@ sub new {
 
                      $self->{on_connect}
                         and $self->{on_connect}($self, $host, $port, sub {
-                               delete @$self{qw(fh _tw _ww _rw _eof _queue rbuf _wbuf tls _tls_rbuf _tls_wbuf)};
+                               delete @$self{qw(fh _tw _rtw _wtw _ww _rw _eof _queue rbuf _wbuf tls _tls_rbuf _tls_wbuf)};
                                $self->{_skip_drain_rbuf} = 1;
                                &$retry;
                             });
@@ -508,15 +508,6 @@ sub _start {
 
    $self->_drain_wbuf;
 }
-
-#sub _shutdown {
-#   my ($self) = @_;
-#
-#   delete @$self{qw(_tw _rw _ww fh wbuf on_read _queue)};
-#   $self->{_eof} = 1; # tell starttls et. al to stop trying
-#
-#   &_freetls;
-#}
 
 sub _error {
    my ($self, $errno, $fatal, $message) = @_;

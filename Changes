@@ -1,5 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+
+        - tcp_connect now reports the correct error in $!, not an unrelated
+          one (was broken since 4.91).
+        - AE::Handle did not properly clear rtimeout/wtimeout watchers
+          when retrying a tcp_connect.
+        - new functions: AnyEvent::Util::run_cmd and close_all_fds_except.
         - fixed wrong documentation in AE::Socket.
 
 5.01 Mon Aug 10 03:16:32 CEST 2009
