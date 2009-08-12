@@ -1,6 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+5.11 Wed Aug 12 17:49:37 CEST 2009
         - fixed a bug in run_cmd with input from filename.
+        - create a json coder object when none is given in write direction
+          to reduce dependency on JSON.
 
 5.1  Tue Aug 11 03:17:32 CEST 2009
         - tcp_connect now reports the correct error in $!, not an unrelated

@@ -880,13 +880,17 @@ this line into their JSON decoder of choice.
 
 =cut
 
+sub json_coder() {
+   eval { require JSON::XS; JSON::XS->new->utf8 }
+      || do { require JSON; JSON->new->utf8 }
+}
+
 register_write_type json => sub {
    my ($self, $ref) = @_;
 
-   require JSON;
+   my $json = $self->{json} ||= json_coder;
 
-   $self->{json} ? $self->{json}->encode ($ref)
-                 : JSON::encode_json ($ref)
+   $json->encode ($ref)
 };
 
 =item storable => $reference
@@ -1450,9 +1454,7 @@ the C<json> write type description, above, for an actual example.
 register_read_type json => sub {
    my ($self, $cb) = @_;
 
-   my $json = $self->{json} ||=
-      eval { require JSON::XS; JSON::XS->new->utf8 }
-         || do { require JSON; JSON->new->utf8 };
+   my $json = $self->{json} ||= json_coder;
 
    my $data;
    my $rbuf = \$self->{rbuf};
