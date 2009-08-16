@@ -505,6 +505,12 @@ module (C<format_address> converts it to C<unix/>).
 
 =cut
 
+# perl contains a bug (imho) where it requires that the kernel always returns
+# sockaddr_un structures of maximum length (which is not, AFAICS, required
+# by any standard). try to 0-pad structures for the benefit of those platforms.
+
+my $sa_un_zero = Socket::pack_sockaddr_un ""; $sa_un_zero ^= $sa_un_zero;
+
 sub unpack_sockaddr($) {
    my $af = sockaddr_family $_[0];
 
@@ -513,7 +519,7 @@ sub unpack_sockaddr($) {
    } elsif ($af == AF_INET6) {
       unpack "x2 n x4 a16", $_[0]
    } elsif ($af == AF_UNIX) {
-      ((Socket::unpack_sockaddr_un $_[0]), pack "S", AF_UNIX)
+      ((Socket::unpack_sockaddr_un $_[0] ^ $sa_un_zero), pack "S", AF_UNIX)
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
