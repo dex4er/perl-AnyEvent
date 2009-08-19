@@ -136,10 +136,13 @@ The default is to use C<"any"> but disable SSLv2. This has the effect of
 sending a SSLv2 hello, indicating the support for SSLv3 and TLSv1, but not
 actually negotiating an (insecure) SSLv2 connection.
 
-Specifying a specific version is almost always wrong to use for a server,
-and often wrong for a client. If you only want to allow a specific
-protocol version, use the C<sslv2>, C<sslv3> or C<tlsv1> arguments
-instead.
+Specifying a specific version is almost always wrong to use for a server
+speaking to a wide variety of clients (e.g. web browsers), and often wrong
+for a client. If you only want to allow a specific protocol version, use
+the C<sslv2>, C<sslv3> or C<tlsv1> arguments instead.
+
+For new services it is usually a good idea to enforce a C<TLSv1> method
+from the beginning.
 
 =item sslv2 => $enabled
 
@@ -151,7 +154,7 @@ Enable or disable SSLv3 (normally I<enabled>).
 
 =item tlsv1 => $enabled
 
-Enable or disable SSLv3 (normally I<enabled>).
+Enable or disable TLSv1 (normally I<enabled>).
 
 =item verify => $enable
 
