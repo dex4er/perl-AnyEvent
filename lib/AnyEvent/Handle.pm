@@ -1738,7 +1738,7 @@ sub starttls {
    $ERROR_SYSCALL   = Net::SSLeay::ERROR_SYSCALL     ();
    $ERROR_WANT_READ = Net::SSLeay::ERROR_WANT_READ   ();
 
-   $tls = $self->{tls};
+   $tls = delete $self->{tls};
    $ctx = $self->{tls_ctx};
 
    local $Carp::CarpLevel = 1; # skip ourselves when creating a new context or session

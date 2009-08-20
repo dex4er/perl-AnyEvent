@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+        - AnyEvent::Handle could cause hard crashes in Net::SSLeay when
+          using starttls with an illegal/uncreatable tls context.
+
 5.111 Sun Aug 16 18:44:36 CEST 2009
 	- perl errornously requires sockaddr_un structures returned by the
           kernel to have a specific length. work around this bug by padding
