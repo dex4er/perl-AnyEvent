@@ -509,7 +509,7 @@ module (C<format_address> converts it to C<unix/>).
 # sockaddr_un structures of maximum length (which is not, AFAICS, required
 # by any standard). try to 0-pad structures for the benefit of those platforms.
 
-my $sa_un_zero = Socket::pack_sockaddr_un ""; $sa_un_zero ^= $sa_un_zero;
+my $sa_un_zero = eval { Socket::pack_sockaddr_un "" }; $sa_un_zero ^= $sa_un_zero;
 
 sub unpack_sockaddr($) {
    my $af = sockaddr_family $_[0];

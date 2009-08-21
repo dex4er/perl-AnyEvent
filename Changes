@@ -1,7 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+5.112 Fri Aug 21 13:59:04 CEST 2009
         - AnyEvent::Handle could cause hard crashes in Net::SSLeay when
           using starttls with an illegal/uncreatable tls context.
+        - port to broken win32 perls.
 
 5.111 Sun Aug 16 18:44:36 CEST 2009
 	- perl errornously requires sockaddr_un structures returned by the
