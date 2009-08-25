@@ -1914,16 +1914,9 @@ program when the user enters quit:
       },
    );
 
-   my $time_watcher; # can only be used once
-
-   sub new_timer {
-      $timer = AnyEvent->timer (after => 1, cb => sub {
-         warn "timeout\n"; # print 'timeout' about every second
-         &new_timer; # and restart the time
-      });
-   }
-
-   new_timer; # create first timer
+   my $time_watcher = AnyEvent->timer (after => 1, interval => 1, cb => sub {
+      warn "timeout\n"; # print 'timeout' at most every second
+   });
 
    $cv->recv; # wait until user enters /^q/i
 

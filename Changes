@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: pass values to anyevent condvar callback, make this count as recv.
 5.112 Fri Aug 21 13:59:04 CEST 2009
         - AnyEvent::Handle could cause hard crashes in Net::SSLeay when
           using starttls with an illegal/uncreatable tls context.
