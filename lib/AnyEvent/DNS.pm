@@ -378,9 +378,9 @@ sub _enc_name($) {
    pack "(C/a*)*", (split /\./, shift), ""
 }
 
-if ($[ < 5.008) {
+if ($] < 5.008) {
    # special slower 5.6 version
-   *_enc_name = sub {
+   *_enc_name = sub ($) {
       join "", map +(pack "C/a*", $_), (split /\./, shift), ""
    };
 }

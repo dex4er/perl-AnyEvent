@@ -140,7 +140,7 @@ BEGIN {
 
          $next = (POSIX::times ())[0];
          # we assume 32 bit signed on wrap but 64 bit will never wrap
-         $last -= 0x100000000 if $last > $next;
+         $last -= 4294967296 if $last > $next; # 0x100000000, but perl has probelsm with big hex constants
          $MNOW += ($next - $last) * $HZ1;
          $last = $next;
       };
@@ -303,7 +303,7 @@ sub AnyEvent::Impl::Perl::io::DESTROY {
    }
 }
 
-sub AE::timer {
+sub AE::timer($$$) {
    my ($after, $interval, $cb) = @_;
    
    my $self;

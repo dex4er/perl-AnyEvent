@@ -1108,8 +1108,8 @@ package AnyEvent;
 
 # basically a tuned-down version of common::sense
 sub common_sense {
-   # no warnings
-   ${^WARNING_BITS} ^= ${^WARNING_BITS};
+   # from common:.sense 1.0
+   ${^WARNING_BITS} = "\xfc\x3f\xf3\x00\x0f\xf3\xcf\xc0\xf3\xfc\x33\x03";
    # use strict vars subs
    $^H |= 0x00000600;
 }
@@ -1345,7 +1345,7 @@ package AnyEvent::Base;
 
 # default implementations for many methods
 
-sub _time {
+sub _time() {
    # probe for availability of Time::HiRes
    if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
       warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
@@ -1375,7 +1375,7 @@ our $HAVE_ASYNC_INTERRUPT;
 
 sub _have_async_interrupt() {
    $HAVE_ASYNC_INTERRUPT = 1*(!$ENV{PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT}
-                              && eval "use Async::Interrupt 1.0 (); 1")
+                              && eval "use Async::Interrupt 1.02 (); 1")
       unless defined $HAVE_ASYNC_INTERRUPT;
 
    $HAVE_ASYNC_INTERRUPT

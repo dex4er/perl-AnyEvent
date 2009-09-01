@@ -2,6 +2,13 @@ Revision history for Perl extension AnyEvent.
 
 TODO: pass values to anyevent condvar callback, make this count as recv.
 TODO: resolv.conf nameserver blabla  # comment does not work
+	- update to Async::Interrupt 1.02.
+        - use same set of warningsa s common::sense 2.0.
+	- fix a potential 32 bit overflow issue due to perl having problems
+          with large hex constants in the Perl backend.
+        - do not use the slower 5.6 version fo the enc_name code in AnyEvent::DNS
+          by default.
+
 5.112 Fri Aug 21 13:59:04 CEST 2009
         - AnyEvent::Handle could cause hard crashes in Net::SSLeay when
           using starttls with an illegal/uncreatable tls context.
