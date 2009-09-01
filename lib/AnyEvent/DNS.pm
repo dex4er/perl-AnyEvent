@@ -36,7 +36,11 @@ use AnyEvent::Util qw(AF_INET6);
 
 our $VERSION = $AnyEvent::VERSION;
 
-our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
+# some public dns servers
+our @DNS_FALLBACK = (
+   v209.244.0.3, v209.244.0.4, # level3
+   v4.2.2.1, v4.2.2.2, v4.2.2.3, v4.2.2.4, v4.2.2.5, v4.2.2.6, # vnsc-pri.sys.gtei.net
+);
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 
@@ -812,9 +816,9 @@ sub parse_resolv_conf {
    my $attempts;
 
    for (split /\n/, $resolvconf) {
-      if (/^\s*#/) {
-         # comment
-      } elsif (/^\s*nameserver\s+(\S+)\s*$/i) {
+      s/#.*$//; # not quite legal, but many people insist
+
+      if (/^\s*nameserver\s+(\S+)\s*$/i) {
          my $ip = $1;
          if (my $ipn = AnyEvent::Socket::parse_address ($ip)) {
             push @{ $self->{server} }, $ipn;
