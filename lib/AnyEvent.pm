@@ -2370,13 +2370,13 @@ hand-optimised "raw sockets benchmark", while AnyEvent + its pure perl
 backend easily beats IO::Lambda and POE.
 
 And even the 100% non-blocking version written using the high-level (and
-slow :) L<AnyEvent::Handle> abstraction beats both POE and IO::Lambda by a
-large margin, even though it does all of DNS, tcp-connect and socket I/O
-in a non-blocking way.
+slow :) L<AnyEvent::Handle> abstraction beats both POE and IO::Lambda
+higher level ("unoptimised") abstractions by a large margin, even though
+it does all of DNS, tcp-connect and socket I/O in a non-blocking way.
 
 The two AnyEvent benchmarks programs can be found as F<eg/ae0.pl> and
 F<eg/ae2.pl> in the AnyEvent distribution, the remaining benchmarks are
-part of the IO::lambda distribution and were used without any changes.
+part of the IO::Lambda distribution and were used without any changes.
 
 
 =head1 SIGNALS

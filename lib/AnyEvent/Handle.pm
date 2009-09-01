@@ -1193,7 +1193,6 @@ sub unshift_read {
             ->($self, $cb, @_);
    }
 
-
    unshift @{ $self->{_queue} }, $cb;
    $self->_drain_rbuf;
 }
