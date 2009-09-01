@@ -39,7 +39,7 @@ our $VERSION = $AnyEvent::VERSION;
 # some public dns servers
 our @DNS_FALLBACK = (
    v209.244.0.3, v209.244.0.4, # level3
-   v4.2.2.1, v4.2.2.2, v4.2.2.3, v4.2.2.4, v4.2.2.5, v4.2.2.6, # vnsc-pri.sys.gtei.net
+   v4.2.2.1, v4.2.2.3, v4.2.2.4, v4.2.2.5, v4.2.2.6, # vnsc-pri.sys.gtei.net
 );
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)

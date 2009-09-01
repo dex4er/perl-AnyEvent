@@ -1,16 +1,16 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: pass values to anyevent condvar callback, make this count as recv.
+5.12 Tue Sep  1 20:26:50 CEST 2009
 	- be more lenient when parsing resolv.conf files, as some people
           use hashmarks as comment indicator inside directives (reported
           by Michael S. Fischer).
-	- (optionally) require Async::Interrupt 1.02.
         - use same set of warnings as common::sense 2.0.
 	- fix a potential 32 bit overflow issue due to perl having problems
           with large hex constants in the Perl backend.
         - do not use the slower 5.6 version fo the enc_name code in AnyEvent::DNS
           by default.
         - fix some prototypes.
+	- (optionally) require Async::Interrupt 1.02.
         - replace opendns fallbacks by verizon/level3 public dns servers.
 
 5.112 Fri Aug 21 13:59:04 CEST 2009
