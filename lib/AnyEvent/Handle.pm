@@ -314,7 +314,10 @@ putting it into the stream.
 
 Since BSD emulation of OOB data on top of TCP's urgent data can have
 security implications, AnyEvent::Handle sets this flag automatically
-unless explicitly specified.
+unless explicitly specified. Note that setting this flag after
+establishing a connection I<may> be a bit too late (data loss could
+already have occured on BSD systems), but at least it will protect you
+from most attacks.
 
 =item read_size => <bytes>
 
