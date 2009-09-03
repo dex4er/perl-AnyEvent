@@ -308,9 +308,13 @@ BSD majorly fucked up the implementation of TCP urgent data. The result
 is that almost no OS implements TCP according to the specs, and every OS
 implements it slightly differently.
 
-If you want to handle TCP urgent data, then setting this flag gives you
-the most portable way of getting urgent data, by putting it into the
-stream.
+If you want to handle TCP urgent data, then setting this flag (the default
+is enabled) gives you the most portable way of getting urgent data, by
+putting it into the stream.
+
+Since BSD emulation of OOB data on top of TCP's urgent data can have
+security implications, AnyEvent::Handle sets this flag automatically
+unless explicitly specified.
 
 =item read_size => <bytes>
 
@@ -521,9 +525,10 @@ sub _start {
    $self->rtimeout  (delete $self->{rtimeout} ) if $self->{rtimeout};
    $self->wtimeout  (delete $self->{wtimeout} ) if $self->{wtimeout};
 
-   $self->no_delay  (delete $self->{no_delay} ) if exists $self->{no_delay};
-   $self->keepalive (delete $self->{keepalive}) if exists $self->{keepalive};
-   $self->oobinline (delete $self->{oobinline}) if exists $self->{oobinline};
+   $self->no_delay  (delete $self->{no_delay} ) if exists $self->{no_delay}  && $self->{no_delay};
+   $self->keepalive (delete $self->{keepalive}) if exists $self->{keepalive} && $self->{keepalive};
+
+   $self->oobinline (exists $self->{oobinline} ? delete $self->{oobinline} : 1);
 
    $self->starttls  (delete $self->{tls}, delete $self->{tls_ctx})
       if $self->{tls};
