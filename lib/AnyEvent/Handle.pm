@@ -287,6 +287,31 @@ accomplishd by setting this option to a true value.
 The default is your opertaing system's default behaviour (most likely
 enabled), this option explicitly enables or disables it, if possible.
 
+=item keepalive => <boolean>
+
+Enables (default disable) the SO_KEEPALIVE option on the stream socket:
+normally, TCP connections have no time-out once established, so TCP
+conenctions, once established, can stay alive forever even when the other
+side has long gone. TCP keepalives are a cheap way to take down long-lived
+TCP connections whent he other side becomes unreachable. While the default
+is OS-dependent, TCP keepalives usually kick in after around two hours,
+and, if the other side doesn't reply, take down the TCP connection some 10
+to 15 minutes later.
+
+It is harmless to specify this option for file handles that do not support
+keepalives, and enabling it on connections that are potentially long-lived
+is usually a good idea.
+
+=item oobinline => <boolean>
+
+BSD majorly fucked up the implementation of TCP urgent data. The result
+is that almost no OS implements TCP according to the specs, and every OS
+implements it slightly differently.
+
+If you want to handle TCP urgent data, then setting this flag gives you
+the most portable way of getting urgent data, by putting it into the
+stream.
+
 =item read_size => <bytes>
 
 The default read block size (the amount of bytes this module will
@@ -492,16 +517,18 @@ sub _start {
    $self->{_ractivity} =
    $self->{_wactivity} = AE::now;
 
-   $self->timeout  (delete $self->{timeout} ) if $self->{timeout};
-   $self->rtimeout (delete $self->{rtimeout}) if $self->{rtimeout};
-   $self->wtimeout (delete $self->{wtimeout}) if $self->{wtimeout};
+   $self->timeout   (delete $self->{timeout}  ) if $self->{timeout};
+   $self->rtimeout  (delete $self->{rtimeout} ) if $self->{rtimeout};
+   $self->wtimeout  (delete $self->{wtimeout} ) if $self->{wtimeout};
 
-   $self->no_delay (delete $self->{no_delay}) if exists $self->{no_delay};
+   $self->no_delay  (delete $self->{no_delay} ) if exists $self->{no_delay};
+   $self->keepalive (delete $self->{keepalive}) if exists $self->{keepalive};
+   $self->oobinline (delete $self->{oobinline}) if exists $self->{oobinline};
 
-   $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
+   $self->starttls  (delete $self->{tls}, delete $self->{tls_ctx})
       if $self->{tls};
 
-   $self->on_drain (delete $self->{on_drain}) if $self->{on_drain};
+   $self->on_drain  (delete $self->{on_drain}) if $self->{on_drain};
 
    $self->start_read
       if $self->{on_read} || @{ $self->{_queue} };
@@ -589,7 +616,58 @@ sub no_delay {
 
    eval {
       local $SIG{__DIE__};
-      setsockopt $_[0]{fh}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, int $_[1]
+      setsockopt $_[0]{fh}, Socket::IPPROTO_TCP (), Socket::TCP_NODELAY (), int $_[1]
+         if $_[0]{fh};
+   };
+}
+
+=item $handle->keepalive ($boolean)
+
+Enables or disables the C<keepalive> setting (see constructor argument of
+the same name for details).
+
+=cut
+
+sub keepalive {
+   $_[0]{keepalive} = $_[1];
+
+   eval {
+      local $SIG{__DIE__};
+      setsockopt $_[0]{fh}, Socket::SOL_SOCKET (), Socket::SO_KEEPALIVE (), int $_[1]
+         if $_[0]{fh};
+   };
+}
+
+=item $handle->oobinline ($boolean)
+
+Enables or disables the C<oobinline> setting (see constructor argument of
+the same name for details).
+
+=cut
+
+sub oobinline {
+   $_[0]{oobinline} = $_[1];
+
+   eval {
+      local $SIG{__DIE__};
+      setsockopt $_[0]{fh}, Socket::SOL_SOCKET (), Socket::SO_OOBINLINE (), int $_[1]
+         if $_[0]{fh};
+   };
+}
+
+=item $handle->keepalive ($boolean)
+
+Enables or disables the C<keepalive> setting (see constructor argument of
+the same name for details).
+
+=cut
+
+sub keepalive {
+   $_[0]{keepalive} = $_[1];
+
+   eval {
+      local $SIG{__DIE__};
+      setsockopt $_[0]{fh}, Socket::SOL_SOCKET (), Socket::SO_KEEPALIVE (), int $_[1]
          if $_[0]{fh};
    };
 }
