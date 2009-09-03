@@ -1,7 +1,5 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: packagename for ae types
-
 	- INCOMPATIBLE CHANGE: do no longer support register_read_type
           and register_write_type in AnyEvent::Handle, instead support
           package names (the facility was mostly abused).

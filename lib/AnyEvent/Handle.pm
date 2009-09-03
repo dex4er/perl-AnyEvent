@@ -62,6 +62,21 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK);
 
 our $VERSION = $AnyEvent::VERSION;
 
+sub _load_func($) {
+   my $func = $_[0];
+
+   unless (defined &$func) {
+      my $pkg = $func;
+      do {
+         $pkg =~ s/::[^:]+$//
+            or return;
+         eval "require $pkg";
+      } until defined &$func;
+   }
+
+   \&$func
+}
+
 =head1 METHODS
 
 =over 4
@@ -873,6 +888,7 @@ sub _drain_wbuf {
 
 our %WH;
 
+# deprecated
 sub register_write_type($$) {
    $WH{$_[0]} = $_[1];
 }
@@ -883,7 +899,8 @@ sub push_write {
    if (@_ > 1) {
       my $type = shift;
 
-      @_ = ($WH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::push_write")
+      @_ = ($WH{$type} ||= _load_func "$type\::anyevent_write_type"
+            or Carp::croak "unsupported/unloadable type '$type' passed to AnyEvent::Handle::push_write")
            ->($self, @_);
    }
 
@@ -898,8 +915,11 @@ sub push_write {
 
 =item $handle->push_write (type => @args)
 
-Instead of formatting your data yourself, you can also let this module do
-the job by specifying a type and type-specific arguments.
+Instead of formatting your data yourself, you can also let this module
+do the job by specifying a type and type-specific arguments. You
+can also specify the (fully qualified) name of a package, in which
+case AnyEvent tries to load the package and then expects to find the
+C<anyevent_read_type> function inside (see "custom write types", below).
 
 Predefined types are (if you have ideas for additional types, feel free to
 drop by and tell us):
@@ -1021,17 +1041,37 @@ sub push_shutdown {
    $self->on_drain (sub { shutdown $_[0]{fh}, 1 });
 }
 
-=item AnyEvent::Handle::register_write_type type => $coderef->($handle, @args)
+=item custom write types - Package::anyevent_write_type $handle, @args
 
-This function (not method) lets you add your own types to C<push_write>.
-Whenever the given C<type> is used, C<push_write> will invoke the code
-reference with the handle object and the remaining arguments.
+Instead of one of the predefined types, you can also specify the name of
+a package. AnyEvent will try to load the package and then expects to find
+a function named C<anyevent_write_type> inside. If it isn't found, it
+progressively tries to load the parent package until it either finds the
+function (good) or runs out of packages (bad).
 
-The code reference is supposed to return a single octet string that will
-be appended to the write buffer.
+Whenever the given C<type> is used, C<push_write> will the function with
+the handle object and the remaining arguments.
 
-Note that this is a function, and all types registered this way will be
-global, so try to use unique names.
+The function is supposed to return a single octet string that will be
+appended to the write buffer, so you cna mentally treat this function as a
+"arguments to on-the-wire-format" converter.
+
+Example: implement a custom write type C<join> that joins the remaining
+arguments using the first one.
+
+   $handle->push_write (My::Type => " ", 1,2,3);
+
+   # uses the following package, which can be defined in the "My::Type" or in
+   # the "My" modules to be auto-loaded, or just about anywhere when the
+   # My::Type::anyevent_write_type is defined before invoking it.
+
+   package My::Type;
+
+   sub anyevent_write_type {
+      my ($handle, $delim, @args) = @_;
+
+      join $delim, @args
+   }
 
 =cut
 
@@ -1260,7 +1300,8 @@ sub push_read {
    if (@_) {
       my $type = shift;
 
-      $cb = ($RH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::push_read")
+      $cb = ($RH{$type} ||= _load_func "$type\::anyevent_read_type"
+             or Carp::croak "unsupported/unloadable type '$type' passed to AnyEvent::Handle::push_read")
             ->($self, $cb, @_);
    }
 
@@ -1289,7 +1330,9 @@ sub unshift_read {
 
 Instead of providing a callback that parses the data itself you can chose
 between a number of predefined parsing formats, for chunks of data, lines
-etc.
+etc. You can also specify the (fully qualified) name of a package, in
+which case AnyEvent tries to load the package and then expects to find the
+C<anyevent_read_type> function inside (see "custom read types", below).
 
 Predefined types are (if you have ideas for additional types, feel free to
 drop by and tell us):
@@ -1618,25 +1661,28 @@ register_read_type storable => sub {
 
 =back
 
-=item AnyEvent::Handle::register_read_type type => $coderef->($handle, $cb, @args)
+=item custom read types - Package::anyevent_read_type $handle, $cb, @args
 
-This function (not method) lets you add your own types to C<push_read>.
+Instead of one of the predefined types, you can also specify the name
+of a package. AnyEvent will try to load the package and then expects to
+find a function named C<anyevent_read_type> inside. If it isn't found, it
+progressively tries to load the parent package until it either finds the
+function (good) or runs out of packages (bad).
 
-Whenever the given C<type> is used, C<push_read> will invoke the code
-reference with the handle object, the callback and the remaining
-arguments.
+Whenever this type is used, C<push_read> will invoke the function with the
+handle object, the original callback and the remaining arguments.
 
-The code reference is supposed to return a callback (usually a closure)
-that works as a plain read callback (see C<< ->push_read ($cb) >>).
+The function is supposed to return a callback (usually a closure) that
+works as a plain read callback (see C<< ->push_read ($cb) >>), so you can
+mentally treat the function as a "configurable read type to read callback"
+converter.
 
-It should invoke the passed callback when it is done reading (remember to
-pass C<$handle> as first argument as all other callbacks do that).
+It should invoke the original callback when it is done reading (remember
+to pass C<$handle> as first argument as all other callbacks do that,
+although there is no strict requirement on this).
 
-Note that this is a function, and all types registered this way will be
-global, so try to use unique names.
-
-For examples, see the source of this module (F<perldoc -m AnyEvent::Handle>,
-search for C<register_read_type>)).
+For examples, see the source of this module (F<perldoc -m
+AnyEvent::Handle>, search for C<register_read_type>)).
 
 =item $handle->stop_read
 
