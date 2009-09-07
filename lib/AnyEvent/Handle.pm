@@ -131,16 +131,17 @@ The actual numeric host and port (the socket peername) are passed as
 parameters, together with a retry callback.
 
 When, for some reason, the handle is not acceptable, then calling
-C<$retry> will continue with the next conenction target (in case of
+C<$retry> will continue with the next connection target (in case of
 multi-homed hosts or SRV records there can be multiple connection
-endpoints). When it is called then the read and write queues, eof status,
-tls status and similar properties of the handle are being reset.
+endpoints). At the time it is called the read and write queues, eof
+status, tls status and similar properties of the handle will have been
+reset.
 
 In most cases, ignoring the C<$retry> parameter is the way to go.
 
 =item on_connect_error => $cb->($handle, $message)
 
-This callback is called when the conenction could not be
+This callback is called when the connection could not be
 established. C<$!> will contain the relevant error code, and C<$message> a
 message describing it (usually the same as C<"$!">).
 
@@ -306,7 +307,7 @@ enabled), this option explicitly enables or disables it, if possible.
 
 Enables (default disable) the SO_KEEPALIVE option on the stream socket:
 normally, TCP connections have no time-out once established, so TCP
-conenctions, once established, can stay alive forever even when the other
+connections, once established, can stay alive forever even when the other
 side has long gone. TCP keepalives are a cheap way to take down long-lived
 TCP connections whent he other side becomes unreachable. While the default
 is OS-dependent, TCP keepalives usually kick in after around two hours,
@@ -376,7 +377,7 @@ C<undef>.
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
 When this parameter is given, it enables TLS (SSL) mode, that means
-AnyEvent will start a TLS handshake as soon as the conenction has been
+AnyEvent will start a TLS handshake as soon as the connection has been
 established and will transparently encrypt/decrypt data afterwards.
 
 All TLS protocol errors will be signalled as C<EPROTO>, with an
