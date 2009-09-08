@@ -569,7 +569,7 @@ sub _error {
    if ($self->{on_error}) {
       $self->{on_error}($self, $fatal, $message);
       $self->destroy if $fatal;
-   } elsif ($self->{fh}) {
+   } elsif ($self->{fh} || $self->{connect}) {
       $self->destroy;
       Carp::croak "AnyEvent::Handle uncaught error: $message";
    }
