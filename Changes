@@ -1,11 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
+5.2  Mon Sep 14 07:04:49 CEST 2009
 	- INCOMPATIBLE CHANGE: do no longer support register_read_type
           and register_write_type in AnyEvent::Handle, instead support
           package names (the facility was mostly abused).
-        - implement "packagename-as-read/write type" support in AnyEvent::Handle.
+        - implement "packagename-as-read/write type" support in
+          AnyEvent::Handle.
 	- AnyEvent::Handle: new options "keepalive" and "oobinline".
         - oobinline set by default to avoid security issues.
+        - the pure-perl event loop backend wrongly detected times() fallback
+          support (spotted by Pavel Boldin).
 
 5.12 Tue Sep  1 20:26:50 CEST 2009
 	- be more lenient when parsing resolv.conf files, as some people

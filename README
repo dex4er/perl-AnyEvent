@@ -1744,9 +1744,9 @@ RECOMMENDED/OPTIONAL MODULES
         operation much. It is purely used for performance.
 
     JSON and JSON::XS
-        This module is required when you want to read or write JSON data via
-        AnyEvent::Handle. It is also written in pure-perl, but can take
-        advantage of the ultra-high-speed JSON::XS module when it is
+        One of these modules is required when you want to read or write JSON
+        data via AnyEvent::Handle. It is also written in pure-perl, but can
+        take advantage of the ultra-high-speed JSON::XS module when it is
         installed.
 
         In fact, AnyEvent::Handle will use JSON::XS by default if it is
