@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
          warn "got error $msg\n";
          $hdl->destroy;
          $cv->send;
-      );
+      };
 
    # send some request line
    $hdl->push_write ("getinfo\015\012");

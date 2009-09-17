@@ -106,7 +106,7 @@ delay value...).
 
 How to actually get I/O events in L<IO::Async::Handle> is undocumented:
 read events are apparently automatic, for write events, you have to
-explicitly request C<want_writable>, and specifying C<want_readable> is
+explicitly request C<want_writeready>, and specifying C<want_readready> is
 apparently a usage bug (it doesn't exist). All this must be deduced from
 reading the sources.
 
