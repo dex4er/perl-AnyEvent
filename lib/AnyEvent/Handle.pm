@@ -712,7 +712,7 @@ Replace the current C<on_stoptls> callback (see the C<on_stoptls> constructor ar
 
 =cut
 
-sub on_starttls {
+sub on_stoptls {
    $_[0]{on_stoptls} = $_[1];
 }
 

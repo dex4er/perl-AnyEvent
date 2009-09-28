@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- AnyEvent:Handle::on_starttls/on_stoptls methods were broken
+          (reported by Torsten Foertsch).
+
 5.2  Mon Sep 14 07:04:49 CEST 2009
 	- INCOMPATIBLE CHANGE: do no longer support register_read_type
           and register_write_type in AnyEvent::Handle, instead support
