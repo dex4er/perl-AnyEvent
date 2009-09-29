@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+5.201 Tue Sep 29 12:09:25 CEST 2009
 	- AnyEvent:Handle::on_starttls/on_stoptls methods were broken
           (reported by Torsten Foertsch).
         - common::sense 2.0 could cause tcp_server to throw an exception
