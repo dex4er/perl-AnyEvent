@@ -535,6 +535,15 @@ C<1> and C<2>.
 
 See C<close_all_fds_except> for more details.
 
+=item '$$' => \$pid
+
+A reference to a scalar which will receive the PID of the newly-created
+subprocess after C<run_cmd> returns.
+
+Note the the PID might already have been recycled and used by an unrelated
+process at the time C<run_cmd> returns, so it's not useful to send
+signals, use a unique key in data structures and so on.
+
 =back
 
 Example: run C<rm -rf />, redirecting standard input, output and error to
@@ -709,6 +718,9 @@ sub run_cmd {
 
       POSIX::_exit (126);
    }
+
+   ${$arg{'$$'}} = $pid
+      if $arg{'$$'};
 
    %redir = (); # close child side of the fds
 

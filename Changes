@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+        - AnyEvent::Handle::run_cmd can now pass the PID of the
+          newly-created process, which is much less useful than it might
+          sound (based on patch by Yann Kerherve).
+
 5.201 Tue Sep 29 12:09:25 CEST 2009
 	- AnyEvent:Handle::on_starttls/on_stoptls methods were broken
           (reported by Torsten Foertsch).
