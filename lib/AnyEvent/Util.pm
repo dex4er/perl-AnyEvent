@@ -488,18 +488,20 @@ Redirects program standard output into the specified filename, similar to C<<
 =item ">" => \$data
 
 Appends program standard output to the referenced scalar. The condvar will
-not be signalled before EOF was received.
+not be signalled before EOF or an error is signalled.
 
 =item ">" => $filehandle
 
-Redirects program standard output to the given filehandle (or actualy its
+Redirects program standard output to the given filehandle (or actually its
 underlying file descriptor).
 
 =item ">" => $callback->($data)
 
 Calls the given callback each time standard output receives some data,
-passing it the data received. On EOF, the callback will be invoked once
-without any arguments.
+passing it the data received. On EOF or error, the callback will be
+invoked once without any arguments.
+
+The condvar will not be signalled before EOF or an error is signalled.
 
 =item "fd>" => $see_above
 
@@ -513,6 +515,10 @@ forms as for ">" are allowed.
 In the callback form, the callback is supposed to return data to be
 written, or the empty list or C<undef> or a zero-length scalar to signal
 EOF.
+
+Similarly, either the write data must be exhausted or an error is to be
+signalled before the condvar is signalled, for both string-reference and
+callback forms.
 
 =item "fd<" => $see_above
 
