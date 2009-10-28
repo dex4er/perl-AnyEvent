@@ -1388,7 +1388,7 @@ our ($SIG_COUNT, $SIG_TW);
 sub _signal_exec {
    $HAVE_ASYNC_INTERRUPT
       ? $SIGPIPE_R->drain
-      : sysread $SIGPIPE_R, my $dummy, 9;
+      : sysread $SIGPIPE_R, (my $dummy), 9;
 
    while (%SIG_EV) {
       for (keys %SIG_EV) {

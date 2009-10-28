@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+	- fix a problem where socket consntants were called with parameters
+          (spotted by David Friedland).
+        - improve perl 5.6 compatibility further (but it still won't work
+          unless you rip out everything but the core).
+
 5.202 Wed Oct 14 22:35:44 CEST 2009
 	- AnyEvent::DNS would unexpectedly clobber $_ under windows
           (analysed by Matthias Waldorf).

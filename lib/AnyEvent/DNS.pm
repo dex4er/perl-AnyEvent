@@ -118,7 +118,7 @@ sub MAX_PKT() { 4096 } # max packet size we advertise and accept
 
 sub DOMAIN_PORT() { 53 } # if this changes drop me a note
 
-sub resolver;
+sub resolver ();
 
 sub a($$) {
    my ($domain, $cb) = @_;
@@ -763,7 +763,7 @@ sub new {
 
    Scalar::Util::weaken (my $wself = $self);
 
-   if (socket my $fh4, AF_INET , &Socket::SOCK_DGRAM, 0) {
+   if (socket my $fh4, AF_INET , Socket::SOCK_DGRAM(), 0) {
       ++$got_socket;
 
       AnyEvent::Util::fh_nonblocking $fh4, 1;
@@ -775,7 +775,7 @@ sub new {
       };
    }
 
-   if (AF_INET6 && socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0) {
+   if (AF_INET6 && socket my $fh6, AF_INET6, Socket::SOCK_DGRAM(), 0) {
       ++$got_socket;
 
       $self->{fh6} = $fh6;
