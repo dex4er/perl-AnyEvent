@@ -1,7 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
-	- fix a problem where socket consntants were called with parameters
+	- fix a problem where socket constants were called with parameters
           (spotted by David Friedland).
+        - fork_call never use'd POSIX (reported by Daisuke Maki).
         - improve perl 5.6 compatibility further (but it still won't work
           unless you rip out everything but the core).
 
