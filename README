@@ -356,6 +356,14 @@ WATCHERS
         When this is the case, you can call this method, which will update
         the event loop's idea of "current time".
 
+        A typical example would be a script in a web server (e.g.
+        "mod_perl") - when mod_perl executes the script, then the event loop
+        will have the wrong idea about the "current time" (being potentially
+        far in the past, when the script ran the last time). In that case
+        you should arrange a call to "AnyEvent->now_update" each time the
+        web server process wakes up again (e.g. at the start of your script,
+        or in a handler).
+
         Note that updating the time *might* cause some events to be handled.
 
   SIGNAL WATCHERS

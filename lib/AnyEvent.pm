@@ -1125,15 +1125,13 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '5.202';
+our $VERSION = '5.21';
 our $MODEL;
 
 our $AUTOLOAD;
 our @ISA;
 
 our @REGISTRY;
-
-our $WIN32;
 
 our $VERBOSE;
 

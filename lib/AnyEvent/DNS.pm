@@ -886,40 +886,62 @@ sub os_config {
       # - calling windows api functions doesn't work on cygwin
       # - ipconfig uses locale-specific messages
 
-      # we use ipconfig parsing because, despite all its brokenness,
-      # it seems most stable in practise.
-      # for good measure, we append a fallback nameserver to our list.
+      # we use Net::DNS::Resolver first, and if it fails, will fall back to
+      # ipconfig parsing.
+      unless (eval {
+         # Net::DNS::Resolver uses a LOT of ram (~10mb), but what can we do :/
+         # (this seems mostly to be due to Win32::API).
+         require Net::DNS::Resolver;
+         my $r = Net::DNS::Resolver->new;
 
-      if (open my $fh, "ipconfig /all |") {
-         # parsing strategy: we go through the output and look for
-         # :-lines with DNS in them. everything in those is regarded as
-         # either a nameserver (if it parses as an ip address), or a suffix
-         # (all else).
+         $r->nameservers
+            or die;
 
-         my $dns;
-         local $_;
-         while (<$fh>) {
-            if (s/^\s.*\bdns\b.*://i) {
-               $dns = 1;
-            } elsif (/^\S/ || /^\s[^:]{16,}: /) {
-               $dns = 0;
+         for my $s ($r->nameservers) {
+            if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
+               push @{ $self->{server} }, $ipn;
             }
-            if ($dns && /^\s*(\S+)\s*$/) {
-               my $s = $1;
-               $s =~ s/%\d+(?!\S)//; # get rid of ipv6 scope id
-               if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
-                  push @{ $self->{server} }, $ipn;
-               } else {
-                  push @{ $self->{search} }, $s;
+         }
+         $self->{search} = [$r->searchlist];
+
+         1
+      }) {
+         # we use ipconfig parsing because, despite all its brokenness,
+         # it seems most stable in practise.
+         # unfortunately it wants a console window.
+         # for good measure, we append a fallback nameserver to our list.
+
+         if (open my $fh, "ipconfig /all |") {
+            # parsing strategy: we go through the output and look for
+            # :-lines with DNS in them. everything in those is regarded as
+            # either a nameserver (if it parses as an ip address), or a suffix
+            # (all else).
+
+            my $dns;
+            local $_;
+            while (<$fh>) {
+               if (s/^\s.*\bdns\b.*://i) {
+                  $dns = 1;
+               } elsif (/^\S/ || /^\s[^:]{16,}: /) {
+                  $dns = 0;
+               }
+               if ($dns && /^\s*(\S+)\s*$/) {
+                  my $s = $1;
+                  $s =~ s/%\d+(?!\S)//; # get rid of ipv6 scope id
+                  if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
+                     push @{ $self->{server} }, $ipn;
+                  } else {
+                     push @{ $self->{search} }, $s;
+                  }
                }
             }
          }
-
-         # always add one fallback server
-         push @{ $self->{server} }, $DNS_FALLBACK[rand @DNS_FALLBACK];
-
-         $self->_compile;
       }
+
+      # always add one fallback server
+      push @{ $self->{server} }, $DNS_FALLBACK[rand @DNS_FALLBACK];
+
+      $self->_compile;
    } else {
       # try resolv.conf everywhere else
 
