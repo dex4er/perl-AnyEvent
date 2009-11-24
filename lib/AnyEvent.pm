@@ -405,6 +405,23 @@ Example: exit on SIGINT
 
    my $w = AnyEvent->signal (signal => "INT", cb => sub { exit 1 });
 
+=head3 Restart Behaviour
+
+While restart behaviour is up to the event loop implementation, most will
+not restart syscalls (that includes L<Async::Interrupt> and AnyEvent's
+pure perl implementation).
+
+=head3 Safe/Unsafe Signals
+
+Perl signals can be either "safe" (synchronous to opcode handling) or
+"unsafe" (asynchronous) - the former might get delayed indefinitely, the
+latter might corrupt your memory.
+
+AnyEvent signal handlers are, in addition, synchronous to the event loop,
+i.e. they will not interrupt your running perl program but will only be
+called as part of the normal event handling (just like timer, I/O etc.
+callbacks, too).
+
 =head3 Signal Races, Delays and Workarounds
 
 Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
