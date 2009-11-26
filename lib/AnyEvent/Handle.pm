@@ -905,11 +905,14 @@ sub push_write {
            ->($self, @_);
    }
 
+   # we downgrade here to avoid hard-to-track-down bugs,
+   # and diagnose the problem earlier and better.
+
    if ($self->{tls}) {
-      $self->{_tls_wbuf} .= $_[0];
+      utf8::downgrade $self->{_tls_wbuf} .= $_[0];
       &_dotls ($self)    if $self->{fh};
    } else {
-      $self->{wbuf}      .= $_[0];
+      utf8::downgrade $self->{wbuf}      .= $_[0];
       $self->_drain_wbuf if $self->{fh};
    }
 }
