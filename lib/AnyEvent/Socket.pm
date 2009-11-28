@@ -111,6 +111,11 @@ forms supported by parse_ipv4). Note that scope-id's are not supported
 
 This function works similarly to C<inet_pton AF_INET6, ...>.
 
+Example:
+
+   print unpack "H*", parse_ipv6 "2002:5345::10.0.0.1";
+   # => 2002534500000000000000000a000001
+
 =cut
 
 sub parse_ipv6($) {
@@ -171,6 +176,11 @@ If the C<$text> to parse is a mapped IPv4 in IPv6 address (:ffff::<ipv4>),
 then it will be treated as an IPv4 address. If you don't want that, you
 have to call C<parse_ipv4> and/or C<parse_ipv6> manually.
 
+Example:
+
+   print unpack "H*", parse_address "10.1.2.3";
+   # => 0a010203
+
 =item $ipn = AnyEvent::Socket::aton $ip
 
 Same as C<parse_address>, but not exported (think C<Socket::inet_aton> but
@@ -196,6 +206,10 @@ sub parse_address($) {
 Works like the builtin function of the same name, except it tries hard to
 work even on broken platforms (well, that's windows), where getprotobyname
 is traditionally very unreliable.
+
+Example: get the protocol number for TCP (usually 6)
+
+   my $proto = getprotobyname "tcp";
 
 =cut
 
@@ -353,6 +367,11 @@ If the C<$ipn> is a mapped IPv4 in IPv6 address (:ffff::<ipv4>), then just
 the contained IPv4 address will be returned. If you do not want that, you
 have to call C<format_ipv6> manually.
 
+Example:
+
+   print format_address "\x01\x02\x03\x05";
+   => 1.2.3.5
+
 =item $text = AnyEvent::Socket::ntoa $ipn
 
 Same as format_address, but not exported (think C<inet_ntoa>).
@@ -420,6 +439,14 @@ for IPv6).
 Unlike the L<Socket> function of the same name, you can get multiple IPv4
 and IPv6 addresses as result (and maybe even other adrdess types).
 
+Example.
+
+   inet_aton "www.google.com", my $cv = AE::cv;
+   say unpack "H*", $_
+      for $cv->recv;
+   # => d155e363
+   # => d155e367 etc.
+
 =cut
 
 sub inet_aton {
@@ -469,6 +496,12 @@ Pack the given port/host combination into a binary sockaddr
 structure. Handles both IPv4 and IPv6 host addresses, as well as UNIX
 domain sockets (C<$host> == C<unix/> and C<$service> == absolute
 pathname).
+
+Example:
+
+   my $bind = AnyEvent::Socket::pack_sockaddr 43, v195.234.53.120;
+   bind $socket, $bind
+      or die "bind: $!";
 
 =cut
 
