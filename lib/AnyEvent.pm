@@ -2451,7 +2451,7 @@ That does not mean that AnyEvent won't take advantage of some additional
 modules if they are installed.
 
 This section epxlains which additional modules will be used, and how they
-affect AnyEvent's operetion.
+affect AnyEvent's operation.
 
 =over 4
 
