@@ -2466,7 +2466,7 @@ C<$AnyEvent::MAX_SIGNAL_LATENCY>).
 
 If this module is available, then it will be used to implement signal
 catching, which means that signals will not be delayed, and the event loop
-will not be interrupted regularly, which is more efficient (And good for
+will not be interrupted regularly, which is more efficient (and good for
 battery life on laptops).
 
 This affects not just the pure-perl event loop, but also other event loops
