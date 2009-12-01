@@ -2450,7 +2450,7 @@ it's built-in modules) are required to use it.
 That does not mean that AnyEvent won't take advantage of some additional
 modules if they are installed.
 
-This section epxlains which additional modules will be used, and how they
+This section explains which additional modules will be used, and how they
 affect AnyEvent's operation.
 
 =over 4
@@ -2526,9 +2526,19 @@ Most event libraries are not fork-safe. The ones who are usually are
 because they rely on inefficient but fork-safe C<select> or C<poll>
 calls. Only L<EV> is fully fork-aware.
 
+This means that, in general, you cannot fork and do event processing
+in the child if a watcher was created before the fork (which in turn
+initialises the event library).
+
 If you have to fork, you must either do so I<before> creating your first
 watcher OR you must not use AnyEvent at all in the child OR you must do
 something completely out of the scope of AnyEvent.
+
+The problem of doing event processing in the parent I<and> the child
+is much more complicated: even for backends that I<are> fork-aware or
+fork-safe, their behaviour is not usually what you want: fork clones all
+watchers, that means all timers, I/O watchers etc. are active in both
+parent and child, which is almost never what you want.
 
 
 =head1 SECURITY CONSIDERATIONS
