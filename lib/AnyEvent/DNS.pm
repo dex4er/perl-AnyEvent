@@ -1091,7 +1091,7 @@ sub _exec {
                      &$do_retry;
                   };
 
-               $handle->push_write (pack "n/a", $req->[0]);
+               $handle->push_write (pack "n/a*", $req->[0]);
                $handle->push_read (chunk => 2, sub {
                   $handle->unshift_read (chunk => (unpack "n", $_[1]), sub {
                      undef $handle;
