@@ -9,6 +9,9 @@ TODO: inet_aton does not actually deliver ipv6 addresses
         - upgrade internal warning set to the same as common::sense 2.03.
         - use pack "n/a*" for pre-5.8.9 perl compatibility in AnyEvent::DNS
           (John Beppu).
+        - add google public dns servers to fallback server set and make sure
+          we load-balance properly between the three sets. also add all
+          fallback dns servers, not just a random one, to each dns config.
 
 5.21  Thu Nov 19 02:48:47 CET 2009
 	- fix a problem where socket constants were called with parameters
