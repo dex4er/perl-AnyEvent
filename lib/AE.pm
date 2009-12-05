@@ -53,6 +53,8 @@ package AE;
 
 use AnyEvent (); # BEGIN { AnyEvent::common_sense }
 
+our $VERSION = $AnyEvent::VERSION;
+
 =item $w = AE::io $fh_or_fd, $watch_write, $cb
 
 Creates an I/O watcher that listens for read events (C<$watch_write>
