@@ -1,6 +1,5 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: inet_aton does not actually deliver ipv6 addresses
 	- downgrade-or-fail in AnyEvent::Handle::push_write, to
           diagnose encoding failures earlier and more succinctly.
           (this works around bugs in perl, throwing away encoding info
@@ -9,6 +8,7 @@ TODO: inet_aton does not actually deliver ipv6 addresses
         - upgrade internal warning set to the same as common::sense 2.03.
         - use pack "n/a*" for pre-5.8.9 perl compatibility in AnyEvent::DNS
           (John Beppu).
+        - AnyEvent::Socket::inet_aton now properly supports ipv6, as documented.
         - add google public dns servers to fallback server set and make sure
           we load-balance properly between the three sets. also add all
           fallback dns servers, not just a random one, to each dns config.

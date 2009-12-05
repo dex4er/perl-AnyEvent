@@ -432,12 +432,14 @@ sub format_address($) {
 =item inet_aton $name_or_address, $cb->(@addresses)
 
 Works similarly to its Socket counterpart, except that it uses a
-callback. Also, if a host has only an IPv6 address, this might be passed
-to the callback instead (use the length to detect this - 4 for IPv4, 16
-for IPv6).
+callback. Use the length to distinguish between ipv4 and ipv6 (4 octets
+for IPv4, 16 for IPv6), or use C<format_address> to convert it to a more
+readable format.
 
-Unlike the L<Socket> function of the same name, you can get multiple IPv4
-and IPv6 addresses as result (and maybe even other adrdess types).
+Note that C<resolve_sockaddr>, while initially a more complex interface,
+resolves host addresses, service names and SRV records and gives you an
+ordered list of socket addresses to try and should be preferred over
+C<inet_aton>.
 
 Example.
 
@@ -446,6 +448,11 @@ Example.
       for $cv->recv;
    # => d155e363
    # => d155e367 etc.
+
+   inet_aton "ipv6.google.com", my $cv = AE::cv;
+   say unpack "H*", $_
+      for $cv->recv;
+   # => 20014860a00300000000000000000068
 
 =cut
 
@@ -461,15 +468,34 @@ sub inet_aton {
    } else {
       require AnyEvent::DNS;
 
-      # simple, bad suboptimal algorithm
-      AnyEvent::DNS::a ($name, sub {
-         if (@_) {
-            $cb->(map +(parse_ipv4 $_), @_);
-         } else {
-            $cb->();
-            #AnyEvent::DNS::aaaa ($name, $cb); need inet_pton
-         }
-      });
+      my $ipv4 = $AnyEvent::PROTOCOL{ipv4};
+      my $ipv6 = $AnyEvent::PROTOCOL{ipv6};
+
+      my @res;
+
+      my $cv = AE::cv {
+         $cb->(map @$_, reverse @res);
+      };
+
+      $cv->begin;
+
+      if ($ipv4) {
+         $cv->begin;
+         AnyEvent::DNS::a ($name, sub {
+            $res[$ipv4] = [map &parse_ipv4, @_];
+            $cv->end;
+         });
+      };
+
+      if ($ipv6) {
+         $cv->begin;
+         AnyEvent::DNS::aaaa ($name, sub {
+            $res[$ipv6] = [map &parse_ipv6, @_];
+            $cv->end;
+         });
+      };
+
+      $cv->end;
    }
 }
 
@@ -483,7 +509,7 @@ BEGIN {
            : sub { unpack "S" , $_[0] };
 }
 
-# check for broken platforms with extra field in sockaddr structure
+# check for broken platforms with an extra field in sockaddr structure
 # kind of a rfc vs. bsd issue, as usual (ok, normally it's a
 # unix vs. bsd issue, a iso C vs. bsd issue or simply a
 # correctness vs. bsd issue.)
