@@ -879,7 +879,7 @@ sub os_config {
    $self->{search} = [];
 
    if ((AnyEvent::WIN32 || $^O =~ /cygwin/i)) {
-      no strict 'refs';
+      #no strict 'refs';
 
       # there are many options to find the current nameservers etc. on windows
       # all of them don't work consistently:
@@ -1125,7 +1125,7 @@ sub _exec {
 sub _scheduler {
    my ($self) = @_;
 
-   no strict 'refs';
+   #no strict 'refs';
 
    $NOW = time;
 
