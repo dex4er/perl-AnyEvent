@@ -1146,7 +1146,7 @@ package AnyEvent;
 # basically a tuned-down version of common::sense
 sub common_sense {
    # from common:.sense 1.0
-   ${^WARNING_BITS} = "\xfc\x3f\x33\x00\x0f\xf3\xcf\xc0\xf3\xfc\x33\x03";
+   ${^WARNING_BITS} = "\xfc\x3f\x33\x00\x0f\xf3\xcf\xc0\xf3\xfc\x33\x00";
    # use strict vars subs
    $^H |= 0x00000600;
 }

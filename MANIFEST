@@ -11,6 +11,8 @@ lib/AnyEvent/Strict.pm
 lib/AnyEvent/Debug.pm
 lib/AnyEvent/DNS.pm
 lib/AnyEvent/Util.pm
+lib/AnyEvent/Util/idna.pl
+lib/AnyEvent/Util/uts46data.pl
 lib/AnyEvent/TLS.pm
 lib/AnyEvent/Handle.pm
 lib/AnyEvent/Socket.pm
@@ -33,6 +35,7 @@ t/04_condvar.t
 t/05_dns.t
 t/06_socket.t
 t/07_io.t
+t/08_idna.t
 t/handle/01_readline.t
 t/handle/02_write.t
 t/handle/03_http_req.t

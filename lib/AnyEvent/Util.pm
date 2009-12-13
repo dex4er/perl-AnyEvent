@@ -29,7 +29,11 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use base 'Exporter';
 
 our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpair run_cmd);
-our @EXPORT_OK = qw(AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL close_all_fds_except);
+our @EXPORT_OK = qw(
+   AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL
+   close_all_fds_except
+   punycode_encode punycode_decode idn_nameprep idn_toascii
+);
 
 our $VERSION = $AnyEvent::VERSION;
 
@@ -740,6 +744,141 @@ sub run_cmd {
 
    $cv
 }
+
+=item AnyEvent::Util::punycode_encode $string
+
+Punycode-encodes the given C<$string> and returns its punycode form. Note
+that uppercase letters are I<not> casefolded - you have to do that
+yourself.
+
+Croaks when it cannot encode the string.
+
+=item AnyEvent::Util::punycode_decode $string
+
+Tries to punycode-decode the given C<$string> and return it's unicode
+form. Again, uppercase letters are not casefoled, you have to do that
+yourself.
+
+Croaks when it cannot decode the string.
+
+=cut
+
+sub punycode_encode {
+   require "AnyEvent/Util/idna.pl";
+   goto &punycode_encode;
+}
+
+sub punycode_decode {
+   require "AnyEvent/Util/idna.pl";
+   goto &punycode_decode;
+}
+
+=item AnyEvent::Util::idn_nameprep $idn
+
+Implements the IDNA nameprep normalisation algorithm. Or actually the
+UTS#46 algorithm. Or maybe something similar - reality is complicated
+btween IDNA2003, UTS#46 and IDNA2008.
+
+If you have no clue what this means, look at C<idn_toascii> instead.
+
+This function is designed to avoid using a lot of memory - the full
+translation tables will take several megabytes when compiled, which is
+why they are compiled each time the function needs them. Also, names that
+are already fully ASCII will only be checked for validity, without the
+overhead of full nameprep processing.
+
+=cut
+
+our ($uts46_allowed, $uts46_map, $uts46_cmap);
+
+sub idn_nameprep {
+   local $_ = shift;
+
+   if (/[^\x00-\x7f]/) {
+      unless (defined $uts46_allowed) {
+         require Unicode::Normalize;
+         require "lib/AnyEvent/Util/uts46data.pl";
+      }
+
+      # uts46 nameprep
+      eval $uts46_allowed
+         or die "nameprep: disallowed characters ($@)";
+
+      eval $uts46_map
+         or die "nameprep: error during mapping phase, please report: $!";
+      # uts46_map replaces multi-char replacements by special codepoints
+      s{
+         ([\x{110000}-\x{12ffff}])
+      }{
+         my $idx = (ord $1) - 0x110000;
+         local $_ = substr $uts46_cmap, $idx >> 5, ($idx & 31) + 2;
+         utf8::decode $_;
+         eval $uts46_allowed
+            or die "nameprep: disallowed characters";
+         $_
+      }gex;
+
+      # KC
+      $_ = Unicode::Normalize::NFKC ($_);
+   }
+
+   # uts46 verification
+   /\.-|-\.|\.\./
+      and die "nameprep: invalid hyphens detected";
+
+   # decode punycode components
+   s{
+      (^|\.)xn--([^\.]*)
+   }{
+      my ($pfx, $pc) = ($1, $2);
+      $pfx . punycode_decode $pc
+   }gex;
+
+   $_
+}
+
+=item $domainname = AnyEvent::Util::idn_to_ascii $idn
+
+Converts the given C<$idn> (international domain name, e.g.
+日本語。ＪＰ) to a pure-ASCII domain name. This operation is
+idempotent, which means you can call it just in case and it will do the
+right thing.
+
+This function is an amalgam of IDNA2003, UTS#46 and IDNA2008 - it tries to
+be reasonably compatible to other implementations, reasonably secure, as
+much as IDNs can be secure, and reasonably efficient when confronted with
+IDNs that are already valid DNS names.
+
+=cut
+
+sub idn_to_ascii {
+   return $_[0]
+      unless $_[0] =~ /[^\x00-\x7f]/;
+
+   my @output;
+
+   eval {
+      # punycode by label
+      for (split /\./, idn_nameprep $_[0]) {
+         if (/[^\x00-\x7f]/) {
+            eval {
+               push @output, "xn--" . punycode_encode ($_);
+               1;
+            } or do {
+               push @output, $_;
+            };
+         } else {
+            push @output, $_;
+         }
+      }
+
+      1
+   } or return $_[0];
+
+   join ".", @output
+}
+
+
 1;
 
 =back
