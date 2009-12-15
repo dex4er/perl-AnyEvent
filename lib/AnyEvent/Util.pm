@@ -942,12 +942,14 @@ be reasonably compatible to other implementations, reasonably secure, as
 much as IDNs can be secure, and reasonably efficient when confronted with
 IDNs that are already valid DNS names.
 
-At the moment, this function simply calls C<idn_nameprep $idn, 1>.
+At the moment, this function simply calls C<idn_nameprep $idn, 1>,
+returning it's argument when that function fails.
 
 =cut
 
 sub idn_to_unicode($) {
-   idn_nameprep $_[0], 1
+   my $res = eval { idn_nameprep $_[0], 1 };
+   defined $res ? $res : $_[0]
 }
 
 
