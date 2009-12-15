@@ -827,8 +827,8 @@ sub idn_nameprep($;$) {
                or die "FATAL: idn_nameprep imap table has unexpected contents";
 
             $rep = $1;
-            utf8::decode $rep;
-            $chr = $rep unless $rep =~ s/\x01$// && $_[1]; # replace unless deviation and display
+            $chr = $rep unless $rep =~ s/^\x01// && $_[1]; # replace unless deviation and display
+            utf8::decode $chr;
          }
          $chr
       }gex;
@@ -843,15 +843,19 @@ sub idn_nameprep($;$) {
    }{
       my ($pfx, $ace, $pc) = ($1, $2, $3);
 
-      $ace eq "xn"
-         or Carp::croak "$_[0]: hyphens in 3rd/4th position of a label are not allowed";
+      if ($ace eq "xn") {
+         $pc = punycode_decode $pc; # will croak on error (we hope :)
 
-      $pc = punycode_decode $pc; # will croak on error (we hope :)
+         require Unicode::Normalize;
+         $pc eq Unicode::Normalize::NFC ($pc)
+            or Carp::croak "$_[0]: punycode label not in NFC detected during idn_nameprep";
 
-      $pc eq Unicode::Normalize::NFC $pc
-         or Carp::croak "$_[0]: punycode label not in NFC detected during idn_nameprep";
-
-      $pfx . $pc
+         "$pfx$pc"
+      } elsif ($ace !~ /^[a-z0-9]{2}$/) {
+         "$pfx$ace--$pc"
+      } else {
+         Carp::croak "$_[0]: hyphens in 3rd/4th position of a label are not allowed";
+      }
    }gex;
 
    # uts46 verification
@@ -868,6 +872,7 @@ sub idn_nameprep($;$) {
       }
 
       vec $uts46_valid, ord, 1
+         or $_[1] && 0 <= index $uts46_imap, pack "C0U*", 0, ord, 1 # deviation == \x00$chr\x01
          or Carp::croak "$_[0]: disallowed characters during idn_nameprep"
          for split //;
    }

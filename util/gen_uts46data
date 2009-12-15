@@ -38,7 +38,7 @@ while (<$fh>) {
          # nop
       }
       when (/mapped|deviation|ignored/) {
-         $map .= "\x01" if $type eq "deviation";
+         $map = "\x01$map" if $type eq "deviation";
 
          $imap .= "\x00" . chr . $map
             for $r1 .. $r2 || $r1;
