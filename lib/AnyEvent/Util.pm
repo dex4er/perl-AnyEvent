@@ -32,7 +32,7 @@ our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpai
 our @EXPORT_OK = qw(
    AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL
    close_all_fds_except
-   punycode_encode punycode_decode idn_nameprep idn_to_ascii
+   punycode_encode punycode_decode idn_nameprep idn_to_ascii idn_to_unicode
 );
 
 our $VERSION = $AnyEvent::VERSION;
@@ -923,6 +923,31 @@ sub idn_to_ascii($) {
    } or return $_[0];
 
    join ".", @output
+}
+
+=item $idn = AnyEvent::Util::idn_to_unicode $idn
+
+Converts the given unicode string (C<$idn>, international domain name,
+e.g. 日本語。ＪＰ, www.deliantra.net, www.xn--l-0ga.de) to
+unicode form (this is usually called the "IDN ToUnicode" transform). This
+transformation is idempotent, which means you can call it just in case and
+it will do the right thing.
+
+Unlike some other "ToUnicode" implementations, this one works on full
+domain names and should never fail - if it cannot convert the name, then
+it will return it unchanged.
+
+This function is an amalgam of IDNA2003, UTS#46 and IDNA2008 - it tries to
+be reasonably compatible to other implementations, reasonably secure, as
+much as IDNs can be secure, and reasonably efficient when confronted with
+IDNs that are already valid DNS names.
+
+At the moment, this function simply calls C<idn_nameprep $idn, 1>.
+
+=cut
+
+sub idn_to_unicode($) {
+   idn_nameprep $_[0], 1
 }
 
 
