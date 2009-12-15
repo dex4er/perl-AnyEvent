@@ -949,7 +949,7 @@ returning it's argument when that function fails.
 
 sub idn_to_unicode($) {
    my $res = eval { idn_nameprep $_[0], 1 };
-   defined $res ? $res : $_[1]
+   defined $res ? $res : $_[0]
 }
 
 
