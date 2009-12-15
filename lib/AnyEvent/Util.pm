@@ -32,7 +32,7 @@ our @EXPORT = qw(fh_nonblocking guard fork_call portable_pipe portable_socketpai
 our @EXPORT_OK = qw(
    AF_INET6 WSAEWOULDBLOCK WSAEINPROGRESS WSAEINVAL
    close_all_fds_except
-   punycode_encode punycode_decode idn_nameprep idn_toascii
+   punycode_encode punycode_decode idn_nameprep idn_to_ascii
 );
 
 our $VERSION = $AnyEvent::VERSION;
@@ -763,86 +763,128 @@ Croaks when it cannot decode the string.
 
 =cut
 
-sub punycode_encode {
+sub punycode_encode($) {
    require "AnyEvent/Util/idna.pl";
    goto &punycode_encode;
 }
 
-sub punycode_decode {
+sub punycode_decode($) {
    require "AnyEvent/Util/idna.pl";
    goto &punycode_decode;
 }
 
-=item AnyEvent::Util::idn_nameprep $idn
+=item AnyEvent::Util::idn_nameprep $idn[, $display]
 
 Implements the IDNA nameprep normalisation algorithm. Or actually the
 UTS#46 algorithm. Or maybe something similar - reality is complicated
-btween IDNA2003, UTS#46 and IDNA2008.
+btween IDNA2003, UTS#46 and IDNA2008. If C<$display> is true then the name
+is prepared for display, otherwise it is prepared for lookup (default).
 
-If you have no clue what this means, look at C<idn_toascii> instead.
+If you have no clue what this means, look at C<idn_to_ascii> instead.
 
-This function is designed to avoid using a lot of memory - the full
-translation tables will take several megabytes when compiled, which is
-why they are compiled each time the function needs them. Also, names that
-are already fully ASCII will only be checked for validity, without the
-overhead of full nameprep processing.
+This function is designed to avoid using a lot of resources - it uses
+about 1MB of RAM (most of this due to Unicode::Normalize). Also, names
+that are already "simple" will only be checked for basic validity, without
+the overhead of full nameprep processing.
 
 =cut
 
-our ($uts46_allowed, $uts46_map, $uts46_cmap);
+our ($uts46_valid, $uts46_imap);
 
-sub idn_nameprep {
-   local $_ = shift;
+sub idn_nameprep($;$) {
+   local $_ = $_[0];
 
-   if (/[^\x00-\x7f]/) {
-      unless (defined $uts46_allowed) {
+   # lowercasing these should always be valid, and is required for xn-- detection
+   y/A-Z/a-z/;
+
+   if (/[^0-9a-z\-.]/) {
+      # load the mapping data
+      unless (defined $uts46_imap) {
          require Unicode::Normalize;
          require "lib/AnyEvent/Util/uts46data.pl";
       }
 
       # uts46 nameprep
-      eval $uts46_allowed
-         or die "nameprep: disallowed characters ($@)";
 
-      eval $uts46_map
-         or die "nameprep: error during mapping phase, please report: $!";
-      # uts46_map replaces multi-char replacements by special codepoints
+      # I naively tried to use a regex/transliterate approach first,
+      # with one regex and one y///, but the compiled code was 4.5MB.
+      # this version has a bit-table for the valid class, and
+      # a char-replacement search string
+
+      # for speed (cough) reasons, we skip-case 0-9a-z, -, ., which
+      # really ought to be trivially valid. A-Z is valid, but already lowercased.
       s{
-         ([\x{110000}-\x{12ffff}])
+         ([^0-9a-z\-.])
       }{
-         my $idx = (ord $1) - 0x110000;
-         local $_ = substr $uts46_cmap, $idx >> 5, ($idx & 31) + 2;
-         utf8::decode $_;
-         eval $uts46_allowed
-            or die "nameprep: disallowed characters";
-         $_
+         my $chr = $1;
+         unless (vec $uts46_valid, ord $chr, 1) {
+            # not in valid class, search for mapping
+            utf8::encode $chr; # the imap table is in utf-8
+            (my $rep = index $uts46_imap, "\x00$chr") >= 0
+               or Carp::croak "$_[0]: disallowed characters during idn_nameprep";
+
+            (substr $uts46_imap, $rep, 128) =~ /\x00 .[\x80-\xbf]* ([^\x00]+) \x00/x
+               or die "FATAL: idn_nameprep imap table has unexpected contents";
+
+            $rep = $1;
+            utf8::decode $rep;
+            $chr = $rep unless $rep =~ s/\x01$// && $_[1]; # replace unless deviation and display
+         }
+         $chr
       }gex;
 
       # KC
       $_ = Unicode::Normalize::NFKC ($_);
    }
 
+   # decode punycode components, check for invalid xx-- prefixes
+   s{
+      (^|\.)(..)--([^\.]*)
+   }{
+      my ($pfx, $ace, $pc) = ($1, $2, $3);
+
+      $ace eq "xn"
+         or Carp::croak "$_[0]: hyphens in 3rd/4th position of a label are not allowed";
+
+      $pc = punycode_decode $pc; # will croak on error (we hope :)
+
+      $pc eq Unicode::Normalize::NFC $pc
+         or Carp::croak "$_[0]: punycode label not in NFC detected during idn_nameprep";
+
+      $pfx . $pc
+   }gex;
+
    # uts46 verification
    /\.-|-\.|\.\./
-      and die "nameprep: invalid hyphens detected";
+      and Carp::croak "$_[0]: invalid hyphens detected during idn_nameprep";
 
-   # decode punycode components
-   s{
-      (^|\.)xn--([^\.]*)
-   }{
-      my ($pfx, $pc) = ($1, $2);
-      $pfx . punycode_decode $pc
-   }gex;
+   # missing: label begin with combining mark, idna2008 bidi
+
+   # now check validity of each codepoint
+   if (/[^0-9a-z\-.]/) {
+      # load the mapping data
+      unless (defined $uts46_imap) {
+         require "lib/AnyEvent/Util/uts46data.pl";
+      }
+
+      vec $uts46_valid, ord, 1
+         or Carp::croak "$_[0]: disallowed characters during idn_nameprep"
+         for split //;
+   }
 
    $_
 }
 
 =item $domainname = AnyEvent::Util::idn_to_ascii $idn
 
-Converts the given C<$idn> (international domain name, e.g.
-日本語。ＪＰ) to a pure-ASCII domain name. This operation is
-idempotent, which means you can call it just in case and it will do the
-right thing.
+Converts the given unicode string (C<$idn>, international domain name,
+e.g. 日本語。ＪＰ) to a pure-ASCII domain name (this is usually
+called the "IDN ToAscii" transform). This transformation is idempotent,
+which means you can call it just in case and it will do the right thing.
+
+Unlike some other "ToAscii" implementations, this one works on full domain
+names and should never fail - if it cannot convert the name, then it will
+return it unchanged.
 
 This function is an amalgam of IDNA2003, UTS#46 and IDNA2008 - it tries to
 be reasonably compatible to other implementations, reasonably secure, as
@@ -851,7 +893,7 @@ IDNs that are already valid DNS names.
 
 =cut
 
-sub idn_to_ascii {
+sub idn_to_ascii($) {
    return $_[0]
       unless $_[0] =~ /[^\x00-\x7f]/;
 
@@ -862,7 +904,7 @@ sub idn_to_ascii {
       for (split /\./, idn_nameprep $_[0]) {
          if (/[^\x00-\x7f]/) {
             eval {
-               push @output, "xn--" . punycode_encode ($_);
+               push @output, "xn--" . punycode_encode $_;
                1;
             } or do {
                push @output, $_;

@@ -13,7 +13,7 @@ sub pyc_initial_n    () { 128 }
 
 sub pyc_digits       () { "abcdefghijklmnopqrstuvwxyz0123456789" }
 
-sub pyc_adapt {
+sub pyc_adapt($$$) {
    my ($delta, $numpoints, $firsttime) = @_;
 
    $delta = $firsttime ? $delta / 700 : $delta >> 1;
@@ -29,7 +29,7 @@ sub pyc_adapt {
    $k + $delta * (pyc_base - pyc_tmin + 1) / ($delta + 38)
 }
 
-sub punycode_encode {
+sub punycode_encode($) {
    my ($input) = @_;
 
    my ($n, $bias, $delta) = (pyc_initial_n, pyc_initial_bias);
@@ -85,7 +85,7 @@ sub punycode_encode {
    $output
 }
 
-sub punycode_decode {
+sub punycode_decode($) {
    my ($input) = @_;
 
    my ($n, $bias, $i) = (pyc_initial_n, pyc_initial_bias);
