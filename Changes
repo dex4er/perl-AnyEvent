@@ -1,7 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: use idna stuff in socket/dns
-TODO: add nfc check for punycdoe-decoded labels
 	- provide $AE::VERSION.
         - removed traces of "no strict 'refs'".
         - implement punycode_encode/decode, idn_nameprep,
