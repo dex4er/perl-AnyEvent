@@ -437,8 +437,8 @@ for IPv4, 16 for IPv6), or use C<format_address> to convert it to a more
 readable format.
 
 Note that C<resolve_sockaddr>, while initially a more complex interface,
-resolves host addresses, service names and SRV records and gives you an
-ordered list of socket addresses to try and should be preferred over
+resolves host addresses, IDNs, service names and SRV records and gives you
+an ordered list of socket addresses to try and should be preferred over
 C<inet_aton>.
 
 Example.
@@ -591,13 +591,14 @@ and sockaddr structures usable to connect to this node and service in a
 protocol-independent way. It works remotely similar to the getaddrinfo
 posix function.
 
-For internet addresses, C<$node> is either an IPv4 or IPv6 address or an
-internet hostname, and C<$service> is either a service name (port name
-from F</etc/services>) or a numerical port number. If both C<$node> and
-C<$service> are names, then SRV records will be consulted to find the real
-service, otherwise they will be used as-is. If you know that the service
-name is not in your services database, then you can specify the service in
-the format C<name=port> (e.g. C<http=80>).
+For internet addresses, C<$node> is either an IPv4 or IPv6 address, an
+internet hostname (DNS domain name or IDN), and C<$service> is either
+a service name (port name from F</etc/services>) or a numerical port
+number. If both C<$node> and C<$service> are names, then SRV records
+will be consulted to find the real service, otherwise they will be
+used as-is. If you know that the service name is not in your services
+database, then you can specify the service in the format C<name=port>
+(e.g. C<http=80>).
 
 For UNIX domain sockets, C<$node> must be the string C<unix/> and
 C<$service> must be the absolute pathname of the socket. In this case,
@@ -667,10 +668,10 @@ sub resolve_sockaddr($$$$$$) {
               or Carp::croak "$service/$proto: service unknown";
    }
 
-   my @target = [$node, $port];
-
    # resolve a records / provide sockaddr structures
    my $resolve = sub {
+      my @target = @_;
+
       my @res;
       my $cv = AE::cv {
          $cb->(
@@ -726,42 +727,46 @@ sub resolve_sockaddr($$$$$$) {
       $cv->end;
    };
 
+   $node = AnyEvent::Util::idn_to_ascii $node
+      if $node =~ /[^\x00-\x7f]/;
+
    # try srv records, if applicable
    if ($node eq "localhost") {
-      @target = (["127.0.0.1", $port], ["::1", $port]);
-      &$resolve;
+      $resolve->(["127.0.0.1", $port], ["::1", $port]);
    } elsif (defined $service && !parse_address $node) {
       AnyEvent::DNS::srv $service, $proto, $node, sub {
          my (@srv) = @_;
 
-         # no srv records, continue traditionally
-         @srv
-            or return &$resolve;
+         if (@srv) {
+            # the only srv record has "." ("" here) => abort
+            $srv[0][2] ne "" || $#srv
+               or return $cb->();
 
-         # the only srv record has "." ("" here) => abort
-         $srv[0][2] ne "" || $#srv
-            or return $cb->();
-
-         # use srv records then
-         @target = map ["$_->[3].", $_->[2]],
-                      grep $_->[3] ne ".",
-                         @srv;
-
-         &$resolve;
+            # use srv records then
+            $resolve->(
+               map ["$_->[3].", $_->[2]],
+                  grep $_->[3] ne ".",
+                     @srv
+            );
+         } else {
+            # no srv records, continue traditionally
+            $resolve->([$node, $port]);
+         }
       };
    } else {
-      &$resolve;
+      # most common case
+      $resolve->([$node, $port]);
    }
 }
 
 =item $guard = tcp_connect $host, $service, $connect_cb[, $prepare_cb]
 
-This is a convenience function that creates a TCP socket and makes a 100%
-non-blocking connect to the given C<$host> (which can be a hostname or
-a textual IP address, or the string C<unix/> for UNIX domain sockets)
-and C<$service> (which can be a numeric port number or a service name,
-or a C<servicename=portnumber> string, or the pathname to a UNIX domain
-socket).
+This is a convenience function that creates a TCP socket and makes a
+100% non-blocking connect to the given C<$host> (which can be a DNS/IDN
+hostname or a textual IP address, or the string C<unix/> for UNIX domain
+sockets) and C<$service> (which can be a numeric port number or a service
+name, or a C<servicename=portnumber> string, or the pathname to a UNIX
+domain socket).
 
 If both C<$host> and C<$port> are names, then this function will use SRV
 records to locate the real target(s).
@@ -877,7 +882,7 @@ Example: connect to a UNIX domain socket.
 sub tcp_connect($$$;$) {
    my ($host, $port, $connect, $prepare) = @_;
 
-   # see http://cr.yp.to/docs/connect.html for some background
+   # see http://cr.yp.to/docs/connect.html for some tricky aspects
    # also http://advogato.org/article/672.html
 
    my %state = ( fh => undef );

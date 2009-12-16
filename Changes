@@ -1,6 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: use idna stuff in socket/dns
+	- support IDNs in resolve_sockaddr, and therefore in tcp_connect.
 	- provide $AE::VERSION.
         - removed traces of "no strict 'refs'".
         - implement punycode_encode/decode, idn_nameprep,
