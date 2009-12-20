@@ -921,13 +921,26 @@ GLOBAL VARIABLES AND FUNCTIONS
         detected, and the array will be ignored.
 
         Best use "AnyEvent::post_detect { BLOCK }" when your application
-        allows it,as it takes care of these details.
+        allows it, as it takes care of these details.
 
         This variable is mainly useful for modules that can do something
         useful when AnyEvent is used and thus want to know when it is
         initialised, but do not need to even load it by default. This array
         provides the means to hook into AnyEvent passively, without loading
         it.
+
+        Example: To load Coro::AnyEvent whenever Coro and AnyEvent are used
+        together, you could put this into Coro (this is the actual code used
+        by Coro to accomplish this):
+
+           if (defined $AnyEvent::MODEL) {
+              # AnyEvent already initialised, so load Coro::AnyEvent
+              require Coro::AnyEvent;
+           } else {
+              # AnyEvent not yet initialised, so make sure to load Coro::AnyEvent
+              # as soon as it is
+              push @AnyEvent::post_detect, sub { require Coro::AnyEvent };
+           }
 
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods

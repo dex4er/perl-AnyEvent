@@ -1,10 +1,11 @@
 Revision history for Perl extension AnyEvent.
 
+5.23  Sun Dec 20 23:48:00 CET 2009
 	- support IDNs in resolve_sockaddr, and therefore in tcp_connect.
-	- provide $AE::VERSION.
-        - removed traces of "no strict 'refs'".
         - implement punycode_encode/decode, idn_nameprep,
           idn_to_ascii and idn_to_unicode operations in AnyEvent::Util.
+	- provide $AE::VERSION.
+        - removed traces of "no strict 'refs'".
 
 5.22  Sat Dec  5 03:51:13 CET 2009
 	- downgrade-or-fail in AnyEvent::Handle::push_write, to
