@@ -393,7 +393,7 @@ AnyEvent offers.
 =head2 Timers and other event sources
 
 So far, we have only used I/O watchers. These are useful mainly to find
-out whether a Socket has data to read, or space to write more data. On sane
+out whether a socket has data to read, or space to write more data. On sane
 operating systems this also works for console windows/terminals (typically
 on standard input), serial lines, all sorts of other devices, basically
 almost everything that has a file descriptor but isn't a file itself. (As
