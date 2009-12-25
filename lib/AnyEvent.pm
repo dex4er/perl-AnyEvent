@@ -2536,12 +2536,17 @@ try to use a monotonic clock for timing stability.
 =head1 FORK
 
 Most event libraries are not fork-safe. The ones who are usually are
-because they rely on inefficient but fork-safe C<select> or C<poll>
-calls. Only L<EV> is fully fork-aware.
+because they rely on inefficient but fork-safe C<select> or C<poll> calls
+- higher performance APIs such as BSD's kqueue or the dreaded Linux epoll
+are usually badly thought-out hacks that are incompatible with fork in
+one way or another. Only L<EV> is fully fork-aware and ensures that you
+continue event-processing in both parent and child (or both, if you know
+what you are doing).
 
-This means that, in general, you cannot fork and do event processing
-in the child if a watcher was created before the fork (which in turn
-initialises the event library).
+This means that, in general, you cannot fork and do event processing in
+the child if the event library was initialised before the fork (which
+usually happens when the first AnyEvent watcher is created, or the library
+is loaded).
 
 If you have to fork, you must either do so I<before> creating your first
 watcher OR you must not use AnyEvent at all in the child OR you must do
@@ -2551,7 +2556,10 @@ The problem of doing event processing in the parent I<and> the child
 is much more complicated: even for backends that I<are> fork-aware or
 fork-safe, their behaviour is not usually what you want: fork clones all
 watchers, that means all timers, I/O watchers etc. are active in both
-parent and child, which is almost never what you want.
+parent and child, which is almost never what you want. USing C<exec>
+to start worker children from some kind of manage rprocess is usually
+preferred, because it is much easier and cleaner, at the expense of having
+to have another binary.
 
 
 =head1 SECURITY CONSIDERATIONS
