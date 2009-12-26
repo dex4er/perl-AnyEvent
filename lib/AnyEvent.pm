@@ -505,16 +505,19 @@ Example: fork a process and wait for it
 
    $w = AnyEvent->idle (cb => <callback>);
 
-Sometimes there is a need to do something, but it is not so important
-to do it instantly, but only when there is nothing better to do. This
-"nothing better to do" is usually defined to be "no other events need
-attention by the event loop".
+Repeatedly invoke the callback after the process becomes idle, until
+either the watcher is destroyed or new events have been detected.
 
-Idle watchers ideally get invoked when the event loop has nothing
-better to do, just before it would block the process to wait for new
-events. Instead of blocking, the idle watcher is invoked.
+Idle watchers are useful when there is a need to do something, but it
+is not so important (or wise) to do it instantly. The callback will be
+invoked only when there is "nothing better to do", which is usually
+defined as "all outstanding events have been handled and no new events
+have been detected". That means that idle watchers ideally get invoked
+when the event loop has just polled for new events but none have been
+detected. Instead of blocking to wait for more events, the idle watchers
+will be invoked.
 
-Most event loops unfortunately do not really support idle watchers (only
+Unfortunately, most event loops do not really support idle watchers (only
 EV, Event and Glib do it in a usable fashion) - for the rest, AnyEvent
 will simply call the callback "from time to time".
 

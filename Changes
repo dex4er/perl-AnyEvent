@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- improve idle watcher documentation slightly.
+
 5.23  Sun Dec 20 23:48:00 CET 2009
 	- support IDNs in resolve_sockaddr, and therefore in tcp_connect.
         - implement punycode_encode/decode, idn_nameprep,
