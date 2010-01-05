@@ -23,7 +23,7 @@ Function calls also allow more static type checking than method calls, so
 many mistakes are caught at compiletime with this API.
 
 Also, some backends (Perl and EV) are so fast that the method call
-overhead is very noticable (with EV it increases the time five- to
+overhead is very noticeable (with EV it increases the time five- to
 six-fold, with Perl the method call overhead is about a factor of two).
 
 At the moment, there will be no checking (L<AnyEvent::Strict> does not
