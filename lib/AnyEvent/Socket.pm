@@ -937,8 +937,18 @@ sub tcp_connect($$$;$) {
                      $state{next}();
                   });
                } else {
-                  # dummy read to fetch real error code
-                  sysread $state{fh}, my $buf, 1 if $! == Errno::ENOTCONN;
+                  if ($! == Errno::ENOTCONN) {
+                     # dummy read to fetch real error code if !cygwin
+                     sysread $state{fh}, my $buf, 1;
+
+                     # cygwin 1.5 continously reports "ready' but never delivers
+                     # an error with getpeername or sysread.
+                     # cygwin 1.7 only reports readyness *once*, but is otherwise
+                     # the same, which is atcually more broken.
+                     # Work around both by using unportable SO_ERROR for cygwin.
+                     $! = (unpack "l", getsockopt $state{fh}, Socket::SOL_SOCKET(), Socket::SO_ERROR()) || Errno::EAGAIN
+                        if AnyEvent::CYGWIN && $! == Errno::EAGAIN;
+                  }
 
                   return if $! == Errno::EAGAIN; # skip spurious wake-ups
 

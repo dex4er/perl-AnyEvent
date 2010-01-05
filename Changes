@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+5.24  Tue Jan  5 11:39:43 CET 2010
+	- cygwin never reports errors from failed connects. 1.5 just gives
+          you continous readyness and EAGAIN, 1.7 is even more broken and
+          just hangs. work around both issues in a cygwin-specific hack.
 	- improve idle watcher documentation slightly.
 
 5.23  Sun Dec 20 23:48:00 CET 2009

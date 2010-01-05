@@ -488,18 +488,21 @@ WATCHERS
   IDLE WATCHERS
        $w = AnyEvent->idle (cb => <callback>);
 
-    Sometimes there is a need to do something, but it is not so important to
-    do it instantly, but only when there is nothing better to do. This
-    "nothing better to do" is usually defined to be "no other events need
-    attention by the event loop".
+    Repeatedly invoke the callback after the process becomes idle, until
+    either the watcher is destroyed or new events have been detected.
 
-    Idle watchers ideally get invoked when the event loop has nothing better
-    to do, just before it would block the process to wait for new events.
-    Instead of blocking, the idle watcher is invoked.
+    Idle watchers are useful when there is a need to do something, but it is
+    not so important (or wise) to do it instantly. The callback will be
+    invoked only when there is "nothing better to do", which is usually
+    defined as "all outstanding events have been handled and no new events
+    have been detected". That means that idle watchers ideally get invoked
+    when the event loop has just polled for new events but none have been
+    detected. Instead of blocking to wait for more events, the idle watchers
+    will be invoked.
 
-    Most event loops unfortunately do not really support idle watchers (only
-    EV, Event and Glib do it in a usable fashion) - for the rest, AnyEvent
-    will simply call the callback "from time to time".
+    Unfortunately, most event loops do not really support idle watchers
+    (only EV, Event and Glib do it in a usable fashion) - for the rest,
+    AnyEvent will simply call the callback "from time to time".
 
     Example: read lines from STDIN, but only process them when the program
     is otherwise idle:
@@ -1802,12 +1805,17 @@ RECOMMENDED/OPTIONAL MODULES
 
 FORK
     Most event libraries are not fork-safe. The ones who are usually are
-    because they rely on inefficient but fork-safe "select" or "poll" calls.
-    Only EV is fully fork-aware.
+    because they rely on inefficient but fork-safe "select" or "poll" calls
+    - higher performance APIs such as BSD's kqueue or the dreaded Linux
+    epoll are usually badly thought-out hacks that are incompatible with
+    fork in one way or another. Only EV is fully fork-aware and ensures that
+    you continue event-processing in both parent and child (or both, if you
+    know what you are doing).
 
     This means that, in general, you cannot fork and do event processing in
-    the child if a watcher was created before the fork (which in turn
-    initialises the event library).
+    the child if the event library was initialised before the fork (which
+    usually happens when the first AnyEvent watcher is created, or the
+    library is loaded).
 
     If you have to fork, you must either do so *before* creating your first
     watcher OR you must not use AnyEvent at all in the child OR you must do
@@ -1817,7 +1825,10 @@ FORK
     much more complicated: even for backends that *are* fork-aware or
     fork-safe, their behaviour is not usually what you want: fork clones all
     watchers, that means all timers, I/O watchers etc. are active in both
-    parent and child, which is almost never what you want.
+    parent and child, which is almost never what you want. USing "exec" to
+    start worker children from some kind of manage rprocess is usually
+    preferred, because it is much easier and cleaner, at the expense of
+    having to have another binary.
 
 SECURITY CONSIDERATIONS
     AnyEvent can be forced to load any event model via

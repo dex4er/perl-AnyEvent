@@ -1158,7 +1158,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '5.23';
+our $VERSION = '5.24';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1169,8 +1169,9 @@ our @REGISTRY;
 our $VERBOSE;
 
 BEGIN {
-   eval "sub WIN32(){ " . (($^O =~ /mswin32/i)*1) ." }";
-   eval "sub TAINT(){ " . (${^TAINT}*1) . " }";
+   eval "sub CYGWIN(){" . (($^O =~ /cygwin/i) *1) . "}";
+   eval "sub WIN32 (){" . (($^O =~ /mswin32/i)*1) . "}";
+   eval "sub TAINT (){" . (${^TAINT}          *1) . "}";
 
    delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
       if ${^TAINT};
