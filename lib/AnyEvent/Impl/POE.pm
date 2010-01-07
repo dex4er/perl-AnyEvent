@@ -16,7 +16,7 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 This module provides transparent support for AnyEvent. You don't have to
 do anything to make POE work with AnyEvent except by loading POE before
 creating the first AnyEvent watcher. There are some cases where POE will
-issue spurious (and non-suppressable) warnings. These can be avoided by
+issue spurious (and non-suppressible) warnings. These can be avoided by
 loading AnyEvent::Impl::POE before loading any other modules using POE and
 AnyEvent, i.e. in your main program.
 
@@ -35,7 +35,7 @@ interoperable with POE:
 =item Weird messages
 
 If you only use C<run_one_timeslice> (as AnyEvent has to for it's
-condition variables), POE will print an ugly, unsupressable, message at
+condition variables), POE will print an ugly, unsuppressible, message at
 program exit:
 
    Sessions were started, but POE::Kernel's run() method was never...
@@ -113,7 +113,7 @@ internally.
 
 =item Event Non-Ordering
 
-POE cannot guarentee the order of callback invocation for timers, and
+POE cannot guarantee the order of callback invocation for timers, and
 usually gets it wrong. That is, if you have two timers, one timing out
 after another (all else being equal), the callbacks might be called in
 reverse order.
@@ -159,8 +159,8 @@ documentation is extremely lacking, making it impossible to implement
 stuff as trivial as AnyEvent watchers without having to resort to
 undocumented behaviour or features.
 
-For example, the POE::Kernel manpage has nine occurances of the word TODO
-with an explanation of whats missing. In general, the POE manpages are
+For example, the POE::Kernel manpage has nine occurrences of the word TODO
+with an explanation of whats missing. In general, the POE man pages are
 littered with comments like "section not yet written".
 
 Some other gems:
@@ -188,17 +188,18 @@ the first name I came up with was silently ignored.
    get_next_event_time() returns the time the next event is due, in a form
    compatible with the UNIX time() function.
 
-And surely, one would hope that POE supports subsecond accuracy as
+And surely, one would hope that POE supports sub-second accuracy as
 documented elsewhere, unlike the explanation above implies. Yet:
 
    POE::Kernel timers support subsecond accuracy, but don’t expect too
    much here. Perl is not the right language for realtime programming.
 
-... of course, Perl is not the right language to expect subsecond accuray
-- the manpage author must hate Perl to spread so much FUD in so little
-space. The Deliantra game server logs with 100µs-accuracy because Perl is
-fast enough to require this, and is still able to deliver map updates with
-little jitter at exactly the right time. It does not, however, use POE.
+... of course, Perl is not the right language to expect sub-second
+accuracy - the manpage author must hate Perl to spread so much FUD in
+so little space. The Deliantra game server logs with 100µs-accuracy
+because Perl is fast enough to require this, and is still able to deliver
+map updates with little jitter at exactly the right time. It does not,
+however, use POE.
 
    Furthermore, since the Kernel keeps track of everything sessions do, it
    knows when a session has run out of tasks to perform.
@@ -254,7 +255,7 @@ POE manpage understands.
 =item No idle events
 
 The POE-recommended workaround to this is apparently to use
-C<fork>. Consequently, idle watchera will have to be emulated by AnyEvent.
+C<fork>. Consequently, idle watchers will have to be emulated by AnyEvent.
 
 =back
 
