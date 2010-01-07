@@ -99,7 +99,7 @@ extremely problematic, as POE can use different time functions, which can
 differ by more than a second - and user code is left guessing which one is
 used.
 
-In addition, most timer functions in POE want an absoltue timestamp, which
+In addition, most timer functions in POE want an absolute timestamp, which
 is hard to create if all you have is a relative time and no function to
 return the "current time".
 
