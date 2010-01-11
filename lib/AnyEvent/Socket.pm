@@ -383,44 +383,47 @@ sub format_ipv4($) {
 }
 
 sub format_ipv6($) {
-   if (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 eq $_[0]) {
-      return "::";
-   } elsif (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1 eq $_[0]) {
-      return "::1";
-   } elsif (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
-      # v4compatible
-      return "::" . format_ipv4 substr $_[0], 12;
-   } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
-      # v4mapped
-      return "::ffff:" . format_ipv4 substr $_[0], 12;
-   } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
-      # v4translated
-      return "::ffff:0:" . format_ipv4 substr $_[0], 12;
-   } else {
-      my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
-
-      # this is rather sucky, I admit
-      $ip =~ s/^0:(?:0:)*(0$)?/::/
-         or $ip =~ s/(:0){7}$/::/ or $ip =~ s/(:0){7}/:/
-         or $ip =~ s/(:0){6}$/::/ or $ip =~ s/(:0){6}/:/
-         or $ip =~ s/(:0){5}$/::/ or $ip =~ s/(:0){5}/:/
-         or $ip =~ s/(:0){4}$/::/ or $ip =~ s/(:0){4}/:/
-         or $ip =~ s/(:0){3}$/::/ or $ip =~ s/(:0){3}/:/
-         or $ip =~ s/(:0){2}$/::/ or $ip =~ s/(:0){2}/:/
-         or $ip =~ s/(:0){1}$/::/ or $ip =~ s/(:0){1}/:/;
-      return $ip
+   if ($_[0] =~ /^\x00\x00\x00\x00\x00\x00\x00\x00/) {
+      if (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 eq $_[0]) {
+         return "::";
+      } elsif (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1 eq $_[0]) {
+         return "::1";
+      } elsif (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
+         # v4compatible
+         return "::" . format_ipv4 substr $_[0], 12;
+      } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
+         # v4mapped
+         return "::ffff:" . format_ipv4 substr $_[0], 12;
+      } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
+         # v4translated
+         return "::ffff:0:" . format_ipv4 substr $_[0], 12;
+      }
    }
+
+   # split into left, 0-run, right parts
+
+   my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
+
+   # this is admittedly rather sucky
+      $ip =~ s/(?:^|:) 0:0:0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)   0:0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)     0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)       0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)         0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)           0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)             0 (?:$|:)/::/x;
+
+   $ip
 }
 
 sub format_address($) {
-   my $af = address_family $_[0];
-   if ($af == AF_INET) {
+   if (4 == length $_[0]) {
       return &format_ipv4;
-   } elsif ($af == AF_INET6) {
-      return (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12)
-         ? format_ipv4 substr $_[0], 12
+   } elsif (16 == length $_[0]) {
+      return $_[0] =~ /^\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff(....)$/s
+         ? format_ipv4 $1
          : &format_ipv6;
-   } elsif ($af == AF_UNIX) {
+   } elsif (AF_UNIX == address_family $_[0]) {
       return "unix/"
    } else {
       return undef
