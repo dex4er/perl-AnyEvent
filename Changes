@@ -1,6 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 	- speed up AnyEvent::Socket::format_address and ::format_ipv6.
+        - the AnyEvent::Util::fh_nonblocking function worked only
+          by lucky accident on win32.
         - smaller and faster AnyEvent::Util::fh_nonblocking.
 
 5.24  Tue Jan  5 11:39:43 CET 2010

@@ -374,8 +374,7 @@ BEGIN {
 
    *fh_nonblocking = AnyEvent::WIN32
       ? sub($$) {
-          my $nb = (! ! $_[1]) + 0;
-          ioctl $_[0], 0x8004667e, \$nb; # FIONBIO
+          ioctl $_[0], 0x8004667e, pack "L", ! ! $_[1]; # FIONBIO
         }
       : sub($$) {
           fcntl $_[0], Fcntl::F_SETFL(), $_[1] ? Fcntl::O_NONBLOCK() : 0;
