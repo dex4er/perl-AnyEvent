@@ -400,8 +400,6 @@ sub format_ipv6($) {
       }
    }
 
-   # split into left, 0-run, right parts
-
    my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
 
    # this is admittedly rather sucky

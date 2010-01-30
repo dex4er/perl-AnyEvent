@@ -369,17 +369,18 @@ broken (i.e. windows) platforms.
 
 =cut
 
-sub fh_nonblocking($$) {
-   my ($fh, $nb) = @_;
+BEGIN {
+   require Fcntl; # only for !Win32
 
-   require Fcntl;
-
-   if (AnyEvent::WIN32) {
-      $nb = (! ! $nb) + 0;
-      ioctl $fh, 0x8004667e, \$nb; # FIONBIO
-   } else {
-      fcntl $fh, &Fcntl::F_SETFL, $nb ? &Fcntl::O_NONBLOCK : 0;
-   }
+   *fh_nonblocking = AnyEvent::WIN32
+      ? sub($$) {
+          my $nb = (! ! $_[1]) + 0;
+          ioctl $_[0], 0x8004667e, \$nb; # FIONBIO
+        }
+      : sub($$) {
+          fcntl $_[0], Fcntl::F_SETFL(), $_[1] ? Fcntl::O_NONBLOCK() : 0;
+        }
+   ;
 }
 
 =item $guard = guard { CODE }
