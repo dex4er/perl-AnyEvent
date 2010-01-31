@@ -81,7 +81,7 @@ sub _load_func($) {
 
 =over 4
 
-=item $handle = B<new> AnyEvent::TLS fh => $filehandle, key => value...
+=item $handle = B<new> AnyEvent::Handle fh => $filehandle, key => value...
 
 The constructor supports these arguments (all as C<< key => value >> pairs).
 
