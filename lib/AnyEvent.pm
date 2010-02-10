@@ -1392,7 +1392,7 @@ sub _time() {
       # if (eval "use POSIX (); (POSIX::times())...
    } else {
       warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
-      *_time = sub { time }; # epic fail
+      *_time = sub (){ time }; # epic fail
    }
 
    &_time
