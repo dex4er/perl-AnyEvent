@@ -1242,61 +1242,64 @@ sub AnyEvent::Util::postdetect::DESTROY {
 }
 
 sub detect() {
-   unless ($MODEL) {
-      local $SIG{__DIE__};
+   # free some memory
+   *detect = sub () { $MODEL };
 
-      if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z]+)$/) {
-         my $model = "AnyEvent::Impl::$1";
-         if (eval "require $model") {
-            $MODEL = $model;
-            warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $VERBOSE >= 2;
-         } else {
-            warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $VERBOSE;
-         }
+   local $!; # for good measure
+   local $SIG{__DIE__};
+
+   if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z]+)$/) {
+      my $model = "AnyEvent::Impl::$1";
+      if (eval "require $model") {
+         $MODEL = $model;
+         warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $VERBOSE >= 2;
+      } else {
+         warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $VERBOSE;
       }
-
-      # check for already loaded models
-      unless ($MODEL) {
-         for (@REGISTRY, @models) {
-            my ($package, $model) = @$_;
-            if (${"$package\::VERSION"} > 0) {
-               if (eval "require $model") {
-                  $MODEL = $model;
-                  warn "AnyEvent: autodetected model '$model', using it.\n" if $VERBOSE >= 2;
-                  last;
-               }
-            }
-         }
-
-         unless ($MODEL) {
-            # try to autoload a model
-            for (@REGISTRY, @models) {
-               my ($package, $model, $autoload) = @$_;
-               if (
-                  $autoload
-                  and eval "require $package"
-                  and ${"$package\::VERSION"} > 0
-                  and eval "require $model"
-               ) {
-                  $MODEL = $model;
-                  warn "AnyEvent: autoloaded model '$model', using it.\n" if $VERBOSE >= 2;
-                  last;
-               }
-            }
-
-            $MODEL
-              or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.\n";
-         }
-      }
-
-      push @{"$MODEL\::ISA"}, "AnyEvent::Base";
-
-      unshift @ISA, $MODEL;
-
-      require AnyEvent::Strict if $ENV{PERL_ANYEVENT_STRICT};
-
-      (shift @post_detect)->() while @post_detect;
    }
+
+   # check for already loaded models
+   unless ($MODEL) {
+      for (@REGISTRY, @models) {
+         my ($package, $model) = @$_;
+         if (${"$package\::VERSION"} > 0) {
+            if (eval "require $model") {
+               $MODEL = $model;
+               warn "AnyEvent: autodetected model '$model', using it.\n" if $VERBOSE >= 2;
+               last;
+            }
+         }
+      }
+
+      unless ($MODEL) {
+         # try to autoload a model
+         for (@REGISTRY, @models) {
+            my ($package, $model, $autoload) = @$_;
+            if (
+               $autoload
+               and eval "require $package"
+               and ${"$package\::VERSION"} > 0
+               and eval "require $model"
+            ) {
+               $MODEL = $model;
+               warn "AnyEvent: autoloaded model '$model', using it.\n" if $VERBOSE >= 2;
+               last;
+            }
+         }
+
+         $MODEL
+           or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.\n";
+      }
+   }
+
+   @models = (); # free probe data
+
+   push @{"$MODEL\::ISA"}, "AnyEvent::Base";
+   unshift @ISA, $MODEL;
+
+   require AnyEvent::Strict if $ENV{PERL_ANYEVENT_STRICT};
+
+   (shift @post_detect)->() while @post_detect;
 
    $MODEL
 }
@@ -1305,9 +1308,9 @@ sub AUTOLOAD {
    (my $func = $AUTOLOAD) =~ s/.*://;
 
    $method{$func}
-      or Carp::croak "$func: not a valid method for AnyEvent objects";
+      or Carp::croak "$func: not a valid AnyEvent class method";
 
-   detect unless $MODEL;
+   detect;
 
    my $class = shift;
    $class->$func (@_);
@@ -1385,15 +1388,18 @@ package AnyEvent::Base;
 # default implementations for many methods
 
 sub _time() {
-   # probe for availability of Time::HiRes
-   if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
-      warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
-      *_time = \&Time::HiRes::time;
-      # if (eval "use POSIX (); (POSIX::times())...
-   } else {
-      warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
-      *_time = sub (){ time }; # epic fail
-   }
+   eval q{ # poor man's autoloading
+      # probe for availability of Time::HiRes
+      if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
+         warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
+         *_time = \&Time::HiRes::time;
+         # if (eval "use POSIX (); (POSIX::times())...
+      } else {
+         warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
+         *_time = sub (){ time }; # epic fail
+      }
+   };
+   die if $@;
 
    &_time
 }
@@ -1424,20 +1430,8 @@ our ($SIGPIPE_R, $SIGPIPE_W, %SIG_CB, %SIG_EV, $SIG_IO);
 our (%SIG_ASY, %SIG_ASY_W);
 our ($SIG_COUNT, $SIG_TW);
 
-sub _signal_exec {
-   $HAVE_ASYNC_INTERRUPT
-      ? $SIGPIPE_R->drain
-      : sysread $SIGPIPE_R, (my $dummy), 9;
-
-   while (%SIG_EV) {
-      for (keys %SIG_EV) {
-         delete $SIG_EV{$_};
-         $_->() for values %{ $SIG_CB{$_} || {} };
-      }
-   }
-}
-
 # install a dummy wakeup watcher to reduce signal catching latency
+# used by Impls
 sub _sig_add() {
    unless ($SIG_COUNT++) {
       # try to align timer on a full-second boundary, if possible
@@ -1578,8 +1572,22 @@ sub signal {
               undef $SIG{$signal}
             unless keys %{ $SIG_CB{$signal} };
       };
+
+      *_signal_exec = sub {
+         $HAVE_ASYNC_INTERRUPT
+            ? $SIGPIPE_R->drain
+            : sysread $SIGPIPE_R, (my $dummy), 9;
+
+         while (%SIG_EV) {
+            for (keys %SIG_EV) {
+               delete $SIG_EV{$_};
+               $_->() for values %{ $SIG_CB{$_} || {} };
+            }
+         }
+      };
    };
    die if $@;
+
    &signal
 }
 
@@ -1590,6 +1598,7 @@ our $CHLD_W;
 our $CHLD_DELAY_W;
 our $WNOHANG;
 
+# used by many Impl's
 sub _emit_childstatus($$) {
    my (undef, $rpid, $rstatus) = @_;
 
@@ -1598,78 +1607,92 @@ sub _emit_childstatus($$) {
           values %{ $PID_CB{0}     || {} };
 }
 
-sub _sigchld {
-   my $pid;
-
-   AnyEvent->_emit_childstatus ($pid, $?)
-      while ($pid = waitpid -1, $WNOHANG) > 0;
-}
-
 sub child {
-   my (undef, %arg) = @_;
+   eval q{ # poor man's autoloading {}
+      *_sigchld = sub {
+         my $pid;
 
-   defined (my $pid = $arg{pid} + 0)
-      or Carp::croak "required option 'pid' is missing";
+         AnyEvent->_emit_childstatus ($pid, $?)
+            while ($pid = waitpid -1, $WNOHANG) > 0;
+      };
 
-   $PID_CB{$pid}{$arg{cb}} = $arg{cb};
+      *child = sub {
+         my (undef, %arg) = @_;
 
-   # WNOHANG is almost cetrainly 1 everywhere
-   $WNOHANG ||= $^O =~ /^(?:openbsd|netbsd|linux|freebsd|cygwin|MSWin32)$/
-                ? 1
-                : eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
+         defined (my $pid = $arg{pid} + 0)
+            or Carp::croak "required option 'pid' is missing";
 
-   unless ($CHLD_W) {
-      $CHLD_W = AE::signal CHLD => \&_sigchld;
-      # child could be a zombie already, so make at least one round
-      &_sigchld;
-   }
+         $PID_CB{$pid}{$arg{cb}} = $arg{cb};
 
-   bless [$pid, $arg{cb}], "AnyEvent::Base::child"
-}
+         # WNOHANG is almost cetrainly 1 everywhere
+         $WNOHANG ||= $^O =~ /^(?:openbsd|netbsd|linux|freebsd|cygwin|MSWin32)$/
+                      ? 1
+                      : eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
 
-sub AnyEvent::Base::child::DESTROY {
-   my ($pid, $cb) = @{$_[0]};
+         unless ($CHLD_W) {
+            $CHLD_W = AE::signal CHLD => \&_sigchld;
+            # child could be a zombie already, so make at least one round
+            &_sigchld;
+         }
 
-   delete $PID_CB{$pid}{$cb};
-   delete $PID_CB{$pid} unless keys %{ $PID_CB{$pid} };
+         bless [$pid, $arg{cb}], "AnyEvent::Base::child"
+      };
 
-   undef $CHLD_W unless keys %PID_CB;
+      *AnyEvent::Base::child::DESTROY = sub {
+         my ($pid, $cb) = @{$_[0]};
+
+         delete $PID_CB{$pid}{$cb};
+         delete $PID_CB{$pid} unless keys %{ $PID_CB{$pid} };
+
+         undef $CHLD_W unless keys %PID_CB;
+      };
+   };
+   die if $@;
+
+   &child
 }
 
 # idle emulation is done by simply using a timer, regardless
 # of whether the process is idle or not, and not letting
 # the callback use more than 50% of the time.
 sub idle {
-   my (undef, %arg) = @_;
+   eval q{ # poor man's autoloading {}
+      *idle = sub {
+         my (undef, %arg) = @_;
 
-   my ($cb, $w, $rcb) = $arg{cb};
+         my ($cb, $w, $rcb) = $arg{cb};
 
-   $rcb = sub {
-      if ($cb) {
-         $w = _time;
-         &$cb;
-         $w = _time - $w;
+         $rcb = sub {
+            if ($cb) {
+               $w = _time;
+               &$cb;
+               $w = _time - $w;
 
-         # never use more then 50% of the time for the idle watcher,
-         # within some limits
-         $w = 0.0001 if $w < 0.0001;
-         $w = 5      if $w > 5;
+               # never use more then 50% of the time for the idle watcher,
+               # within some limits
+               $w = 0.0001 if $w < 0.0001;
+               $w = 5      if $w > 5;
 
-         $w = AE::timer $w, 0, $rcb;
-      } else {
-         # clean up...
-         undef $w;
-         undef $rcb;
-      }
+               $w = AE::timer $w, 0, $rcb;
+            } else {
+               # clean up...
+               undef $w;
+               undef $rcb;
+            }
+         };
+
+         $w = AE::timer 0.05, 0, $rcb;
+
+         bless \\$cb, "AnyEvent::Base::idle"
+      };
+
+      *AnyEvent::Base::idle::DESTROY = sub {
+         undef $${$_[0]};
+      };
    };
+   die if $@;
 
-   $w = AE::timer 0.05, 0, $rcb;
-
-   bless \\$cb, "AnyEvent::Base::idle"
-}
-
-sub AnyEvent::Base::idle::DESTROY {
-   undef $${$_[0]};
+   &idle
 }
 
 package AnyEvent::CondVar;
