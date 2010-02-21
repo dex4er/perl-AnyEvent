@@ -38,36 +38,20 @@ our @EXPORT_OK = qw(
 our $VERSION = $AnyEvent::VERSION;
 
 BEGIN {
-   my $af_inet6 = eval { local $SIG{__DIE__}; &Socket::AF_INET6 };
-
-   # uhoh
-   $af_inet6 ||= 10 if $^O =~ /linux/;
-   $af_inet6 ||= 23 if $^O =~ /cygwin/i;
-   $af_inet6 ||= 23 if AnyEvent::WIN32;
-   $af_inet6 ||= 24 if $^O =~ /openbsd|netbsd/;
-   $af_inet6 ||= 28 if $^O =~ /freebsd/;
-
-   $af_inet6 && socket my $ipv6_socket, $af_inet6, &Socket::SOCK_STREAM, 0 # check if they can be created
-      or $af_inet6 = 0;
-
-   eval "sub AF_INET6() { $af_inet6 }"; die if $@;
-
-   delete $AnyEvent::PROTOCOL{ipv6} unless $af_inet6;
+   if (
+      $AnyEvent::PROTOCOL{ipv6}
+      && _AF_INET6
+      && socket my $ipv6_socket, _AF_INET6, Socket::SOCK_DGRAM(), 0 # check if they can be created
+   ) {
+      *AF_INET6 = \&_AF_INET6;
+   } else {
+      # disable ipv6
+      *AF_INET6 = sub () { 0 };
+      delete $AnyEvent::PROTOCOL{ipv6};
+   }
 }
 
 BEGIN {
-   # broken windows perls use undocumented error codes...
-   if (AnyEvent::WIN32) {
-      eval "sub WSAEINVAL      () { 10022 }";
-      eval "sub WSAEWOULDBLOCK () { 10035 }";
-      eval "sub WSAEINPROGRESS () { 10036 }";
-   } else {
-      # these should never match any errno value
-      eval "sub WSAEINVAL      () { -1e99 }";
-      eval "sub WSAEWOULDBLOCK () { -1e99 }";
-      eval "sub WSAEINPROGRESS () { -1e99 }";
-   }
-
    # fix buggy Errno on some non-POSIX platforms
    # such as openbsd and windows.
    my %ERR = (
@@ -117,7 +101,7 @@ BEGIN {
          # vista returns fantasy port numbers.
 
          for (1..10) {
-            socket my $l, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+            socket my $l, Socket::AF_INET(), Socket::SOCK_STREAM(), 0
                or next;
 
             bind $l, Socket::pack_sockaddr_in 0, "\x7f\x00\x00\x01"
@@ -129,7 +113,7 @@ BEGIN {
             listen $l, 1
                or next;
 
-            socket my $r, &Socket::AF_INET, &Socket::SOCK_STREAM, 0
+            socket my $r, Socket::AF_INET(), Socket::SOCK_STREAM(), 0
                or next;
 
             bind $r, Socket::pack_sockaddr_in 0, "\x7f\x00\x00\x01"
@@ -173,7 +157,7 @@ BEGIN {
       };
 
       *portable_socketpair = sub () {
-         socketpair my $fh1, my $fh2, &Socket::AF_UNIX, &Socket::SOCK_STREAM, &Socket::PF_UNSPEC
+         socketpair my $fh1, my $fh2, Socket::AF_UNIX(), Socket::SOCK_STREAM(), Socket::PF_UNSPEC()
             or return;
 
          ($fh1, $fh2)
@@ -370,14 +354,12 @@ broken (i.e. windows) platforms.
 =cut
 
 BEGIN {
-   require Fcntl; # only for !Win32
-
    *fh_nonblocking = AnyEvent::WIN32
       ? sub($$) {
           ioctl $_[0], 0x8004667e, pack "L", $_[1]; # FIONBIO
         }
       : sub($$) {
-          fcntl $_[0], Fcntl::F_SETFL(), $_[1] ? Fcntl::O_NONBLOCK() : 0;
+          fcntl $_[0], AnyEvent::F_SETFL, $_[1] ? AnyEvent::O_NONBLOCK : 0;
         }
    ;
 }

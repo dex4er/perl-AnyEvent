@@ -30,6 +30,9 @@ WriteMakefile(
     test         => { TESTS => "t/*.t t/handle/*.t" },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
+    PL_FILES     => { "constants.pl.PL" => "constants.pl" },
+    clean        => { FILES => "constans.pl.pm" },
+    PMLIBDIRS    => ["lib"],
     META_MERGE => {
         recommends => {
            "Net::SSLeay"      => 1.33,
@@ -41,4 +44,14 @@ WriteMakefile(
         }
     },
 );
+
+package MY;
+
+sub init_PM {
+   my ($self) = @_;
+
+   $self->SUPER::init_PM;
+   $self->{PM}{"constants.pl"} = '$(INST_LIB)/AnyEvent/constants.pl';
+}
+
 

@@ -4,6 +4,7 @@ Changes
 README
 Makefile.PL
 
+constants.pl.PL
 lib/AE.pm
 lib/AnyEvent.pm
 lib/AnyEvent/Intro.pod

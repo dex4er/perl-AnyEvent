@@ -1169,8 +1169,8 @@ our @REGISTRY;
 our $VERBOSE;
 
 BEGIN {
-   eval "sub CYGWIN(){" . (($^O =~ /cygwin/i) *1) . "}";
-   eval "sub WIN32 (){" . (($^O =~ /mswin32/i)*1) . "}";
+   require "AnyEvent/constants.pl";
+
    eval "sub TAINT (){" . (${^TAINT}          *1) . "}";
 
    delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
@@ -1493,8 +1493,6 @@ sub signal {
       } else {
          warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
 
-         require Fcntl;
-
          if (AnyEvent::WIN32) {
             require AnyEvent::Util;
 
@@ -1503,12 +1501,12 @@ sub signal {
             AnyEvent::Util::fh_nonblocking ($SIGPIPE_W, 1) if $SIGPIPE_W; # just in case
          } else {
             pipe $SIGPIPE_R, $SIGPIPE_W;
-            fcntl $SIGPIPE_R, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_R;
-            fcntl $SIGPIPE_W, &Fcntl::F_SETFL, &Fcntl::O_NONBLOCK if $SIGPIPE_W; # just in case
+            fcntl $SIGPIPE_R, AnyEvent::F_SETFL, AnyEvent::O_NONBLOCK if $SIGPIPE_R;
+            fcntl $SIGPIPE_W, AnyEvent::F_SETFL, AnyEvent::O_NONBLOCK if $SIGPIPE_W; # just in case
 
             # not strictly required, as $^F is normally 2, but let's make sure...
-            fcntl $SIGPIPE_R, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
-            fcntl $SIGPIPE_W, &Fcntl::F_SETFD, &Fcntl::FD_CLOEXEC;
+            fcntl $SIGPIPE_R, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
+            fcntl $SIGPIPE_W, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
          }
 
          $SIGPIPE_R
