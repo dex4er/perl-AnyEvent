@@ -106,6 +106,7 @@ you want to use the pure-perl backend.
 package AnyEvent::Impl::Perl;
 
 use Scalar::Util qw(weaken);
+use List::Util ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
@@ -310,7 +311,7 @@ sub AE::timer($$$) {
 
    if ($interval) {
       $self = [$MNOW + $after , sub {
-         $_[0][0] = $MNOW + $interval;
+         $_[0][0] = List::Util::max $_[0][0] + $interval, $MNOW;
          push @timer, $_[0];
          weaken $timer[-1];
          $need_sort = $_[0][0] if $_[0][0] < $need_sort;

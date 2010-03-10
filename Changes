@@ -10,6 +10,8 @@ Revision history for Perl extension AnyEvent.
         - precompile a number of constants and use them instead of runtime
           detection and eval.
         - free detection code after detection and similar memory optimisations.
+        - Perl backend timer interval best effort drift has been improved
+          (ame algorithm as EV).
 
 5.24  Tue Jan  5 11:39:43 CET 2010
 	- cygwin never reports errors from failed connects. 1.5 just gives
