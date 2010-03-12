@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+5.25  Sat Mar 13 00:23:14 CET 2010
 	- fix a race condition in AnyEvent::Handle that would cause
           a "bio_read: unsupported method" error (in _another_
           ssl connection) after user code threw an exception.

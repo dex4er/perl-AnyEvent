@@ -31,7 +31,7 @@ WriteMakefile(
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
     PL_FILES     => { "constants.pl.PL" => "constants.pl" },
-    clean        => { FILES => "constans.pl.pm" },
+    clean        => { FILES => "constants.pl" },
     PMLIBDIRS    => ["lib"],
     META_MERGE => {
         recommends => {
