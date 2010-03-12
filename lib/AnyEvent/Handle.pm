@@ -1716,7 +1716,7 @@ sub stop_read {
 sub start_read {
    my ($self) = @_;
 
-   unless ($self->{_rw} || $self->{_eof}) {
+   unless ($self->{_rw} || $self->{_eof} || !$self->{fh}) {
       Scalar::Util::weaken $self;
 
       $self->{_rw} = AE::io $self->{fh}, 0, sub {
@@ -1819,6 +1819,7 @@ sub _dotls {
    while (length ($tmp = Net::SSLeay::BIO_read ($self->{_wbio}))) {
       $self->{wbuf} .= $tmp;
       $self->_drain_wbuf;
+      $self->{tls} or return; # tls session might have gone away in callback
    }
 
    $self->{_on_starttls}
@@ -1927,7 +1928,7 @@ sub starttls {
 
 Shuts down the SSL connection - this makes a proper EOF handshake by
 sending a close notify to the other side, but since OpenSSL doesn't
-support non-blocking shut downs, it is not guarenteed that you can re-use
+support non-blocking shut downs, it is not guaranteed that you can re-use
 the stream afterwards.
 
 =cut
@@ -1935,7 +1936,7 @@ the stream afterwards.
 sub stoptls {
    my ($self) = @_;
 
-   if ($self->{tls}) {
+   if ($self->{tls} && $self->{fh}) {
       Net::SSLeay::shutdown ($self->{tls});
 
       &_dotls;
@@ -2021,6 +2022,29 @@ sub destroy {
 sub AnyEvent::Handle::destroyed::AUTOLOAD {
    #nop
 }
+
+=item $handle->destroyed
+
+Returns false as long as the handle hasn't been destroyed by a call to C<<
+->destroy >>, true otherwise.
+
+Can be useful to decide whether the handle is still valid after some
+callback possibly destroyed the handle. For example, C<< ->push_write >>,
+C<< ->starttls >> and other methods can call user callbacks, which in turn
+can destroy the handle, so work can be avoided by checking sometimes:
+
+   $hdl->starttls ("accept");
+   return if $hdl->destroyed;
+   $hdl->push_write (...
+
+Note that the call to C<push_write> will silently be ignored if the handle
+has been destroyed, so often you can just ignore the possibility of the
+handle being destroyed.
+
+=cut
+
+sub destroyed { 0 }
+sub AnyEvent::Handle::destroyed::destroyed { 1 }
 
 =item AnyEvent::Handle::TLS_CTX
 

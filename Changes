@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+	- fix a race condition in AnyEvent::Handle that would cause
+          a "bio_read: unsupported method" error (in _another_
+          ssl connection) after user code threw an exception.
 	- speed up AnyEvent::Socket::format_address and ::format_ipv6.
         - the AnyEvent::Util::fh_nonblocking function worked only
           by lucky accident on win32.
