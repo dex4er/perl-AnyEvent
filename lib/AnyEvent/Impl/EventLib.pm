@@ -17,9 +17,10 @@ before creating the first AnyEvent watcher.
 
 The L<Event::Lib> module suffers from the same limitations and bugs
 as libevent, most notably it kills already-installed watchers on a
-file descriptor and it is unable to support fork. It has many other bugs
-such as taking references to file handles and callbacks instead of making
-a copy. Only Tk rivals it in its brokenness.
+file descriptor and it is unable to support fork. These are not fatal
+issues, but L<Event::Lib> itself has many additional bugs such as taking
+references to file handles and callbacks instead of making a copy, causing
+memory corruption and random crashes. Only Tk rivals it in its brokenness.
 
 This adaptor module employs the same workaround around the watcher problem
 as Tk and should therefore be avoided. (This was done for simplicity, one
