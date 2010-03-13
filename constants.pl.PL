@@ -1,5 +1,7 @@
 #! perl
 
+# this file is unfortunately only executed at Makefile.PL time
+
 open my $fh, ">lib/AnyEvent/constants.pl"
    or die "lib/AnyEvent/constants.pl: $_[0]\n";
 
@@ -12,7 +14,6 @@ sub i($$) {
 print "package AnyEvent;\n";
 
 our $WIN32 = $^O =~ /mswin32/i;
-
 
 i CYGWIN => $^O =~ /cygwin/i;
 i WIN32  => $WIN32;
