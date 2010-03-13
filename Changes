@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+5.251 Sat Mar 13 00:58:21 CET 2010
+	- make test failed if it was run before make install, and
+          older versions of perl make our live very difficult, so
+          write constants.pl during Makefile.PL time.
+
 5.25  Sat Mar 13 00:23:14 CET 2010
 	- fix a race condition in AnyEvent::Handle that would cause
           a "bio_read: unsupported method" error (in _another_

@@ -21,6 +21,9 @@ print <<EOF;
 
 EOF
 
+do "constants.pl.PL"
+   or die "cannot execute constants.pl.PL";
+
 WriteMakefile(
     dist	=> {
 	            PREOP	=> 'pod2text lib/AnyEvent.pm | tee README >$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;',
@@ -30,8 +33,6 @@ WriteMakefile(
     test         => { TESTS => "t/*.t t/handle/*.t" },
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
-    PL_FILES     => { "constants.pl.PL" => "constants.pl" },
-    clean        => { FILES => "constants.pl" },
     PMLIBDIRS    => ["lib"],
     META_MERGE => {
         recommends => {
@@ -44,14 +45,4 @@ WriteMakefile(
         }
     },
 );
-
-package MY;
-
-sub init_PM {
-   my ($self) = @_;
-
-   $self->SUPER::init_PM;
-   $self->{PM}{"constants.pl"} = '$(INST_LIB)/AnyEvent/constants.pl';
-}
-
 

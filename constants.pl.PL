@@ -1,7 +1,9 @@
 #! perl
 
-open STDOUT, ">$ARGV[0]~"
-   or die "$ARGV[0]~: $!";
+open my $fh, ">lib/AnyEvent/constants.pl"
+   or die "lib/AnyEvent/constants.pl: $_[0]\n";
+
+my $oldstdout = select $fh;
 
 sub i($$) {
    print "sub $_[0] () { ", $_[1]*1, " }\n";
@@ -62,5 +64,9 @@ i _AF_INET6     => $af_inet6;
 
 print "1;\n";
 
-close STDOUT;
+close $fh;
+select $oldstdout;
+
 rename "$ARGV[0]~", $ARGV[0];
+
+1
