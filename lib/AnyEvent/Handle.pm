@@ -834,6 +834,9 @@ water mark, the C<on_drain> callback will be invoked.
 Sets the C<on_drain> callback or clears it (see the description of
 C<on_drain> in the constructor).
 
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
+
 =cut
 
 sub on_drain {
@@ -850,6 +853,9 @@ sub on_drain {
 Queues the given scalar to be written. You can push as much data as you
 want (only limited by the available memory), as C<AnyEvent::Handle>
 buffers it independently of the kernel.
+
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
 
 =cut
 
@@ -1035,6 +1041,9 @@ the peer.
 
 You can rely on the normal read queue and C<on_eof> handling
 afterwards. This is the cleanest way to close a connection.
+
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
 
 =cut
 
@@ -1241,6 +1250,9 @@ This replaces the currently set C<on_read> callback, or clears it (when
 the new callback is C<undef>). See the description of C<on_read> in the
 constructor.
 
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
+
 =cut
 
 sub on_read {
@@ -1288,6 +1300,9 @@ available (or an error condition is detected).
 If enough data was available, then the callback must remove all data it is
 interested in (which can be none at all) and return a true value. After returning
 true, it will be removed from the queue.
+
+These methods may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
 
 =cut
 
@@ -1854,6 +1869,9 @@ Due to bugs in OpenSSL, it might or might not be possible to do multiple
 handshakes on the same stream. Best do not attempt to use the stream after
 stopping TLS.
 
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
+
 =cut
 
 our %TLS_CACHE; #TODO not yet documented, should we?
@@ -1930,6 +1948,9 @@ Shuts down the SSL connection - this makes a proper EOF handshake by
 sending a close notify to the other side, but since OpenSSL doesn't
 support non-blocking shut downs, it is not guaranteed that you can re-use
 the stream afterwards.
+
+This method may invoke callbacks (and therefore the handle might be
+destroyed after it returns).
 
 =cut
 

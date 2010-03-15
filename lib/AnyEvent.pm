@@ -2526,6 +2526,9 @@ can take avdantage of advanced kernel interfaces such as C<epoll> and
 C<kqueue>, and is the fastest backend I<by far>. You can even embed
 L<Glib>/L<Gtk2> in it (or vice versa, see L<EV::Glib> and L<Glib::EV>).
 
+If you only use backends that rely on another event loop (e.g. C<Tk>),
+then this module will do nothing for you.
+
 =item L<Guard>
 
 The guard module, when used, will be used to implement
@@ -2536,11 +2539,8 @@ purely used for performance.
 =item L<JSON> and L<JSON::XS>
 
 One of these modules is required when you want to read or write JSON data
-via L<AnyEvent::Handle>. It is also written in pure-perl, but can take
+via L<AnyEvent::Handle>. L<JSON> is also written in pure-perl, but can take
 advantage of the ultra-high-speed L<JSON::XS> module when it is installed.
-
-In fact, L<AnyEvent::Handle> will use L<JSON::XS> by default if it is
-installed.
 
 =item L<Net::SSLeay>
 
