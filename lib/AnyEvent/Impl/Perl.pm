@@ -217,7 +217,7 @@ sub one_event {
 
       _update_clock;
 
-      if ($fds) {
+      if ($fds > 0) {
          # buggy microshit windows errornously sets exceptfds instead of writefds
          $vec[1] |= $vec[2] if AnyEvent::WIN32;
 
@@ -236,10 +236,10 @@ sub one_event {
                }
             }
          }
-      } elsif (AnyEvent::WIN32 && $! == AnyEvent::Util::WSAEINVAL) {
+      } elsif (AnyEvent::WIN32 && $fds && $! == AnyEvent::Util::WSAEINVAL) {
          # buggy microshit windoze asks us to route around it
          CORE::select undef, undef, undef, $wait if $wait;
-      } elsif (!@timer || $timer[0][0] > $MNOW) {
+      } elsif (!@timer || $timer[0][0] > $MNOW && !$fds) {
          $$$_ && $$$_->() for @idle = grep $$$_, @idle;
       }
    }

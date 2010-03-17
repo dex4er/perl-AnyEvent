@@ -1,5 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
+	- don't generate spurious readyness notifications when select
+          returns EINTR in the pure perl backend (analysed and testcase
+          by Bas Denissen).
+
 5.251 Sat Mar 13 00:58:21 CET 2010
         - make test failed if it was run before make install on perl <=
           5.8.8, and older versions of perl make our live very difficult,
