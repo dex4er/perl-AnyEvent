@@ -22,9 +22,14 @@ package AnyEvent::Impl::EV;
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use EV 3.44;
 
+# cannot override directly, as EV doesn't allow arguments
 sub time       { EV::time       }
 sub now        { EV::now        }
 sub now_update { EV::now_update }
+
+*AE::time       = \&EV::time;
+*AE::now        = \&EV::now;
+*AE::now_update = \&EV::now_update;
 
 *AE::timer = \&EV::timer;
 

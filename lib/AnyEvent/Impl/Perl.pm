@@ -168,6 +168,9 @@ _update_clock;
 sub now        { $NOW          }
 sub now_update { _update_clock }
 
+*AE::now        = sub () { $NOW };
+*AE::now_update = sub () { _update_clock };
+
 # fds[0] is for read, fds[1] is for write watchers
 # fds[poll][V] is the bitmask for select
 # fds[poll][W][fd] contains a list of i/o watchers

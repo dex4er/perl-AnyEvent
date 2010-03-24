@@ -23,8 +23,8 @@ Function calls also allow more static type checking than method calls, so
 many mistakes are caught at compiletime with this API.
 
 Also, some backends (Perl and EV) are so fast that the method call
-overhead is very noticeable (with EV it increases the time five- to
-six-fold, with Perl the method call overhead is about a factor of two).
+overhead is very noticeable (with EV it increases the execution time five-
+to six-fold, with Perl the method call overhead is about a factor of two).
 
 At the moment, there will be no checking (L<AnyEvent::Strict> does not
 affect his API), so the L<AnyEvent> API has a definite advantage here
@@ -32,7 +32,8 @@ still.
 
 Note that the C<AE> API is an alternative to, not the future version of,
 the AnyEvent API. Both APIs can be used interchangably and and there are
-no plans to "switch", so if in doubt, use the L<AnyEvent> API.
+no plans to "switch", so if in doubt, feel free to use the L<AnyEvent>
+API in new code.
 
 As the AE API is complementary, not everything in the AnyEvent API is
 available, so you still need to use AnyEvent for the finer stuff. Also,

@@ -1171,7 +1171,7 @@ our $VERBOSE;
 BEGIN {
    require "AnyEvent/constants.pl";
 
-   eval "sub TAINT (){" . (${^TAINT}          *1) . "}";
+   eval "sub TAINT (){" . (${^TAINT}*1) . "}";
 
    delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
       if ${^TAINT};
@@ -1224,17 +1224,11 @@ our @post_detect;
 sub post_detect(&) {
    my ($cb) = @_;
 
-   if ($MODEL) {
-      $cb->();
+   push @post_detect, $cb;
 
-      undef
-   } else {
-      push @post_detect, $cb;
-
-      defined wantarray
-         ? bless \$cb, "AnyEvent::Util::postdetect"
-         : ()
-   }
+   defined wantarray
+      ? bless \$cb, "AnyEvent::Util::postdetect"
+      : ()
 }
 
 sub AnyEvent::Util::postdetect::DESTROY {
@@ -1297,9 +1291,22 @@ sub detect() {
    push @{"$MODEL\::ISA"}, "AnyEvent::Base";
    unshift @ISA, $MODEL;
 
+   # now nuke some methods that are overriden by the backend.
+   # SUPER is not allowed.
+   for (qw(time signal child idle)) {
+      undef &{"AnyEvent::Base::$_"}
+         if defined &{"$MODEL\::$_"};
+   }
+
    require AnyEvent::Strict if $ENV{PERL_ANYEVENT_STRICT};
 
    (shift @post_detect)->() while @post_detect;
+
+   *post_detect = sub(&) {
+      shift->();
+
+      undef
+   };
 
    $MODEL
 }
@@ -1387,31 +1394,44 @@ package AnyEvent::Base;
 
 # default implementations for many methods
 
-sub _time() {
-   eval q{ # poor man's autoloading
+sub time {
+   eval q{ # poor man's autoloading {}
       # probe for availability of Time::HiRes
       if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
          warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
-         *_time = \&Time::HiRes::time;
+         *AE::time = \&Time::HiRes::time;
          # if (eval "use POSIX (); (POSIX::times())...
       } else {
          warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
-         *_time = sub (){ time }; # epic fail
+         *AE::time = sub (){ time }; # epic fail
       }
+
+      *time = sub { AE::time }; # different prototypes
    };
    die if $@;
 
-   &_time
+   &time
 }
 
-sub time { _time }
-sub now  { _time }
+*now = \&time;
+
 sub now_update { }
 
 # default implementation for ->condvar
 
 sub condvar {
-   bless { @_ == 3 ? (_ae_cb => $_[2]) : () }, "AnyEvent::CondVar"
+   eval q{ # poor man's autoloading {}
+      *condvar = sub {
+         bless { @_ == 3 ? (_ae_cb => $_[2]) : () }, "AnyEvent::CondVar"
+      };
+
+      *AE::cv = sub (;&) {
+         bless { @_ ? (_ae_cb => shift) : () }, "AnyEvent::CondVar"
+      };
+   };
+   die if $@;
+
+   &condvar
 }
 
 # default implementation for ->signal
@@ -1451,7 +1471,7 @@ sub _sig_del {
 }
 
 our $_sig_name_init; $_sig_name_init = sub {
-   eval q{ # poor man's autoloading
+   eval q{ # poor man's autoloading {}
       undef $_sig_name_init;
 
       if (_have_async_interrupt) {
@@ -1515,45 +1535,43 @@ sub signal {
          $SIG_IO = AE::io $SIGPIPE_R, 0, \&_signal_exec;
       }
 
-      *signal = sub {
-         my (undef, %arg) = @_;
+      *signal = $HAVE_ASYNC_INTERRUPT
+         ? sub {
+              my (undef, %arg) = @_;
 
-         my $signal = uc $arg{signal}
-            or Carp::croak "required option 'signal' is missing";
+              # async::interrupt
+              my $signal = sig2num $arg{signal};
+              $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
-         if ($HAVE_ASYNC_INTERRUPT) {
-            # async::interrupt
+              $SIG_ASY{$signal} ||= new Async::Interrupt
+                 cb             => sub { undef $SIG_EV{$signal} },
+                 signal         => $signal,
+                 pipe           => [$SIGPIPE_R->filenos],
+                 pipe_autodrain => 0,
+              ;
 
-            $signal = sig2num $signal;
-            $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+              bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
+           }
+         : sub {
+              my (undef, %arg) = @_;
 
-            $SIG_ASY{$signal} ||= new Async::Interrupt
-               cb             => sub { undef $SIG_EV{$signal} },
-               signal         => $signal,
-               pipe           => [$SIGPIPE_R->filenos],
-               pipe_autodrain => 0,
-            ;
+              # pure perl
+              my $signal = sig2name $arg{signal};
+              $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
 
-         } else {
-            # pure perl
+              $SIG{$signal} ||= sub {
+                 local $!;
+                 syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
+                 undef $SIG_EV{$signal};
+              };
 
-            # AE::Util has been loaded in signal
-            $signal = sig2name $signal;
-            $SIG_CB{$signal}{$arg{cb}} = $arg{cb};
+              # can't do signal processing without introducing races in pure perl,
+              # so limit the signal latency.
+              _sig_add;
 
-            $SIG{$signal} ||= sub {
-               local $!;
-               syswrite $SIGPIPE_W, "\x00", 1 unless %SIG_EV;
-               undef $SIG_EV{$signal};
-            };
-
-            # can't do signal processing without introducing races in pure perl,
-            # so limit the signal latency.
-            _sig_add;
-         }
-
-         bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
-      };
+              bless [$signal, $arg{cb}], "AnyEvent::Base::signal"
+           }
+      ;
 
       *AnyEvent::Base::signal::DESTROY = sub {
          my ($signal, $cb) = @{$_[0]};
