@@ -9,7 +9,10 @@ and POE are various supported event loops/environments.
 
    use AnyEvent;
 
-   # file descriptor readable
+   # if you prefer function calls, look at the L<AE> manpage for
+   # an alternative API.
+
+   # file handle or descriptor readable
    my $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub { ...  });
 
    # one-shot or repeating timers
@@ -1344,7 +1347,7 @@ sub _dupfh($$;$$) {
 
 Starting with version 5.0, AnyEvent officially supports a second, much
 simpler, API that is designed to reduce the calling, typing and memory
-overhead.
+overhead by using function call syntax and a fixed number of parameters.
 
 See the L<AE> manpage for details.
 
@@ -1353,6 +1356,9 @@ See the L<AE> manpage for details.
 package AE;
 
 our $VERSION = $AnyEvent::VERSION;
+
+# fall back to the main API by default - backends and AnyEvent::Base
+# implementations can overwrite these.
 
 sub io($$$) {
    AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
@@ -2077,7 +2083,7 @@ The actual code goes further and collects all errors (C<die>s, exceptions)
 that occurred during request processing. The C<result> method detects
 whether an exception as thrown (it is stored inside the $txn object)
 and just throws the exception, which means connection errors and other
-problems get reported tot he code that tries to use the result, not in a
+problems get reported to the code that tries to use the result, not in a
 random callback.
 
 All of this enables the following usage styles:

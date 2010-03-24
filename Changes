@@ -3,6 +3,7 @@ Revision history for Perl extension AnyEvent.
 	- don't generate spurious readyness notifications when select
           returns EINTR in the pure perl backend (analysed and testcase
           by Bas Denissen).
+        - give same examples in SYNOPSIS sections of AnyEvent and AE.
         - provider faster implementations for AE::time/now/now_update for
           EV and Perl backends.
         - provide faster AE::cv and AE::time implementations for all

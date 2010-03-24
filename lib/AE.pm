@@ -6,6 +6,35 @@ AE - simpler/faster/newer/cooler AnyEvent API
 
   use AnyEvent; # not AE
 
+  # file handle or descriptor readable
+  my $w = AE::io $fh, 0, sub { ...  };
+
+  # one-shot or repeating timers
+  my $w = AE::timer $seconds,        0, sub { ... }; # once
+  my $w = AE::timer $seconds, interval, sub { ... }; # repeated
+
+  print AE::now;  # prints current event loop time
+  print AE::time; # think Time::HiRes::time or simply CORE::time.
+
+  # POSIX signal
+  my $w = AE::signal TERM => sub { ... };
+
+  # child process exit
+  my $w = AE::child $pid, sub {
+     my ($pid, $status) = @_;
+     ...
+  };
+
+  # called when event loop idle (if applicable)
+  my $w = AE::idle { ... };
+
+  my $w = AE::cv; # stores whether a condition was flagged
+  $w->send; # wake up current and all future recv's
+  $w->recv; # enters "main loop" till $condvar gets ->send
+  # use a condvar in callback mode:
+  $w->cb (sub { $_[0]->recv });
+
+
 =head1 DESCRIPTION
 
 This module documents the new simpler AnyEvent API.
