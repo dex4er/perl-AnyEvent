@@ -611,21 +611,21 @@ for the send to occur.
 
 Example: wait for a timer.
 
-   # wait till the result is ready
-   my $result_ready = AnyEvent->condvar;
+   # condition: "wait till the timer is fired"
+   my $timer_fired = AnyEvent->condvar;
 
-   # do something such as adding a timer
-   # or socket watcher the calls $result_ready->send
-   # when the "result" is ready.
+   # create the timer - we could wait for, say
+   # a handle becomign ready, or even an
+   # AnyEvent::HTTP request to finish, but
    # in this case, we simply use a timer:
    my $w = AnyEvent->timer (
       after => 1,
-      cb    => sub { $result_ready->send },
+      cb    => sub { $timer_fired->send },
    );
 
    # this "blocks" (while handling events) till the callback
    # calls ->send
-   $result_ready->recv;
+   $timer_fired->recv;
 
 Example: wait for a timer, but take advantage of the fact that condition
 variables are also callable directly.
