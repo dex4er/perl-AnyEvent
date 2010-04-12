@@ -1,5 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: docs signal for condvar
+
+5.26  Mon Apr 12 04:49:35 CEST 2010
 	- don't generate spurious readyness notifications when select
           returns EINTR in the pure perl backend (analysed and testcase
           by Bas Denissen).

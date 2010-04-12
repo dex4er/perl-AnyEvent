@@ -7,7 +7,10 @@ NAME
 SYNOPSIS
        use AnyEvent;
 
-       # file descriptor readable
+       # if you prefer function calls, look at the L<AE> manpage for
+       # an alternative API.
+
+       # file handle or descriptor readable
        my $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub { ...  });
 
        # one-shot or repeating timers
@@ -591,21 +594,21 @@ WATCHERS
 
     Example: wait for a timer.
 
-       # wait till the result is ready
-       my $result_ready = AnyEvent->condvar;
+       # condition: "wait till the timer is fired"
+       my $timer_fired = AnyEvent->condvar;
 
-       # do something such as adding a timer
-       # or socket watcher the calls $result_ready->send
-       # when the "result" is ready.
+       # create the timer - we could wait for, say
+       # a handle becomign ready, or even an
+       # AnyEvent::HTTP request to finish, but
        # in this case, we simply use a timer:
        my $w = AnyEvent->timer (
           after => 1,
-          cb    => sub { $result_ready->send },
+          cb    => sub { $timer_fired->send },
        );
 
        # this "blocks" (while handling events) till the callback
        # calls ->send
-       $result_ready->recv;
+       $timer_fired->recv;
 
     Example: wait for a timer, but take advantage of the fact that condition
     variables are also callable directly.
@@ -1078,7 +1081,7 @@ OTHER MODULES
 SIMPLIFIED AE API
     Starting with version 5.0, AnyEvent officially supports a second, much
     simpler, API that is designed to reduce the calling, typing and memory
-    overhead.
+    overhead by using function call syntax and a fixed number of parameters.
 
     See the AE manpage for details.
 
@@ -1353,7 +1356,7 @@ REAL-WORLD EXAMPLE
     exceptions) that occurred during request processing. The "result" method
     detects whether an exception as thrown (it is stored inside the $txn
     object) and just throws the exception, which means connection errors and
-    other problems get reported tot he code that tries to use the result,
+    other problems get reported to the code that tries to use the result,
     not in a random callback.
 
     All of this enables the following usage styles:
@@ -1776,6 +1779,9 @@ RECOMMENDED/OPTIONAL MODULES
         You can even embed Glib/Gtk2 in it (or vice versa, see EV::Glib and
         Glib::EV).
 
+        If you only use backends that rely on another event loop (e.g.
+        "Tk"), then this module will do nothing for you.
+
     Guard
         The guard module, when used, will be used to implement
         "AnyEvent::Util::guard". This speeds up guards considerably (and
@@ -1784,12 +1790,9 @@ RECOMMENDED/OPTIONAL MODULES
 
     JSON and JSON::XS
         One of these modules is required when you want to read or write JSON
-        data via AnyEvent::Handle. It is also written in pure-perl, but can
-        take advantage of the ultra-high-speed JSON::XS module when it is
-        installed.
-
-        In fact, AnyEvent::Handle will use JSON::XS by default if it is
-        installed.
+        data via AnyEvent::Handle. JSON is also written in pure-perl, but
+        can take advantage of the ultra-high-speed JSON::XS module when it
+        is installed.
 
     Net::SSLeay
         Implementing TLS/SSL in Perl is certainly interesting, but not very
