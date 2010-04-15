@@ -2,6 +2,9 @@ Revision history for Perl extension AnyEvent.
 
 TODO: docs signal for condvar
 
+	- AF_INET6 was not properly used from Socket6 during configuration
+          time (found by Andy Grundman).
+
 5.26  Mon Apr 12 04:49:35 CEST 2010
 	- don't generate spurious readyness notifications when select
           returns EINTR in the pure perl backend (analysed and testcase

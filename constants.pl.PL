@@ -42,7 +42,7 @@ if ($WIN32) {
 my $af_inet6;
 
 $af_inet6 ||= eval { require Socket ; Socket::AF_INET6 () };
-$af_ine6t ||= eval { require Socket6; Socket6::AF_INET6() };
+$af_inet6 ||= eval { require Socket6; Socket6::AF_INET6() };
 
 # uhoh
 $af_inet6 ||= 10 if $^O =~ /linux/;
