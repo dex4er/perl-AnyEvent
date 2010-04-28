@@ -473,10 +473,10 @@ WATCHERS
     Example: fork a process and wait for it
 
        my $done = AnyEvent->condvar;
-  
-       my $pid = fork or exit 5;
-  
-       my $w = AnyEvent->child (
+      
+   my $pid = fork or exit 5;
+      
+   my $w = AnyEvent->child (
           pid => $pid,
           cb  => sub {
              my ($pid, $status) = @_;
@@ -484,8 +484,8 @@ WATCHERS
              $done->send;
           },
        );
-  
-       # do something else, then wait for process exit
+      
+   # do something else, then wait for process exit
        $done->recv;
 
   IDLE WATCHERS
@@ -1845,8 +1845,8 @@ SECURITY CONSIDERATIONS
     before the first watcher gets created, e.g. with a "BEGIN" block:
 
        BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
-  
-       use AnyEvent;
+      
+   use AnyEvent;
 
     Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
     be used to probe what backend is used and gain other information (which

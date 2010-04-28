@@ -2,6 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: docs signal for condvar
 
+5.261 Wed Apr 28 16:13:36 CEST 2010
 	- AF_INET6 was not properly used from Socket6 during configuration
           time (found by Andy Grundman).
 
