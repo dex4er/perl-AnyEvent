@@ -9,7 +9,7 @@ and POE are various supported event loops/environments.
 
    use AnyEvent;
 
-   # if you prefer function calls, look at the L<AE> manpage for
+   # if you prefer function calls, look at the AE manpage for
    # an alternative API.
 
    # file handle or descriptor readable
