@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
+AnyEvent::Handle - non-blocking I/O on streaming handles via AnyEvent
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 =head1 DESCRIPTION
 
 This module is a helper module to make it easier to do event-based I/O on
-filehandles.
+stream-based filehandles (sockets, pipes or other stream things).
 
 The L<AnyEvent::Intro> tutorial contains some well-documented
 AnyEvent::Handle examples.
@@ -533,6 +533,12 @@ sub new {
 
 sub _start {
    my ($self) = @_;
+
+   # too many clueless people try to use udp and similar sockets
+   # with AnyEvent::Handle, do them a favour.
+   if (Socket::SOCK_STREAM != unpack "I", getsockopt $self->{fh}, Socket::SOL_SOCKET (), Socket::SO_TYPE ()) {
+      Carp::croak "AnyEvent::Handle: only stream sockets supported, anything else will NOT work!";
+   }
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 

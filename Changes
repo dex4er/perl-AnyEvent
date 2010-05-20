@@ -2,6 +2,11 @@ Revision history for Perl extension AnyEvent.
 
 TODO: docs signal for condvar
 
+	- simplified and reworked the "OTHER MODULES" section.
+	- explicitly check for non-stream sockets in AE::Handle, too many
+          clueless people fell into the trap of this somehow working
+          (see the horrible AE::Handle::UDP for a good example...).
+
 5.261 Wed Apr 28 16:13:36 CEST 2010
 	- AF_INET6 was not properly used from Socket6 during configuration
           time (found by Andy Grundman).
