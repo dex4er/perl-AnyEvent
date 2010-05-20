@@ -1059,7 +1059,7 @@ exit cleanly.
 The following is a non-exhaustive list of additional modules that use
 AnyEvent as a client and can therefore be mixed easily with other AnyEvent
 modules and other event loops in the same program. Some of the modules
-come with AnyEvent, the others are available via CPAN.
+come as part of AnyEvent, the others are available via CPAN.
 
 =over 4
 
