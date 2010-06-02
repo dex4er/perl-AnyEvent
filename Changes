@@ -2,6 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: docs signal for condvar
 
+TODO: FIX PIPE CHECK! explicitly ceck for datagram sockets and files
 	- simplified and reworked the "OTHER MODULES" section.
 	- explicitly check for non-stream sockets in AE::Handle, too many
           clueless people fell into the trap of this somehow working

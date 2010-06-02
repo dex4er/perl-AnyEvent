@@ -799,8 +799,10 @@ The file handle is perfect for being plugged into L<AnyEvent::Handle>, but
 can be used as a normal perl file handle as well.
 
 Unless called in void context, C<tcp_connect> returns a guard object that
-will automatically abort connecting when it gets destroyed (it does not do
-anything to the socket after the connect was successful).
+will automatically cancel the connection attempt when it gets destroyed
+- in which case the callback will not be invoked. Destroying it does not
+do anything to the socket after the connect was successful - you cannot
+"uncall" a callback that has been invoked already.
 
 Sometimes you need to "prepare" the socket before connecting, for example,
 to C<bind> it to some port, or you want a specific connect timeout that
