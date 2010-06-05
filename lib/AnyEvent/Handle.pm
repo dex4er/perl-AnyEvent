@@ -536,9 +536,9 @@ sub _start {
 
    # too many clueless people try to use udp and similar sockets
    # with AnyEvent::Handle, do them a favour.
-   if (Socket::SOCK_STREAM != unpack "I", getsockopt $self->{fh}, Socket::SOL_SOCKET (), Socket::SO_TYPE ()) {
-      Carp::croak "AnyEvent::Handle: only stream sockets supported, anything else will NOT work!";
-   }
+   my $type = getsockopt $self->{fh}, Socket::SOL_SOCKET (), Socket::SO_TYPE ();
+   Carp::croak "AnyEvent::Handle: only stream sockets supported, anything else will NOT work!"
+      if Socket::SOCK_STREAM != (unpack "I", $type) && defined $type;
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
