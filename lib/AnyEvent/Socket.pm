@@ -898,7 +898,11 @@ sub tcp_connect($$$;$) {
          return unless exists $state{fh};
 
          my $target = shift @target
-            or return (%state = (), _postpone $connect);
+            or return _postpone sub {
+               return unless exists $state{fh};
+               %state = ();
+               $connect->();
+            };
 
          my ($domain, $type, $proto, $sockaddr) = @$target;
 
