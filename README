@@ -7,7 +7,7 @@ NAME
 SYNOPSIS
        use AnyEvent;
 
-       # if you prefer function calls, look at the L<AE> manpage for
+       # if you prefer function calls, look at the AE manpage for
        # an alternative API.
 
        # file handle or descriptor readable
@@ -473,10 +473,10 @@ WATCHERS
     Example: fork a process and wait for it
 
        my $done = AnyEvent->condvar;
-      
-   my $pid = fork or exit 5;
-      
-   my $w = AnyEvent->child (
+  
+       my $pid = fork or exit 5;
+  
+       my $w = AnyEvent->child (
           pid => $pid,
           cb  => sub {
              my ($pid, $status) = @_;
@@ -484,8 +484,8 @@ WATCHERS
              $done->send;
           },
        );
-      
-   # do something else, then wait for process exit
+  
+       # do something else, then wait for process exit
        $done->recv;
 
   IDLE WATCHERS
@@ -541,8 +541,8 @@ WATCHERS
     event loop and will only block when necessary (usually when told by the
     user).
 
-    The instrument to do that is called a "condition variable", so called
-    because they represent a condition that must become true.
+    The tool to do that is called a "condition variable", so called because
+    they represent a condition that must become true.
 
     Now is probably a good time to look at the examples further below.
 
@@ -557,13 +557,27 @@ WATCHERS
     as if it were a callback, read about the caveats in the description for
     the "->send" method).
 
-    Condition variables are similar to callbacks, except that you can
-    optionally wait for them. They can also be called merge points - points
-    in time where multiple outstanding events have been processed. And yet
-    another way to call them is transactions - each condition variable can
-    be used to represent a transaction, which finishes at some point and
-    delivers a result. And yet some people know them as "futures" - a
-    promise to compute/deliver something that you can wait for.
+    Since condition variables are the most complex part of the AnyEvent API,
+    here are some different mental models of what they are - pick the ones
+    you can connect to:
+
+    *   Condition variables are like callbacks - you can call them (and pass
+        them instead of callbacks). Unlike callbacks however, you can also
+        wait for them to be called.
+
+    *   Condition variables are signals - one side can emit or send them,
+        the other side can wait for them, or install a handler that is
+        called when the signal fires.
+
+    *   Condition variables are like "Merge Points" - points in your program
+        where you merge multiple independent results/control flows into one.
+
+    *   Condition variables represent a transaction - function that start
+        some kind of transaction can return them, leaving the caller the
+        choice between waiting in a blocking fashion, or setting a callback.
+
+    *   Condition variables represent future values, or promises to deliver
+        some result, long before the result is available.
 
     Condition variables are very useful to signal that something has
     finished, for example, if you write a module that does asynchronous http
@@ -1009,7 +1023,7 @@ OTHER MODULES
     The following is a non-exhaustive list of additional modules that use
     AnyEvent as a client and can therefore be mixed easily with other
     AnyEvent modules and other event loops in the same program. Some of the
-    modules come with AnyEvent, most are available via CPAN.
+    modules come as part of AnyEvent, the others are available via CPAN.
 
     AnyEvent::Util
         Contains various utility functions that replace often-used but
@@ -1030,50 +1044,44 @@ OTHER MODULES
     AnyEvent::DNS
         Provides rich asynchronous DNS resolver capabilities.
 
-    AnyEvent::HTTP
-        A simple-to-use HTTP library that is capable of making a lot of
-        concurrent HTTP requests.
+    AnyEvent::HTTP, AnyEvent::IRC, AnyEvent::XMPP, AnyEvent::GPSD,
+    AnyEvent::IGS, AnyEvent::FCP
+        Implement event-based interfaces to the protocols of the same name
+        (for the curious, IGS is the International Go Server and FCP is the
+        Freenet Client Protocol).
+
+    AnyEvent::Handle::UDP
+        Here be danger!
+
+        As Pauli would put it, "Not only is it not right, it's not even
+        wrong!" - there are so many things wrong with AnyEvent::Handle::UDP,
+        most notably it's use of a stream-based API with a protocol that
+        isn't streamable, that the only way to improve it is to delete it.
+
+        It features data corruption (but typically only under load) and
+        general confusion. On top, the author is not only clueless about UDP
+        but also fact-resistant - some gems of his understanding: "connect
+        doesn't work with UDP", "UDP packets are not IP packets", "UDP only
+        has datagrams, not packets", "I don't need to implement proper error
+        checking as UDP doesn't support error checking" and so on - he
+        doesn't even understand what's wrong with his module when it is
+        explained to him.
+
+    AnyEvent::DBI
+        Executes DBI requests asynchronously in a proxy process for you,
+        notifying you in an event-bnased way when the operation is finished.
+
+    AnyEvent::AIO
+        Truly asynchronous (as opposed to non-blocking) I/O, should be in
+        the toolbox of every event programmer. AnyEvent::AIO transparently
+        fuses IO::AIO and AnyEvent together, giving AnyEvent access to
+        event-based file I/O, and much more.
 
     AnyEvent::HTTPD
-        Provides a simple web application server framework.
+        A simple embedded webserver.
 
     AnyEvent::FastPing
         The fastest ping in the west.
-
-    AnyEvent::DBI
-        Executes DBI requests asynchronously in a proxy process.
-
-    AnyEvent::AIO
-        Truly asynchronous I/O, should be in the toolbox of every event
-        programmer. AnyEvent::AIO transparently fuses IO::AIO and AnyEvent
-        together.
-
-    AnyEvent::BDB
-        Truly asynchronous Berkeley DB access. AnyEvent::BDB transparently
-        fuses BDB and AnyEvent together.
-
-    AnyEvent::GPSD
-        A non-blocking interface to gpsd, a daemon delivering GPS
-        information.
-
-    AnyEvent::IRC
-        AnyEvent based IRC client module family (replacing the older
-        Net::IRC3).
-
-    AnyEvent::XMPP
-        AnyEvent based XMPP (Jabber protocol) module family (replacing the
-        older Net::XMPP2>.
-
-    AnyEvent::IGS
-        A non-blocking interface to the Internet Go Server protocol (used by
-        App::IGS).
-
-    Net::FCP
-        AnyEvent-based implementation of the Freenet Client Protocol,
-        birthplace of AnyEvent.
-
-    Event::ExecFlow
-        High level API for event-based execution flow control.
 
     Coro
         Has special support for AnyEvent via Coro::AnyEvent.
@@ -1845,8 +1853,8 @@ SECURITY CONSIDERATIONS
     before the first watcher gets created, e.g. with a "BEGIN" block:
 
        BEGIN { delete $ENV{PERL_ANYEVENT_MODEL} }
-      
-   use AnyEvent;
+  
+       use AnyEvent;
 
     Similar considerations apply to $ENV{PERL_ANYEVENT_VERBOSE}, as that can
     be used to probe what backend is used and gain other information (which
