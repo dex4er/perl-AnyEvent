@@ -558,8 +558,8 @@ will actively watch for new events and call your callbacks.
 AnyEvent is slightly different: it expects somebody else to run the event
 loop and will only block when necessary (usually when told by the user).
 
-The instrument to do that is called a "condition variable", so called
-because they represent a condition that must become true.
+The tool to do that is called a "condition variable", so called because
+they represent a condition that must become true.
 
 Now is probably a good time to look at the examples further below.
 
@@ -574,13 +574,29 @@ by calling the C<send> method (or calling the condition variable as if it
 were a callback, read about the caveats in the description for the C<<
 ->send >> method).
 
-Condition variables are similar to callbacks, except that you can
-optionally wait for them. They can also be called merge points - points
-in time where multiple outstanding events have been processed. And yet
-another way to call them is transactions - each condition variable can be
-used to represent a transaction, which finishes at some point and delivers
-a result. And yet some people know them as "futures" - a promise to
-compute/deliver something that you can wait for.
+Since condition variables are the most complex part of the AnyEvent API, here are
+some different mental models of what they are - pick the ones you can connect to:
+
+=over 4
+
+=item * Condition variables are like callbacks - you can call them (and pass them instead
+of callbacks). Unlike callbacks however, you can also wait for them to be called.
+
+=item * Condition variables are signals - one side can emit or send them,
+the other side can wait for them, or install a handler that is called when
+the signal fires.
+
+=item * Condition variables are like "Merge Points" - points in your program
+where you merge multiple independent results/control flows into one.
+
+=item * Condition variables represent a transaction - function that start
+some kind of transaction can return them, leaving the caller the choice
+between waiting in a blocking fashion, or setting a callback.
+
+=item * Condition variables represent future values, or promises to deliver
+some result, long before the result is available.
+
+=back
 
 Condition variables are very useful to signal that something has finished,
 for example, if you write a module that does asynchronous http requests,

@@ -1,13 +1,12 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: docs signal for condvar
-
 	- postpone differently in AnyEvent::Socket now, as
           when not, canceling the connection attempt might fail
           (found by Felix Antonius Wilhelm Ostmann).
 	- explicitly check for non-stream sockets in AE::Handle, too many
           clueless people fell into the trap of this somehow working.
 	- simplified and reworked the "OTHER MODULES" section.
+        - better/more condvar examples.
 
 5.261 Wed Apr 28 16:13:36 CEST 2010
 	- AF_INET6 was not properly used from Socket6 during configuration
