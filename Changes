@@ -1,5 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
+	- backport to perl 5.8.x.
+
 5.27   Sun Jun  6 12:12:05 CEST 2010
 	- postpone differently in AnyEvent::Socket now, as
           when not, canceling the connection attempt might fail

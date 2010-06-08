@@ -538,7 +538,7 @@ sub _start {
    # with AnyEvent::Handle, do them a favour.
    my $type = getsockopt $self->{fh}, Socket::SOL_SOCKET (), Socket::SO_TYPE ();
    Carp::croak "AnyEvent::Handle: only stream sockets supported, anything else will NOT work!"
-      if Socket::SOCK_STREAM != (unpack "I", $type) && defined $type;
+      if Socket::SOCK_STREAM () != (unpack "I", $type) && defined $type;
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
