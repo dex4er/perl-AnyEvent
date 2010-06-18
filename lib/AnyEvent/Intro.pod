@@ -25,7 +25,7 @@ programming. Typically such frameworks are an all-or-nothing thing: If you
 use one such framework, you can't (easily, or even at all) use another in
 the same program.
 
-AnyEvent is different - it is a thin abstraction layer on top of other of
+AnyEvent is different - it is a thin abstraction layer on top of other
 event loops, just like DBI is an abstraction of many different database
 APIs. Its main purpose is to move the choice of the underlying framework
 (the event loop) from the module author to the program author using the
@@ -126,12 +126,12 @@ because you "block"/keep your process from executing anything else while
 you do so.
 
 The second example avoids blocking by only registering interest in a read
-event, which is fast and doesn't block your process. Only when read data
-is available will the callback be called, which can then proceed to read
-the data.
+event, which is fast and doesn't block your process. Only when data is
+available for reading will the callback be called, which can then proceed
+to read the data.
 
 The "interest" is represented by an object returned by C<< AnyEvent->io
->> called a "watcher" object - called like that because it "watches" your
+>> called a "watcher" object - called this because it "watches" your
 file handle (or other event sources) for the event you are interested in.
 
 In the example above, we create an I/O watcher by calling the C<<
@@ -220,8 +220,8 @@ are named "condition variables" because they represent a condition that is
 initially false and needs to be fulfilled.
 
 You can also call them "merge points", "sync points", "rendezvous ports"
-or even callbacks and many other things (and they are often called like
-this in other frameworks). The important point is that you can create them
+or even callbacks and many other things (and they are often called these
+names in other frameworks). The important point is that you can create them
 freely and later wait for them to become true.
 
 Condition variables have two sides - one side is the "producer" of the
@@ -349,22 +349,22 @@ Instead of waiting for a condition variable, the program enters the Gtk2
 main loop by calling C<< Gtk2->main >>, which will block the program and
 wait for events to arrive.
 
-This also shows that AnyEvent is quite flexible - you didn't have anything
-to do to make the AnyEvent watcher use Gtk2 (actually Glib) - it just
+This also shows that AnyEvent is quite flexible - you didn't have to do
+anything to make the AnyEvent watcher use Gtk2 (actually Glib) - it just
 worked.
 
 Admittedly, the example is a bit silly - who would want to read names
 from standard input in a Gtk+ application. But imagine that instead of
 doing that, you would make a HTTP request in the background and display
 it's results. In fact, with event-based programming you can make many
-http-requests in parallel in your program and still provide feedback to
+HTTP requests in parallel in your program and still provide feedback to
 the user and stay interactive.
 
 And in the next part you will see how to do just that - by implementing an
 HTTP request, on our own, with the utility modules AnyEvent comes with.
 
 Before that, however, let's briefly look at how you would write your
-program with using only AnyEvent, without ever calling some other event
+program using only AnyEvent, without ever calling some other event
 loop's run function.
 
 In the example using condition variables, we used those to start waiting
