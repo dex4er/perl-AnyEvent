@@ -140,8 +140,9 @@ that model the default. For example:
    # .. AnyEvent will likely default to Tk
 
 The I<likely> means that, if any module loads another event model and
-starts using it, all bets are off. Maybe you should tell their authors to
-use AnyEvent so their modules work together with others seamlessly...
+starts using it, all bets are off - this case should be very rare though,
+as very few modules hardcode event loops without announcing this very
+loudly.
 
 The pure-perl implementation of AnyEvent is called
 C<AnyEvent::Impl::Perl>. Like other event modules you can load it

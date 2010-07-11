@@ -1,5 +1,6 @@
 Revision history for Perl extension AnyEvent.
 
+TODO: document $AnyEvent::DNS::RESOLVER
 5.271  Tue Jun  8 12:05:46 CEST 2010
 	- backport to perl 5.8.x.
 
