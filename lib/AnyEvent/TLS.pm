@@ -883,7 +883,7 @@ sub init() {
    Net::SSLeay::randomize ();
 
    $REF_IDX = Net::SSLeay::get_ex_new_index (0, 0, 0, 0, 0)
-      until $REF_IDX; # Net::SSLeay uses id #0 for it's own stuff without allocating it
+      until $REF_IDX; # Net::SSLeay uses id #0 for its own stuff without allocating it
 }
 
 =item $certname = AnyEvent::TLS::certname $x509

@@ -34,7 +34,7 @@ interoperable with POE:
 
 =item Weird messages
 
-If you only use C<run_one_timeslice> (as AnyEvent has to for it's
+If you only use C<run_one_timeslice> (as AnyEvent has to for its
 condition variables), POE will print an ugly, unsuppressible, message at
 program exit:
 

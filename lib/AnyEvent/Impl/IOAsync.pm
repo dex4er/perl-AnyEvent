@@ -57,7 +57,7 @@ Worse, IO::Async does not let you install multiple child watchers, does
 not let you watch for any child, and apparently an interface to unregister
 child watchers has been forgotten as well.
 
-As a result, AnyEvent::Impl::IOAsync has to fall back on it's own child
+As a result, AnyEvent::Impl::IOAsync has to fall back on its own child
 management, which makes it impossible to watch for child processes via
 both AnyEvent and IO::Async. Hooking and Patching IO::Async has been
 considered, but is considerable work.
@@ -73,7 +73,7 @@ This makes signal watchers almost useless (You could just hook them
 yourself, you can't share any of them, as would make sense for
 e.g. SIGTERM, SIGTSTP, SIGPWR, SIGUSR1 etc.).
 
-As a result, AnyEvent falls back to it's own signal handling (it is
+As a result, AnyEvent falls back to its own signal handling (it is
 pointless to somehow share the IO::Async watcher, as it doesn't matter if
 AnyEvent blocks the signal via IO::Async or directly, and AnyEvents signal
 handling is race-free).

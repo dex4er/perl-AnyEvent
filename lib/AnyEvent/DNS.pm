@@ -95,7 +95,7 @@ the callback.
 =item AnyEvent::DNS::reverse_lookup $ipv4_or_6, $cb->(@hostnames)
 
 Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
-into it's hostname(s). Handles V4MAPPED and V4COMPAT IPv6 addresses
+into its hostname(s). Handles V4MAPPED and V4COMPAT IPv6 addresses
 transparently.
 
 =item AnyEvent::DNS::reverse_verify $ipv4_or_6, $cb->(@hostnames)

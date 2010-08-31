@@ -738,7 +738,7 @@ Croaks when it cannot encode the string.
 
 =item AnyEvent::Util::punycode_decode $string
 
-Tries to punycode-decode the given C<$string> and return it's unicode
+Tries to punycode-decode the given C<$string> and return its unicode
 form. Again, uppercase letters are not casefoled, you have to do that
 yourself.
 
@@ -926,7 +926,7 @@ much as IDNs can be secure, and reasonably efficient when confronted with
 IDNs that are already valid DNS names.
 
 At the moment, this function simply calls C<idn_nameprep $idn, 1>,
-returning it's argument when that function fails.
+returning its argument when that function fails.
 
 =cut
 

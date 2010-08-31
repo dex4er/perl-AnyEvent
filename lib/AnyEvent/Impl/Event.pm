@@ -16,7 +16,7 @@ do anything to make Event work with AnyEvent except by loading Event before
 creating the first AnyEvent watcher.
 
 The event module is reasonably efficient and generally works correctly
-even with many watchers, except that it's signal handling is inherently
+even with many watchers, except that its signal handling is inherently
 racy and requires the wake-up-frequently workaround.
 
 =cut
