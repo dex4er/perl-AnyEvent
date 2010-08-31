@@ -121,14 +121,12 @@ module.
 
 During the first call of any watcher-creation method, the module tries
 to detect the currently loaded event loop by probing whether one of the
-following modules is already loaded: L<EV>,
-L<Event>, L<Glib>, L<AnyEvent::Impl::Perl>, L<Tk>, L<Event::Lib>, L<Qt>,
-L<POE>. The first one found is used. If none are found, the module tries
-to load these modules (excluding Tk, Event::Lib, Qt and POE as the pure perl
-adaptor should always succeed) in the order given. The first one that can
-be successfully loaded will be used. If, after this, still none could be
-found, AnyEvent will fall back to a pure-perl event loop, which is not
-very efficient, but should work everywhere.
+following modules is already loaded: L<EV>, L<AnyEvent::Impl::Perl>,
+L<Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>. The first one
+found is used. If none are detected, the module tries to load the first
+four modules in the order given; but note that if L<EV> is not
+available, the pure-perl L<AnyEvent::Impl::Perl> should always work, so
+the other two are not normally tried.
 
 Because AnyEvent first checks for modules that are already loaded, loading
 an event model explicitly before first using AnyEvent will likely make
