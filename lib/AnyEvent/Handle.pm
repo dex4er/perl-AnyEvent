@@ -194,6 +194,9 @@ method or access the C<< $handle->{rbuf} >> member directly. Note that you
 must not enlarge or modify the read buffer, you can only remove data at
 the beginning from it.
 
+You can also call C<< ->push_read (...) >> or any other function that
+modifies the read queue. Or do both. Or ...
+
 When an EOF condition is detected then AnyEvent::Handle will first try to
 feed all the remaining data to the queued callbacks and C<on_read> before
 calling the C<on_eof> callback. If no progress can be made, then a fatal
@@ -935,7 +938,7 @@ Instead of formatting your data yourself, you can also let this module
 do the job by specifying a type and type-specific arguments. You
 can also specify the (fully qualified) name of a package, in which
 case AnyEvent tries to load the package and then expects to find the
-C<anyevent_read_type> function inside (see "custom write types", below).
+C<anyevent_write_type> function inside (see "custom write types", below).
 
 Predefined types are (if you have ideas for additional types, feel free to
 drop by and tell us):
@@ -1109,9 +1112,10 @@ a queue.
 
 In the simple case, you just install an C<on_read> callback and whenever
 new data arrives, it will be called. You can then remove some data (if
-enough is there) from the read buffer (C<< $handle->rbuf >>). Or you cna
+enough is there) from the read buffer (C<< $handle->rbuf >>). Or you can
 leave the data there if you want to accumulate more (e.g. when only a
-partial message has been received so far).
+partial message has been received so far), or change the read queue with
+e.g. C<push_read>.
 
 In the more complex case, you want to queue multiple callbacks. In this
 case, AnyEvent::Handle will call the first queued callback each time new

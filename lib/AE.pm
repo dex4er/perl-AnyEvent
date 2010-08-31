@@ -10,8 +10,8 @@ AE - simpler/faster/newer/cooler AnyEvent API
   my $w = AE::io $fh, 0, sub { ...  };
 
   # one-shot or repeating timers
-  my $w = AE::timer $seconds,        0, sub { ... }; # once
-  my $w = AE::timer $seconds, interval, sub { ... }; # repeated
+  my $w = AE::timer $seconds,         0, sub { ... }; # once
+  my $w = AE::timer $seconds, $interval, sub { ... }; # repeated
 
   print AE::now;  # prints current event loop time
   print AE::time; # think Time::HiRes::time or simply CORE::time.
@@ -40,39 +40,39 @@ AE - simpler/faster/newer/cooler AnyEvent API
 This module documents the new simpler AnyEvent API.
 
 The rationale for the new API is that experience with L<EV> shows that
-this API actually "works", despite it's lack of extensibility, leading to
+this API actually "works", despite its lack of extensibility, leading to
 a shorter, easier and faster API.
 
-The main difference to AnyEvent is that instead of method calls, function
-calls are used, and that no named arguments are used.
+The main differences from AnyEvent is that function calls are used
+instead of method calls, and that no named arguments are used.
 
 This makes calls to watcher creation functions really short, which can
-make a program more readable, despite the lack of named parameters.
+make a program more readable despite the lack of named parameters.
 Function calls also allow more static type checking than method calls, so
-many mistakes are caught at compiletime with this API.
+many mistakes are caught at compile-time with this API.
 
 Also, some backends (Perl and EV) are so fast that the method call
 overhead is very noticeable (with EV it increases the execution time five-
 to six-fold, with Perl the method call overhead is about a factor of two).
 
-At the moment, there will be no checking (L<AnyEvent::Strict> does not
-affect his API), so the L<AnyEvent> API has a definite advantage here
-still.
+At the moment, there is no checking (L<AnyEvent::Strict> does not
+affect this API), so the L<AnyEvent> API still has a definite advantage
+here.
 
 Note that the C<AE> API is an alternative to, not the future version of,
-the AnyEvent API. Both APIs can be used interchangably and and there are
+the AnyEvent API. Both APIs can be used interchangeably and and there are
 no plans to "switch", so if in doubt, feel free to use the L<AnyEvent>
 API in new code.
 
 As the AE API is complementary, not everything in the AnyEvent API is
-available, so you still need to use AnyEvent for the finer stuff. Also,
+available, and you still need to use AnyEvent for the finer stuff. Also,
 you should not C<use AE> directly, C<use AnyEvent> will provide the AE
 namespace.
 
 =head2 FUNCTIONS
 
 This section briefly describes the alternative watcher
-constructors. Semantics and any methods are not described here, please
+constructors. Semantics are not described here; please
 refer to the L<AnyEvent> manpage for the details.
 
 =over 4
@@ -98,7 +98,7 @@ Example: wait until STDIN becomes readable.
 
   $stdin_ready = AE::io *STDIN, 0, sub { scalar <STDIN> };
 
-Example. wait until STDOUT becomes writable and print something.
+Example: wait until STDOUT becomes writable and print something.
 
   $stdout_ready = AE::io *STDOUT, 1, sub { print STDOUT "woaw\n" };
 
@@ -107,8 +107,8 @@ Example. wait until STDOUT becomes writable and print something.
 Creates a timer watcher that invokes the callback C<$cb> after at least
 C<$after> second have passed (C<$after> can be negative or C<0>).
 
-If C<$interval> is C<0>, then the clalback will only be invoked once,
-otherwise it must be a positive number of seconds that specified the
+If C<$interval> is C<0>, then the callback will only be invoked once,
+otherwise it must be a positive number of seconds that specifies the
 interval between successive invocations of the callback.
 
 Example: print "too late" after at least one second has passed.
@@ -121,12 +121,12 @@ Example: print "blubb" once a second, starting as soon as possible.
 
 =item $w = AE::signal $signame, $cb
 
-Invoke the callback c<$cb> each time one or more occurences of the named
-signal C<$signame> are detected.
+Invoke the callback C<$cb> each time one or more occurrences of the
+named signal C<$signame> are detected.
 
 =item $w = AE::child $pid, $cb
 
-Invokes the callbakc C<$cb> when the child with the given C<$pid> exits
+Invokes the callback C<$cb> when the child with the given C<$pid> exits
 (or all children, when C<$pid> is zero).
 
 The callback will get the actual pid and exit status as arguments.

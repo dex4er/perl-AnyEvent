@@ -17,7 +17,7 @@ and POE are various supported event loops/environments.
 
    # one-shot or repeating timers
    my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
-   my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...
+   my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...);
 
    print AnyEvent->now;  # prints current event loop time
    print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
@@ -78,7 +78,7 @@ model you use.
 
 For modules like POE or IO::Async (which is a total misnomer as it is
 actually doing all I/O I<synchronously>...), using them in your module is
-like joining a cult: After you joined, you are dependent on them and you
+like joining a cult: After you join, you are dependent on them and you
 cannot use anything else, as they are simply incompatible to everything
 that isn't them. What's worse, all the potential users of your
 module are I<also> forced to use the same event loop you use.
@@ -89,13 +89,13 @@ with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
 your module uses one of those, every user of your module has to use it,
 too. But if your module uses AnyEvent, it works transparently with all
 event models it supports (including stuff like IO::Async, as long as those
-use one of the supported event loops. It is trivial to add new event loops
+use one of the supported event loops. It is easy to add new event loops
 to AnyEvent, too, so it is future-proof).
 
 In addition to being free of having to use I<the one and only true event
 model>, AnyEvent also is free of bloat and policy: with POE or similar
 modules, you get an enormous amount of code and strict rules you have to
-follow. AnyEvent, on the other hand, is lean and up to the point, by only
+follow. AnyEvent, on the other hand, is lean and to the point, by only
 offering the functionality that is necessary, in as thin as a wrapper as
 technically possible.
 
@@ -111,10 +111,10 @@ model, you should I<not> use this module.
 
 =head1 DESCRIPTION
 
-L<AnyEvent> provides an identical interface to multiple event loops. This
-allows module authors to utilise an event loop without forcing module
-users to use the same event loop (as only a single event loop can coexist
-peacefully at any one time).
+L<AnyEvent> provides a uniform interface to various event loops. This
+allows module authors to use event loop functionality without forcing
+module users to use a specific event loop implementation (since more
+than one event loop cannot coexist peacefully).
 
 The interface itself is vaguely similar, but not identical to the L<Event>
 module.
@@ -161,11 +161,11 @@ is in control).
 
 Note that B<callbacks must not permanently change global variables>
 potentially in use by the event loop (such as C<$_> or C<$[>) and that B<<
-callbacks must not C<die> >>. The former is good programming practise in
+callbacks must not C<die> >>. The former is good programming practice in
 Perl and the latter stems from the fact that exception handling differs
 widely between event loops.
 
-To disable the watcher you have to destroy it (e.g. by setting the
+To disable a watcher you have to destroy it (e.g. by setting the
 variable you store it in to C<undef> or otherwise deleting all references
 to it).
 
@@ -174,7 +174,7 @@ All watchers are created by calling a method on the C<AnyEvent> class.
 Many watchers either are used with "recursion" (repeating timers for
 example), or need to refer to their watcher object in other ways.
 
-An any way to achieve that is this pattern:
+One way to achieve that is this pattern:
 
    my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
       # you can use $w here, for example to undef it
@@ -216,7 +216,7 @@ The I/O watcher might use the underlying file descriptor or a copy of it.
 You must not close a file handle as long as any watcher is active on the
 underlying file descriptor.
 
-Some event loops issue spurious readyness notifications, so you should
+Some event loops issue spurious readiness notifications, so you should
 always use non-blocking calls when reading/writing from/to your file
 handles.
 
@@ -250,14 +250,14 @@ Although the callback might get passed parameters, their value and
 presence is undefined and you cannot rely on them. Portable AnyEvent
 callbacks cannot use arguments passed to time watcher callbacks.
 
-The callback will normally be invoked once only. If you specify another
+The callback will normally be invoked only once. If you specify another
 parameter, C<interval>, as a strictly positive number (> 0), then the
 callback will be invoked regularly at that interval (in fractional
 seconds) after the first invocation. If C<interval> is specified with a
-false value, then it is treated as if it were missing.
+false value, then it is treated as if it were not specified at all.
 
 The callback will be rescheduled before invoking the callback, but no
-attempt is done to avoid timer drift in most backends, so the interval is
+attempt is made to avoid timer drift in most backends, so the interval is
 only approximate.
 
 Example: fire an event after 7.7 seconds.
@@ -285,10 +285,10 @@ While most event loops expect timers to specified in a relative way, they
 use absolute time internally. This makes a difference when your clock
 "jumps", for example, when ntp decides to set your clock backwards from
 the wrong date of 2014-01-01 to 2008-01-01, a watcher that is supposed to
-fire "after" a second might actually take six years to finally fire.
+fire "after a second" might actually take six years to finally fire.
 
 AnyEvent cannot compensate for this. The only event loop that is conscious
-about these issues is L<EV>, which offers both relative (ev_timer, based
+of these issues is L<EV>, which offers both relative (ev_timer, based
 on true relative time) and absolute (ev_periodic, based on wallclock time)
 timers.
 
@@ -320,15 +320,15 @@ function to call when you want to know the current time.>
 
 This function is also often faster then C<< AnyEvent->time >>, and
 thus the preferred method if you want some timestamp (for example,
-L<AnyEvent::Handle> uses this to update it's activity timeouts).
+L<AnyEvent::Handle> uses this to update its activity timeouts).
 
 The rest of this section is only of relevance if you try to be very exact
-with your timing, you can skip it without bad conscience.
+with your timing; you can skip it without a bad conscience.
 
 For a practical example of when these times differ, consider L<Event::Lib>
 and L<EV> and the following set-up:
 
-The event loop is running and has just invoked one of your callback at
+The event loop is running and has just invoked one of your callbacks at
 time=500 (assume no other callbacks delay processing). In your callback,
 you wait a second by executing C<sleep 1> (blocking the process for a
 second) and then (at time=501) you create a relative timer that fires
@@ -431,7 +431,7 @@ callbacks, too).
 Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
 callbacks to signals in a generic way, which is a pity, as you cannot
 do race-free signal handling in perl, requiring C libraries for
-this. AnyEvent will try to do it's best, which means in some cases,
+this. AnyEvent will try to do its best, which means in some cases,
 signals will be delayed. The maximum time a signal might be delayed is
 specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10 seconds). This
 variable can be changed only before the first signal watcher is created,
@@ -443,16 +443,16 @@ saving.
 All these problems can be avoided by installing the optional
 L<Async::Interrupt> module, which works with most event loops. It will not
 work with inherently broken event loops such as L<Event> or L<Event::Lib>
-(and not with L<POE> currently, as POE does it's own workaround with
+(and not with L<POE> currently, as POE does its own workaround with
 one-second latency). For those, you just have to suffer the delays.
 
 =head2 CHILD PROCESS WATCHERS
 
    $w = AnyEvent->child (pid => <process id>, cb => <callback>);
 
-You can also watch on a child process exit and catch its exit status.
+You can also watch for a child process exit and catch its exit status.
 
-The child process is specified by the C<pid> argument (one some backends,
+The child process is specified by the C<pid> argument (on some backends,
 using C<0> watches for any child process exit, on others this will
 croak). The watcher will be triggered only when the child process has
 finished and an exit status is available, not on any trace events
@@ -509,8 +509,8 @@ Example: fork a process and wait for it
 
    $w = AnyEvent->idle (cb => <callback>);
 
-Repeatedly invoke the callback after the process becomes idle, until
-either the watcher is destroyed or new events have been detected.
+This will repeatedly invoke the callback after the process becomes idle,
+until either the watcher is destroyed or new events have been detected.
 
 Idle watchers are useful when there is a need to do something, but it
 is not so important (or wise) to do it instantly. The callback will be
@@ -590,7 +590,7 @@ the signal fires.
 =item * Condition variables are like "Merge Points" - points in your program
 where you merge multiple independent results/control flows into one.
 
-=item * Condition variables represent a transaction - function that start
+=item * Condition variables represent a transaction - functions that start
 some kind of transaction can return them, leaving the caller the choice
 between waiting in a blocking fashion, or setting a callback.
 
@@ -620,7 +620,7 @@ Condition variables are represented by hash refs in perl, and the keys
 used by AnyEvent itself are all named C<_ae_XXX> to make subclassing
 easy (it is often useful to build your own transaction class on top of
 AnyEvent). To subclass, use C<AnyEvent::CondVar> as base class and call
-it's C<new> method in your own C<new> method.
+its C<new> method in your own C<new> method.
 
 There are two "sides" to a condition variable - the "producer side" which
 eventually calls C<< -> send >>, and the "consumer side", which waits
@@ -695,14 +695,14 @@ C<send>.
 
 =item $cv->croak ($error)
 
-Similar to send, but causes all call's to C<< ->recv >> to invoke
+Similar to send, but causes all calls to C<< ->recv >> to invoke
 C<Carp::croak> with the given error message/object/scalar.
 
 This can be used to signal any errors to the condition variable
 user/consumer. Doing it this way instead of calling C<croak> directly
-delays the error detetcion, but has the overwhelmign advantage that it
+delays the error detection, but has the overwhelming advantage that it
 diagnoses the error at the place where the result is expected, and not
-deep in some event clalback without connection to the actual code causing
+deep in some event callback with no connection to the actual code causing
 the problem.
 
 =item $cv->begin ([group callback])
@@ -750,7 +750,7 @@ sending.
 
 The ping example mentioned above is slightly more complicated, as the
 there are results to be passwd back, and the number of tasks that are
-begung can potentially be zero:
+begun can potentially be zero:
 
    my $cv = AnyEvent->condvar;
 
@@ -781,7 +781,7 @@ C<send> is called even when C<no> hosts are being pinged (the loop
 doesn't execute once).
 
 This is the general pattern when you "fan out" into multiple (but
-potentially none) subrequests: use an outer C<begin>/C<end> pair to set
+potentially zero) subrequests: use an outer C<begin>/C<end> pair to set
 the callback and ensure C<end> is called at least once, and then, for each
 subrequest you start, call C<begin> and for each subrequest you finish,
 call C<end>.
@@ -798,7 +798,7 @@ code awaits the condition.
 =item $cv->recv
 
 Wait (blocking if necessary) until the C<< ->send >> or C<< ->croak
->> methods have been called on c<$cv>, while servicing other watchers
+>> methods have been called on C<$cv>, while servicing other watchers
 normally.
 
 You can only wait once on a condition - additional calls are valid but
@@ -825,7 +825,7 @@ condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
 while still supporting blocking waits if the caller so desires).
 
-You can ensure that C<< -recv >> never blocks by setting a callback and
+You can ensure that C<< ->recv >> never blocks by setting a callback and
 only calling C<< ->recv >> from within that callback (or at a later
 time). This will work even when the event loop does not support blocking
 waits otherwise.
@@ -840,10 +840,11 @@ C<croak> have been called.
 This is a mutator function that returns the callback set and optionally
 replaces it before doing so.
 
-The callback will be called when the condition becomes (or already was)
-"true", i.e. when C<send> or C<croak> are called (or were called), with
-the only argument being the condition variable itself. Calling C<recv>
-inside the callback or at any later time is guaranteed not to block.
+The callback will be called when the condition becomes "true", i.e. when
+C<send> or C<croak> are called, with the only argument being the
+condition variable itself. If the condition is already true, the
+callback is called immediately when it is set. Calling C<recv> inside
+the callback or at any later time is guaranteed not to block.
 
 =back
 
@@ -865,7 +866,7 @@ AnyEvent itself.
 
 =item Backends that are transparently being picked up when they are used.
 
-These will be used when they are currently loaded when the first watcher
+These will be used if they are already loaded when the first watcher
 is created, in which case it is assumed that the application is using
 them. This means that AnyEvent will automatically pick the right backend
 when the main program loads an event module before anything starts to
@@ -891,7 +892,7 @@ Support for IO::Async can only be partial, as it is too broken and
 architecturally limited to even support the AnyEvent API. It also
 is the only event loop that needs the loop to be set explicitly, so
 it can only be used by a main program knowing about AnyEvent. See
-L<AnyEvent::Impl::Async> for the gory details.
+L<AnyEvent::Impl::IOAsync> for the gory details.
 
    AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed.
 
@@ -929,7 +930,7 @@ backend has been autodetected.
 
 Afterwards it contains the event model that is being used, which is the
 name of the Perl class implementing the model. This class is usually one
-of the C<AnyEvent::Impl:xxx> modules, but can be any other class in the
+of the C<AnyEvent::Impl::xxx> modules, but can be any other class in the
 case AnyEvent has been extended at runtime (e.g. in I<rxvt-unicode> it
 will be C<urxvt::anyevent>).
 
@@ -938,7 +939,7 @@ will be C<urxvt::anyevent>).
 Returns C<$AnyEvent::MODEL>, forcing autodetection of the event model
 if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
-runtime, and not e.g. while initialising of your module.
+runtime, and not e.g. during initialisation of your module.
 
 If you need to do some initialisation before AnyEvent watchers are
 created, use C<post_detect>.
@@ -946,7 +947,7 @@ created, use C<post_detect>.
 =item $guard = AnyEvent::post_detect { BLOCK }
 
 Arranges for the code block to be executed as soon as the event model is
-autodetected (or immediately if this has already happened).
+autodetected (or immediately if that has already happened).
 
 The block will be executed I<after> the actual backend has been detected
 (C<$AnyEvent::MODEL> is set), but I<before> any watchers have been
@@ -965,7 +966,7 @@ C<undef> when the hook was immediately executed). See L<AnyEvent::AIO> for
 a case where this is useful.
 
 Example: Create a watcher for the IO::AIO module and store it in
-C<$WATCHER>. Only do so after the event loop is initialised, though.
+C<$WATCHER>, but do so only do so after the event loop is initialised.
 
    our WATCHER;
 
@@ -983,8 +984,8 @@ C<$WATCHER>. Only do so after the event loop is initialised, though.
 =item @AnyEvent::post_detect
 
 If there are any code references in this array (you can C<push> to it
-before or after loading AnyEvent), then they will called directly after
-the event loop has been chosen.
+before or after loading AnyEvent), then they will be called directly
+after the event loop has been chosen.
 
 You should check C<$AnyEvent::MODEL> before adding to this array, though:
 if it is defined then the event loop has already been detected, and the
@@ -1030,17 +1031,19 @@ events is to stay interactive.
 
 It is fine, however, to call C<< ->recv >> when the user of your module
 requests it (i.e. if you create a http request object ad have a method
-called C<results> that returns the results, it should call C<< ->recv >>
-freely, as the user of your module knows what she is doing. always).
+called C<results> that returns the results, it may call C<< ->recv >>
+freely, as the user of your module knows what she is doing. Always).
 
 =head1 WHAT TO DO IN THE MAIN PROGRAM
 
 There will always be a single main program - the only place that should
 dictate which event model to use.
 
-If it doesn't care, it can just "use AnyEvent" and use it itself, or not
-do anything special (it does not need to be event-based) and let AnyEvent
-decide which implementation to chose if some module relies on it.
+If the program is not event-based, it need not do anything special, even
+when it depends on a module that uses an AnyEvent. If the program itself
+uses AnyEvent, but does not care which event loop is used, all it needs
+to do is C<use AnyEvent>. In either case, AnyEvent will choose the best
+available loop implementation.
 
 If the main program relies on a specific event model - for example, in
 Gtk2 programs you have to rely on the Glib module - you should load the
@@ -1048,7 +1051,7 @@ event module before loading AnyEvent or any module that uses it: generally
 speaking, you should load it as early as possible. The reason is that
 modules might create watchers when they are loaded, and AnyEvent will
 decide on the event model to use as soon as it creates watchers, and it
-might chose the wrong one unless you load the correct one yourself.
+might choose the wrong one unless you load the correct one yourself.
 
 You can chose to use a pure-perl implementation by loading the
 C<AnyEvent::Impl::Perl> module, which gives you similar behaviour
@@ -1082,8 +1085,8 @@ come as part of AnyEvent, the others are available via CPAN.
 
 =item L<AnyEvent::Util>
 
-Contains various utility functions that replace often-used but blocking
-functions such as C<inet_aton> by event-/callback-based versions.
+Contains various utility functions that replace often-used blocking
+functions such as C<inet_aton> with event/callback-based versions.
 
 =item L<AnyEvent::Socket>
 
@@ -1095,7 +1098,7 @@ connections or tcp servers, with IPv6 and SRV record support and more.
 
 Provide read and write buffers, manages watchers for reads and writes,
 supports raw and formatted I/O, I/O queued and fully transparent and
-non-blocking SSL/TLS (via L<AnyEvent::TLS>.
+non-blocking SSL/TLS (via L<AnyEvent::TLS>).
 
 =item L<AnyEvent::DNS>
 
@@ -1113,7 +1116,7 @@ Here be danger!
 
 As Pauli would put it, "Not only is it not right, it's not even wrong!" -
 there are so many things wrong with AnyEvent::Handle::UDP, most notably
-it's use of a stream-based API with a protocol that isn't streamable, that
+its use of a stream-based API with a protocol that isn't streamable, that
 the only way to improve it is to delete it.
 
 It features data corruption (but typically only under load) and general
@@ -1127,7 +1130,7 @@ wrong with his module when it is explained to him.
 =item L<AnyEvent::DBI>
 
 Executes L<DBI> requests asynchronously in a proxy process for you,
-notifying you in an event-bnased way when the operation is finished.
+notifying you in an event-based way when the operation is finished.
 
 =item L<AnyEvent::AIO>
 
@@ -1856,7 +1859,7 @@ it will croak.
 
 In other words, enables "strict" mode.
 
-Unlike C<use strict> (or it's modern cousin, C<< use L<common::sense>
+Unlike C<use strict> (or its modern cousin, C<< use L<common::sense>
 >>, it is definitely recommended to keep it off in production. Keeping
 C<PERL_ANYEVENT_STRICT=1> in your environment while developing programs
 can be very useful, however.
@@ -2512,7 +2515,7 @@ $SIG{PIPE} = sub { }
 =head1 RECOMMENDED/OPTIONAL MODULES
 
 One of AnyEvent's main goals is to be 100% Pure-Perl(tm): only perl (and
-it's built-in modules) are required to use it.
+its built-in modules) are required to use it.
 
 That does not mean that AnyEvent won't take advantage of some additional
 modules if they are installed.
@@ -2580,7 +2583,7 @@ the help of L<AnyEvent::TLS>), gains the ability to do TLS/SSL.
 =item L<Time::HiRes>
 
 This module is part of perl since release 5.008. It will be used when the
-chosen event library does not come with a timing source on it's own. The
+chosen event library does not come with a timing source of its own. The
 pure-perl event loop (L<AnyEvent::Impl::Perl>) will additionally use it to
 try to use a monotonic clock for timing stability.
 
