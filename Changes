@@ -8,6 +8,8 @@ TODO: http://github.com/sanko/net-bittorrent/commit/e1d06941d7217011f5f06ce71520
 TODO: check for -w? somehow?
 	- clarify that you can actually call push_read etc. in on_read.
         - incorporated major typo patches by Abhijit Menon-Sen.
+        - AnyEvent::Strict: do the test for invalid fh arguments differently,
+          resulting in more informative error messages.
 
 5.271  Tue Jun  8 12:05:46 CEST 2010
 	- backport to perl 5.8.x.

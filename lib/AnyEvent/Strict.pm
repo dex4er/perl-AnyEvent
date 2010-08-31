@@ -48,11 +48,11 @@ sub io {
    $arg{poll} =~ /^[rw]$/
       or croak "AnyEvent->io called with illegal poll argument '$arg{poll}'";
 
-   if (defined fileno $arg{fh} or ref $arg{fh} or $arg{fh} !~ /^\s*\d+\s*$/) {
-      defined fileno $arg{fh}
-         or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
-   } else {
+   if ($arg{fh} =~ /^\s*\d+\s*$/) {
       $arg{fh} = AnyEvent::_dupfh $arg{poll}, $arg{fh};
+   } else {
+      defined eval { fileno $arg{fh} }
+         or croak "AnyEvent->io called with illegal fh argument '$arg{fh}'";
    }
 
    -f $arg{fh}
