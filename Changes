@@ -5,6 +5,7 @@ TODO: maybe remove orderign description and make this a private feature?
 TODO: anyevenmt_read_type for unshift_read
 TODO: condvar->new method is documented and should be there.
 TODO: http://github.com/sanko/net-bittorrent/commit/e1d06941d7217011f5f06ce7152012d5e1b44b9a
+TODO: check for -w? somehow?
 	- clarify that you can actually call push_read etc. in on_read.
         - incorporated major typo patches by Abhijit Menon-Sen.
 

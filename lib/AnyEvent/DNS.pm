@@ -81,16 +81,16 @@ Example:
    AnyEvent::DNS::srv "sip", "udp", "schmorp.de", sub { ...
    # @_ = ( [10, 10, 5060, "sip1.schmorp.de" ] )
 
+=item AnyEvent::DNS::any $domain, $cb->(@rrs)
+
+Tries to resolve the given domain and passes all resource records found to
+the callback.
+
 =item AnyEvent::DNS::ptr $domain, $cb->(@hostnames)
 
 Tries to make a PTR lookup on the given domain. See C<reverse_lookup>
 and C<reverse_verify> if you want to resolve an IP address to a hostname
 instead.
-
-=item AnyEvent::DNS::any $domain, $cb->(@rrs)
-
-Tries to resolve the given domain and passes all resource records found to
-the callback.
 
 =item AnyEvent::DNS::reverse_lookup $ipv4_or_6, $cb->(@hostnames)
 
@@ -111,7 +111,7 @@ address you originally resolved.
 
 Example:
 
-   AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
+   AnyEvent::DNS::reverse_verify "2001:500:2f::f", sub { print shift };
    # => f.root-servers.net
 
 =cut
