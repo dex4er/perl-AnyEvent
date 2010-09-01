@@ -6,10 +6,15 @@ TODO: anyevenmt_read_type for unshift_read
 TODO: condvar->new method is documented and should be there.
 TODO: http://github.com/sanko/net-bittorrent/commit/e1d06941d7217011f5f06ce7152012d5e1b44b9a
 TODO: check for -w? somehow?
-	- clarify that you can actually call push_read etc. in on_read.
-        - incorporated major typo patches by Abhijit Menon-Sen.
+TODO: _start might call on_error with ETIMEDOUT??
+AnyEvent::Handle uncaught error: Connection timed out at 
+                  /usr/local/lib/perl5/site_perl/5.8.8/AnyEvent/HTTP.pm line 473
+        - due to a glitch, AnyEvent's internal getprotobyname wasn't
+          actually used in tcp_server.
         - AnyEvent::Strict: do the test for invalid fh arguments differently,
           resulting in more informative error messages.
+	- clarify that you can actually call push_read etc. in on_read.
+        - incorporated major typo patches by Abhijit Menon-Sen.
 
 5.271  Tue Jun  8 12:05:46 CEST 2010
 	- backport to perl 5.8.x.

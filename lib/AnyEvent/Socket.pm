@@ -655,7 +655,7 @@ sub resolve_sockaddr($$$$$$) {
    $proto ||= "tcp";
    $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
 
-   my $proton = getprotobyname $proto
+   my $proton = AnyEvent::Socket::getprotobyname $proto
       or Carp::croak "$proto: protocol unknown";
 
    my $port;
