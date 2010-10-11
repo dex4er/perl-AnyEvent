@@ -2,6 +2,7 @@
 
 # this file is unfortunately only executed at Makefile.PL time
 
+use Config;
 use Socket;
 
 open my $fh, ">lib/AnyEvent/constants.pl"
@@ -9,21 +10,25 @@ open my $fh, ">lib/AnyEvent/constants.pl"
 
 my $oldstdout = select $fh;
 
+print "# automatically generated from constants.pl.PL for perl $] built for $Config{archname}\n";
+
 sub i($$) {
-   print "sub $_[0] () { ", $_[1]*1, " }\n";
+   print "sub $_[0](){", $_[1]*1, "}\n";
 }
 
 sub n($$) {
-   print "sub $_[0] () { ", (defined $_[1] ? $_[1]*1 : "undef"), " }\n";
+   print "sub $_[0](){", (defined $_[1] ? $_[1]*1 : "undef"), "}\n";
 }
 
 print "package AnyEvent;\n";
 
 our $WIN32 = $^O =~ /mswin32/i;
 
+# used a lot
 i CYGWIN => $^O =~ /cygwin/i;
 i WIN32  => $WIN32;
 
+# add these purely to avoid loading Fcntl, which is slow and bloated.
 use Fcntl ();
 
 i F_SETFL    => eval { Fcntl::F_SETFL() };
@@ -47,17 +52,18 @@ if ($WIN32) {
 
 my $af_inet6;
 
-$af_inet6 ||= eval {                  Socket::AF_INET6 () };
-$af_inet6 ||= eval { require Socket6; Socket6::AF_INET6() };
+$af_inet6 ||= eval {                  Socket::AF_INET6 () }; # where it should be
+$af_inet6 ||= eval { require Socket6; Socket6::AF_INET6() }; # where it actually is ...
 
-# uhoh
+# ... or isn't, because nobody has it installed
 $af_inet6 ||= 10 if $^O =~ /linux/;
 $af_inet6 ||= 23 if $^O =~ /cygwin/i;
 $af_inet6 ||= 23 if AnyEvent::WIN32;
 $af_inet6 ||= 24 if $^O =~ /openbsd|netbsd/;
 $af_inet6 ||= 28 if $^O =~ /freebsd/;
 
-#TODO: WSAxxx, EDOM/ESPIPE
+#TODO: EDOM/ESPIPE
+#TODO: maybe move socket stuff to Socket::?
 
 i _AF_INET6     => $af_inet6;
 #i AF_UNIX      => Socket::AF_UNIX ();
@@ -68,6 +74,8 @@ i _AF_INET6     => $af_inet6;
 #i SO_KEEPALIVE => Socket::SO_KEEPALIVE ();
 #i SO_OOBINLINE => Socket::SO_OOBINLINE ();
 #i IPPROTO_TCP  => Socket::IPPROTO_TCP ();
+
+print "package AnyEvent::Socket;\n";
 
 # more hardcoded os-specific constants - none
 # of these are available via any known module, but we

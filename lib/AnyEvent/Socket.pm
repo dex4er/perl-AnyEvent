@@ -1136,8 +1136,8 @@ C<veno>, C<westwood> and C<yeah>.
 =cut
 
 sub tcp_congestion($$) {
-   defined AnyEvent::Util::TCP_CONGESTION
-      ? setsockopt $_[0], Socket::IPPROTO_TCP (), AnyEvent::Util::TCP_CONGESTION, "$_[1]"
+   defined TCP_CONGESTION
+      ? setsockopt $_[0], Socket::IPPROTO_TCP (), TCP_CONGESTION, "$_[1]"
       : undef
 }
 
