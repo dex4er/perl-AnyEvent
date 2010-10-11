@@ -1112,6 +1112,34 @@ sub tcp_server($$$;$) {
       : ()
 }
 
+=item tcp_nodelay $fh, $enable
+
+Enables (or disables) the C<TCP_NODELAY> socket option (also known as
+Nagle's algorithm). Returns false on error, true otherwise.
+
+=cut
+
+sub tcp_nodelay($$) {
+   my $onoff = int ! ! $_[1];
+
+   setsockopt $_[0], Socket::IPPROTO_TCP (), Socket::TCP_NODELAY (), $onoff
+}
+
+=item tcp_congestion $fh, $algorithm
+
+Sets the tcp congestion algorithm (via the C<TCP_CONGESTION>. The default is OS-specific, but usually
+C<reno>. Typical other available choices include C<cubic>, C<reno>,
+C<lp>, C<bic>, C<highspeed>, C<htcp>, C<hybla>, C<illinois>, C<scalable>,
+C<vegas>, C<veno>, C<westwood> and C<yeah>.
+
+=cut
+
+sub tcp_congestion($$) {
+   defined AnyEvent::Util::TCP_CONGESTION
+      ? setsockopt $_[0], Socket::IPPROTO_TCP (), AnyEvent::Util::TCP_CONGESTION, "$_[1]"
+      : undef
+}
+
 1;
 
 =back
