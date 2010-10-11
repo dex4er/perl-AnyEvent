@@ -653,10 +653,11 @@ our $NOW;
 =item AnyEvent::DNS::resolver
 
 This function creates and returns a resolver that is ready to use and
-should mimic the default resolver for your system as good as possible.
+should mimic the default resolver for your system as good as possible. It
+is used by AnyEvent itself as well.
 
-It only ever creates one resolver and returns this one on subsequent
-calls.
+It only ever creates one resolver and returns this one on subsequent calls
+- see C<$AnyEvent::DNS::RESOLVER>, below, for details.
 
 Unless you have special needs, prefer this function over creating your own
 resolver object.
@@ -669,6 +670,16 @@ The resolver is created with the following parameters:
 C<os_config> will be used for OS-specific configuration, unless
 C<$ENV{PERL_ANYEVENT_RESOLV_CONF}> is specified, in which case that file
 gets parsed.
+
+=item $AnyEvent::DNS::RESOLVER
+
+This variable stores the default resolver returned by
+C<AnyEvent::DNS::resolver>, or C<undef> when the default resolver hasn't
+been instantiated yet.
+
+One can provide a custom resolver (e.g. one with caching functionality)
+by storing it in this variable, causing all subsequent resolves done via
+C<AnyEvent::DNS::resolver> to be done via the custom one.
 
 =cut
 
@@ -802,7 +813,7 @@ sub new {
 Parses the given string as if it were a F<resolv.conf> file. The following
 directives are supported (but not necessarily implemented).
 
-C<#>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
+C<#>- and C<;>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
 C<options> (C<timeout>, C<attempts>, C<ndots>).
 
 Everything else is silently ignored.
@@ -818,7 +829,7 @@ sub parse_resolv_conf {
    my $attempts;
 
    for (split /\n/, $resolvconf) {
-      s/#.*$//; # not quite legal, but many people insist
+      s/\s*[;#].*$//; # not quite legal, but many people insist
 
       if (/^\s*nameserver\s+(\S+)\s*$/i) {
          my $ip = $1;

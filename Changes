@@ -1,20 +1,30 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: document $AnyEvent::DNS::RESOLVER
-TODO: maybe remove orderign description and make this a private feature?
-TODO: anyevenmt_read_type for unshift_read
+FAQ: my program exits beforee doing anything
+FAQ: tcp_connect never calls my callback (context)
+FAQ: high cpu usage with AE::cv->recv
+
 TODO: condvar->new method is documented and should be there.
-TODO: http://github.com/sanko/net-bittorrent/commit/e1d06941d7217011f5f06ce7152012d5e1b44b9a
 TODO: check for -w? somehow?
 TODO: _start might call on_error with ETIMEDOUT??
+cubic reno lp bic highspeed htcp hybla illinois scalable vegas veno westwood yeah
+TODO: document constants
+TODO: test tcp_nodelay/tcp_congestion
+
 AnyEvent::Handle uncaught error: Connection timed out at 
                   /usr/local/lib/perl5/site_perl/5.8.8/AnyEvent/HTTP.pm line 473
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
           actually used in tcp_server.
+        - support autoloading of read types in unshift_read.
         - AnyEvent::Strict: do the test for invalid fh arguments differently,
           resulting in more informative error messages.
 	- clarify that you can actually call push_read etc. in on_read.
+        - support ";" as resolv.conf comment character in AnyEvent::DNS, as
+          requested by Ron Isaacson.
+        - document $AnyEvent::DNS::RESOLVER variable.
         - incorporated major typo patches by Abhijit Menon-Sen.
+        - add a shitload of TCP_xxx sockopt name constants to AnyEvent::Util,
+          undocumented, but who knows when they might come in handy.
 
 5.271  Tue Jun  8 12:05:46 CEST 2010
 	- backport to perl 5.8.x.

@@ -2,6 +2,8 @@
 
 # this file is unfortunately only executed at Makefile.PL time
 
+use Socket;
+
 open my $fh, ">lib/AnyEvent/constants.pl"
    or die "lib/AnyEvent/constants.pl: $_[0]\n";
 
@@ -9,6 +11,10 @@ my $oldstdout = select $fh;
 
 sub i($$) {
    print "sub $_[0] () { ", $_[1]*1, " }\n";
+}
+
+sub n($$) {
+   print "sub $_[0] () { ", (defined $_[1] ? $_[1]*1 : "undef"), " }\n";
 }
 
 print "package AnyEvent;\n";
@@ -41,7 +47,7 @@ if ($WIN32) {
 
 my $af_inet6;
 
-$af_inet6 ||= eval { require Socket ; Socket::AF_INET6 () };
+$af_inet6 ||= eval {                  Socket::AF_INET6 () };
 $af_inet6 ||= eval { require Socket6; Socket6::AF_INET6() };
 
 # uhoh
@@ -63,11 +69,77 @@ i _AF_INET6     => $af_inet6;
 #i SO_OOBINLINE => Socket::SO_OOBINLINE ();
 #i IPPROTO_TCP  => Socket::IPPROTO_TCP ();
 
+# more hardcoded os-specific constants - none
+# of these are available via any known module, but we
+# are forward-looking and try Socket:: anyways.
+my %const;
+
+while (<DATA>) {
+   my ($os, $name, $default) = split /\s+/;
+
+   $const{$name} ||= undef; # make sure it exists
+
+   next unless $os eq $^O;
+
+   my $value = eval "Socket::$name ()";
+   $value = eval $default unless defined $value;
+
+   $const{$name} = $value;
+}
+
+for my $k (sort keys %const) {
+   n $k, $const{$k};
+}
+
 print "1;\n";
 
 close $fh;
 select $oldstdout;
 
-rename "$ARGV[0]~", $ARGV[0];
-
 1
+
+__DATA__
+linux	TCP_MAXSEG	2
+linux	TCP_CORK	3
+linux	TCP_KEEPIDLE	4
+linux	TCP_KEEPINTVL	5
+linux	TCP_KEEPCNT	6
+linux	TCP_SYNCNT	7
+linux	TCP_LINGER2	8
+linux	TCP_DEFER_ACCEPT	9
+linux	TCP_WINDOW_CLAMP	10
+linux	TCP_INFO	11
+linux	TCP_QUICKACK	12
+linux	TCP_CONGESTION	13
+linux	TCP_MD5SIG	14
+netbsd	TCP_MAXSEG	2
+netbsd	TCP_KEEPIDLE	3
+netbsd	TCP_NOPUSH	4
+netbsd	TCP_KEEPINTVL	5
+netbsd	TCP_KEEPCNT	6
+netbsd	TCP_KEEPINIT	7
+netbsd	TCP_NOOPT	8
+netbsd	TCP_MD5SIG	0x10
+netbsd	TCP_CONGESTION	0x20
+cygwin  TCP_MAXSEG      0x02
+cygwin  TCP_NOPUSH      0x04
+cygwin  TCP_NOOPT       0x08
+freebsd	TCP_MAXSEG	0x02
+freebsd	TCP_NOPUSH	0x04
+freebsd	TCP_NOOPT	0x08
+freebsd	TCP_MD5SIG	0x10
+freebsd	TCP_INFO	0x20
+freebsd	TCP_CONGESTION	0x40
+solaris	TCP_CORK	0x18
+solaris	TCP_LINGER2	0x1C
+solaris	TCP_INIT_CWND	0x15
+solaris	TCP_KEEPALIVE	0x8
+solaris	TCP_MAXSEG	0x02
+openbsd	TCP_MAXSEG	0x02
+openbsd	TCP_MD5SIG	0x04
+openbsd	TCP_SACK_ENABLE	0x08
+darwin	TCP_MAXSEG	0x02
+darwin	TCP_NOPUSH	0x04
+darwin	TCP_NOOPT	0x08
+darwin	TCP_KEEPALIVE	0x10
+darwin	TCP_CONNECTIONTIMEOUT	0x20

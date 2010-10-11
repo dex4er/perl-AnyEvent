@@ -1127,10 +1127,11 @@ sub tcp_nodelay($$) {
 
 =item tcp_congestion $fh, $algorithm
 
-Sets the tcp congestion algorithm (via the C<TCP_CONGESTION>. The default is OS-specific, but usually
-C<reno>. Typical other available choices include C<cubic>, C<reno>,
-C<lp>, C<bic>, C<highspeed>, C<htcp>, C<hybla>, C<illinois>, C<scalable>,
-C<vegas>, C<veno>, C<westwood> and C<yeah>.
+Sets the tcp congestion avoidance algorithm (via the C<TCP_CONGESTION>
+socket option). The default is OS-specific, but is usually
+C<reno>. Typical other available choices include C<cubic>, C<lp>, C<bic>,
+C<highspeed>, C<htcp>, C<hybla>, C<illinois>, C<scalable>, C<vegas>,
+C<veno>, C<westwood> and C<yeah>.
 
 =cut
 

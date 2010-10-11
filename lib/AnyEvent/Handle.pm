@@ -560,7 +560,7 @@ sub _start {
    $self->starttls  (delete $self->{tls}, delete $self->{tls_ctx})
       if $self->{tls};
 
-   $self->on_drain  (delete $self->{on_drain}) if $self->{on_drain};
+   $self->on_drain  (delete $self->{on_drain} ) if $self->{on_drain};
 
    $self->start_read
       if $self->{on_read} || @{ $self->{_queue} };
@@ -1273,17 +1273,18 @@ sub on_read {
 
 =item $handle->rbuf
 
-Returns the read buffer (as a modifiable lvalue).
+Returns the read buffer (as a modifiable lvalue). You can also access the
+read buffer directly as the C<< ->{rbuf} >> member, if you want (this is
+much faster, and no less clean).
 
-You can access the read buffer directly as the C<< ->{rbuf} >>
-member, if you want. However, the only operation allowed on the
-read buffer (apart from looking at it) is removing data from its
-beginning. Otherwise modifying or appending to it is not allowed and will
-lead to hard-to-track-down bugs.
+The only operation allowed on the read buffer (apart from looking at it)
+is removing data from its beginning. Otherwise modifying or appending to
+it is not allowed and will lead to hard-to-track-down bugs.
 
-NOTE: The read buffer should only be used or modified if the C<on_read>,
-C<push_read> or C<unshift_read> methods are used. The other read methods
-automatically manage the read buffer.
+NOTE: The read buffer should only be used or modified in the C<on_read>
+callback or when C<push_read> or C<unshift_read> are used with a single
+callback (i.e. untyped). Typed C<push_read> and C<unshift_read> methods
+will manage the read buffer on their own.
 
 =cut
 
@@ -1344,7 +1345,8 @@ sub unshift_read {
    if (@_) {
       my $type = shift;
 
-      $cb = ($RH{$type} or Carp::croak "unsupported type passed to AnyEvent::Handle::unshift_read")
+      $cb = ($RH{$type} ||= _load_func "$type\::anyevent_read_type"
+             or Carp::croak "unsupported/unloadable type '$type' passed to AnyEvent::Handle::unshift_read")
             ->($self, $cb, @_);
    }
 

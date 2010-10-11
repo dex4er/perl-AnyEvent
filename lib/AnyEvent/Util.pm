@@ -38,6 +38,7 @@ our @EXPORT_OK = qw(
 our $VERSION = $AnyEvent::VERSION;
 
 BEGIN {
+   # provide us with AF_INET6, but only if allowed
    if (
       $AnyEvent::PROTOCOL{ipv6}
       && _AF_INET6
@@ -49,9 +50,7 @@ BEGIN {
       *AF_INET6 = sub () { 0 };
       delete $AnyEvent::PROTOCOL{ipv6};
    }
-}
 
-BEGIN {
    # fix buggy Errno on some non-POSIX platforms
    # such as openbsd and windows.
    my %ERR = (
