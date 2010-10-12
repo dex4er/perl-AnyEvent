@@ -646,11 +646,8 @@ the same name for details).
 sub no_delay {
    $_[0]{no_delay} = $_[1];
 
-   eval {
-      local $SIG{__DIE__};
-      setsockopt $_[0]{fh}, Socket::IPPROTO_TCP (), Socket::TCP_NODELAY (), int $_[1]
-         if $_[0]{fh};
-   };
+   setsockopt $_[0]{fh}, Socket::IPPROTO_TCP (), Socket::TCP_NODELAY (), int $_[1]
+      if $_[0]{fh};
 }
 
 =item $handle->keepalive ($boolean)

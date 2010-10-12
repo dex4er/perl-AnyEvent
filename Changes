@@ -1,20 +1,15 @@
 Revision history for Perl extension AnyEvent.
 
-FAQ: my program exits beforee doing anything
-FAQ: tcp_connect never calls my callback (context)
-FAQ: high cpu usage with AE::cv->recv
-
-TODO: condvar->new method is documented and should be there.
 TODO: check for -w? somehow?
 TODO: _start might call on_error with ETIMEDOUT??
-cubic reno lp bic highspeed htcp hybla illinois scalable vegas veno westwood yeah
-TODO: document constants
-TODO: test tcp_nodelay/tcp_congestion
-
+TODO: document TCP_*** constants
+TODO: FAQ!!
 AnyEvent::Handle uncaught error: Connection timed out at 
                   /usr/local/lib/perl5/site_perl/5.8.8/AnyEvent/HTTP.pm line 473
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
           actually used in tcp_server.
+        - implement AnyEvent::CondVar->new method, which was documented but
+          missing.
         - support autoloading of read types in unshift_read.
         - AnyEvent::Strict: do the test for invalid fh arguments differently,
           resulting in more informative error messages.

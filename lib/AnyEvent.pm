@@ -1727,6 +1727,12 @@ package AnyEvent::CondVar;
 
 our @ISA = AnyEvent::CondVar::Base::;
 
+# only to be used for subclassing
+sub new {
+   my $class = shift;
+   bless AnyEvent->condvar (@_), $class
+}
+
 package AnyEvent::CondVar::Base;
 
 #use overload
