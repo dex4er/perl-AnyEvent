@@ -48,7 +48,9 @@ L<AnyEvent::Intro> manpage.
 
 =head1 SUPPORT
 
-There is a mailinglist for discussing all things AnyEvent, and an IRC
+An FAQ document is available as L<AnyEvent::FAQ>.
+
+There also is a mailinglist for discussing all things AnyEvent, and an IRC
 channel, too.
 
 See the AnyEvent project page at the B<Schmorpforge Ta-Sa Software
@@ -2660,6 +2662,10 @@ pronounced).
 
 =head1 SEE ALSO
 
+Tutorial/Introduction: L<AnyEvent::Intro>.
+
+FAQ: L<AnyEvent::FAQ>.
+
 Utility functions: L<AnyEvent::Util>.
 
 Event modules: L<EV>, L<EV::Glib>, L<Glib::EV>, L<Event>, L<Glib::Event>,
@@ -2675,10 +2681,9 @@ servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
 
 Asynchronous DNS: L<AnyEvent::DNS>.
 
-Coroutine support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>,
-L<Coro::Event>,
+Thread support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV L<Coro::Event    >,
 
-Nontrivial usage examples: L<AnyEvent::GPSD>, L<AnyEvent::XMPP>,
+Nontrivial usage examples: L<AnyEvent::GPSD>, L<AnyEvent::IRC>,
 L<AnyEvent::HTTP>.
 
 

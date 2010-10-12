@@ -3,7 +3,6 @@ Revision history for Perl extension AnyEvent.
 TODO: check for -w? somehow?
 TODO: _start might call on_error with ETIMEDOUT??
 TODO: document TCP_*** constants
-TODO: FAQ!!
 AnyEvent::Handle uncaught error: Connection timed out at 
                   /usr/local/lib/perl5/site_perl/5.8.8/AnyEvent/HTTP.pm line 473
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
@@ -13,6 +12,7 @@ AnyEvent::Handle uncaught error: Connection timed out at
         - support autoloading of read types in unshift_read.
         - AnyEvent::Strict: do the test for invalid fh arguments differently,
           resulting in more informative error messages.
+        - new AnyEvent::FAQ manpage.
 	- clarify that you can actually call push_read etc. in on_read.
         - support ";" as resolv.conf comment character in AnyEvent::DNS, as
           requested by Ron Isaacson.
