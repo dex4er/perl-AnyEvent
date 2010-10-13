@@ -15,7 +15,7 @@ SYNOPSIS
 
        # one-shot or repeating timers
        my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
-       my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...
+       my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...);
 
        print AnyEvent->now;  # prints current event loop time
        print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
@@ -44,8 +44,10 @@ INTRODUCTION/TUTORIAL
     manpage.
 
 SUPPORT
-    There is a mailinglist for discussing all things AnyEvent, and an IRC
-    channel, too.
+    An FAQ document is available as AnyEvent::FAQ.
+
+    There also is a mailinglist for discussing all things AnyEvent, and an
+    IRC channel, too.
 
     See the AnyEvent project page at the Schmorpforge Ta-Sa Software
     Repository, at <http://anyevent.schmorp.de>, for more info.
@@ -73,7 +75,7 @@ WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
     For modules like POE or IO::Async (which is a total misnomer as it is
     actually doing all I/O *synchronously*...), using them in your module is
-    like joining a cult: After you joined, you are dependent on them and you
+    like joining a cult: After you join, you are dependent on them and you
     cannot use anything else, as they are simply incompatible to everything
     that isn't them. What's worse, all the potential users of your module
     are *also* forced to use the same event loop you use.
@@ -84,15 +86,15 @@ WHY YOU SHOULD USE THIS MODULE (OR NOT)
     module uses one of those, every user of your module has to use it, too.
     But if your module uses AnyEvent, it works transparently with all event
     models it supports (including stuff like IO::Async, as long as those use
-    one of the supported event loops. It is trivial to add new event loops
-    to AnyEvent, too, so it is future-proof).
+    one of the supported event loops. It is easy to add new event loops to
+    AnyEvent, too, so it is future-proof).
 
     In addition to being free of having to use *the one and only true event
     model*, AnyEvent also is free of bloat and policy: with POE or similar
     modules, you get an enormous amount of code and strict rules you have to
-    follow. AnyEvent, on the other hand, is lean and up to the point, by
-    only offering the functionality that is necessary, in as thin as a
-    wrapper as technically possible.
+    follow. AnyEvent, on the other hand, is lean and to the point, by only
+    offering the functionality that is necessary, in as thin as a wrapper as
+    technically possible.
 
     Of course, AnyEvent comes with a big (and fully optional!) toolbox of
     useful functionality, such as an asynchronous DNS resolver, 100%
@@ -105,24 +107,22 @@ WHY YOU SHOULD USE THIS MODULE (OR NOT)
     model, you should *not* use this module.
 
 DESCRIPTION
-    AnyEvent provides an identical interface to multiple event loops. This
-    allows module authors to utilise an event loop without forcing module
-    users to use the same event loop (as only a single event loop can
-    coexist peacefully at any one time).
+    AnyEvent provides a uniform interface to various event loops. This
+    allows module authors to use event loop functionality without forcing
+    module users to use a specific event loop implementation (since more
+    than one event loop cannot coexist peacefully).
 
     The interface itself is vaguely similar, but not identical to the Event
     module.
 
     During the first call of any watcher-creation method, the module tries
     to detect the currently loaded event loop by probing whether one of the
-    following modules is already loaded: EV, Event, Glib,
-    AnyEvent::Impl::Perl, Tk, Event::Lib, Qt, POE. The first one found is
-    used. If none are found, the module tries to load these modules
-    (excluding Tk, Event::Lib, Qt and POE as the pure perl adaptor should
-    always succeed) in the order given. The first one that can be
-    successfully loaded will be used. If, after this, still none could be
-    found, AnyEvent will fall back to a pure-perl event loop, which is not
-    very efficient, but should work everywhere.
+    following modules is already loaded: EV, AnyEvent::Impl::Perl, Event,
+    Glib, Tk, Event::Lib, Qt, POE. The first one found is used. If none are
+    detected, the module tries to load the first four modules in the order
+    given; but note that if EV is not available, the pure-perl
+    AnyEvent::Impl::Perl should always work, so the other two are not
+    normally tried.
 
     Because AnyEvent first checks for modules that are already loaded,
     loading an event model explicitly before first using AnyEvent will
@@ -134,8 +134,9 @@ DESCRIPTION
        # .. AnyEvent will likely default to Tk
 
     The *likely* means that, if any module loads another event model and
-    starts using it, all bets are off. Maybe you should tell their authors
-    to use AnyEvent so their modules work together with others seamlessly...
+    starts using it, all bets are off - this case should be very rare
+    though, as very few modules hardcode event loops without announcing this
+    very loudly.
 
     The pure-perl implementation of AnyEvent is called
     "AnyEvent::Impl::Perl". Like other event modules you can load it
@@ -153,11 +154,11 @@ WATCHERS
 
     Note that callbacks must not permanently change global variables
     potentially in use by the event loop (such as $_ or $[) and that
-    callbacks must not "die". The former is good programming practise in
+    callbacks must not "die". The former is good programming practice in
     Perl and the latter stems from the fact that exception handling differs
     widely between event loops.
 
-    To disable the watcher you have to destroy it (e.g. by setting the
+    To disable a watcher you have to destroy it (e.g. by setting the
     variable you store it in to "undef" or otherwise deleting all references
     to it).
 
@@ -166,7 +167,7 @@ WATCHERS
     Many watchers either are used with "recursion" (repeating timers for
     example), or need to refer to their watcher object in other ways.
 
-    An any way to achieve that is this pattern:
+    One way to achieve that is this pattern:
 
        my $w; $w = AnyEvent->type (arg => value ..., cb => sub {
           # you can use $w here, for example to undef it
@@ -207,7 +208,7 @@ WATCHERS
     it. You must not close a file handle as long as any watcher is active on
     the underlying file descriptor.
 
-    Some event loops issue spurious readyness notifications, so you should
+    Some event loops issue spurious readiness notifications, so you should
     always use non-blocking calls when reading/writing from/to your file
     handles.
 
@@ -240,14 +241,14 @@ WATCHERS
     presence is undefined and you cannot rely on them. Portable AnyEvent
     callbacks cannot use arguments passed to time watcher callbacks.
 
-    The callback will normally be invoked once only. If you specify another
+    The callback will normally be invoked only once. If you specify another
     parameter, "interval", as a strictly positive number (> 0), then the
     callback will be invoked regularly at that interval (in fractional
     seconds) after the first invocation. If "interval" is specified with a
-    false value, then it is treated as if it were missing.
+    false value, then it is treated as if it were not specified at all.
 
     The callback will be rescheduled before invoking the callback, but no
-    attempt is done to avoid timer drift in most backends, so the interval
+    attempt is made to avoid timer drift in most backends, so the interval
     is only approximate.
 
     Example: fire an event after 7.7 seconds.
@@ -274,13 +275,13 @@ WATCHERS
     they use absolute time internally. This makes a difference when your
     clock "jumps", for example, when ntp decides to set your clock backwards
     from the wrong date of 2014-01-01 to 2008-01-01, a watcher that is
-    supposed to fire "after" a second might actually take six years to
+    supposed to fire "after a second" might actually take six years to
     finally fire.
 
     AnyEvent cannot compensate for this. The only event loop that is
-    conscious about these issues is EV, which offers both relative
-    (ev_timer, based on true relative time) and absolute (ev_periodic, based
-    on wallclock time) timers.
+    conscious of these issues is EV, which offers both relative (ev_timer,
+    based on true relative time) and absolute (ev_periodic, based on
+    wallclock time) timers.
 
     AnyEvent always prefers relative timers, if available, matching the
     AnyEvent API.
@@ -309,15 +310,15 @@ WATCHERS
 
         This function is also often faster then "AnyEvent->time", and thus
         the preferred method if you want some timestamp (for example,
-        AnyEvent::Handle uses this to update it's activity timeouts).
+        AnyEvent::Handle uses this to update its activity timeouts).
 
         The rest of this section is only of relevance if you try to be very
-        exact with your timing, you can skip it without bad conscience.
+        exact with your timing; you can skip it without a bad conscience.
 
         For a practical example of when these times differ, consider
         Event::Lib and EV and the following set-up:
 
-        The event loop is running and has just invoked one of your callback
+        The event loop is running and has just invoked one of your callbacks
         at time=500 (assume no other callbacks delay processing). In your
         callback, you wait a second by executing "sleep 1" (blocking the
         process for a second) and then (at time=501) you create a relative
@@ -416,7 +417,7 @@ WATCHERS
     Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
     callbacks to signals in a generic way, which is a pity, as you cannot do
     race-free signal handling in perl, requiring C libraries for this.
-    AnyEvent will try to do it's best, which means in some cases, signals
+    AnyEvent will try to do its best, which means in some cases, signals
     will be delayed. The maximum time a signal might be delayed is specified
     in $AnyEvent::MAX_SIGNAL_LATENCY (default: 10 seconds). This variable
     can be changed only before the first signal watcher is created, and
@@ -428,15 +429,15 @@ WATCHERS
     All these problems can be avoided by installing the optional
     Async::Interrupt module, which works with most event loops. It will not
     work with inherently broken event loops such as Event or Event::Lib (and
-    not with POE currently, as POE does it's own workaround with one-second
+    not with POE currently, as POE does its own workaround with one-second
     latency). For those, you just have to suffer the delays.
 
   CHILD PROCESS WATCHERS
        $w = AnyEvent->child (pid => <process id>, cb => <callback>);
 
-    You can also watch on a child process exit and catch its exit status.
+    You can also watch for a child process exit and catch its exit status.
 
-    The child process is specified by the "pid" argument (one some backends,
+    The child process is specified by the "pid" argument (on some backends,
     using 0 watches for any child process exit, on others this will croak).
     The watcher will be triggered only when the child process has finished
     and an exit status is available, not on any trace events
@@ -491,8 +492,8 @@ WATCHERS
   IDLE WATCHERS
        $w = AnyEvent->idle (cb => <callback>);
 
-    Repeatedly invoke the callback after the process becomes idle, until
-    either the watcher is destroyed or new events have been detected.
+    This will repeatedly invoke the callback after the process becomes idle,
+    until either the watcher is destroyed or new events have been detected.
 
     Idle watchers are useful when there is a need to do something, but it is
     not so important (or wise) to do it instantly. The callback will be
@@ -572,7 +573,7 @@ WATCHERS
     *   Condition variables are like "Merge Points" - points in your program
         where you merge multiple independent results/control flows into one.
 
-    *   Condition variables represent a transaction - function that start
+    *   Condition variables represent a transaction - functions that start
         some kind of transaction can return them, leaving the caller the
         choice between waiting in a blocking fashion, or setting a callback.
 
@@ -600,7 +601,7 @@ WATCHERS
     used by AnyEvent itself are all named "_ae_XXX" to make subclassing easy
     (it is often useful to build your own transaction class on top of
     AnyEvent). To subclass, use "AnyEvent::CondVar" as base class and call
-    it's "new" method in your own "new" method.
+    its "new" method in your own "new" method.
 
     There are two "sides" to a condition variable - the "producer side"
     which eventually calls "-> send", and the "consumer side", which waits
@@ -670,14 +671,14 @@ WATCHERS
         calling "send".
 
     $cv->croak ($error)
-        Similar to send, but causes all call's to "->recv" to invoke
+        Similar to send, but causes all calls to "->recv" to invoke
         "Carp::croak" with the given error message/object/scalar.
 
         This can be used to signal any errors to the condition variable
         user/consumer. Doing it this way instead of calling "croak" directly
-        delays the error detetcion, but has the overwhelmign advantage that
+        delays the error detection, but has the overwhelming advantage that
         it diagnoses the error at the place where the result is expected,
-        and not deep in some event clalback without connection to the actual
+        and not deep in some event callback with no connection to the actual
         code causing the problem.
 
     $cv->begin ([group callback])
@@ -724,7 +725,7 @@ WATCHERS
 
         The ping example mentioned above is slightly more complicated, as
         the there are results to be passwd back, and the number of tasks
-        that are begung can potentially be zero:
+        that are begun can potentially be zero:
 
            my $cv = AnyEvent->condvar;
 
@@ -755,7 +756,7 @@ WATCHERS
         (the loop doesn't execute once).
 
         This is the general pattern when you "fan out" into multiple (but
-        potentially none) subrequests: use an outer "begin"/"end" pair to
+        potentially zero) subrequests: use an outer "begin"/"end" pair to
         set the callback and ensure "end" is called at least once, and then,
         for each subrequest you start, call "begin" and for each subrequest
         you finish, call "end".
@@ -766,7 +767,7 @@ WATCHERS
 
     $cv->recv
         Wait (blocking if necessary) until the "->send" or "->croak" methods
-        have been called on c<$cv>, while servicing other watchers normally.
+        have been called on $cv, while servicing other watchers normally.
 
         You can only wait once on a condition - additional calls are valid
         but will return immediately.
@@ -793,7 +794,7 @@ WATCHERS
         the result will not block, while still supporting blocking waits if
         the caller so desires).
 
-        You can ensure that "-recv" never blocks by setting a callback and
+        You can ensure that "->recv" never blocks by setting a callback and
         only calling "->recv" from within that callback (or at a later
         time). This will work even when the event loop does not support
         blocking waits otherwise.
@@ -806,11 +807,11 @@ WATCHERS
         This is a mutator function that returns the callback set and
         optionally replaces it before doing so.
 
-        The callback will be called when the condition becomes (or already
-        was) "true", i.e. when "send" or "croak" are called (or were
-        called), with the only argument being the condition variable itself.
-        Calling "recv" inside the callback or at any later time is
-        guaranteed not to block.
+        The callback will be called when the condition becomes "true", i.e.
+        when "send" or "croak" are called, with the only argument being the
+        condition variable itself. If the condition is already true, the
+        callback is called immediately when it is set. Calling "recv" inside
+        the callback or at any later time is guaranteed not to block.
 
 SUPPORTED EVENT LOOPS/BACKENDS
     The available backend classes are (every class has its own manpage):
@@ -825,9 +826,9 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
 
     Backends that are transparently being picked up when they are used.
-        These will be used when they are currently loaded when the first
-        watcher is created, in which case it is assumed that the application
-        is using them. This means that AnyEvent will automatically pick the
+        These will be used if they are already loaded when the first watcher
+        is created, in which case it is assumed that the application is
+        using them. This means that AnyEvent will automatically pick the
         right backend when the main program loads an event module before
         anything starts to create watchers. Nothing special needs to be done
         by the main program.
@@ -851,7 +852,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
         architecturally limited to even support the AnyEvent API. It also is
         the only event loop that needs the loop to be set explicitly, so it
         can only be used by a main program knowing about AnyEvent. See
-        AnyEvent::Impl::Async for the gory details.
+        AnyEvent::Impl::IOAsync for the gory details.
 
            AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed.
 
@@ -882,7 +883,7 @@ GLOBAL VARIABLES AND FUNCTIONS
 
         Afterwards it contains the event model that is being used, which is
         the name of the Perl class implementing the model. This class is
-        usually one of the "AnyEvent::Impl:xxx" modules, but can be any
+        usually one of the "AnyEvent::Impl::xxx" modules, but can be any
         other class in the case AnyEvent has been extended at runtime (e.g.
         in *rxvt-unicode* it will be "urxvt::anyevent").
 
@@ -890,14 +891,15 @@ GLOBAL VARIABLES AND FUNCTIONS
         Returns $AnyEvent::MODEL, forcing autodetection of the event model
         if necessary. You should only call this function right before you
         would have created an AnyEvent watcher anyway, that is, as late as
-        possible at runtime, and not e.g. while initialising of your module.
+        possible at runtime, and not e.g. during initialisation of your
+        module.
 
         If you need to do some initialisation before AnyEvent watchers are
         created, use "post_detect".
 
     $guard = AnyEvent::post_detect { BLOCK }
         Arranges for the code block to be executed as soon as the event
-        model is autodetected (or immediately if this has already happened).
+        model is autodetected (or immediately if that has already happened).
 
         The block will be executed *after* the actual backend has been
         detected ($AnyEvent::MODEL is set), but *before* any watchers have
@@ -916,7 +918,7 @@ GLOBAL VARIABLES AND FUNCTIONS
         AnyEvent::AIO for a case where this is useful.
 
         Example: Create a watcher for the IO::AIO module and store it in
-        $WATCHER. Only do so after the event loop is initialised, though.
+        $WATCHER, but do so only do so after the event loop is initialised.
 
            our WATCHER;
 
@@ -933,7 +935,7 @@ GLOBAL VARIABLES AND FUNCTIONS
 
     @AnyEvent::post_detect
         If there are any code references in this array (you can "push" to it
-        before or after loading AnyEvent), then they will called directly
+        before or after loading AnyEvent), then they will be called directly
         after the event loop has been chosen.
 
         You should check $AnyEvent::MODEL before adding to this array,
@@ -978,17 +980,18 @@ WHAT TO DO IN A MODULE
 
     It is fine, however, to call "->recv" when the user of your module
     requests it (i.e. if you create a http request object ad have a method
-    called "results" that returns the results, it should call "->recv"
-    freely, as the user of your module knows what she is doing. always).
+    called "results" that returns the results, it may call "->recv" freely,
+    as the user of your module knows what she is doing. Always).
 
 WHAT TO DO IN THE MAIN PROGRAM
     There will always be a single main program - the only place that should
     dictate which event model to use.
 
-    If it doesn't care, it can just "use AnyEvent" and use it itself, or not
-    do anything special (it does not need to be event-based) and let
-    AnyEvent decide which implementation to chose if some module relies on
-    it.
+    If the program is not event-based, it need not do anything special, even
+    when it depends on a module that uses an AnyEvent. If the program itself
+    uses AnyEvent, but does not care which event loop is used, all it needs
+    to do is "use AnyEvent". In either case, AnyEvent will choose the best
+    available loop implementation.
 
     If the main program relies on a specific event model - for example, in
     Gtk2 programs you have to rely on the Glib module - you should load the
@@ -996,7 +999,7 @@ WHAT TO DO IN THE MAIN PROGRAM
     generally speaking, you should load it as early as possible. The reason
     is that modules might create watchers when they are loaded, and AnyEvent
     will decide on the event model to use as soon as it creates watchers,
-    and it might chose the wrong one unless you load the correct one
+    and it might choose the wrong one unless you load the correct one
     yourself.
 
     You can chose to use a pure-perl implementation by loading the
@@ -1026,9 +1029,8 @@ OTHER MODULES
     modules come as part of AnyEvent, the others are available via CPAN.
 
     AnyEvent::Util
-        Contains various utility functions that replace often-used but
-        blocking functions such as "inet_aton" by event-/callback-based
-        versions.
+        Contains various utility functions that replace often-used blocking
+        functions such as "inet_aton" with event/callback-based versions.
 
     AnyEvent::Socket
         Provides various utility functions for (internet protocol) sockets,
@@ -1039,7 +1041,7 @@ OTHER MODULES
     AnyEvent::Handle
         Provide read and write buffers, manages watchers for reads and
         writes, supports raw and formatted I/O, I/O queued and fully
-        transparent and non-blocking SSL/TLS (via AnyEvent::TLS.
+        transparent and non-blocking SSL/TLS (via AnyEvent::TLS).
 
     AnyEvent::DNS
         Provides rich asynchronous DNS resolver capabilities.
@@ -1055,7 +1057,7 @@ OTHER MODULES
 
         As Pauli would put it, "Not only is it not right, it's not even
         wrong!" - there are so many things wrong with AnyEvent::Handle::UDP,
-        most notably it's use of a stream-based API with a protocol that
+        most notably its use of a stream-based API with a protocol that
         isn't streamable, that the only way to improve it is to delete it.
 
         It features data corruption (but typically only under load) and
@@ -1069,7 +1071,7 @@ OTHER MODULES
 
     AnyEvent::DBI
         Executes DBI requests asynchronously in a proxy process for you,
-        notifying you in an event-bnased way when the operation is finished.
+        notifying you in an event-based way when the operation is finished.
 
     AnyEvent::AIO
         Truly asynchronous (as opposed to non-blocking) I/O, should be in
@@ -1142,7 +1144,7 @@ ENVIRONMENT VARIABLES
 
         In other words, enables "strict" mode.
 
-        Unlike "use strict" (or it's modern cousin, "use common::sense", it
+        Unlike "use strict" (or its modern cousin, "use common::sense", it
         is definitely recommended to keep it off in production. Keeping
         "PERL_ANYEVENT_STRICT=1" in your environment while developing
         programs can be very useful, however.
@@ -1748,7 +1750,7 @@ SIGNALS
 
 RECOMMENDED/OPTIONAL MODULES
     One of AnyEvent's main goals is to be 100% Pure-Perl(tm): only perl (and
-    it's built-in modules) are required to use it.
+    its built-in modules) are required to use it.
 
     That does not mean that AnyEvent won't take advantage of some additional
     modules if they are installed.
@@ -1809,8 +1811,8 @@ RECOMMENDED/OPTIONAL MODULES
 
     Time::HiRes
         This module is part of perl since release 5.008. It will be used
-        when the chosen event library does not come with a timing source on
-        it's own. The pure-perl event loop (AnyEvent::Impl::Perl) will
+        when the chosen event library does not come with a timing source of
+        its own. The pure-perl event loop (AnyEvent::Impl::Perl) will
         additionally use it to try to use a monotonic clock for timing
         stability.
 
@@ -1873,6 +1875,10 @@ BUGS
     not as pronounced).
 
 SEE ALSO
+    Tutorial/Introduction: AnyEvent::Intro.
+
+    FAQ: AnyEvent::FAQ.
+
     Utility functions: AnyEvent::Util.
 
     Event modules: EV, EV::Glib, Glib::EV, Event, Glib::Event, Glib, Tk,
@@ -1888,9 +1894,9 @@ SEE ALSO
 
     Asynchronous DNS: AnyEvent::DNS.
 
-    Coroutine support: Coro, Coro::AnyEvent, Coro::EV, Coro::Event,
+    Thread support: Coro, Coro::AnyEvent, Coro::EV, Coro::Event.
 
-    Nontrivial usage examples: AnyEvent::GPSD, AnyEvent::XMPP,
+    Nontrivial usage examples: AnyEvent::GPSD, AnyEvent::IRC,
     AnyEvent::HTTP.
 
 AUTHOR
