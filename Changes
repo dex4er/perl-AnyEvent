@@ -1,7 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
-TODO: check for -w? somehow?
 TODO: document TCP_*** constants
+TODO: catch AE::xxx for anyevent struct and anyevent debug
+TODO: anyevent::trace? or debug tracing all watchers?
+
+5.28   Wed Oct 13 04:14:23 CEST 2010
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
           actually used in tcp_server.
         - implement AnyEvent::CondVar->new method, which was documented but
@@ -11,6 +14,9 @@ TODO: document TCP_*** constants
           resulting in more informative error messages.
         - new AnyEvent::FAQ manpage.
 	- clarify that you can actually call push_read etc. in on_read.
+        - put keys and certs in /tmp, not into the current directory,
+          and document this in the SECURITY CONSIDERATIONS sections
+          of AnyEvent::TLS.
         - support ";" as resolv.conf comment character in AnyEvent::DNS, as
           requested by Ron Isaacson.
         - document $AnyEvent::DNS::RESOLVER variable.

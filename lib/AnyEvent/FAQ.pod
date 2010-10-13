@@ -18,13 +18,13 @@ Here is an example:
 
    my $timer = AnyEvent->timer (after => 5, cb => sub { say "hi" });
 
-If you run this, your program will exit almost instantly. The reason is
-that creating the timer does not wait for it, instead the C<timer> method
-returns instantly and perl executes the rest of the program.
+The expectation might be for the program to print "hi" after 5 seconds
+and then probably to exit. However, if you run this, your program will
+exit almost instantly: Creating the timer does not wait for it, instead
+the C<timer> method returns immediately and perl executes the rest of the
+program. But there is nothing left to execute, so perl exits.
 
-But there is nothing left to execute, so perl exits.
-
-To wait for an event, use a condvar:
+To force AnyEvent to wait for something, use a condvar:
 
    use AnyEvent;
 
@@ -34,7 +34,17 @@ To wait for an event, use a condvar:
    $quit_program->recv;
 
 Here the program doesn't immediately exit, because it first waits for
-"quit_program" condition.
+the "quit_program" condition.
+
+In most cases, your main program should call the event library "loop"
+function directly:
+
+   use EV;
+   use AnyEvent;
+
+   ...
+
+   EV::loop;
 
 =head2 Why is my C<tcp_connect> callback never called?
 

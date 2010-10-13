@@ -86,10 +86,11 @@ some actual usage examples.
 
 our $REF_IDX; # our session ex_data id
 
-# create temp file, populate it, and returna  guard and filename
+# create temp file, populate it, and return a guard and filename
 sub _tmpfile($) {
    require File::Temp;
-   my ($fh, $path) = File::Temp::mkstemp ("aetlspemXXXXXX");
+   # File::Temp opens the file with mode 0600
+   my ($fh, $path) = File::Temp::tempfile ("aetlsXXXXXXXXX", TMPDIR => 1, EXLOCK => 0);
    my $guard = AnyEvent::Util::guard { unlink $path };
 
    syswrite $fh, $_[0];
@@ -1092,6 +1093,14 @@ With Diffie-Hellman ephemeral key exchange, you can lose the DH parameters
 needs special set-up (done by default by AnyEvent::TLS).
 
 =back
+
+=head1 SECURITY CONSIDERATIONS
+
+When you use any of the options that pass in keys or certificates
+as strings (e.g. C<ca_cert>), then, due to serious shortcomings in
+L<Net::SSLeay>, this module creates a temporary file to store the string -
+see L<File::Temp> and possibly its C<safe_level> setting for more details
+on what to watch out for.
 
 =head1 BUGS
 
