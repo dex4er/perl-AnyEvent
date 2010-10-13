@@ -1,10 +1,7 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: check for -w? somehow?
-TODO: _start might call on_error with ETIMEDOUT??
 TODO: document TCP_*** constants
-AnyEvent::Handle uncaught error: Connection timed out at 
-                  /usr/local/lib/perl5/site_perl/5.8.8/AnyEvent/HTTP.pm line 473
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
           actually used in tcp_server.
         - implement AnyEvent::CondVar->new method, which was documented but
@@ -18,6 +15,7 @@ AnyEvent::Handle uncaught error: Connection timed out at
           requested by Ron Isaacson.
         - document $AnyEvent::DNS::RESOLVER variable.
         - incorporated major typo patches by Abhijit Menon-Sen.
+        - AnyEvent::Handle now croaks when negative timeouts are passed.
         - add a shitload of TCP_xxx sockopt name constants to AnyEvent::Util,
           undocumented, but who knows when they might come in handy.
 

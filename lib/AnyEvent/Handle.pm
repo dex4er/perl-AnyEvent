@@ -767,6 +767,9 @@ for my $dir ("", "r", "w") {
    *$timeout = sub {
       my ($self, $new_value) = @_;
 
+      $new_value >= 0
+         or Carp::croak "AnyEvent::Handle->$timeout called with negative timeout ($new_value), caught";
+
       $self->{$timeout} = $new_value;
       delete $self->{$tw}; &$cb;
    };

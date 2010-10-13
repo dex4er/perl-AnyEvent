@@ -2681,7 +2681,7 @@ servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
 
 Asynchronous DNS: L<AnyEvent::DNS>.
 
-Thread support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV L<Coro::Event    >,
+Thread support: L<Coro>, L<Coro::AnyEvent>, L<Coro::EV>, L<Coro::Event>.
 
 Nontrivial usage examples: L<AnyEvent::GPSD>, L<AnyEvent::IRC>,
 L<AnyEvent::HTTP>.
