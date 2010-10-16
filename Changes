@@ -4,6 +4,8 @@ TODO: document TCP_*** constants
 TODO: catch AE::xxx for anyevent struct and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 
+        - AE::Handle: implement dynamic read_size adjustment, add
+          max_read_size parameter, reduce default read_size to 2048.
 	- work around OS bugs (cygwin again) when lingering in AE::Handle.
 
 5.28   Wed Oct 13 04:14:23 CEST 2010

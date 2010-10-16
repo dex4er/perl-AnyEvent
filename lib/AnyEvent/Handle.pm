@@ -77,6 +77,8 @@ sub _load_func($) {
    \&$func
 }
 
+sub MAX_READ_SIZE() { 131072 }
+
 =head1 METHODS
 
 =over 4
@@ -339,9 +341,17 @@ from most attacks.
 
 =item read_size => <bytes>
 
-The default read block size (the number of bytes this module will
-try to read during each loop iteration, which affects memory
-requirements). Default: C<8192>.
+The initial read block size, the number of bytes this module will try to
+read during each loop iteration. Each handle object will consume at least
+this amount of memory for the read buffer as well, so when handling many
+connections requirements). See also C<max_read_size>. Default: C<2048>.
+
+=item max_read_size => <bytes>
+
+The maximum read buffer size used by the dynamic adjustment
+algorithm: Each time AnyEvent::Handle can read C<read_size> bytes in
+one go it will double C<read_size> up to the maximum given by this
+option. Default: C<131072> or C<read_size>, whichever is higher.
 
 =item low_water_mark => <bytes>
 
@@ -547,6 +557,10 @@ sub _start {
    $self->{_activity}  =
    $self->{_ractivity} =
    $self->{_wactivity} = AE::now;
+
+   $self->{read_size} ||= 2048;
+   $self->{max_read_size} = $self->{read_size}
+      if $self->{read_size} > ($self->{max_read_size} || MAX_READ_SIZE);
 
    $self->timeout   (delete $self->{timeout}  ) if $self->{timeout};
    $self->rtimeout  (delete $self->{rtimeout} ) if $self->{rtimeout};
@@ -1747,7 +1761,7 @@ sub start_read {
 
       $self->{_rw} = AE::io $self->{fh}, 0, sub {
          my $rbuf = \($self->{tls} ? my $buf : $self->{rbuf});
-         my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
+         my $len = sysread $self->{fh}, $$rbuf, $self->{read_size}, length $$rbuf;
 
          if ($len > 0) {
             $self->{_activity} = $self->{_ractivity} = AE::now;
@@ -1758,6 +1772,12 @@ sub start_read {
                &_dotls ($self);
             } else {
                $self->_drain_rbuf;
+            }
+
+            if ($len == $self->{read_size}) {
+               $self->{read_size} *= 2;
+               $self->{read_size} = $self->{max_read_size} || MAX_READ_SIZE
+                  if $self->{read_size} > ($self->{max_read_size} || MAX_READ_SIZE);
             }
 
          } elsif (defined $len) {
