@@ -4,6 +4,8 @@ TODO: document TCP_*** constants
 TODO: catch AE::xxx for anyevent struct and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 
+	- work around OS bugs (cygwin again) when lingering in AE::Handle.
+
 5.28   Wed Oct 13 04:14:23 CEST 2010
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
           actually used in tcp_server.

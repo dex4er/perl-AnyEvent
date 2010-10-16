@@ -2008,7 +2008,7 @@ sub DESTROY {
 
          if ($len > 0) {
             substr $wbuf, 0, $len, "";
-         } else {
+         } elsif (defined $len || ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK)) {
             @linger = (); # end
          }
       };
