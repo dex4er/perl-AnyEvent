@@ -15,12 +15,17 @@ This module provides transparent support for AnyEvent. You don't have to
 do anything to make EV work with AnyEvent except by loading EV before
 creating the first AnyEvent watcher.
 
+EV is the fastest event library for perl, and best supported by
+AnyEvent. Most functions from the L<AE> API are implemented as direct
+aliases to EV functions, so using EV via AE is as fast as using EV
+directly.
+
 =cut
 
 package AnyEvent::Impl::EV;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
-use EV 3.44;
+use EV 4.00;
 
 # cannot override directly, as EV doesn't allow arguments
 sub time       { EV::time       }
@@ -39,7 +44,7 @@ sub timer {
    EV::timer $arg{after}, $arg{interval}, $arg{cb}
 }
 
-*AE::io = defined &EV::_ae_io # 3.8
+*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case
    ? \&EV::_ae_io
    : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 
@@ -79,11 +84,11 @@ sub idle {
 *AE::idle = \&EV::idle;
 
 sub one_event {
-   EV::loop EV::LOOP_ONESHOT;
+   EV::run EV::RUN_ONCE;
 }
 
 sub loop {
-   EV::loop;
+   EV::run;
 }
 
 1;

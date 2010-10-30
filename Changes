@@ -3,7 +3,9 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: catch AE::xxx for anyevent struct and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
+TODO: anyevent strict etc. for AE::
 
+        - convert EV backend to EV 4.00 API.
         - AE::Handle: implement dynamic read_size adjustment, add
           max_read_size parameter, reduce default read_size to 2048.
 	- work around OS bugs (cygwin again) when lingering in AE::Handle.
