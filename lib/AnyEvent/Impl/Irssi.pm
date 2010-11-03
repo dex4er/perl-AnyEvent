@@ -32,7 +32,8 @@ signal just like irssi itself would.
 
 =item * Artificial timer delays.
 
-Irssi artificially enforces timers to have at least a 10ms delay.
+Irssi artificially enforces timers to have at least a 10ms delay (by
+croaking, even).
 
 This means that some applications will be limited to a rate of 100Hz (for
 example, L<Coro::AnyEvent> thread scheduling).
@@ -72,7 +73,7 @@ sub init {
    close DATA;
 }
 
-Irssi::command "/script exec -permanent AnyEvent::Impl::Irssi::init 'AnyEvent adaptor, see man AnyEvent'";
+Irssi::command "/script exec -permanent AnyEvent::Impl::Irssi::init 'AnyEvent adaptor'";
 
 1;
 
