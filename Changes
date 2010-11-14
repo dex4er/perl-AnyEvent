@@ -4,6 +4,7 @@ TODO: document TCP_*** constants
 TODO: catch AE::xxx for anyevent struct and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict etc. for AE::
+TODO: anyevent strict checking for $_ changes?
 
         - convert EV backend to EV 4.00 API.
         - AE::Handle: implement dynamic read_size adjustment, add

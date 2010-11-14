@@ -15,9 +15,12 @@ Loading it makes AnyEvent check all arguments to AnyEvent-methods, at the
 expense of being slower (often the argument checking takes longer than the
 actual function).
 
+B<< Currently, only AnyEvent I<methods> are checked, the AE:: I<functions> are not
+affected. >>
+
 Normally, you don't load this module yourself but instead use it
 indirectly via the C<PERL_ANYEVENT_STRICT> environment variable (see
-L<AnyEvent>). However, this module can be loaded at any time.
+L<AnyEvent>). However, this module can be loaded manually at any time.
 
 =cut
 
@@ -34,7 +37,7 @@ AnyEvent::post_detect {
    # # and link us in before it in the chain.
    my $MODEL = shift @AnyEvent::ISA;
    unshift @ISA, $MODEL;
-   unshift @AnyEvent::ISA, AnyEvent::Strict::
+   unshift @AnyEvent::ISA, AnyEvent::Strict::;
 };
 
 sub io {
