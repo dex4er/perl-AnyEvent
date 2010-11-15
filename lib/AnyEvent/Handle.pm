@@ -424,8 +424,9 @@ Use the C<< ->starttls >> method if you need to start TLS negotiation later.
 =item tls_ctx => $anyevent_tls
 
 Use the given C<AnyEvent::TLS> object to create the new TLS connection
-(unless a connection object was specified directly). If this parameter is
-missing, then AnyEvent::Handle will use C<AnyEvent::Handle::TLS_CTX>.
+(unless a connection object was specified directly). If this
+parameter is missing (or C<undef>), then AnyEvent::Handle will use
+C<AnyEvent::Handle::TLS_CTX>.
 
 Instead of an object, you can also specify a hash reference with C<< key
 => value >> pairs. Those will be passed to L<AnyEvent::TLS> to create a

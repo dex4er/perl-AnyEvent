@@ -11,6 +11,7 @@ TODO: anyevent strict checking for $_ changes?
           max_read_size parameter, reduce default read_size to 2048.
 	- work around OS bugs (cygwin again) when lingering in AE::Handle.
         - reduce memory usage slightly when connect was used in AE::Handle.
+        - document tls_ctx => undef as valid.
 
 5.28   Wed Oct 13 04:14:23 CEST 2010
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
