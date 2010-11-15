@@ -161,7 +161,7 @@ Some errors are fatal (which is indicated by C<$fatal> being true). On
 fatal errors the handle object will be destroyed (by a call to C<< ->
 destroy >>) after invoking the error callback (which means you are free to
 examine the handle object). Examples of fatal errors are an EOF condition
-with active (but unsatisifable) read watchers (C<EPIPE>) or I/O errors. In
+with active (but unsatisfiable) read watchers (C<EPIPE>) or I/O errors. In
 cases where the other side can close the connection at will, it is
 often easiest to not report C<EPIPE> errors in this callback.
 
