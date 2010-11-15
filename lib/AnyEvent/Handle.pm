@@ -504,7 +504,7 @@ sub new {
                sub {
                   my ($fh, $host, $port, $retry) = @_;
 
-                  delete $self->{_connect};
+                  delete $self->{_connect}; # no longer needed
 
                   if ($fh) {
                      $self->{fh} = $fh;
