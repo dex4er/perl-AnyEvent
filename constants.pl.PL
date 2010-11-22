@@ -3,7 +3,10 @@
 # this file is unfortunately only executed at Makefile.PL time
 
 use Config;
-use Socket;
+
+# when built as part of perl, these are not available
+BEGIN { eval "use Socket ()" }
+BEGIN { eval "use Fcntl  ()" }
 
 open my $fh, ">lib/AnyEvent/constants.pl"
    or die "lib/AnyEvent/constants.pl: $_[0]\n";
@@ -31,10 +34,10 @@ i WIN32  => $WIN32;
 # add these purely to avoid loading Fcntl, which is slow and bloated.
 use Fcntl ();
 
-i F_SETFL    => eval { Fcntl::F_SETFL() };
-i F_SETFD    => eval { Fcntl::F_SETFD() };
-i O_NONBLOCK => eval { Fcntl::O_NONBLOCK() };
-i FD_CLOEXEC => eval { Fcntl::FD_CLOEXEC() };
+i F_SETFD    => eval { Fcntl::F_SETFD() } || 2;
+i F_SETFL    => eval { Fcntl::F_SETFL() } || 4;
+i O_NONBLOCK => eval { Fcntl::O_NONBLOCK() } || 04000;
+i FD_CLOEXEC => eval { Fcntl::FD_CLOEXEC() } || 1;
 
 print "package AnyEvent::Util;\n";
 
