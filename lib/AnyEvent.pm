@@ -1293,7 +1293,7 @@ sub detect() {
          }
 
          $MODEL
-           or die "No event module selected for AnyEvent and autodetect failed. Install any one of these modules: EV, Event or Glib.\n";
+           or die "AnyEvent: backend autodetection failed - did you properly install AnyEvent?\n";
       }
    }
 
@@ -1302,7 +1302,7 @@ sub detect() {
    push @{"$MODEL\::ISA"}, "AnyEvent::Base";
    unshift @ISA, $MODEL;
 
-   # now nuke some methods that are overriden by the backend.
+   # now nuke some methods that are overridden by the backend.
    # SUPER is not allowed.
    for (qw(time signal child idle)) {
       undef &{"AnyEvent::Base::$_"}
