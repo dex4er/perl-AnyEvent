@@ -32,7 +32,6 @@ i CYGWIN => $^O =~ /cygwin/i;
 i WIN32  => $WIN32;
 
 # add these purely to avoid loading Fcntl, which is slow and bloated.
-use Fcntl ();
 
 i F_SETFD    => eval { Fcntl::F_SETFD() } || 2;
 i F_SETFL    => eval { Fcntl::F_SETFL() } || 4;
