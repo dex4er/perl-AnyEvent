@@ -16,6 +16,7 @@ TODO: handle example for "loops"
         - document tls_ctx => undef as valid.
         - include some probably linux-only support for building AnyEvent
           as part of the perl core.
+        - improve compatibility of t/08_idna.t to perl 5.8.
 
 5.28   Wed Oct 13 04:14:23 CEST 2010
         - due to a glitch, AnyEvent's internal getprotobyname wasn't
