@@ -288,7 +288,7 @@ this, without an extra variable to store the name in:
    # now wait and fetch the name
    my $name = $name_ready->recv;
 
-   undef $wait_for_input; # watche rno longer needed
+   undef $wait_for_input; # watcher no longer needed
 
    print "your name is $name\n";
 
