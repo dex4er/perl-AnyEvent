@@ -251,7 +251,7 @@ and there is no consumer yet - let's change that right now:
    # now wait until the name is available:
    $name_ready->recv;
 
-   undef $wait_for_input; # watche rno longer needed
+   undef $wait_for_input; # watcher no longer needed
 
    print "your name is $name\n";
 
