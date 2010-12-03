@@ -1309,7 +1309,11 @@ sub detect() {
          if defined &{"$MODEL\::$_"};
    }
 
-   require AnyEvent::Strict if $ENV{PERL_ANYEVENT_STRICT};
+   if ($ENV{PERL_ANYEVENT_STRICT}) {
+      eval { require AnyEvent::Strict };
+      warn "AnyEvent: cannot load AnyEvent::Strict: $@"
+         if $@ && $VERBOSE;
+   }
 
    (shift @post_detect)->() while @post_detect;
 
