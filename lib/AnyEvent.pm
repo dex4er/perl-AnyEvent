@@ -1311,7 +1311,7 @@ sub detect() {
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       eval { require AnyEvent::Strict };
-      warn "AnyEvent: cannot load AnyEvent::Strict: $@"
+      warn "AnyEvent: cannot load AnyEvent::Strict ($@)\n"
          if $@ && $VERBOSE;
    }
 
