@@ -44,7 +44,7 @@ sub timer {
    EV::timer $arg{after}, $arg{interval}, $arg{cb}
 }
 
-*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case
+*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case it is dropped
    ? \&EV::_ae_io
    : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 

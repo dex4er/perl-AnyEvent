@@ -64,9 +64,9 @@ for my $it ("", 1, 2, 3, 4) {
 
    my $error = AnyEvent->timer (after => 5, cb => sub {
       print <<EOF;
-Bail out! No child exit detected. This is either a bug in AnyEvent or a bug in your Perl (mostly some windows distributions suffer from that): child watchers might not work properly on this platform. You can force installation of this module if you do not rely on child watchers, or you could upgrade to a working version of Perl for your platform.\n";
+No child exit detected. This is either a bug in AnyEvent or a bug in your Perl (mostly some windows distributions suffer from that): child watchers might not work properly on this platform. You can force installation of this module if you do not rely on child watchers, or you could upgrade to a working version of Perl for your platform.\n";
 EOF
-      exit 0;
+      exit 1;
    });
 
    $cv2->wait;

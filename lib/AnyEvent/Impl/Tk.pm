@@ -25,15 +25,17 @@ broken.
 
 I regularly run out of words to describe how bad it really is.
 
-To work around the many, many bugs in Tk that don't get fixed, this
-adaptor dup()'s all filehandles that get passed into its I/O watchers,
-so if you register a read and a write watcher for one fh, AnyEvent will
-create two additional file descriptors (and handles).
+To work around some of the many, many bugs in Tk that don't get fixed,
+this adaptor dup()'s all filehandles that get passed into its I/O
+watchers, so if you register a read and a write watcher for one fh,
+AnyEvent will create two additional file descriptors (and handles).
 
 This creates a high overhead and is slow, but seems to work around most
 known bugs in L<Tk::fileevent> on 32 bit architectures (Tk seems to be
 terminally broken on 64 bit, do not expect more than 10 or so watchers to
 work on 64 bit machines).
+
+Do not expect these workarounds to avoid segfaults and crashes inside Tk.
 
 Note also that Tk event ids wrap around after 2**32 or so events, which on
 my machine can happen within less than 12 hours, after which Tk will stomp
@@ -56,6 +58,8 @@ use Tk ();
 our $mw = new MainWindow;
 $mw->withdraw;
 
+END { undef $mw }
+
 sub io {
    my (undef, %arg) = @_;
 
@@ -76,9 +80,12 @@ sub AnyEvent::Impl::Tk::io::DESTROY {
    my ($fh, $tk) = @{$_[0]};
 
    # work around another bug: watchers don't get removed when
-   # the fh is closed contrary to documentation. also, trying
+   # the fh is closed, contrary to documentation. also, trying
    # to unregister a read callback will make it impossible
    # to remove the write callback.
+   # if your program segfaults here then you need to destroy
+   # your watchers before program exit. sorry, no way around
+   # that.
    $mw->fileevent ($fh, $tk => "");
 }
 

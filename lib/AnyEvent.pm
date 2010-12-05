@@ -1311,7 +1311,7 @@ sub detect() {
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       eval { require AnyEvent::Strict };
-      warn "AnyEvent: cannot load AnyEvent::Strict ($@)\n"
+      warn "AnyEvent: cannot load AnyEvent::Strict: $@"
          if $@ && $VERBOSE;
    }
 
@@ -1630,7 +1630,6 @@ sub signal {
 our %PID_CB;
 our $CHLD_W;
 our $CHLD_DELAY_W;
-our $WNOHANG;
 
 # used by many Impl's
 sub _emit_childstatus($$) {
@@ -1647,7 +1646,7 @@ sub child {
          my $pid;
 
          AnyEvent->_emit_childstatus ($pid, $?)
-            while ($pid = waitpid -1, $WNOHANG) > 0;
+            while ($pid = waitpid -1, WNOHANG) > 0;
       };
 
       *child = sub {
@@ -1657,11 +1656,6 @@ sub child {
             or Carp::croak "required option 'pid' is missing";
 
          $PID_CB{$pid}{$arg{cb}} = $arg{cb};
-
-         # WNOHANG is almost cetrainly 1 everywhere
-         $WNOHANG ||= $^O =~ /^(?:openbsd|netbsd|linux|freebsd|cygwin|MSWin32)$/
-                      ? 1
-                      : eval { local $SIG{__DIE__}; require POSIX; &POSIX::WNOHANG } || 1;
 
          unless ($CHLD_W) {
             $CHLD_W = AE::signal CHLD => \&_sigchld;

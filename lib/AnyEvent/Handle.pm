@@ -2137,6 +2137,86 @@ It is only safe to "forget" the reference inside EOF or error callbacks,
 from within all other callbacks, you need to explicitly call the C<<
 ->destroy >> method.
 
+=item Why is my C<on_eof> callback never called?
+
+Probably because your C<on_error> callback is being called instead: When
+you have outstanding requests in your read queue, then an EOF is
+considered an error as you clearly expected some data.
+
+To avoid this, make sure you have an empty read queue whenever your handle
+is supposed to be "idle" (i.e. connection closes are O.K.). You cna set
+an C<on_read> handler that simply pushes the first read requests in the
+queue.
+
+See also the next question, which explains this in a bit more detail.
+
+=item How can I serve requests in a loop?
+
+Most protocols consist of some setup phase (authentication for example)
+followed by a request handling phase, where the server waits for requests
+and handles them, in a loop.
+
+There are two important variants: The first (traditional, better) variant
+handles requests until the server gets some QUIT command, causing it to
+close the connection first (highly desirable for a busy TCP server). A
+client dropping the connection is an error, which means this variant can
+detect an unexpected detection close.
+
+To handle this case, always make sure you have a on-empty read queue, by
+pushing the "read request start" handler on it:
+
+   # we assume a request starts with a single line
+   my @start_request; @start_request = (line => sub {
+      my ($hdl, $line) = @_;
+
+      ... handle request
+
+      # push next request read, possibly from a nested callback
+      $hdl->push_read (@start_request);
+   });
+
+   # auth done, now go into request handling loop
+   # now push the first @start_request
+   $hdl->push_read (@start_request);
+
+By always having an outstanding C<push_read>, the handle always expects
+some data and raises the C<EPIPE> error when the connction is dropped
+unexpectedly.
+
+The second variant is a protocol where the client can drop the connection
+at any time. For TCP, this means that the server machine may run out of
+sockets easier, and in general, it means you cnanot distinguish a protocl
+failure/client crash from a normal connection close. Nevertheless, these
+kinds of protocols are common (and sometimes even the best solution to the
+problem).
+
+Having an outstanding read request at all times is possible if you ignore
+C<EPIPE> errors, but this doesn't help with when the client drops the
+connection during a request, which would still be an error.
+
+A better solution is to push the initial request read in an C<on_read>
+callback. This avoids an error, as when the server doesn't expect data
+(i.e. is idly waiting for the next request, an EOF will not raise an
+error, but simply result in an C<on_eof> callback. It is also a bit slower
+and simpler:
+
+   # auth done, now go into request handling loop
+   $hdl->on_read (sub {
+      my ($hdl) = @_;
+
+      # called each time we receive data but the read queue is empty
+      # simply start read the request
+
+      $hdl->push_read (line => sub {
+         my ($hdl, $line) = @_;
+
+         ... handle request
+
+         # do nothing special when the request has been handled, just
+         # let the request queue go empty.
+      });
+   });
+
 =item I get different callback invocations in TLS mode/Why can't I pause
 reading?
 

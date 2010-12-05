@@ -1,19 +1,20 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
-TODO: catch AE::xxx for anyevent struct and anyevent debug
+TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
-TODO: anyevent strict etc. for AE::
 TODO: anyevent strict checking for $_ changes?
 
-TODO: handle example for "loops"
-5.29
-        - convert EV backend to EV 4.00 API.
+5.29   Sun Dec  5 10:49:21 CET 2010
+        - convert EV backend to EV 4.00 API (so better upgrade EV too).
         - AE::Handle: implement dynamic read_size adjustment, add
           max_read_size parameter, reduce default read_size to 2048.
+        - add some FAQ entries for servers and/or on_eof vs. on_error.
 	- work around OS bugs (cygwin again) when lingering in AE::Handle.
         - reduce memory usage slightly when connect was used in AE::Handle.
+        - wrok around more segfaults in Tk.
         - document tls_ctx => undef as valid.
+        - detect WNOHANG value at compiletime.
         - include some probably linux-only support for building AnyEvent
           as part of the perl core.
         - improve compatibility of t/08_idna.t to perl 5.8.
