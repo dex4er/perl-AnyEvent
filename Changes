@@ -5,6 +5,8 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+TODO: wbuf_max for anyevent
+TODO: fix with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
 5.29   Sun Dec  5 10:49:21 CET 2010
         - convert EV backend to EV 4.00 API (so better upgrade EV too).
         - AE::Handle: implement dynamic read_size adjustment, add
