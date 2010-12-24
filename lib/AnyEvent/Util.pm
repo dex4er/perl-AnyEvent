@@ -595,6 +595,8 @@ sub run_cmd {
          } elsif (ref $ob) {
             my ($pr, $pw) = AnyEvent::Util::portable_pipe;
             $cv->begin;
+
+            fcntl $pr, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
             my $w; $w = AE::io $pr, 0,
                "SCALAR" eq ref $ob
                   ? sub {
@@ -636,6 +638,7 @@ sub run_cmd {
                $data = $ob->();
             }
 
+            fcntl $pw, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
             my $w; $w = AE::io $pw, 1, sub {
                my $len = syswrite $pw, $data;
 
