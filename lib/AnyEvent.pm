@@ -879,6 +879,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::POE       based on POE, very slow, some limitations.
    AnyEvent::Impl::Irssi     used when running within irssi.
    AnyEvent::Impl::IOAsync   based on IO::Async.
+   AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
 
 =item Backends with special needs.
 
@@ -1211,6 +1212,7 @@ my @models = (
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
    [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],
+   [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
 );
 
 our %method = map +($_ => 1),

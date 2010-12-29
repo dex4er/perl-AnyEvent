@@ -51,6 +51,7 @@ WriteMakefile(
         'lib/AnyEvent/Debug.pm'          => '$(INST_LIBDIR)/AnyEvent/Debug.pm',
         'lib/AnyEvent/FAQ.pod'           => '$(INST_LIBDIR)/AnyEvent/FAQ.pod',
         'lib/AnyEvent/Handle.pm'         => '$(INST_LIBDIR)/AnyEvent/Handle.pm',
+        'lib/AnyEvent/Impl/Cocoa.pm'     => '$(INST_LIBDIR)/AnyEvent/Impl/Cocoa.pm',
         'lib/AnyEvent/Impl/EV.pm'        => '$(INST_LIBDIR)/AnyEvent/Impl/EV.pm',
         'lib/AnyEvent/Impl/Event.pm'     => '$(INST_LIBDIR)/AnyEvent/Impl/Event.pm',
         'lib/AnyEvent/Impl/EventLib.pm'  => '$(INST_LIBDIR)/AnyEvent/Impl/EventLib.pm',

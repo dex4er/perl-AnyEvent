@@ -95,7 +95,6 @@ use Scalar::Util;
 
 use IO::Async::Loop 0.33;
 
-our $VERSION = $AnyEvent::VERSION;
 our $LOOP = new IO::Async::Loop;
 
 sub set_loop($) {

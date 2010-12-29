@@ -5,11 +5,11 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
-TODO: wbuf_max for anyevent
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
           issues with IO::Async have been solved in that version, including
           the availabilty of a default loop!
 	- implement new wbuf_max parameter for AnyEvent::Handle.
+        - added Cocoa::EventLoop backend by Daisuke Murase.
         - the default testsuite now honors PERL_ANYEVENT_MODEL (Paul Evans).
 	- set CLOEXEC flag on parent-side fd's in AnyEvent::Util::run_cmd,
           to avoid leaking them to any child processes.
