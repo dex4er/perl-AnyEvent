@@ -1,4 +1,6 @@
 use utf8;
+
+use AnyEvent;
 use AnyEvent::Util;
 
 $| = 1; print "1..11\n";

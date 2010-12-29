@@ -1,6 +1,6 @@
 use AnyEvent;
 use AnyEvent::Util;
-use AnyEvent::Impl::Perl;
+BEGIN { require AnyEvent::Impl::Perl unless $ENV{PERL_ANYEVENT_MODEL} }
 
 $| = 1; print "1..18\n";
 

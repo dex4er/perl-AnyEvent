@@ -98,7 +98,7 @@ backends, as AnyEvent makes no CPU tikme guarantees), this shouldn't be a
 big deal - as soon as your program actually implements something sensible,
 CPU usage will be normal.
 
-=item Why does this FAQ not deal with L<AnyEvent::Handle> questions?
+=head2 Why does this FAQ not deal with L<AnyEvent::Handle> questions?
 
 Because L<AnyEvent::Handle> has a NONFAQ on it's own that already deals
 with common issues.

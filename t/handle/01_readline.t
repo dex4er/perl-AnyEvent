@@ -4,7 +4,8 @@
 
 use strict;
 
-use AnyEvent::Impl::Perl;
+use AnyEvent;
+BEGIN { require AnyEvent::Impl::Perl unless $ENV{PERL_ANYEVENT_MODEL} }
 use AnyEvent::Handle;
 use Test::More tests => 8;
 use Socket;

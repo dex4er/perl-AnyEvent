@@ -7,8 +7,10 @@ TODO: anyevent strict checking for $_ changes?
 
 TODO: wbuf_max for anyevent
 TODO: fix with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
-TODO: ioasync stuff
-TODO: install arch-dependen constants.pl in some arch-dependend path. somehow.
+	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
+          issues with IO::Async have been solved in that version, including
+          the availabilty of a default loop!
+        - the default testsuite now honors PERL_ANYEVENT_MODEL (Paul Evans).
 	- set CLOEXEC flag on parent-side fd's in AnyEvent::Util::run_cmd,
           to avoid leaking them to any child processes.
         - try to force files into the arch-dependend lib directory, for the

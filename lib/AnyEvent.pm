@@ -878,6 +878,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
    AnyEvent::Impl::POE       based on POE, very slow, some limitations.
    AnyEvent::Impl::Irssi     used when running within irssi.
+   AnyEvent::Impl::IOAsync   based on IO::Async.
 
 =item Backends with special needs.
 
@@ -887,14 +888,6 @@ instantiates the application before any AnyEvent watchers are created,
 everything should just work.
 
    AnyEvent::Impl::Qt        based on Qt.
-
-Support for IO::Async can only be partial, as it is too broken and
-architecturally limited to even support the AnyEvent API. It also
-is the only event loop that needs the loop to be set explicitly, so
-it can only be used by a main program knowing about AnyEvent. See
-L<AnyEvent::Impl::IOAsync> for the gory details.
-
-   AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed.
 
 =item Event loops that are indirectly supported via other backends.
 
@@ -1217,14 +1210,7 @@ my @models = (
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
    [Wx::                   => AnyEvent::Impl::POE::],
    [Prima::                => AnyEvent::Impl::POE::],
-   # IO::Async is just too broken - we would need workarounds for its
-   # byzantine signal and broken child handling, among others.
-   # IO::Async is rather hard to detect, as it doesn't have any
-   # obvious default class.
-   [IO::Async::               => AnyEvent::Impl::IOAsync::], # requires special main program
-   [IO::Async::Loop::         => AnyEvent::Impl::IOAsync::], # requires special main program
-   [IO::Async::Notifier::     => AnyEvent::Impl::IOAsync::], # requires special main program
-   [AnyEvent::Impl::IOAsync:: => AnyEvent::Impl::IOAsync::], # requires special main program
+   [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],
 );
 
 our %method = map +($_ => 1),
