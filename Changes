@@ -9,6 +9,7 @@ TODO: wbuf_max for anyevent
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
           issues with IO::Async have been solved in that version, including
           the availabilty of a default loop!
+	- implement new wbuf_max parameter for AnyEvent::Handle.
         - the default testsuite now honors PERL_ANYEVENT_MODEL (Paul Evans).
 	- set CLOEXEC flag on parent-side fd's in AnyEvent::Util::run_cmd,
           to avoid leaking them to any child processes.

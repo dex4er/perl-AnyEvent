@@ -281,6 +281,21 @@ be configured to accept only so-and-so much data that it cannot act on
 amount of data without a callback ever being called as long as the line
 isn't finished).
 
+=item wbuf_max => <bytes>
+
+If defined, then a fatal error will be raised (with C<$!> set to C<ENOSPC>)
+when the write buffer ever (strictly) exceeds this size. This is useful to
+avoid some forms of denial-of-service attacks.
+
+Although the units of this parameter is bytes, this is the I<raw> number
+of bytes not yet accepted by the kernel. This can make a difference when
+you e.g. use TLS, as TLS typically makes your write data larger (but it
+can also make it smaller due to compression).
+
+As an example of when this limit is useful, take a chat server that sends
+chat messages to a client. If the client does not read those in a timely
+manner then the send buffer in the server would grow unbounded.
+
 =item autocork => <boolean>
 
 When disabled (the default), C<push_write> will try to immediately
@@ -742,10 +757,18 @@ sub on_stoptls {
 
 Configures the C<rbuf_max> setting (C<undef> disables it).
 
+=item $handle->wbuf_max ($max_octets)
+
+Configures the C<wbuf_max> setting (C<undef> disables it).
+
 =cut
 
 sub rbuf_max {
    $_[0]{rbuf_max} = $_[1];
+}
+
+sub rbuf_max {
+   $_[0]{wbuf_max} = $_[1];
 }
 
 #############################################################################
@@ -875,9 +898,9 @@ sub on_drain {
 
 =item $handle->push_write ($data)
 
-Queues the given scalar to be written. You can push as much data as you
-want (only limited by the available memory), as C<AnyEvent::Handle>
-buffers it independently of the kernel.
+Queues the given scalar to be written. You can push as much data as
+you want (only limited by the available memory and C<wbuf_max>), as
+C<AnyEvent::Handle> buffers it independently of the kernel.
 
 This method may invoke callbacks (and therefore the handle might be
 destroyed after it returns).
@@ -915,6 +938,13 @@ sub _drain_wbuf {
       # if still data left in wbuf, we need to poll
       $self->{_ww} = AE::io $self->{fh}, 1, $cb
          if length $self->{wbuf};
+
+      if (
+         defined $self->{wbuf_max}
+         && $self->{wbuf_max} < length $self->{wbuf}
+      ) {
+         $self->_error (Errno::ENOSPC, 1), return;
+      }
    };
 }
 
