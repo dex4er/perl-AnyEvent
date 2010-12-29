@@ -1,6 +1,7 @@
 # we avoid complicated tests here because some systems will
 # not have working DNS
 
+use AnyEvent;
 BEGIN { eval q{use AnyEvent::Impl::POE;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::POE not loadable}), exit 0) } $^W = 0;
 use AnyEvent::DNS;
 

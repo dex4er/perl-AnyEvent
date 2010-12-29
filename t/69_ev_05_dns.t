@@ -1,6 +1,7 @@
 # we avoid complicated tests here because some systems will
 # not have working DNS
 
+use AnyEvent;
 BEGIN { eval q{use AnyEvent::Impl::EV;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EV not loadable}), exit 0) } 
 use AnyEvent::DNS;
 
