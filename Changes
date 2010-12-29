@@ -6,7 +6,6 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: wbuf_max for anyevent
-TODO: fix with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
           issues with IO::Async have been solved in that version, including
           the availabilty of a default loop!

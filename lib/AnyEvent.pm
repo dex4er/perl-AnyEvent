@@ -87,12 +87,12 @@ module are I<also> forced to use the same event loop you use.
 
 AnyEvent is different: AnyEvent + POE works fine. AnyEvent + Glib works
 fine. AnyEvent + Tk works fine etc. etc. but none of these work together
-with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if
-your module uses one of those, every user of your module has to use it,
-too. But if your module uses AnyEvent, it works transparently with all
-event models it supports (including stuff like IO::Async, as long as those
-use one of the supported event loops. It is easy to add new event loops
-to AnyEvent, too, so it is future-proof).
+with the rest: POE + EV? No go. Tk + Event? No go. Again: if your module
+uses one of those, every user of your module has to use it, too. But if
+your module uses AnyEvent, it works transparently with all event models it
+supports (including stuff like IO::Async, as long as those use one of the
+supported event loops. It is easy to add new event loops to AnyEvent, too,
+so it is future-proof).
 
 In addition to being free of having to use I<the one and only true event
 model>, AnyEvent also is free of bloat and policy: with POE or similar
