@@ -11,6 +11,7 @@ TODO: anyevent strict checking for $_ changes?
 	- implement new wbuf_max parameter for AnyEvent::Handle.
         - added Cocoa::EventLoop backend by Daisuke Murase.
         - the default testsuite now honors PERL_ANYEVENT_MODEL (Paul Evans).
+        - clarify handle on_prepare documentation.
 	- set CLOEXEC flag on parent-side fd's in AnyEvent::Util::run_cmd,
           to avoid leaking them to any child processes.
         - try to force files into the arch-dependend lib directory, for the

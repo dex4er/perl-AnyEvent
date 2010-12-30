@@ -116,10 +116,10 @@ appropriate circumstances:
 =item on_prepare => $cb->($handle)
 
 This (rarely used) callback is called before a new connection is
-attempted, but after the file handle has been created. It could be used to
-prepare the file handle with parameters required for the actual connect
-(as opposed to settings that can be changed when the connection is already
-established).
+attempted, but after the file handle has been created (you can access that
+file handle via C<< $handle->{fh} >>). It could be used to prepare the
+file handle with parameters required for the actual connect (as opposed to
+settings that can be changed when the connection is already established).
 
 The return value of this callback should be the connect timeout value in
 seconds (or C<0>, or C<undef>, or the empty list, to indicate that the
@@ -548,7 +548,7 @@ sub new {
                   local $self->{fh} = $_[0];
 
                   $self->{on_prepare}
-                     ?  $self->{on_prepare}->($self)
+                     ? $self->{on_prepare}->($self)
                      : ()
                }
             );
