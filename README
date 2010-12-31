@@ -82,11 +82,11 @@ WHY YOU SHOULD USE THIS MODULE (OR NOT)
 
     AnyEvent is different: AnyEvent + POE works fine. AnyEvent + Glib works
     fine. AnyEvent + Tk works fine etc. etc. but none of these work together
-    with the rest: POE + IO::Async? No go. Tk + Event? No go. Again: if your
-    module uses one of those, every user of your module has to use it, too.
-    But if your module uses AnyEvent, it works transparently with all event
-    models it supports (including stuff like IO::Async, as long as those use
-    one of the supported event loops. It is easy to add new event loops to
+    with the rest: POE + EV? No go. Tk + Event? No go. Again: if your module
+    uses one of those, every user of your module has to use it, too. But if
+    your module uses AnyEvent, it works transparently with all event models
+    it supports (including stuff like IO::Async, as long as those use one of
+    the supported event loops. It is easy to add new event loops to
     AnyEvent, too, so it is future-proof).
 
     In addition to being free of having to use *the one and only true event
@@ -839,6 +839,8 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
            AnyEvent::Impl::POE       based on POE, very slow, some limitations.
            AnyEvent::Impl::Irssi     used when running within irssi.
+           AnyEvent::Impl::IOAsync   based on IO::Async.
+           AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
 
     Backends with special needs.
         Qt requires the Qt::Application to be instantiated first, but will
@@ -847,14 +849,6 @@ SUPPORTED EVENT LOOPS/BACKENDS
         created, everything should just work.
 
            AnyEvent::Impl::Qt        based on Qt.
-
-        Support for IO::Async can only be partial, as it is too broken and
-        architecturally limited to even support the AnyEvent API. It also is
-        the only event loop that needs the loop to be set explicitly, so it
-        can only be used by a main program knowing about AnyEvent. See
-        AnyEvent::Impl::IOAsync for the gory details.
-
-           AnyEvent::Impl::IOAsync   based on IO::Async, cannot be autoprobed.
 
     Event loops that are indirectly supported via other backends.
         Some event loops can be supported via other modules:

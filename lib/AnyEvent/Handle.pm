@@ -1618,9 +1618,7 @@ register_read_type packstring => sub {
       defined (my $len = eval { unpack $format, $_[0]{rbuf} })
          or return;
 
-      warn "len $len\n";#d#
       $format = length pack $format, $len;
-      warn "len2 $format\n";#d#
 
       # bypass unshift if we already have the remaining chunk
       if ($format + $len <= length $_[0]{rbuf}) {
