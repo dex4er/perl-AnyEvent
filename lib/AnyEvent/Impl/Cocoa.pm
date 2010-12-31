@@ -19,8 +19,8 @@ your AnyEvent application, or AnyEvent within Cocoa applications.
 
 =head1 BUGS
 
-Right now, Cocoa::EventLoop (and this module) are in an early development
-phase and has some shortcomings and likely bugs.
+Right now, L<Cocoa::EventLoop> (and this module) are in an early
+development phase and has some shortcomings and likely bugs.
 
 For example, there seems to be no way to just handle a single event
 with Cocoa (is there nothing they can implement properly?), so this
