@@ -1009,7 +1009,7 @@ Croaks on any errors it can detect before the listen.
 If called in non-void context, then this function returns a guard object
 whose lifetime it tied to the TCP server: If the object gets destroyed,
 the server will be stopped (but existing accepted connections will
-continue).
+not be affected).
 
 If you need more control over the listening socket, you can provide a
 C<< $prepare_cb->($fh, $host, $port) >>, which is called just before the
