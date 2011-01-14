@@ -5,6 +5,7 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+TODO: resetttls?
 5.3    Fri Dec 31 05:48:13 CET 2010
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
           issues with IO::Async have been solved in that version, including

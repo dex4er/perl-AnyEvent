@@ -777,7 +777,7 @@ hosts or hosts with both IPv4 and IPv6 addresses) and try to connect to
 each in turn.
 
 After the connection is established, then the C<$connect_cb> will be
-invoked with the socket file handle (in non-blocking mode) as first and
+invoked with the socket file handle (in non-blocking mode) as first, and
 the peer host (as a textual IP address) and peer port as second and third
 arguments, respectively. The fourth argument is a code reference that you
 can call if, for some reason, you don't like this connection, which will
@@ -1001,7 +1001,7 @@ below.
 
 For each new connection that could be C<accept>ed, call the C<<
 $accept_cb->($fh, $host, $port) >> with the file handle (in non-blocking
-mode) as first and the peer host and port as second and third arguments
+mode) as first, and the peer host and port as second and third arguments
 (see C<tcp_connect> for details).
 
 Croaks on any errors it can detect before the listen.
