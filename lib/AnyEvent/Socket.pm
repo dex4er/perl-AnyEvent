@@ -951,7 +951,7 @@ sub tcp_connect($$$;$) {
                      # cygwin 1.5 continously reports "ready' but never delivers
                      # an error with getpeername or sysread.
                      # cygwin 1.7 only reports readyness *once*, but is otherwise
-                     # the same, which is atcually more broken.
+                     # the same, which is actually more broken.
                      # Work around both by using unportable SO_ERROR for cygwin.
                      $! = (unpack "l", getsockopt $state{fh}, Socket::SOL_SOCKET(), Socket::SO_ERROR()) || Errno::EAGAIN
                         if AnyEvent::CYGWIN && $! == Errno::EAGAIN;
