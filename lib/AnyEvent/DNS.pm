@@ -63,7 +63,16 @@ Tries to resolve the given domain name into a list of name servers.
 
 =item AnyEvent::DNS::txt $domain, $cb->(@hostnames)
 
-Tries to resolve the given domain name into a list of text records.
+Tries to resolve the given domain name into a list of text records. Only
+the first text string per record will be returned. If you want all
+strings, you need to call the resolver manually:
+
+   resolver->resolve ($domain => "txt", sub {
+      for my $record (@_) {
+         my (undef, undef, undef, @txt) = @$record;
+         # strings now in @txt
+      }
+   });
 
 =item AnyEvent::DNS::srv $service, $proto, $domain, $cb->(@srv_rr)
 

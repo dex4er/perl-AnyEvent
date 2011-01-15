@@ -1775,15 +1775,24 @@ you change the C<on_read> callback or push/unshift a read callback, and it
 will automatically C<stop_read> for you when neither C<on_read> is set nor
 there are any read requests in the queue.
 
-These methods will have no effect when in TLS mode (as TLS doesn't support
-half-duplex connections).
+In older versions of this module (<= 5.3), these methods had no effect,
+as TLS does not support half-duplex connections. In current versions they
+work as expected, as this behaviour is required to avoid certain resource
+attacks, where the program would be forced to read (and buffer) arbitrary
+amounts of data before being able to send some data. The drawback is that
+some readings of the the SSL/TLS specifications basically require this
+attack to be working, as SSL/TLS implementations might stall sending data
+during a rehandshake.
+
+As a guideline, during the initial handshake, you should not stop reading,
+and as a client, it might cause problems, depending on your applciation.
 
 =cut
 
 sub stop_read {
    my ($self) = @_;
 
-   delete $self->{_rw} unless $self->{tls};
+   delete $self->{_rw};
 }
 
 sub start_read {
