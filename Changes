@@ -6,6 +6,8 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: resetttls?
+	- stop_read now does just that in TLS mode. see its
+          documentation for caveats.
 	- update to common::sense 3.4 warning set.
 
 5.3    Fri Dec 31 05:48:13 CET 2010
