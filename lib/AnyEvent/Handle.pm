@@ -1089,7 +1089,7 @@ C<on_drain> handler by a callback that shuts down the socket (and set
 C<low_water_mark> to C<0>). This method is a shorthand for just that, and
 replaces the C<on_drain> callback with:
 
-   sub { shutdown $_[0]{fh}, 1 }    # for push_shutdown
+   sub { shutdown $_[0]{fh}, 1 }
 
 This simply shuts down the write side and signals an EOF condition to the
 the peer.
