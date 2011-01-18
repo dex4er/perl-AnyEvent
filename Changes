@@ -6,6 +6,7 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: resetttls?
+	- fix parsing of "domain" statement in resolv.conf (Johannes Plunien).
 	- stop_read now does just that in TLS mode. see its
           documentation for caveats.
 	- update to common::sense 3.4 warning set.

@@ -847,7 +847,7 @@ sub parse_resolv_conf {
          } else {
             warn "nameserver $ip invalid and ignored\n";
          }
-      } elsif (/^\s*domain\s+(\S*)\s+$/i) {
+      } elsif (/^\s*domain\s+(\S*)\s*$/i) {
          $self->{search} = [$1];
       } elsif (/^\s*search\s+(.*?)\s*$/i) {
          $self->{search} = [split /\s+/, $1];
