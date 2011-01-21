@@ -389,7 +389,7 @@ sub child {
 }
 
 sub DESTROY {
-   POE::Kernel->post (${${$_[0]}}, "stop");
+   POE::Kernel->call (${${$_[0]}}, "stop");
 }
 
 sub one_event {

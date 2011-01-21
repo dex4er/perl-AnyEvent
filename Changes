@@ -6,6 +6,8 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: resetttls?
+	- work around a POE bug where POE would first poll for new events and
+          invoke handlers BEFORE handling the message queue.
 	- fix parsing of "domain" statement in resolv.conf (Johannes Plunien).
 	- stop_read now does just that in TLS mode. see its
           documentation for caveats.
