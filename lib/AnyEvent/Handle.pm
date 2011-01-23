@@ -2052,6 +2052,19 @@ sub _freetls {
    delete @$self{qw(_rbio _wbio _tls_wbuf _on_starttls)};
 }
 
+=item $handle->resettls
+
+This rarely-used method simply resets and TLS state on the handle, usually
+causing data loss.
+
+One case where it may be useful is when you want to skip over the data in
+the stream but you are not interested in interpreting it, so data loss is
+no concern.
+
+=cut
+
+*resettls = \&_freetls;
+
 sub DESTROY {
    my ($self) = @_;
 

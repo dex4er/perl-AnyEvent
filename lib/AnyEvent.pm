@@ -1163,7 +1163,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '5.3';
+our $VERSION = '5.31';
 our $MODEL;
 
 our $AUTOLOAD;

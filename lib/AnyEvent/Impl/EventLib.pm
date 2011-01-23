@@ -15,17 +15,24 @@ This module provides transparent support for AnyEvent. You don't have to
 do anything to make Event work with AnyEvent except by loading Event::Lib
 before creating the first AnyEvent watcher.
 
-The L<Event::Lib> module suffers from the same limitations and bugs
-as libevent, most notably it kills already-installed watchers on a
-file descriptor and it is unable to support fork. These are not fatal
-issues, but L<Event::Lib> itself has many additional bugs such as taking
-references to file handles and callbacks instead of making a copy, causing
-memory corruption and random crashes. Only Tk rivals it in its brokenness.
+Note: the AnyEvent author has not found recent releases of Event::Lib to
+be even remotely working (not even the examples from the manpage or the
+testsuite work), so this event backend should be avoided (or somebody
+should step up and maintain it, hint, hint).
 
-This adaptor module employs the same workaround around the watcher problem
-as Tk and should therefore be avoided. (This was done for simplicity, one
-could in theory work around the problems with lower overhead by managing
-our own watchers).
+The L<Event::Lib> module suffers from the same limitations and bugs as
+libevent, most notably it kills already-installed watchers on a file
+descriptor and it is unable to support fork. These are not fatal issues,
+and are worked-around by this module, but the L<Event::Lib> perl module
+itself has many additional bugs such as taking references to file handles
+and callbacks instead of making a copy or freeing still-allocated scalars,
+causing memory corruption and random crashes. Only Tk rivals it in its
+brokenness.
+
+This adaptor module employs the same workaround around the watcher
+problems as Tk and should therefore be avoided. (This was done for
+simplicity, one could in theory work around the problems with lower
+overhead by managing our own watchers).
 
 Event::Lib also leaks file handles and memory and tends to just exit on
 problems.

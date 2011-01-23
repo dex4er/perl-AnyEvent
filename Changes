@@ -11,7 +11,9 @@ TODO: anyevent strict checking for $_ changes?
 	- fix parsing of "domain" statement in resolv.conf (Johannes Plunien).
 	- stop_read now does just that in TLS mode. see its
           documentation for caveats.
-	- update to common::sense 3.4 warning set.
+	- update to common::sense 3.4 warning set (some warnings in perl impose
+          an arbitrary 32kb limit on regex matches, which affects
+          AnyEvent::Handle).
         - AE::Handle had a broken rbuf_max method and missing wbuf_max method.
         - new experimental AE::Handle::resettls method.
 
