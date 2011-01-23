@@ -5,7 +5,7 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
-TODO: resetttls?
+5.31  Sun Jan 23 11:49:19 CET 2011
 	- work around a POE bug where POE would first poll for new events and
           invoke handlers BEFORE handling the message queue.
 	- fix parsing of "domain" statement in resolv.conf (Johannes Plunien).
@@ -13,6 +13,7 @@ TODO: resetttls?
           documentation for caveats.
 	- update to common::sense 3.4 warning set.
         - AE::Handle had a broken rbuf_max method and missing wbuf_max method.
+        - new experimental AE::Handle::resettls method.
 
 5.3    Fri Dec 31 05:48:13 CET 2010
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major
