@@ -12,6 +12,7 @@ TODO: resetttls?
 	- stop_read now does just that in TLS mode. see its
           documentation for caveats.
 	- update to common::sense 3.4 warning set.
+        - AE::Handle had a broken rbuf_max method and missing wbuf_max method.
 
 5.3    Fri Dec 31 05:48:13 CET 2010
 	- major IOAsync patch by Paul Evans - 0.33 is required, as the major

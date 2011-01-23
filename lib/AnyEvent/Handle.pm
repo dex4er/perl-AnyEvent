@@ -767,7 +767,7 @@ sub rbuf_max {
    $_[0]{rbuf_max} = $_[1];
 }
 
-sub rbuf_max {
+sub wbuf_max {
    $_[0]{wbuf_max} = $_[1];
 }
 
