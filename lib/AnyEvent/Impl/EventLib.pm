@@ -40,6 +40,10 @@ problems.
 It also doesn't work around the Windows bug of not signalling TCP
 connection failures.
 
+It also doesn't work with many special devices on Linux (F</dev/random>
+works, F</dev/urandom> fails, F</dev/tty> works, F</dev/null> fails and so
+on).
+
 Event::Lib does not support idle watchers. They could be emulated using
 low-priority timers but as the priority range (and availability) is not
 queryable nor guaranteed, and the default priority is likely the lowest
