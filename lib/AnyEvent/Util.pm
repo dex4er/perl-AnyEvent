@@ -908,6 +908,9 @@ sub idn_to_ascii($) {
       1
    } or return $_[0];
 
+   shift @output
+      while !length $output[0] && @output > 1;
+
    join ".", @output
 }
 

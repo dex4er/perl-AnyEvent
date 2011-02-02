@@ -8,9 +8,13 @@ TODO: anyevent strict checking for $_ changes?
 	- update idna algorithm(s) to UTS#46 version 6.0.0.
         - preserve trailing dot in idn_to_ascii - testsuite says to preserve,
           uts46 says it's an error, and testsuite makes more sense.
+        - remove leading dots in idn_to_ascii - testsuite says to remove,
+          uts46 says it's an error, and testsuite makes more sense.
         - fixed a bug in idn ignored character processing.
-        - passes the uts46 testsuite except for three cases which apparently
-          are bugs in the tetssuite itself.
+        - passes the uts46 6.0.0 testsuite except for three cases which
+          apparently are bugs in the testsuite itself.
+        - passes the uts46 6.0.1 testsuite except for eleven cases which
+          apparently are bugs in the testsuite itself.
 
 5.31  Sun Jan 23 11:49:19 CET 2011
 	- work around a POE bug where POE would first poll for new events and
