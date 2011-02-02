@@ -763,7 +763,7 @@ sub punycode_decode($) {
 
 Implements the IDNA nameprep normalisation algorithm. Or actually the
 UTS#46 algorithm. Or maybe something similar - reality is complicated
-btween IDNA2003, UTS#46 and IDNA2008. If C<$display> is true then the name
+between IDNA2003, UTS#46 and IDNA2008. If C<$display> is true then the name
 is prepared for display, otherwise it is prepared for lookup (default).
 
 If you have no clue what this means, look at C<idn_to_ascii> instead.
@@ -807,9 +807,9 @@ sub idn_nameprep($;$) {
             # not in valid class, search for mapping
             utf8::encode $chr; # the imap table is in utf-8
             (my $rep = index $uts46_imap, "\x00$chr") >= 0
-               or Carp::croak "$_[0]: disallowed characters during idn_nameprep";
+               or Carp::croak "$_[0]: disallowed characters ($chr) during idn_nameprep" . unpack "H*", $chr;
 
-            (substr $uts46_imap, $rep, 128) =~ /\x00 .[\x80-\xbf]* ([^\x00]+) \x00/x
+            (substr $uts46_imap, $rep, 128) =~ /\x00 .[\x80-\xbf]* ([^\x00]*) \x00/x
                or die "FATAL: idn_nameprep imap table has unexpected contents";
 
             $rep = $1;
@@ -845,7 +845,7 @@ sub idn_nameprep($;$) {
    }gex;
 
    # uts46 verification
-   /\.-|-\.|\.\./
+   /\.-|-\./
       and Carp::croak "$_[0]: invalid hyphens detected during idn_nameprep";
 
    # missing: label begin with combining mark, idna2008 bidi
@@ -892,7 +892,7 @@ sub idn_to_ascii($) {
 
    eval {
       # punycode by label
-      for (split /\./, idn_nameprep $_[0]) {
+      for (split /\./, (idn_nameprep $_[0]), -1) {
          if (/[^\x00-\x7f]/) {
             eval {
                push @output, "xn--" . punycode_encode $_;
