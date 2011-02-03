@@ -558,7 +558,7 @@ in the callback and print key and certificate.
                      -newkey rsa:2048 -keyout /dev/fd/3
                      -batch -subj /CN=AnyEvent
                     )],
-      "<", "dev/null",
+      "<", "/dev/null",
       ">" , \my $cert,
       "3>", \my $key,
       "2>", "/dev/null";
