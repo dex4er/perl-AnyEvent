@@ -538,7 +538,7 @@ sub new {
                   } else {
                      if ($self->{on_connect_error}) {
                         $self->{on_connect_error}($self, "$!");
-                        $self->destroy;
+                        $self->destroy if $self;
                      } else {
                         $self->_error ($!, 1);
                      }
