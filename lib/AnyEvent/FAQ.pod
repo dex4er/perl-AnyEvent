@@ -79,23 +79,26 @@ avoid these cases by explicitly returning nothing:
 
 Many people try out this simple program, or it's equivalent:
 
+   use AnyEvent;
    AnyEvent->condvar->recv;
 
 They are then shocked to see that this basically idles with the Perl
 backend, but uses 100% CPU with the EV backend, which is supposed to be
 sooo efficient.
 
-The key to understand this is to understand that the above program is
-actually buggy: Nothing calls C<< ->send >> on the condvar, ever. Worse,
-there are no event watchers whatsoever. Basically, it creates a deadlock:
-there is no way to make progress.
+The key to understand this is to understand that the above program
+is actually I<buggy>: Nothing calls C<< ->send >> on the condvar,
+ever. Worse, there are no event watchers whatsoever. Basically, it creates
+a deadlock: there is no way to make progress, this program doesn't do
+anything useful, and this will not change in the future: it is already an
+ex-parrot.
 
-Some backends handle this by freezing, some by idling, and some do a 100%
-cpu loop.
+Some backends react to this by freezing, some by idling, and some do a
+100% CPU loop.
 
-Since this program is nonsensical (and behaves as documented with all
-backends, as AnyEvent makes no CPU tikme guarantees), this shouldn't be a
-big deal - as soon as your program actually implements something sensible,
+Since this program is not useful (and behaves as documented with all
+backends, as AnyEvent makes no CPU time guarantees), this shouldn't be a
+big deal: as soon as your program actually implements I<something>, the
 CPU usage will be normal.
 
 =head2 Why does this FAQ not deal with L<AnyEvent::Handle> questions?
