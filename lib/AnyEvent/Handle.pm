@@ -249,21 +249,26 @@ file handle (or a call to C<timeout_reset>), the C<on_timeout> callback
 will be invoked (and if that one is missing, a non-fatal C<ETIMEDOUT>
 error will be raised).
 
-There are three variants of the timeouts that work independently
-of each other, for both read and write, just read, and just write:
+There are three variants of the timeouts that work independently of each
+other, for both read and write (triggered when nothing was read I<OR>
+written), just read (triggered when nothing was read), and just write:
 C<timeout>, C<rtimeout> and C<wtimeout>, with corresponding callbacks
 C<on_timeout>, C<on_rtimeout> and C<on_wtimeout>, and reset functions
 C<timeout_reset>, C<rtimeout_reset>, and C<wtimeout_reset>.
 
-Note that timeout processing is active even when you do not have
-any outstanding read or write requests: If you plan to keep the connection
-idle then you should disable the timeout temporarily or ignore the timeout
-in the C<on_timeout> callback, in which case AnyEvent::Handle will simply
-restart the timeout.
+Note that timeout processing is active even when you do not have any
+outstanding read or write requests: If you plan to keep the connection
+idle then you should disable the timeout temporarily or ignore the
+timeout in the corresponding C<on_timeout> callback, in which case
+AnyEvent::Handle will simply restart the timeout.
 
-Zero (the default) disables this timeout.
+Zero (the default) disables the corresponding timeout.
 
 =item on_timeout => $cb->($handle)
+
+=item on_rtimeout => $cb->($handle)
+
+=item on_wtimeout => $cb->($handle)
 
 Called whenever the inactivity timeout passes. If you return from this
 callback, then the timeout will be reset as if some activity had happened,
@@ -780,6 +785,9 @@ sub wbuf_max {
 =item $handle->wtimeout ($seconds)
 
 Configures (or disables) the inactivity timeout.
+
+The timeout will be checked instantly, so this method might destroy the
+handle before it returns.
 
 =item $handle->timeout_reset
 

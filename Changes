@@ -5,6 +5,9 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+	- improve AE::Handle timeout documentation slightly.
+
+5.33  Mon Feb  7 21:51:41 CET 2011
 	- AnyEvent::Handle on_connect_error - do not try to destroy a handle
           object when it's already gone (analyzed by Ryan Bullock).
 	- update idna algorithm(s) to UTS#46 version 6.0.0.
