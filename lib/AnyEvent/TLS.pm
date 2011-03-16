@@ -684,7 +684,7 @@ sub new {
       if (exists $arg{key} or exists $arg{key_file}) {
          if (exists $arg{key}) {
             croak "specifying both key_file and key is not allowed"
-               if exists $arg{cert_file};
+               if exists $arg{key_file};
            ($arg{key_file}, $g2) = _tmpfile delete $arg{key};
          }
       } else {

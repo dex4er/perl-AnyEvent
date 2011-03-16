@@ -5,6 +5,8 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+	- AE::TLS didn't support both cert_file and key at the same time,
+          due to some copy&paste bug (reported and analyzed by vti).
 	- improve AE::Handle timeout documentation slightly.
 
 5.33  Mon Feb  7 21:51:41 CET 2011
