@@ -8,7 +8,8 @@ EOF
 }
 
 use AnyEvent;
-BEGIN { eval q{use AnyEvent::Impl::EV;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EV not loadable}), exit 0) } 
+BEGIN { eval q{use AnyEvent::Impl::EV;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::EV not loadable
+}), exit 0) } 
 
 $| = 1; print "1..5\n";
 

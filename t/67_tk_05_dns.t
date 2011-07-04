@@ -2,7 +2,8 @@
 # not have working DNS
 
 use AnyEvent;
-BEGIN { eval q{use AnyEvent::Impl::Tk;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::Tk not loadable}), exit 0) } 
+BEGIN { eval q{use AnyEvent::Impl::Tk;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::Tk not loadable
+}), exit 0) } 
 use AnyEvent::DNS;
 
 $| = 1; print "1..5\n";

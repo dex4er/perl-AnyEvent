@@ -5,11 +5,17 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+TODO: break the API and put the rr ttl where it belongs.
+TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
+	- add support for (currently third-party) AnyEvent::Impl::FLTK.
+
+5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,
           due to some copy&paste bug (reported and analyzed by vti).
 	- improve AE::Handle timeout documentation slightly.
 
 5.33  Mon Feb  7 21:51:41 CET 2011
+	- never appeared on CPAN, for unknown reasons.
 	- AnyEvent::Handle on_connect_error - do not try to destroy a handle
           object when it's already gone (analyzed by Ryan Bullock).
 	- update idna algorithm(s) to UTS#46 version 6.0.0.

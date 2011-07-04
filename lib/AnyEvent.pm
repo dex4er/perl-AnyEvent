@@ -880,6 +880,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::Irssi     used when running within irssi.
    AnyEvent::Impl::IOAsync   based on IO::Async.
    AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
+   AnyEvent::Impl::FLTK      based on FLTK.
 
 =item Backends with special needs.
 
@@ -1163,7 +1164,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '5.33';
+our $VERSION = '5.34';
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1213,6 +1214,7 @@ my @models = (
    [Prima::                => AnyEvent::Impl::POE::],
    [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],
    [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
+   [FLTK::                 => AnyEvent::Impl::FLTK::],
 );
 
 our %method = map +($_ => 1),
