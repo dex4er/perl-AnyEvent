@@ -2012,7 +2012,8 @@ sub starttls {
    $self->{_rbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
    $self->{_wbio} = Net::SSLeay::BIO_new (Net::SSLeay::BIO_s_mem ());
 
-   Net::SSLeay::BIO_write ($self->{_rbio}, delete $self->{rbuf});
+   Net::SSLeay::BIO_write ($self->{_rbio}, $self->{rbuf});
+   $self->{rbuf} = "";
 
    Net::SSLeay::set_bio ($tls, $self->{_rbio}, $self->{_wbio});
 
@@ -2306,6 +2307,10 @@ will be in C<$_[0]{rbuf}>:
    $handle->on_error (sub {
       my $data = delete $_[0]{rbuf};
    });
+
+Note that this example removes the C<rbuf> member from the handle object,
+which is not normally allowed by the API. It is expressly permitted in
+this case only, as the handle object needs to be destroyed afterwards.
 
 The reason to use C<on_error> is that TCP connections, due to latencies
 and packets loss, might get closed quite violently with an error, when in
