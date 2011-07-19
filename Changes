@@ -5,7 +5,6 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
-TODO: break the API and put the rr ttl where it belongs.
 TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
