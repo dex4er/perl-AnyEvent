@@ -135,7 +135,7 @@ sub a($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "a", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -143,7 +143,7 @@ sub aaaa($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "aaaa", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -151,7 +151,7 @@ sub mx($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "mx", sub {
-      $cb->(map $_->[4], sort { $a->[3] <=> $b->[3] } @_);
+      $cb->(map $_->[5], sort { $a->[4] <=> $b->[4] } @_);
    });
 }
 
@@ -159,7 +159,7 @@ sub ns($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "ns", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -167,7 +167,7 @@ sub txt($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "txt", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -180,7 +180,7 @@ sub srv($$$$) {
 
       # classify by priority
       my %pri;
-      push @{ $pri{$_->[3]} }, [ @$_[3,4,5,6] ]
+      push @{ $pri{$_->[4]} }, [ @$_[4,5,6,7] ]
          for @_;
 
       # order by priority
@@ -210,7 +210,7 @@ sub ptr($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "ptr", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -254,7 +254,7 @@ sub reverse_lookup($$) {
       or return $cb->();
 
    resolver->resolve ($ip => "ptr", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -282,7 +282,7 @@ sub reverse_verify($$) {
          resolver->resolve ("$name." => ($af == (AF_INET) ? "a" : "aaaa"), sub {
             for (@_) {
                push @res, $name
-                  if $_->[3] eq $ip;
+                  if $_->[4] eq $ip;
             }
             $cb->(@res) unless --$cnt;
          });
@@ -403,7 +403,7 @@ if ($] < 5.008) {
 sub _enc_qd() {
    (_enc_name $_->[0]) . pack "nn",
      ($_->[1] > 0 ? $_->[1] : $type_id {$_->[1]}),
-     ($_->[2] > 0 ? $_->[2] : $class_id{$_->[2] || "in"})
+     ($_->[3] > 0 ? $_->[2] : $class_id{$_->[2] || "in"})
 }
 
 sub _enc_rr() {
@@ -547,6 +547,7 @@ sub _dec_rr {
       $name,
       $type_str{$rt}  || $rt,
       $class_str{$rc} || $rc,
+      $ttl,
       ($dec_rr{$rt} || sub { $_ })->(),
    ]
 }
@@ -569,6 +570,7 @@ Examples:
                  'uni-karlsruhe.de',
                  'soa',
                  'in',
+                 600,
                  'netserv.rz.uni-karlsruhe.de',
                  'hostmaster.rz.uni-karlsruhe.de',
                  2008052201, 10800, 1800, 2592000, 86400
@@ -590,13 +592,13 @@ Examples:
      'qd' => [ [ 'www.google.de', 'a', 'in' ] ],
      'rc' => 0,
      'ar' => [
-               [ 'a.l.google.com', 'a', 'in', '209.85.139.9' ],
-               [ 'b.l.google.com', 'a', 'in', '64.233.179.9' ],
-               [ 'c.l.google.com', 'a', 'in', '64.233.161.9' ],
+               [ 'a.l.google.com', 'a', 'in', 3600, '209.85.139.9' ],
+               [ 'b.l.google.com', 'a', 'in', 3600, '64.233.179.9' ],
+               [ 'c.l.google.com', 'a', 'in', 3600, '64.233.161.9' ],
              ],
      'ns' => [
-               [ 'l.google.com', 'ns', 'in', 'a.l.google.com' ],
-               [ 'l.google.com', 'ns', 'in', 'b.l.google.com' ],
+               [ 'l.google.com', 'ns', 'in', 3600, 'a.l.google.com' ],
+               [ 'l.google.com', 'ns', 'in', 3600, 'b.l.google.com' ],
              ],
      'tc' => '',
      'ra' => 1,
@@ -604,10 +606,10 @@ Examples:
      'id' => 64265,
      'aa' => '',
      'an' => [
-               [ 'www.google.de', 'cname', 'in', 'www.google.com' ],
-               [ 'www.google.com', 'cname', 'in', 'www.l.google.com' ],
-               [ 'www.l.google.com', 'a', 'in', '66.249.93.104' ],
-               [ 'www.l.google.com', 'a', 'in', '66.249.93.147' ],
+               [ 'www.google.de', 'cname', 'in', 3600, 'www.google.com' ],
+               [ 'www.google.com', 'cname', 'in', 3600, 'www.l.google.com' ],
+               [ 'www.l.google.com', 'a', 'in', 3600, '66.249.93.104' ],
+               [ 'www.l.google.com', 'a', 'in', 3600, '66.249.93.147' ],
              ],
      'rd' => 1,
      'op' => 0
@@ -1224,16 +1226,17 @@ none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 10.
 
-The callback will be invoked with arraryefs of the form C<[$name, $type,
-$class, @data>], where C<$name> is the domain name, C<$type> a type string
-or number, C<$class> a class name and @data is resource-record-dependent
-data. For C<a> records, this will be the textual IPv4 addresses, for C<ns>
-or C<cname> records this will be a domain name, for C<txt> records these
-are all the strings and so on.
+The callback will be invoked with arraryefs of the form C<[$name,
+$type, $class, $ttl, @data>], where C<$name> is the domain name,
+C<$type> a type string or number, C<$class> a class name, C<$ttl> is the
+remaining time-to-live and C<@data> is resource-record-dependent data, in
+seconds. For C<a> records, this will be the textual IPv4 addresses, for
+C<ns> or C<cname> records this will be a domain name, for C<txt> records
+these are all the strings and so on.
 
 All types mentioned in RFC 1035, C<aaaa>, C<srv>, C<naptr> and C<spf> are
-decoded. All resource records not known to this module will have
-the raw C<rdata> field as fourth entry.
+decoded. All resource records not known to this module will have the raw
+C<rdata> field as fifth array element.
 
 Note that this resolver is just a stub resolver: it requires a name server
 supporting recursive queries, will not do any recursive queries itself and
@@ -1276,15 +1279,15 @@ Examples:
 
    # shortened result:
    # [
-   #   [ 'google.com', 'soa', 'in', 'ns1.google.com', 'dns-admin.google.com',
+   #   [ 'google.com', 'soa', 'in', 3600, 'ns1.google.com', 'dns-admin.google.com',
    #     2008052701, 7200, 1800, 1209600, 300 ],
    #   [
-   #     'google.com', 'txt', 'in',
+   #     'google.com', 'txt', 'in', 3600,
    #     'v=spf1 include:_netblocks.google.com ~all'
    #   ],
-   #   [ 'google.com', 'a', 'in', '64.233.187.99' ],
-   #   [ 'google.com', 'mx', 'in', 10, 'smtp2.google.com' ],
-   #   [ 'google.com', 'ns', 'in', 'ns2.google.com' ],
+   #   [ 'google.com', 'a', 'in', 3600, '64.233.187.99' ],
+   #   [ 'google.com', 'mx', 'in', 3600, 10, 'smtp2.google.com' ],
+   #   [ 'google.com', 'ns', 'in', 3600, 'ns2.google.com' ],
    # ]
 
    # resolve a records:
@@ -1292,7 +1295,7 @@ Examples:
 
    # result:
    # [
-   #   [ 'ruth.schmorp.de', 'a', 'in', '129.13.162.95' ]
+   #   [ 'ruth.schmorp.de', 'a', 'in', 86400, '129.13.162.95' ]
    # ]
 
    # resolve any records, but return only a and aaaa records:
@@ -1305,8 +1308,8 @@ Examples:
 
    # result:
    # [
-   #   [ 'test1.laendle', 'a', 'in', '10.0.0.255' ],
-   #   [ 'test1.laendle', 'aaaa', 'in', '3ffe:1900:4545:0002:0240:0000:0000:f7e1' ]
+   #   [ 'test1.laendle', 'a', 'in', 86400, '10.0.0.255' ],
+   #   [ 'test1.laendle', 'aaaa', 'in', 60, '3ffe:1900:4545:0002:0240:0000:0000:f7e1' ]
    # ]
 
 =cut
@@ -1365,7 +1368,7 @@ sub resolve($%) {
                      or return $do_search->(); # cname chain too long
 
                   $cname = 1;
-                  $name = lc $rr[0][3];
+                  $name = lc $rr[0][4];
 
                } elsif ($cname) {
                   # follow the cname

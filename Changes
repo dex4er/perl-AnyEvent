@@ -7,6 +7,10 @@ TODO: anyevent strict checking for $_ changes?
 
 TODO: break the API and put the rr ttl where it belongs.
 TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
+	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
+          the TTL as fourth element - this affects ->resolve directly,
+          and ->request and ->dns_unpack indirectly. Convenience functions
+          such as AnyEvent::DNS::{a,txt,mx,srv} are not affected.
 	- add support for (currently third-party) AnyEvent::Impl::FLTK.
         - many read types in AnyEvent::Handle would malfunction during
           transitions to TLS because of a "delete $self->{rbuf}".
