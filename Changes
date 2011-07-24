@@ -6,7 +6,6 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
-TODO: keeps alive, self-reference, storabel et al.
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
@@ -18,6 +17,8 @@ TODO: keeps alive, self-reference, storabel et al.
         - many read types in AnyEvent::Handle would malfunction during
           transitions to TLS because of a "delete $self->{rbuf}".
           (reported by Gerald Galster).
+        - resolve AnyEvent::Util::guard at first-use-time, not at load time,
+          for further speed and memory savings when not used.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,
