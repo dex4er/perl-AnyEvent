@@ -10,6 +10,8 @@ TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
           such as AnyEvent::DNS::{a,txt,mx,srv} are not affected.
+        - INCOMPATIBLE CHANGE: backend authors now should not implement
+          one_event or loop, but instead the AnyEvent::CondVar::_wait method.
         - some read types (regex, netstring, json, storable) could
           errornously keep an AE::Handle object alive on their own
           (reported by Mohammad Toossi).
