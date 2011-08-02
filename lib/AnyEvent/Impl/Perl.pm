@@ -252,6 +252,10 @@ sub loop {
    one_event while 1;
 }
 
+sub AnyEvent::CondVar::_wait {
+   one_event until $_[0]{_ae_sent};
+}
+
 sub AE::io($$$) {
    my ($fd, $write, $cb) = @_;
 

@@ -19,6 +19,9 @@ TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
           (reported by Gerald Galster).
         - resolve AnyEvent::Util::guard at first-use-time, not at load time,
           for further speed and memory savings when not used.
+        - improve condvar blocking wait performance (probably only noticable
+          with faster backends), also make it easier for event loops that
+          do not support blockign waits.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,

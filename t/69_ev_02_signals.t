@@ -31,7 +31,7 @@ my $sw = AnyEvent->signal (signal => 'INT', cb => sub {
 
 print "ok 2\n";
 kill 'INT', $$;
-$cv->wait;
+$cv->recv;
 undef $error;
 
 print "ok 4\n";

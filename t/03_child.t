@@ -50,7 +50,7 @@ for my $it ("", 1, 2, 3, 4) {
       $cv->broadcast;
    });
 
-   $cv->wait;
+   $cv->recv;
 
    my $pid2 = fork || POSIX::_exit 7;
 
@@ -69,7 +69,7 @@ EOF
       exit 0;
    });
 
-   $cv2->wait;
+   $cv2->recv;
 
    print "ok ${it}7\n";
    print "ok ${it}8\n";

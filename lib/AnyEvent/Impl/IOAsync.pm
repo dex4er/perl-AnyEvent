@@ -181,13 +181,13 @@ sub AnyEvent::Impl::IOAsync::child::DESTROY {
    $LOOP->unwatch_child (@{ $_[0] });
 }
 
-sub one_event {
-   $LOOP->loop_once;
+sub AnyEvent::CondVar::_wait {
+   $LOOP->loop_once until $_[0]{_ae_sent};
 }
 
-sub loop {
-   $LOOP->loop_forever;
-}
+#sub loop {
+#   $LOOP->loop_forever;
+#}
 
 1;
 

@@ -142,9 +142,9 @@ sub _emit_childstatus {
    Irssi::signal_add    pidwait => $_pidwait;
 }
 
-sub one_event {
-   Carp::croak "Irssi does not support blocking waits";
-}
+#sub loop {
+#   Carp::croak "Irssi does not support blocking waits";
+#}
 
 =head1 SEE ALSO
 

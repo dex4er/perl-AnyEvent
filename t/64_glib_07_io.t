@@ -26,7 +26,7 @@ $rb = AnyEvent->io (fh => $b, poll => "r", cb => sub {
 
 print "ok 3\n";
 
-{ my $cv = AnyEvent->condvar; $t = AnyEvent->timer (after => 0.05, cb => sub { $cv->send }); $cv->wait }
+{ my $cv = AnyEvent->condvar; $t = AnyEvent->timer (after => 0.05, cb => sub { $cv->send }); $cv->recv }
 
 print "ok 4\n";
 
@@ -42,7 +42,7 @@ $ra = AnyEvent->io (fh => $a, poll => "r", cb => sub {
    $cv->send;
 });
 
-$cv = AnyEvent->condvar; $cv->wait;
+$cv = AnyEvent->condvar; $cv->recv;
 
 print "ok 10\n";
 
@@ -59,7 +59,7 @@ $rb = AnyEvent->io (fh => fileno $b, poll => "r", cb => sub {
 
 print "ok 11\n";
 
-{ my $cv = AnyEvent->condvar; $t = AnyEvent->timer (after => 0.05, cb => sub { $cv->send }); $cv->wait }
+{ my $cv = AnyEvent->condvar; $t = AnyEvent->timer (after => 0.05, cb => sub { $cv->send }); $cv->recv }
 
 print "ok 12\n";
 
@@ -75,7 +75,7 @@ $ra = AnyEvent->io (fh => $a, poll => "r", cb => sub {
    $cv->send;
 });
 
-$cv = AnyEvent->condvar; $cv->wait;
+$cv = AnyEvent->condvar; $cv->recv;
 
 print "ok 18\n";
 

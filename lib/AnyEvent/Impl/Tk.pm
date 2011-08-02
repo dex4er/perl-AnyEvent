@@ -133,13 +133,13 @@ sub AnyEvent::Impl::Tk::after::DESTROY {
    Tk::after $mw, cancel => $${$_[0]};
 }
 
-sub one_event {
-   Tk::DoOneEvent (0);
+sub AnyEvent::CondVar::_wait {
+   Tk::DoOneEvent (0) until $_[0]{_ae_sent};
 }
 
-sub loop {
-   Tk::MainLoop;
-}
+#sub loop {
+#   Tk::MainLoop;
+#}
 
 1;
 

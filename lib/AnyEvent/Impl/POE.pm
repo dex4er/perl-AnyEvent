@@ -392,13 +392,13 @@ sub DESTROY {
    POE::Kernel->call (${${$_[0]}}, "stop");
 }
 
-sub one_event {
-   POE::Kernel->loop_do_timeslice;
+sub AnyEvent::CondVar::_wait {
+   POE::Kernel->loop_do_timeslice until $_[0]{_ae_sent};
 }
 
-sub loop {
-   POE::Kernel->run;
-}
+#sub loop {
+#   POE::Kernel->run;
+#}
 
 1;
 

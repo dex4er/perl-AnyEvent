@@ -46,13 +46,13 @@ sub timer {
    Cocoa::EventLoop->timer (%arg);
 }
 
-sub loop {
-   Cocoa::EventLoop->run;
-}
+#sub loop {
+#   Cocoa::EventLoop->run;
+#}
 
-sub one_event {
-   # this actually is not one event, but it's unable to handle it correctly at Cocoa 
-   Cocoa::EventLoop->run_while (0.1);
+sub AnyEvent::CondVar::_wait {
+   # this actually is not correct, but Cocoa is unable to handle it correctly
+   Cocoa::EventLoop->run_while (0.1) until $_[0]{_ae_sent};
 }
 
 1;
@@ -64,7 +64,7 @@ Daisuke Murase <typester@cpan.org>, Marc Lehmann <schmorp@schmorp.de>.
 =head1 COPYRIGHTS
 
    Copyright (c) 2009 by KAYAC Inc.
-   Copyright (c) 2010 by Marc Lehmann <schmorp@schmorp.de>
+   Copyright (c) 2010,2011 by Marc Lehmann <schmorp@schmorp.de>
 
 =cut
 

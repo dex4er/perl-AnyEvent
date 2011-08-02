@@ -89,14 +89,14 @@ sub DESTROY {
    remove Glib::Source $${$_[0]};
 }
 
-sub one_event {
-   $mainloop->iteration (1);
+sub AnyEvent::CondVar::_wait {
+   $mainloop->iteration (1) until $_[0]{_ae_sent};
 }
 
-sub loop {
-   # hackish, but we do not have a mainloop, just a maincontext
-   $mainloop->iteration (1) while 1;
-}
+#sub loop {
+#   # hackish, but we do not have a mainloop, just a maincontext
+#   $mainloop->iteration (1) while 1;
+#}
 
 1;
 

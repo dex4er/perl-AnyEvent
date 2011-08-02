@@ -81,6 +81,7 @@ use AnyEvent::Impl::Qt::Timer;
 use AnyEvent::Impl::Qt::Io;
 
 our $app = Qt::Application \@ARGV; # REQUIRED!
+
 sub io {
    my ($class, %arg) = @_;
 
@@ -110,13 +111,13 @@ sub timer {
 #   AnyEvent::Impl::Qt::Timer 0, 0, $arg{cb}
 #}
 
-sub one_event {
-   Qt::app->processOneEvent;
+sub AnyEvent::CondVar::_wait {
+   Qt::app->processOneEvent until $_[0]{_ae_sent};
 }
 
-sub loop {
-   Qt::app->exec;
-}
+#sub loop {
+#   Qt::app->exec;
+#}
 
 1;
 

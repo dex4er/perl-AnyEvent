@@ -1218,7 +1218,7 @@ my @models = (
 );
 
 our %method = map +($_ => 1),
-   qw(io timer time now now_update signal child idle condvar one_event DESTROY);
+   qw(io timer time now now_update signal child idle condvar DESTROY);
 
 our @post_detect;
 
@@ -1741,6 +1741,10 @@ sub _send {
    # nop
 }
 
+sub _wait {
+   Carp::croak "$AnyEvent::MODEL does not support blocking waits. Caught";
+}
+
 sub send {
    my $cv = shift;
    $cv->{_ae_sent} = [@_];
@@ -1757,20 +1761,21 @@ sub ready {
    $_[0]{_ae_sent}
 }
 
-sub _wait {
-   $WAITING
-      and !$_[0]{_ae_sent}
-      and Carp::croak "AnyEvent::CondVar: recursive blocking wait detected";
-
-   local $WAITING = 1;
-   AnyEvent->one_event while !$_[0]{_ae_sent};
-}
-
 sub recv {
-   $_[0]->_wait;
+   unless ($_[0]{_ae_sent}) {
+      $WAITING
+         and Carp::croak "AnyEvent::CondVar: recursive blocking wait detected";
 
-   Carp::croak $_[0]{_ae_croak} if $_[0]{_ae_croak};
-   wantarray ? @{ $_[0]{_ae_sent} } : $_[0]{_ae_sent}[0]
+      local $WAITING = 1;
+      $_[0]->_wait;
+   }
+
+   $_[0]{_ae_croak}
+      and Carp::croak $_[0]{_ae_croak};
+
+   wantarray
+      ? @{ $_[0]{_ae_sent} }
+      : $_[0]{_ae_sent}[0]
 }
 
 sub cb {
@@ -1796,7 +1801,7 @@ sub end {
 
 # undocumented/compatibility with pre-3.4
 *broadcast = \&send;
-*wait      = \&_wait;
+*wait      = \&recv;
 
 =head1 ERROR AND EXCEPTION HANDLING
 

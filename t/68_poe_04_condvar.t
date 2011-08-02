@@ -28,7 +28,7 @@ print "ok 1\n";
    });
 
    print "ok 2\n";
-   $cv->wait;
+   $cv->recv;
    print "ok 8\n";
 
    my @x = $cv->recv;
