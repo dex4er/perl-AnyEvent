@@ -39,6 +39,7 @@ t/05_dns.t
 t/06_socket.t
 t/07_io.t
 t/08_idna.t
+t/09_multi.t
 t/handle/01_readline.t
 t/handle/02_write.t
 t/handle/03_http_req.t

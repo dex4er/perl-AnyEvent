@@ -484,8 +484,8 @@ watcher before you C<fork> the child (alternatively, you can call
 C<AnyEvent::detect>).
 
 As most event loops do not support waiting for child events, they will be
-emulated by AnyEvent in most cases, in which the latency and race problems
-mentioned in the description of signal watchers apply.
+emulated by AnyEvent in most cases, in which case the latency and race
+problems mentioned in the description of signal watchers apply.
 
 Example: fork a process and wait for it
 
@@ -1642,10 +1642,10 @@ sub child {
       *child = sub {
          my (undef, %arg) = @_;
 
-         defined (my $pid = $arg{pid} + 0)
-            or Carp::croak "required option 'pid' is missing";
+         my $pid = $arg{pid};
+         my $cb  = $arg{cb};
 
-         $PID_CB{$pid}{$arg{cb}} = $arg{cb};
+         $PID_CB{$pid}{$cb+0} = $cb;
 
          unless ($CHLD_W) {
             $CHLD_W = AE::signal CHLD => \&_sigchld;
@@ -1653,13 +1653,13 @@ sub child {
             &_sigchld;
          }
 
-         bless [$pid, $arg{cb}], "AnyEvent::Base::child"
+         bless [$pid, $cb+0], "AnyEvent::Base::child"
       };
 
       *AnyEvent::Base::child::DESTROY = sub {
-         my ($pid, $cb) = @{$_[0]};
+         my ($pid, $icb) = @{$_[0]};
 
-         delete $PID_CB{$pid}{$cb};
+         delete $PID_CB{$pid}{$icb};
          delete $PID_CB{$pid} unless keys %{ $PID_CB{$pid} };
 
          undef $CHLD_W unless keys %PID_CB;

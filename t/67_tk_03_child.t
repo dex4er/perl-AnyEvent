@@ -35,8 +35,8 @@ for my $it ("", 1, 2, 3, 4) {
 
    defined $pid or die "unable to fork";
 
-# work around Tk bug until it has been fixed.
-#my $timer = AnyEvent->timer (after => 2, cb => sub { });
+   # work around Tk bug until it has been fixed.
+   #my $timer = AnyEvent->timer (after => 2, cb => sub { });
 
    my $cv = AnyEvent->condvar;
 
@@ -57,7 +57,10 @@ for my $it ("", 1, 2, 3, 4) {
 
    my $cv2 = AnyEvent->condvar;
 
-   my $w2 = AnyEvent->child (pid => 0, cb => sub {
+   # Glib is the only model that doesn't support pid == 0
+   my $pid0 = $AnyEvent::MODEL eq "AnyEvent::Impl::Glib" ? $pid2 : 0;
+
+   my $w2 = AnyEvent->child (pid => $pid0, cb => sub {
       print $pid2 == $_[0] ? "" : "not ", "ok ${it}5 # $pid2 == $_[0]\n";
       print 7 == ($_[1] >> 8) ? "" : "not ", "ok ${it}6 # 7 == $_[1] >> 8 ($_[1])\n";
       $cv2->broadcast;

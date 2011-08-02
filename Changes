@@ -13,6 +13,10 @@ TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
         - some read types (regex, netstring, json, storable) could
           errornously keep an AE::Handle object alive on their own
           (reported by Mohammad Toossi).
+        - add more workarounds around child watcher bugs in IO::Async
+          and (newly introduced) in POE.
+        - use glib child watchers and try to work around its limitations,
+          if possible (based on a patch by Kevin Ryde).
 	- add support for (currently third-party) AnyEvent::Impl::FLTK.
         - many read types in AnyEvent::Handle would malfunction during
           transitions to TLS because of a "delete $self->{rbuf}".
@@ -21,7 +25,7 @@ TODO: Kevin Ryde         (3.8K)   1 inbox       Glib child processes
           for further speed and memory savings when not used.
         - improve condvar blocking wait performance (probably only noticable
           with faster backends), also make it easier for event loops that
-          do not support blockign waits.
+          do not support blocking waits.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,

@@ -1,6 +1,7 @@
 use AnyEvent;
 use AnyEvent::Util;
-BEGIN { require AnyEvent::Impl::Perl unless $ENV{PERL_ANYEVENT_MODEL} }
+BEGIN { eval q{use AnyEvent::Impl::Event;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::Event not loadable
+}), exit 0) } 
 
 $| = 1; print "1..14\n";
 
