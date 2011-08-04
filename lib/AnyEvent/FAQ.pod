@@ -51,7 +51,7 @@ function directly:
 Tricky: C<tcp_connect> (and a few other functions in L<AnyEvent::Socket>)
 is critically sensitive to the caller context.
 
-In void context, it will just do it's thing and eventually call the
+In void context, it will just do its thing and eventually call the
 callback. In any other context, however, it will return a special "guard"
 object - when it is destroyed (e.g. when you don't store it but throw it
 away), tcp_connect will no longer try to connect or call any callbacks.
@@ -77,7 +77,7 @@ avoid these cases by explicitly returning nothing:
 
 =head2 Why do some backends use a lot of CPU in C<< AE::cv->recv >>?
 
-Many people try out this simple program, or it's equivalent:
+Many people try out this simple program, or its equivalent:
 
    use AnyEvent;
    AnyEvent->condvar->recv;
@@ -103,7 +103,7 @@ CPU usage will be normal.
 
 =head2 Why does this FAQ not deal with L<AnyEvent::Handle> questions?
 
-Because L<AnyEvent::Handle> has a NONFAQ on it's own that already deals
+Because L<AnyEvent::Handle> has a NONFAQ on its own that already deals
 with common issues.
 
 =head1 Authors
