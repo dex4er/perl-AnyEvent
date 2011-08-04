@@ -208,13 +208,17 @@ sub AnyEvent::Impl::IOAsync::child::DESTROY {
    }
 }
 
-sub AnyEvent::CondVar::_wait {
-   $LOOP->loop_once until $_[0]{_ae_sent};
-}
-
 #sub loop {
 #   $LOOP->loop_forever;
 #}
+
+sub _poll {
+   $LOOP->loop_once;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   $LOOP->loop_once until $_[0]{_ae_sent};
+}
 
 1;
 

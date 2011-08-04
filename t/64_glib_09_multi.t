@@ -1,3 +1,19 @@
+BEGIN {
+   # check for broken perls
+   if ($^O =~ /mswin32/i) {
+      my $ok;
+      local $SIG{CHLD} = sub { $ok = 1 };
+      kill 'CHLD', 0;
+
+      unless ($ok) {
+         print <<EOF;
+1..0 # SKIP Your perl interpreter is badly BROKEN. Child watchers will not work, ever. Try upgrading to a newer perl or a working perl (cygwin's perl is known to work). If that is not an option, you should be able to use the remaining functionality of AnyEvent, but child watchers WILL NOT WORK.
+EOF
+         exit 0;
+      }
+   }
+}
+
 use AnyEvent;
 use AnyEvent::Util;
 BEGIN { eval q{use AnyEvent::Impl::Glib;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::Glib not loadable

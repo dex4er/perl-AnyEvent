@@ -17,6 +17,8 @@ NSRunLoop is an event loop for Cocoa applications, wrapped by
 L<Cocoa::EventLoop>. By using this module, you can use Cocoa based API in
 your AnyEvent application, or AnyEvent within Cocoa applications.
 
+It does not support blocking waits.
+
 =head1 BUGS
 
 Right now, L<Cocoa::EventLoop> (and this module) are in an early
@@ -49,11 +51,6 @@ sub timer {
 #sub loop {
 #   Cocoa::EventLoop->run;
 #}
-
-sub AnyEvent::CondVar::_wait {
-   # this actually is not correct, but Cocoa is unable to handle it correctly
-   Cocoa::EventLoop->run_while (0.1) until $_[0]{_ae_sent};
-}
 
 1;
 

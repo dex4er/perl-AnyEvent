@@ -123,11 +123,11 @@ module.
 
 During the first call of any watcher-creation method, the module tries
 to detect the currently loaded event loop by probing whether one of the
-following modules is already loaded: L<EV>, L<AnyEvent::Impl::Perl>,
+following modules is already loaded: L<EV>, L<AnyEvent::Loop>,
 L<Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>. The first one
 found is used. If none are detected, the module tries to load the first
 four modules in the order given; but note that if L<EV> is not
-available, the pure-perl L<AnyEvent::Impl::Perl> should always work, so
+available, the pure-perl L<AnyEvent::Loop> should always work, so
 the other two are not normally tried.
 
 Because AnyEvent first checks for modules that are already loaded, loading
@@ -144,9 +144,9 @@ starts using it, all bets are off - this case should be very rare though,
 as very few modules hardcode event loops without announcing this very
 loudly.
 
-The pure-perl implementation of AnyEvent is called
-C<AnyEvent::Impl::Perl>. Like other event modules you can load it
-explicitly and enjoy the high availability of that event loop :)
+The pure-perl implementation of AnyEvent is called C<AnyEvent::Loop>. Like
+other event modules you can load it explicitly and enjoy the high
+availability of that event loop :)
 
 =head1 WATCHERS
 
@@ -358,9 +358,9 @@ account.
 
 =item AnyEvent->now_update
 
-Some event loops (such as L<EV> or L<AnyEvent::Impl::Perl>) cache
-the current time for each loop iteration (see the discussion of L<<
-AnyEvent->now >>, above).
+Some event loops (such as L<EV> or L<AnyEvent::Loop>) cache the current
+time for each loop iteration (see the discussion of L<< AnyEvent->now >>,
+above).
 
 When a callback runs for a long time (or when the process sleeps), then
 this "current" time will differ substantially from the real time, which
@@ -862,7 +862,7 @@ pure-perl implementation, which is available everywhere as it comes with
 AnyEvent itself.
 
    AnyEvent::Impl::EV        based on EV (interface to libev, best choice).
-   AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
+   AnyEvent::Impl::Perl      pure-perl AnyEvent::Loop, fast and portable.
 
 =item Backends that are transparently being picked up when they are used.
 
@@ -1049,7 +1049,7 @@ decide on the event model to use as soon as it creates watchers, and it
 might choose the wrong one unless you load the correct one yourself.
 
 You can chose to use a pure-perl implementation by loading the
-C<AnyEvent::Impl::Perl> module, which gives you similar behaviour
+C<AnyEvent::Loop> module, which gives you similar behaviour
 everywhere, but letting AnyEvent chose the model is generally better.
 
 =head2 MAINLOOP EMULATION
@@ -1199,9 +1199,9 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 
 my @models = (
    [EV::                   => AnyEvent::Impl::EV::   , 1],
-   [AnyEvent::Impl::Perl:: => AnyEvent::Impl::Perl:: , 1],
+   [AnyEvent::Loop::       => AnyEvent::Impl::Perl:: , 1],
    # everything below here will not (normally) be autoprobed
-   # as the pureperl backend should work everywhere
+   # as the pure perl backend should work everywhere
    # and is usually faster
    [Event::                => AnyEvent::Impl::Event::, 1],
    [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
@@ -1425,7 +1425,12 @@ sub time {
 
 sub now_update { }
 
+sub _poll {
+   Carp::croak "$AnyEvent::MODEL does not support blocking waits. Caught";
+}
+
 # default implementation for ->condvar
+# in fact,t he default should not be overwritten
 
 sub condvar {
    eval q{ # poor man's autoloading {}
@@ -1742,7 +1747,7 @@ sub _send {
 }
 
 sub _wait {
-   Carp::croak "$AnyEvent::MODEL does not support blocking waits. Caught";
+   AnyEvent->_poll until $_[0]{_ae_sent};
 }
 
 sub send {
@@ -1764,7 +1769,7 @@ sub ready {
 sub recv {
    unless ($_[0]{_ae_sent}) {
       $WAITING
-         and Carp::croak "AnyEvent::CondVar: recursive blocking wait detected";
+         and Carp::croak "AnyEvent::CondVar: recursive blocking wait attempted";
 
       local $WAITING = 1;
       $_[0]->_wait;
@@ -1874,7 +1879,7 @@ auto detection and -probing.
 
 This functionality might change in future versions.
 
-For example, to force the pure perl model (L<AnyEvent::Impl::Perl>) you
+For example, to force the pure perl model (L<AnyEvent::Loop::Perl>) you
 could start your program like this:
 
    PERL_ANYEVENT_MODEL=Perl perl ...
@@ -2583,7 +2588,7 @@ the help of L<AnyEvent::TLS>), gains the ability to do TLS/SSL.
 
 This module is part of perl since release 5.008. It will be used when the
 chosen event library does not come with a timing source of its own. The
-pure-perl event loop (L<AnyEvent::Impl::Perl>) will additionally use it to
+pure-perl event loop (L<AnyEvent::Loop>) will additionally load it to
 try to use a monotonic clock for timing stability.
 
 =back
@@ -2661,8 +2666,8 @@ FAQ: L<AnyEvent::FAQ>.
 
 Utility functions: L<AnyEvent::Util>.
 
-Event modules: L<EV>, L<EV::Glib>, L<Glib::EV>, L<Event>, L<Glib::Event>,
-L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
+Event modules: L<AnyEvent::Loop>, L<EV>, L<EV::Glib>, L<Glib::EV>,
+L<Event>, L<Glib::Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
 
 Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
 L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,

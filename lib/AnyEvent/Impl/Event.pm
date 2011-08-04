@@ -69,7 +69,11 @@ sub AnyEvent::Impl::Event::signal::DESTROY {
    ${$_[0]}->cancel;
 }
 
-sub AnyEvent::CondVar::_wait {
+sub _poll {
+   Event::one_event;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
    Event::one_event until $_[0]{_ae_sent};
 }
 

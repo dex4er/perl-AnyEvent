@@ -83,8 +83,12 @@ sub idle {
 
 *AE::idle = \&EV::idle;
 
-sub AnyEvent::CondVar::_wait {
-   EV::run EV::RUN_ONCE while !$_[0]{_ae_sent};
+sub _poll {
+   EV::run EV::RUN_ONCE;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   EV::run EV::RUN_ONCE until $_[0]{_ae_sent};
 }
 
 #sub loop {

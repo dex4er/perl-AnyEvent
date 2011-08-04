@@ -124,13 +124,17 @@ sub AnyEvent::Impl::EventLib::signal::DESTROY {
    ${${$_[0]}}->remove;
 }
 
-sub AnyEvent::CondVar::_wait {
-   event_one_loop until $_[0]{_ae_sent};
-}
-
 #sub loop {
 #   event_mainloop;
 #}
+
+sub _poll {
+   event_one_loop;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   event_one_loop until $_[0]{_ae_sent};
+}
 
 1;
 

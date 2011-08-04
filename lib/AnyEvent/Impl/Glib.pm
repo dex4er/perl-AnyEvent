@@ -124,14 +124,18 @@ sub AnyEvent::Impl::Glib::child::DESTROY {
    }
 }
 
-sub AnyEvent::CondVar::_wait {
-   $mainloop->iteration (1) until $_[0]{_ae_sent};
-}
-
 #sub loop {
 #   # hackish, but we do not have a mainloop, just a maincontext
 #   $mainloop->iteration (1) while 1;
 #}
+
+sub _poll {
+   $mainloop->iteration (1);
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   $mainloop->iteration (1) until $_[0]{_ae_sent};
+}
 
 1;
 

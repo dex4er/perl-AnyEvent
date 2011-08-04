@@ -111,13 +111,17 @@ sub timer {
 #   AnyEvent::Impl::Qt::Timer 0, 0, $arg{cb}
 #}
 
-sub AnyEvent::CondVar::_wait {
-   Qt::app->processOneEvent until $_[0]{_ae_sent};
-}
-
 #sub loop {
 #   Qt::app->exec;
 #}
+
+sub _poll {
+   Qt::app->processOneEvent;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   Qt::app->processOneEvent until $_[0]{_ae_sent};
+}
 
 1;
 
