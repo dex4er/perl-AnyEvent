@@ -36,7 +36,7 @@ creating the first watcher.
 As for performance, this module is on par with (and usually faster than)
 most select/poll-based C event modules such as Event or Glib (it does not
 even come close to EV, though), with respect to I/O watchers. Timers are
-handled less optimally, but for many common tasks, it's still on par with
+handled less optimally, but for many common tasks, it is still on par with
 event loops written in C.
 
 This event loop has been optimised for the following use cases:
@@ -72,12 +72,13 @@ case" where most of the fds are active (which suits C<select>).
 
 The optimal implementation of the "dense" case is not much faster, though,
 so the module should behave very well in most cases, subject to the bad
-scalability of C<select> in general.
+scalability of C<select> in the presence of a large number of inactive
+file descriptors.
 
 =item lots of timer changes/iteration, or none at all
 
 This module sorts the timer list using perl's C<sort>, even though a total
-ordering is not required for timers.
+ordering is not required for timers internally.
 
 This sorting is expensive, but means sorting can be avoided unless the
 timer list has changed in a way that requires a new sort.
@@ -176,6 +177,7 @@ BEGIN {
 
 _update_clock;
 
+# rely on AnyEvent:Base::time to provide time
 sub now       () { $NOW          }
 sub now_update() { _update_clock }
 

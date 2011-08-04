@@ -361,10 +361,11 @@ from most attacks.
 
 =item read_size => <bytes>
 
-The initial read block size, the number of bytes this module will try to
-read during each loop iteration. Each handle object will consume at least
-this amount of memory for the read buffer as well, so when handling many
-connections requirements). See also C<max_read_size>. Default: C<2048>.
+The initial read block size, the number of bytes this module will try
+to read during each loop iteration. Each handle object will consume
+at least this amount of memory for the read buffer as well, so when
+handling many connections watch out for memory requirements). See also
+C<max_read_size>. Default: C<2048>.
 
 =item max_read_size => <bytes>
 

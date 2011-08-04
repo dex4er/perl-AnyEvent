@@ -29,6 +29,8 @@ use AnyEvent::Loop;
 
 our $VERSION = $AnyEvent::VERSION;
 
+# time() is provided via AnyEvent::Base
+
 *AE::now        = \&AnyEvent::Loop::now;
 *AE::now_update = \&AnyEvent::Loop::now_update;
 *AE::io         = \&AnyEvent::Loop::io;
