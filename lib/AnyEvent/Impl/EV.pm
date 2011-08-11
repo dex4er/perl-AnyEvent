@@ -27,26 +27,27 @@ package AnyEvent::Impl::EV;
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use EV 4.00;
 
+*AE::time       = \&EV::time;
+*AE::now        = \&EV::now;
+*AE::now_update = \&EV::now_update;
+*AE::timer      = \&EV::timer;
+*AE::signal     = \&EV::signal;
+*AE::idle       = \&EV::idle;
+
 # cannot override directly, as EV doesn't allow arguments
 sub time       { EV::time       }
 sub now        { EV::now        }
 sub now_update { EV::now_update }
 
-*AE::time       = \&EV::time;
-*AE::now        = \&EV::now;
-*AE::now_update = \&EV::now_update;
-
-*AE::timer = \&EV::timer;
+*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case it is dropped
+   ? \&EV::_ae_io
+   : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 
 sub timer {
    my ($class, %arg) = @_;
 
    EV::timer $arg{after}, $arg{interval}, $arg{cb}
 }
-
-*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case it is dropped
-   ? \&EV::_ae_io
-   : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 
 sub io {
    my ($class, %arg) = @_;
@@ -63,8 +64,6 @@ sub signal {
    EV::signal $arg{signal}, $arg{cb}
 }
 
-*AE::signal = \&EV::signal;
-
 sub child {
    my ($class, %arg) = @_;
 
@@ -80,8 +79,6 @@ sub idle {
 
    EV::idle $arg{cb}
 }
-
-*AE::idle = \&EV::idle;
 
 sub _poll {
    EV::run EV::RUN_ONCE;

@@ -5,6 +5,8 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
+TODO: AnyEvent->postpone
+TODO: redesign Impl
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
@@ -16,6 +18,7 @@ TODO: anyevent strict checking for $_ changes?
           "use AnyEvent::Impl::Perl" to "use AnyEvent::Loop" and
           "AnyEvent::Impl::Perl::loop" to "AnyEvent::Loop::run"
           in your programs, for future compatibility.
+        - new function: AnyEvent::postpone.
         - split the pure perl backend into a loop module and an impl
           module (AnyEvent::Loop and AnyEvent::Impl::Perl).
         - some read types (regex, netstring, json, storable) could

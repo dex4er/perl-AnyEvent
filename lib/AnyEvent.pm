@@ -1007,6 +1007,46 @@ Coro to accomplish this):
       push @AnyEvent::post_detect, sub { require Coro::AnyEvent };
    }
 
+=item AnyEvent::postpone BLOCK
+
+Arranges for the block to be executed as soon as possible, but not before
+the call itself returns. In practise, the block will be executed just
+before the event loop polls for new events, or shortly afterwards.
+
+This function never returns anything (to make the C<return postpone { ...
+}> idiom more useful.
+
+To understand the usefulness of this function, consider a function that
+asynchronously does something for you and returns some transaction
+object or guard to let you cancel the operation. For example,
+C<AnyEvent::Socket::tcp_connect>:
+
+   # start a conenction attempt unless one is active
+   $self->{connect_guard} ||= AnyEvent::Socket::tcp_connect "www.example.net", 80, sub {
+      delete $self->{connect_guard};
+      ...
+   };
+
+Imagine that this function could instantly call the callback, for
+example, because it detects an obvious error such as a negative port
+number. Invoking the callback before the function returns causes problems
+however: the callback will be called and will try to delete the guard
+object. But since the function hasn't returned yet, there is nothing to
+delete. When the function eventually returns it will assign the guard
+object to C<< $self->{connect_guard} >>, where it will likely never be
+deleted, so the program thinks it is still trying to connect.
+
+This is where C<AnyEvent::postpone> should be used. Instead of calling the
+callback directly on error:
+
+   $cb->(undef), return # signal error to callback, BAD!
+      if $some_error_condition;
+
+It should use C<postpone>:
+
+   AnyEvent::postpone { $cb->(undef) }, return # signal error to callback, later
+      if $some_error_condition;
+
 =back
 
 =head1 WHAT TO DO IN A MODULE
@@ -1328,6 +1368,23 @@ sub AUTOLOAD {
    $class->$func (@_);
 }
 
+our $POSTPONE_W;
+our @POSTPONE;
+
+sub _postpone_exec {
+   undef $POSTPONE_W;
+   (pop @POSTPONE)->()
+      while @POSTPONE;
+}
+
+sub postpone(&) {
+   push @POSTPONE, shift;
+
+   $POSTPONE_W ||= AE::timer (0, 0, \&_postpone_exec);
+
+   ()
+}
+
 # utility function to dup a filehandle. this is used by many backends
 # to support binding more than one watcher per filehandle (they usually
 # allow only one watcher per fd, so we dup it to get a different one).
@@ -1430,7 +1487,7 @@ sub _poll {
 }
 
 # default implementation for ->condvar
-# in fact,t he default should not be overwritten
+# in fact, the default should not be overwritten
 
 sub condvar {
    eval q{ # poor man's autoloading {}

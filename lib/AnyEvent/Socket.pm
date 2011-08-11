@@ -60,18 +60,6 @@ our @EXPORT = qw(
 
 our $VERSION = $AnyEvent::VERSION;
 
-# used in cases where we may return immediately but want the
-# caller to do stuff first
-sub _postpone {
-   my ($cb, @args) = (@_, $!);
-
-   my $w; $w = AE::timer 0, 0, sub {
-      undef $w;
-      $! = pop @args;
-      $cb->(@args);
-   };
-}
-
 =item $ipn = parse_ipv4 $dotted_quad
 
 Tries to parse the given dotted quad IPv4 address and return it in
@@ -898,7 +886,7 @@ sub tcp_connect($$$;$) {
          return unless exists $state{fh};
 
          my $target = shift @target
-            or return _postpone sub {
+            or return AnyEvent::postpone {
                return unless exists $state{fh};
                %state = ();
                $connect->();

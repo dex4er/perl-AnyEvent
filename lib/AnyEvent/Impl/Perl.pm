@@ -49,19 +49,19 @@ sub AnyEvent::CondVar::Base::_wait {
 sub io {
    my (undef, %arg) = @_;
 
-   AE::io $arg{fh}, $arg{poll} eq "w", $arg{cb}
+   AnyEvent::Loop::io $arg{fh}, $arg{poll} eq "w", $arg{cb}
 }
 
 sub timer {
    my (undef, %arg) = @_;
 
-   AE::timer $arg{after}, $arg{interval}, $arg{cb}
+   AnyEvent::Loop::timer $arg{after}, $arg{interval}, $arg{cb}
 }
 
 sub idle {
    my (undef, %arg) = @_;
 
-   AE::idle $arg{cb}
+   AnyEvent::Loop::idle $arg{cb}
 }
 
 1;
