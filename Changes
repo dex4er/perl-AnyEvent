@@ -7,6 +7,8 @@ TODO: anyevent strict checking for $_ changes?
 
 TODO: AnyEvent->postpone
 TODO: redesign Impl
+TODO: too long domain names
+TODO: make ae::run mroe robust against eintr, find out which env still causes these issues
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
