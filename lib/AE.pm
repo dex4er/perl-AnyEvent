@@ -157,6 +157,10 @@ Ensures that the current event loop time is up to date.
 
 Return the current time (not cached, always consults a hardware clock).
 
+=item AE::postpone { BLOCK }
+
+Exactly the same as C<AnyEvent:::postpone>.
+
 =back
 
 =head1 AUTHOR

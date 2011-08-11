@@ -886,7 +886,7 @@ sub tcp_connect($$$;$) {
          return unless exists $state{fh};
 
          my $target = shift @target
-            or return AnyEvent::postpone {
+            or return AE::postpone {
                return unless exists $state{fh};
                %state = ();
                $connect->();

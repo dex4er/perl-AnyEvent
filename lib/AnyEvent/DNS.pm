@@ -867,6 +867,8 @@ sub parse_resolv_conf {
                # debug, rotate, no-check-names, inet6
             }
          }
+      } else {
+         # silently skip stuff we don't understand
       }
    }
 
@@ -1197,7 +1199,9 @@ This is the main low-level workhorse for sending DNS requests.
 This function sends a single request (a hash-ref formated as specified
 for C<dns_pack>) to the configured nameservers in turn until it gets a
 response. It handles timeouts, retries and automatically falls back to
-virtual circuit mode (TCP) when it receives a truncated reply.
+virtual circuit mode (TCP) when it receives a truncated reply. It does not
+handle anything else, such as the domain searchlist or relative names -
+use C<< ->resolve >> for that.
 
 Calls the callback with the decoded response packet if a reply was
 received, or no arguments in case none of the servers answered.
@@ -1206,6 +1210,13 @@ received, or no arguments in case none of the servers answered.
 
 sub request($$) {
    my ($self, $req, $cb) = @_;
+
+   # _enc_name barfs on names that are too long, which is often outside
+   # program control, so check for too long names here.
+   for (@{ $req->{qd} }) {
+      return AE::postpone sub { $cb->(undef) }
+         if 255 < length $_->[0];
+   }
 
    push @{ $self->{queue} }, [dns_pack $req, $cb];
    $self->_scheduler;

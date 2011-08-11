@@ -1007,7 +1007,7 @@ Coro to accomplish this):
       push @AnyEvent::post_detect, sub { require Coro::AnyEvent };
    }
 
-=item AnyEvent::postpone BLOCK
+=item AnyEvent::postpone { BLOCK }
 
 Arranges for the block to be executed as soon as possible, but not before
 the call itself returns. In practise, the block will be executed just
@@ -1454,6 +1454,8 @@ sub now_update() {
 sub time() {
    AnyEvent->time
 }
+
+*postpone = \&AnyEvent::postpone;
 
 package AnyEvent::Base;
 
