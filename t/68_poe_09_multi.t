@@ -19,7 +19,7 @@ use AnyEvent::Util;
 BEGIN { eval q{use AnyEvent::Impl::POE;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::POE not loadable
 }), exit 0) } $^W = 0;
 
-$| = 1; print "1..14\n";
+$| = 1; print "1..15\n";
 
 print "ok 1\n";
 
@@ -28,7 +28,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
 # I/O write
 {
    my $cv = AE::cv;
-   my $wt = AE::timer 0.1, 0, $cv;
+   my $wt = AE::timer 1, 0, $cv;
    my $s = 0;
 
    $cv->begin; my $wa = AE::io $a, 1, sub { $cv->end; $s |= 1 };
@@ -55,7 +55,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    syswrite $b, "x";
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 1, 0, $cv;
 
    $s = 0;
    $cv->begin;
@@ -152,7 +152,22 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    print $s == 0 ? "" : "not ", "ok 13 # $s\n";
 }
 
-print "ok 14\n";
+# timers (don't laugh, some event loops are more broken...)
+{
+   my $cv = AE::cv;
+   my $wt = AE::timer 1, 0, $cv;
+   my $s = 0;
+
+   $cv->begin; my $wa = AE::timer 0   , 0, sub { $cv->end; $s |= 1 };
+   $cv->begin; my $wb = AE::timer 0   , 0, sub { $cv->end; $s |= 2 };
+   $cv->begin; my $wc = AE::timer 0.01, 0, sub { $cv->end; $s |= 4 };
+
+   $cv->recv;
+
+   print $s == 7 ? "" : "not ", "ok 14 # $s\n";
+}
+
+print "ok 15\n";
 
 exit 0;
 

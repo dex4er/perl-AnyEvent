@@ -7,6 +7,7 @@ TODO: anyevent strict checking for $_ changes?
 
 TODO: redesign Impl
 TODO: make ae::run mroe robust against eintr, find out which env still causes these issues Andrew Suffield
+TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer.  Invest extra overhead to work around this peculiar behaviour.
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
@@ -23,6 +24,8 @@ TODO: make ae::run mroe robust against eintr, find out which env still causes th
           for too long domain names explicitly and passes an undef to the callback
           instead (reported by James Bromberger).
         - new function: AnyEvent::postpone.
+        - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
+          Invest extra overhead to work around this peculiar behaviour.
         - split the pure perl backend into a loop module and an impl
           module (AnyEvent::Loop and AnyEvent::Impl::Perl).
         - some read types (regex, netstring, json, storable) could
@@ -41,6 +44,8 @@ TODO: make ae::run mroe robust against eintr, find out which env still causes th
         - improve condvar blocking wait performance (probably only noticable
           with faster backends), also make it easier for event loops that
           do not support blocking waits.
+        - PERL_ANYEVENT_MODEL now also allows full module names, although
+          the usefulness of this feature is not yet clear.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,

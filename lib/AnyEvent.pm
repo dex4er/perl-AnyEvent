@@ -1237,29 +1237,6 @@ our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
              $ENV{PERL_ANYEVENT_PROTOCOLS} || "ipv4,ipv6";
 }
 
-my @models = (
-   [EV::                   => AnyEvent::Impl::EV::   , 1],
-   [AnyEvent::Loop::       => AnyEvent::Impl::Perl:: , 1],
-   # everything below here will not (normally) be autoprobed
-   # as the pure perl backend should work everywhere
-   # and is usually faster
-   [Event::                => AnyEvent::Impl::Event::, 1],
-   [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
-   [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
-   [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package
-   [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
-   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
-   [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
-   [Wx::                   => AnyEvent::Impl::POE::],
-   [Prima::                => AnyEvent::Impl::POE::],
-   [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],
-   [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
-   [FLTK::                 => AnyEvent::Impl::FLTK::],
-);
-
-our %method = map +($_ => 1),
-   qw(io timer time now now_update signal child idle condvar DESTROY);
-
 our @post_detect;
 
 sub post_detect(&) {
@@ -1276,6 +1253,47 @@ sub AnyEvent::Util::postdetect::DESTROY {
    @post_detect = grep $_ != ${$_[0]}, @post_detect;
 }
 
+our $POSTPONE_W;
+our @POSTPONE;
+
+sub _postpone_exec {
+   undef $POSTPONE_W;
+
+   &{ shift @POSTPONE }
+      while @POSTPONE;
+}
+
+sub postpone(&) {
+   push @POSTPONE, shift;
+
+   $POSTPONE_W ||= AE::timer (0, 0, \&_postpone_exec);
+
+   ()
+}
+
+our @models = (
+   [EV::                   => AnyEvent::Impl::EV::   , 1],
+   [AnyEvent::Loop::       => AnyEvent::Impl::Perl:: , 1],
+   # everything below here will not (normally) be autoprobed
+   # as the pure perl backend should work everywhere
+   # and is usually faster
+   [Event::                => AnyEvent::Impl::Event::, 1],
+   [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
+   [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
+   [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package
+   [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
+   [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
+   [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
+   [Wx::                   => AnyEvent::Impl::POE::],
+   [Prima::                => AnyEvent::Impl::POE::],
+   [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # a bitch to autodetect
+   [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
+   [FLTK::                 => AnyEvent::Impl::FLTK::],
+);
+
+our %method = map +($_ => 1),
+   qw(io timer time now now_update signal child idle condvar DESTROY);
+
 sub detect() {
    # free some memory
    *detect = sub () { $MODEL };
@@ -1283,8 +1301,9 @@ sub detect() {
    local $!; # for good measure
    local $SIG{__DIE__};
 
-   if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z]+)$/) {
-      my $model = "AnyEvent::Impl::$1";
+   if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z0-9:]+)$/) {
+      my $model = $1;
+      $model = "AnyEvent::Impl::$model" unless $model =~ s/::$//;
       if (eval "require $model") {
          $MODEL = $model;
          warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $VERBOSE >= 2;
@@ -1327,13 +1346,15 @@ sub detect() {
       }
    }
 
-   @models = (); # free probe data
+   # free memory only needed for probing
+   undef @models;
+   undef @REGISTRY;
 
    push @{"$MODEL\::ISA"}, "AnyEvent::Base";
    unshift @ISA, $MODEL;
 
    # now nuke some methods that are overridden by the backend.
-   # SUPER is not allowed.
+   # SUPER usage is not allowed in these.
    for (qw(time signal child idle)) {
       undef &{"AnyEvent::Base::$_"}
          if defined &{"$MODEL\::$_"};
@@ -1346,6 +1367,7 @@ sub detect() {
    }
 
    (shift @post_detect)->() while @post_detect;
+   undef @post_detect;
 
    *post_detect = sub(&) {
       shift->();
@@ -1353,8 +1375,16 @@ sub detect() {
       undef
    };
 
+   # recover a few more bytes
+   postpone {
+      undef &AUTOLOAD;
+   };
+
    $MODEL
 }
+
+our %method = map +($_ => 1),
+   qw(io timer time now now_update signal child idle condvar DESTROY);
 
 sub AUTOLOAD {
    (my $func = $AUTOLOAD) =~ s/.*://;
@@ -1362,27 +1392,13 @@ sub AUTOLOAD {
    $method{$func}
       or Carp::croak "$func: not a valid AnyEvent class method";
 
+   # free some memory
+   undef %method;
+
    detect;
 
    my $class = shift;
    $class->$func (@_);
-}
-
-our $POSTPONE_W;
-our @POSTPONE;
-
-sub _postpone_exec {
-   undef $POSTPONE_W;
-   (pop @POSTPONE)->()
-      while @POSTPONE;
-}
-
-sub postpone(&) {
-   push @POSTPONE, shift;
-
-   $POSTPONE_W ||= AE::timer (0, 0, \&_postpone_exec);
-
-   ()
 }
 
 # utility function to dup a filehandle. this is used by many backends
@@ -1416,46 +1432,54 @@ package AE;
 
 our $VERSION = $AnyEvent::VERSION;
 
-# fall back to the main API by default - backends and AnyEvent::Base
-# implementations can overwrite these.
 
-sub io($$$) {
-   AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
+sub _reset() {
+   eval q{ 
+      # fall back to the main API by default - backends and AnyEvent::Base
+      # implementations can overwrite these.
+
+      sub io($$$) {
+         AnyEvent->io (fh => $_[0], poll => $_[1] ? "w" : "r", cb => $_[2])
+      }
+
+      sub timer($$$) {
+         AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2])
+      }
+
+      sub signal($$) {
+         AnyEvent->signal (signal => $_[0], cb => $_[1])
+      }
+
+      sub child($$) {
+         AnyEvent->child (pid => $_[0], cb => $_[1])
+      }
+
+      sub idle($) {
+         AnyEvent->idle (cb => $_[0])
+      }
+
+      sub cv(;&) {
+         AnyEvent->condvar (@_ ? (cb => $_[0]) : ())
+      }
+
+      sub now() {
+         AnyEvent->now
+      }
+
+      sub now_update() {
+         AnyEvent->now_update
+      }
+
+      sub time() {
+         AnyEvent->time
+      }
+
+      *postpone = \&AnyEvent::postpone;
+   };
+   die if $@;
 }
 
-sub timer($$$) {
-   AnyEvent->timer (after => $_[0], interval => $_[1], cb => $_[2])
-}
-
-sub signal($$) {
-   AnyEvent->signal (signal => $_[0], cb => $_[1])
-}
-
-sub child($$) {
-   AnyEvent->child (pid => $_[0], cb => $_[1])
-}
-
-sub idle($) {
-   AnyEvent->idle (cb => $_[0])
-}
-
-sub cv(;&) {
-   AnyEvent->condvar (@_ ? (cb => $_[0]) : ())
-}
-
-sub now() {
-   AnyEvent->now
-}
-
-sub now_update() {
-   AnyEvent->now_update
-}
-
-sub time() {
-   AnyEvent->time
-}
-
-*postpone = \&AnyEvent::postpone;
+BEGIN { _reset }
 
 package AnyEvent::Base;
 
@@ -1669,7 +1693,7 @@ sub signal {
          while (%SIG_EV) {
             for (keys %SIG_EV) {
                delete $SIG_EV{$_};
-               $_->() for values %{ $SIG_CB{$_} || {} };
+               &$_ for values %{ $SIG_CB{$_} || {} };
             }
          }
       };
@@ -1930,13 +1954,17 @@ can be very useful, however.
 =item C<PERL_ANYEVENT_MODEL>
 
 This can be used to specify the event model to be used by AnyEvent, before
-auto detection and -probing kicks in. It must be a string consisting
-entirely of ASCII letters. The string C<AnyEvent::Impl::> gets prepended
-and the resulting module name is loaded and if the load was successful,
-used as event model. If it fails to load AnyEvent will proceed with
+auto detection and -probing kicks in.
+
+It normally is a string consisting entirely of ASCII letters (e.g. C<EV>
+or C<IOAsync>). The string C<AnyEvent::Impl::> gets prepended and the
+resulting module name is loaded and - if the load was successful - used as
+event model backend. If it fails to load then AnyEvent will proceed with
 auto detection and -probing.
 
-This functionality might change in future versions.
+If the string ends with C<::> instead (e.g. C<AnyEvent::Impl::EV::>) then
+nothing gets prepended and the module name is used as-is (hint: C<::> at
+the end of a string designates a module name and quotes it appropriately).
 
 For example, to force the pure perl model (L<AnyEvent::Loop::Perl>) you
 could start your program like this:
