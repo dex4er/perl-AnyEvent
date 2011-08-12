@@ -90,8 +90,8 @@ package AnyEvent::Impl::IOAsync;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
-use Time::HiRes;
-use Scalar::Util;
+use Time::HiRes ();
+use Scalar::Util ();
 
 use IO::Async::Loop 0.33;
 
@@ -104,7 +104,6 @@ sub set_loop($) {
 sub timer {
    my ($class, %arg) = @_;
    
-   # IO::Async has problems with overloaded objects
    my $cb = $arg{cb};
 
    my $id;
@@ -121,6 +120,7 @@ sub timer {
       Scalar::Util::weaken $ival_cb;
 
    } else {
+      # IO::Async has problems with overloaded objects
       $id = $LOOP->enqueue_timer (delay => $arg{after}, code => sub { &$cb });
    }
 

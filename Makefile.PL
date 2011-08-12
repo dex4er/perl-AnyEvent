@@ -56,6 +56,7 @@ WriteMakefile(
         'lib/AnyEvent/Impl/EV.pm'        => '$(INST_LIBDIR)/AnyEvent/Impl/EV.pm',
         'lib/AnyEvent/Impl/Event.pm'     => '$(INST_LIBDIR)/AnyEvent/Impl/Event.pm',
         'lib/AnyEvent/Impl/EventLib.pm'  => '$(INST_LIBDIR)/AnyEvent/Impl/EventLib.pm',
+        'lib/AnyEvent/Impl/FLTK2.pm'     => '$(INST_LIBDIR)/AnyEvent/Impl/FLTK2.pm',
         'lib/AnyEvent/Impl/Glib.pm'      => '$(INST_LIBDIR)/AnyEvent/Impl/Glib.pm',
         'lib/AnyEvent/Impl/IOAsync.pm'   => '$(INST_LIBDIR)/AnyEvent/Impl/IOAsync.pm',
         'lib/AnyEvent/Impl/Irssi.pm'     => '$(INST_LIBDIR)/AnyEvent/Impl/Irssi.pm',

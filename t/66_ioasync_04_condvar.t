@@ -1,6 +1,9 @@
 use AnyEvent;
-BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not loadable
-}), exit 0) } 
+
+         BEGIN { $ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\n}), exit 0) }
+         BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not loadable\n}), exit 0) }
+         
+      
 
 $| = 1; print "1..21\n";
 

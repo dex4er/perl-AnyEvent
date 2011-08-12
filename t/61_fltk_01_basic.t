@@ -1,8 +1,8 @@
 use AnyEvent;
 
          BEGIN { $ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\n}), exit 0) }
-         BEGIN { eval q{use AnyEvent::Impl::POE;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::POE not loadable\n}), exit 0) }
-         $^W = 0;
+         BEGIN { eval q{use AnyEvent::Impl::FLTK2;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::FLTK2 not loadable\n}), exit 0) }
+         
       
 
 $| = 1; print "1..6\n";

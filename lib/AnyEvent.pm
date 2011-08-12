@@ -880,7 +880,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::Irssi     used when running within irssi.
    AnyEvent::Impl::IOAsync   based on IO::Async.
    AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
-   AnyEvent::Impl::FLTK      based on FLTK.
+   AnyEvent::Impl::FLTK2     based on FLTK (fltk 2 binding).
 
 =item Backends with special needs.
 
@@ -1288,11 +1288,8 @@ our @models = (
    [Prima::                => AnyEvent::Impl::POE::],
    [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # a bitch to autodetect
    [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
-   [FLTK::                 => AnyEvent::Impl::FLTK::],
+   [FLTK::                 => AnyEvent::Impl::FLTK2::],
 );
-
-our %method = map +($_ => 1),
-   qw(io timer time now now_update signal child idle condvar DESTROY);
 
 sub detect() {
    # free some memory
@@ -1770,9 +1767,9 @@ sub idle {
 
          $rcb = sub {
             if ($cb) {
-               $w = _time;
+               $w = AE::time;
                &$cb;
-               $w = _time - $w;
+               $w = AE::time - $w;
 
                # never use more then 50% of the time for the idle watcher,
                # within some limits

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-BEGIN { eval "use Net::SSLeay (); 1" or ((print "1..0 # SKIP no Net::SSLeay\n"), exit 0) }
+BEGIN { eval "use Net::SSLeay 1.33 (); 1" or ((print "1..0 # SKIP no usable Net::SSLeay\n"), exit 0) }
 
 use Test::More tests => 410;
 

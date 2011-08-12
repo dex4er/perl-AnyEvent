@@ -16,8 +16,11 @@ EOF
 
 use AnyEvent;
 use AnyEvent::Util;
-BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not loadable
-}), exit 0) } 
+
+         BEGIN { $ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\n}), exit 0) }
+         BEGIN { eval q{use AnyEvent::Impl::IOAsync;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::IOAsync not loadable\n}), exit 0) }
+         
+      
 
 $| = 1; print "1..15\n";
 
@@ -42,7 +45,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
 # I/O read
 {
    my $cv = AE::cv;
-   my $wt = AE::timer 0.1, 0, $cv;
+   my $wt = AE::timer 0.01, 0, $cv;
    my $s = 0;
 
    my $wa = AE::io $a, 0, sub { $cv->end; $s |= 1 };
@@ -67,7 +70,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    sysread $a, my $dummy, 1;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 0.01, 0, $cv;
 
    $s = 0;
    $cv->recv;
@@ -78,7 +81,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
 # signal
 {
    my $cv = AE::cv;
-   my $wt = AE::timer 0.1, 0, $cv;
+   my $wt = AE::timer 0.01, 0, $cv;
    my $s = 0;
 
    $cv->begin; my $wa = AE::signal INT => sub { $cv->end; $s |= 1 };
@@ -91,7 +94,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    kill INT => $$;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 0.01, 0, $cv;
 
    $s = 0;
    $cv->recv;
@@ -99,7 +102,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    print $s == 3 ? "" : "not ", "ok 7 # $s\n";
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 0.01, 0, $cv;
 
    $s = 0;
    $cv->recv;
@@ -112,7 +115,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
 # child
 {
    my $cv = AE::cv;
-   my $wt = AE::timer 0.1, 0, $cv;
+   my $wt = AE::timer 0.01, 0, $cv;
    my $s = 0;
 
    my $pid = fork;
@@ -134,7 +137,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    kill 9, $pid;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 0.01, 0, $cv;
 
    $s = 0;
    $cv->recv;
@@ -144,7 +147,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    print $astatus == 9 && $bstatus == 9 ? "" : "not ", "ok 12 # $astatus == $bstatus == 9\n";
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv;
+   $wt = AE::timer 0.01, 0, $cv;
 
    $s = 0;
    $cv->recv;
