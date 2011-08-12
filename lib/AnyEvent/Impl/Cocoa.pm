@@ -40,13 +40,17 @@ use Cocoa::EventLoop;
 
 sub io {
    my ($class, %arg) = @_;
-   Cocoa::EventLoop->io (%arg);
+
+   Cocoa::EventLoop->io (%arg)
 }
 
 sub timer {
    my ($class, %arg) = @_;
-   Cocoa::EventLoop->timer (%arg);
+
+   Cocoa::EventLoop->timer (%arg)
 }
+
+# does not support blocking waits
 
 #sub loop {
 #   Cocoa::EventLoop->run;
