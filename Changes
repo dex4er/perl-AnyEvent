@@ -8,6 +8,9 @@ TODO: anyevent strict checking for $_ changes?
 TODO: redesign Impl
 TODO: make ae::run mroe robust against eintr, Andrew Suffield
 TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wait for IO::Async release.
+TODO: wrap
+TODO: shell on env
+TODO: FLTK docs
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
@@ -20,6 +23,7 @@ TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wa
           "AnyEvent::Impl::Perl::loop" to "AnyEvent::Loop::run"
           in your programs, for future compatibility.
         - *blush* idle watcher emulation was borked.
+        - AnyEvent::Strict now checks the AE::xxx functions as well.
         - querying too long domain names would barf deep inside AnyEvent::DNS - since
           this is hard to avoid for applications, AnyEvent:.DNS::request now checks for
           for too long domain names explicitly and passes an undef to the callback
@@ -49,6 +53,7 @@ TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wa
           the usefulness of this feature is not yet clear.
         - add tests for all supported event loops, conditional on PERL_ANYEVENT_LOOP_TESTS.
         - add t/80_ssltext.t.
+        - no longer use AUTOLOAD for the initial loading (for no very good reason).
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,

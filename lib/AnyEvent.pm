@@ -1207,7 +1207,6 @@ use Carp ();
 our $VERSION = '5.34';
 our $MODEL;
 
-our $AUTOLOAD;
 our @ISA;
 
 our @REGISTRY;
@@ -1291,12 +1290,23 @@ our @models = (
    [FLTK::                 => AnyEvent::Impl::FLTK2::],
 );
 
+# all autoloaded methods reserve the complete glob, not just the method slot.
+# due to bugs in perls method cache implementation.
+our @methods = qw(io timer time now now_update signal child idle condvar);
+
 sub detect() {
+   local $!; # for good measure
+   local $SIG{__DIE__}; # we use eval
+
    # free some memory
    *detect = sub () { $MODEL };
-
-   local $!; # for good measure
-   local $SIG{__DIE__};
+   # undef &func doesn't correctly update the method cache. grmbl.
+   # so we delete the whole glob. grmbl.
+   # otoh, perl doesn't let me undef an active usb, but it lets me free
+   # a glob with an active sub. hrm. i hope it works, but perl is
+   # usually buggy in this department. sigh.
+   delete @{"AnyEvent::"}{@methods};
+   undef @methods;
 
    if ($ENV{PERL_ANYEVENT_MODEL} =~ /^([a-zA-Z0-9:]+)$/) {
       my $model = $1;
@@ -1358,9 +1368,17 @@ sub detect() {
    }
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
-      eval { require AnyEvent::Strict };
-      warn "AnyEvent: cannot load AnyEvent::Strict: $@"
-         if $@ && $VERBOSE;
+      require AnyEvent::Strict;
+   }
+
+   if ($ENV{PERL_ANYEVENT_DEBUG_WRAP}) {
+      require AnyEvent::Debug;
+      AnyEvent::Debug::wrap ($ENV{PERL_ANYEVENT_DEBUG_WRAP});
+   }
+
+   if (exists $ENV{PERL_ANYEVENT_DEBUG_SHELL}) {
+      require AnyEvent::Debug;
+      #d#
    }
 
    (shift @post_detect)->() while @post_detect;
@@ -1372,30 +1390,17 @@ sub detect() {
       undef
    };
 
-   # recover a few more bytes
-   postpone {
-      undef &AUTOLOAD;
-   };
-
    $MODEL
 }
 
-our %method = map +($_ => 1),
-   qw(io timer time now now_update signal child idle condvar DESTROY);
-
-sub AUTOLOAD {
-   (my $func = $AUTOLOAD) =~ s/.*://;
-
-   $method{$func}
-      or Carp::croak "$func: not a valid AnyEvent class method";
-
-   # free some memory
-   undef %method;
-
-   detect;
-
-   my $class = shift;
-   $class->$func (@_);
+for my $name (@methods) {
+   *$name = sub {
+      detect;
+      # we use goto because
+      # a) it makes the thunk more transparent
+      # b) it allows us to delete the thunk later
+      goto &{ UNIVERSAL::can AnyEvent => "SUPER::$name" }
+   };
 }
 
 # utility function to dup a filehandle. this is used by many backends
@@ -1429,7 +1434,6 @@ package AE;
 
 our $VERSION = $AnyEvent::VERSION;
 
-
 sub _reset() {
    eval q{ 
       # fall back to the main API by default - backends and AnyEvent::Base
@@ -1452,7 +1456,7 @@ sub _reset() {
       }
 
       sub idle($) {
-         AnyEvent->idle (cb => $_[0])
+         AnyEvent->idle (cb => $_[0]);
       }
 
       sub cv(;&) {

@@ -20,7 +20,7 @@ affected. >>
 
 Normally, you don't load this module yourself but instead use it
 indirectly via the C<PERL_ANYEVENT_STRICT> environment variable (see
-L<AnyEvent>). However, this module can be loaded at any time.
+L<AnyEvent>). However, this module can be loaded manually at any time.
 
 =cut
 
@@ -38,6 +38,7 @@ AnyEvent::post_detect {
    my $MODEL = shift @AnyEvent::ISA;
    unshift @ISA, $MODEL;
    unshift @AnyEvent::ISA, AnyEvent::Strict::;
+   AE::_reset;
 };
 
 sub io {
