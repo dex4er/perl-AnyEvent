@@ -434,7 +434,11 @@ sub verbose {
            . "cb:      $self->{cb} (" . (AnyEvent::Debug::cb2str $self->{cb}) . ")\n"
            . "invoked: $self->{called} times\n";
 
-   if ($self->{error}) {
+   if (exists $self->{bt}) {
+      $res .= "created$self->{bt}";
+   }
+
+   if (exists $self->{error}) {
       $res .= "errors:   " . @{$self->{error}} . "\n";
 
       $res .= "error: " . (AnyEvent::Debug::ft $_->[0]) . " ($_->[0]) $_->[1]\n"
