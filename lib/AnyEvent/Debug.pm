@@ -221,7 +221,7 @@ not be relied upon.
 =cut
 
 our $WRAP_LEVEL;
-our $TRACE_LEVEL = 2;
+our $TRACE_LEVEL;
 our $TRACE_CUR;
 our $POST_DETECT;
 
@@ -379,9 +379,12 @@ sub _reset {
             sub    => $sub,
             cur    => $TRACE_CUR,
             now    => AE::now,
+            arg    => \%arg,
             cb     => $cb,
             called => 0,
          }, "AnyEvent::Debug::Wrapped";
+
+         delete $arg{cb};
 
          $self->{bt} = Carp::longmess ""
             if $WRAP_LEVEL >= 2;
@@ -426,6 +429,7 @@ sub verbose {
    my ($self) = @_;
 
    my $res = "type:    $self->{type} watcher\n"
+           . "args:    " . (join " ", %{ $self->{arg} }) . "\n" # TODO: decode fh?
            . "created: " . (AnyEvent::Debug::ft $self->{now}) . " ($self->{now})\n"
            . "file:    $self->{file}\n"
            . "line:    $self->{line}\n"
