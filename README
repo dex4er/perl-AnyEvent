@@ -117,12 +117,12 @@ DESCRIPTION
 
     During the first call of any watcher-creation method, the module tries
     to detect the currently loaded event loop by probing whether one of the
-    following modules is already loaded: EV, AnyEvent::Impl::Perl, Event,
-    Glib, Tk, Event::Lib, Qt, POE. The first one found is used. If none are
+    following modules is already loaded: EV, AnyEvent::Loop, Event, Glib,
+    Tk, Event::Lib, Qt, POE. The first one found is used. If none are
     detected, the module tries to load the first four modules in the order
     given; but note that if EV is not available, the pure-perl
-    AnyEvent::Impl::Perl should always work, so the other two are not
-    normally tried.
+    AnyEvent::Loop should always work, so the other two are not normally
+    tried.
 
     Because AnyEvent first checks for modules that are already loaded,
     loading an event model explicitly before first using AnyEvent will
@@ -138,9 +138,9 @@ DESCRIPTION
     though, as very few modules hardcode event loops without announcing this
     very loudly.
 
-    The pure-perl implementation of AnyEvent is called
-    "AnyEvent::Impl::Perl". Like other event modules you can load it
-    explicitly and enjoy the high availability of that event loop :)
+    The pure-perl implementation of AnyEvent is called "AnyEvent::Loop".
+    Like other event modules you can load it explicitly and enjoy the high
+    availability of that event loop :)
 
 WATCHERS
     AnyEvent has the central concept of a *watcher*, which is an object that
@@ -349,9 +349,9 @@ WATCHERS
         account.
 
     AnyEvent->now_update
-        Some event loops (such as EV or AnyEvent::Impl::Perl) cache the
-        current time for each loop iteration (see the discussion of
-        AnyEvent->now, above).
+        Some event loops (such as EV or AnyEvent::Loop) cache the current
+        time for each loop iteration (see the discussion of AnyEvent->now,
+        above).
 
         When a callback runs for a long time (or when the process sleeps),
         then this "current" time will differ substantially from the real
@@ -468,8 +468,8 @@ WATCHERS
     you "fork" the child (alternatively, you can call "AnyEvent::detect").
 
     As most event loops do not support waiting for child events, they will
-    be emulated by AnyEvent in most cases, in which the latency and race
-    problems mentioned in the description of signal watchers apply.
+    be emulated by AnyEvent in most cases, in which case the latency and
+    race problems mentioned in the description of signal watchers apply.
 
     Example: fork a process and wait for it
 
@@ -823,7 +823,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
         with AnyEvent itself.
 
            AnyEvent::Impl::EV        based on EV (interface to libev, best choice).
-           AnyEvent::Impl::Perl      pure-perl implementation, fast and portable.
+           AnyEvent::Impl::Perl      pure-perl AnyEvent::Loop, fast and portable.
 
     Backends that are transparently being picked up when they are used.
         These will be used if they are already loaded when the first watcher
@@ -841,6 +841,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::Irssi     used when running within irssi.
            AnyEvent::Impl::IOAsync   based on IO::Async.
            AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
+           AnyEvent::Impl::FLTK2     based on FLTK (fltk 2 binding).
 
     Backends with special needs.
         Qt requires the Qt::Application to be instantiated first, but will
@@ -887,6 +888,10 @@ GLOBAL VARIABLES AND FUNCTIONS
         would have created an AnyEvent watcher anyway, that is, as late as
         possible at runtime, and not e.g. during initialisation of your
         module.
+
+        The effect of calling this function is as if a watcher had been
+        created (specifically, actions that happen "when the first watcher
+        is created" happen when calling detetc as well).
 
         If you need to do some initialisation before AnyEvent watchers are
         created, use "post_detect".
@@ -958,6 +963,47 @@ GLOBAL VARIABLES AND FUNCTIONS
               push @AnyEvent::post_detect, sub { require Coro::AnyEvent };
            }
 
+    AnyEvent::postpone { BLOCK }
+        Arranges for the block to be executed as soon as possible, but not
+        before the call itself returns. In practise, the block will be
+        executed just before the event loop polls for new events, or shortly
+        afterwards.
+
+        This function never returns anything (to make the "return postpone {
+        ... }" idiom more useful.
+
+        To understand the usefulness of this function, consider a function
+        that asynchronously does something for you and returns some
+        transaction object or guard to let you cancel the operation. For
+        example, "AnyEvent::Socket::tcp_connect":
+
+           # start a conenction attempt unless one is active
+           $self->{connect_guard} ||= AnyEvent::Socket::tcp_connect "www.example.net", 80, sub {
+              delete $self->{connect_guard};
+              ...
+           };
+
+        Imagine that this function could instantly call the callback, for
+        example, because it detects an obvious error such as a negative port
+        number. Invoking the callback before the function returns causes
+        problems however: the callback will be called and will try to delete
+        the guard object. But since the function hasn't returned yet, there
+        is nothing to delete. When the function eventually returns it will
+        assign the guard object to "$self->{connect_guard}", where it will
+        likely never be deleted, so the program thinks it is still trying to
+        connect.
+
+        This is where "AnyEvent::postpone" should be used. Instead of
+        calling the callback directly on error:
+
+           $cb->(undef), return # signal error to callback, BAD!
+              if $some_error_condition;
+
+        It should use "postpone":
+
+           AnyEvent::postpone { $cb->(undef) }, return # signal error to callback, later
+              if $some_error_condition;
+
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods
     freely, but you should not load a specific event module or rely on it.
@@ -997,8 +1043,8 @@ WHAT TO DO IN THE MAIN PROGRAM
     yourself.
 
     You can chose to use a pure-perl implementation by loading the
-    "AnyEvent::Impl::Perl" module, which gives you similar behaviour
-    everywhere, but letting AnyEvent chose the model is generally better.
+    "AnyEvent::Loop" module, which gives you similar behaviour everywhere,
+    but letting AnyEvent chose the model is generally better.
 
   MAINLOOP EMULATION
     Sometimes (often for short test scripts, or even standalone programs who
@@ -1143,17 +1189,43 @@ ENVIRONMENT VARIABLES
         "PERL_ANYEVENT_STRICT=1" in your environment while developing
         programs can be very useful, however.
 
+    "PERL_ANYEVENT_DEBUG_SHELL"
+        If this env variable is set, then its contents will be interpreted
+        by "AnyEvent::Socket::parse_hostport" (after replacing every
+        occurance of $$ by the process pid) and an "AnyEvent::Debug::shell"
+        is bound on that port. The shell object is saved in
+        $AnyEvent::Debug::SHELL.
+
+        This takes place when the first watcher is created.
+
+        For example, to bind a debug shell on a unix domain socket in
+        /tmp/debug<pid>.sock, you could use this:
+
+           PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug\$\$.sock perlprog
+
+        Note that creating sockets in /tmp is very unsafe on multiuser
+        systems.
+
+    "PERL_ANYEVENT_DEBUG_WRAP"
+        Can be set to 0, 1 or 2 and enables wrapping of all watchers for
+        debugging purposes. See "AnyEvent::Debug::wrap" for details.
+
     "PERL_ANYEVENT_MODEL"
         This can be used to specify the event model to be used by AnyEvent,
-        before auto detection and -probing kicks in. It must be a string
-        consisting entirely of ASCII letters. The string "AnyEvent::Impl::"
-        gets prepended and the resulting module name is loaded and if the
-        load was successful, used as event model. If it fails to load
-        AnyEvent will proceed with auto detection and -probing.
+        before auto detection and -probing kicks in.
 
-        This functionality might change in future versions.
+        It normally is a string consisting entirely of ASCII letters (e.g.
+        "EV" or "IOAsync"). The string "AnyEvent::Impl::" gets prepended and
+        the resulting module name is loaded and - if the load was successful
+        - used as event model backend. If it fails to load then AnyEvent
+        will proceed with auto detection and -probing.
 
-        For example, to force the pure perl model (AnyEvent::Impl::Perl) you
+        If the string ends with "::" instead (e.g. "AnyEvent::Impl::EV::")
+        then nothing gets prepended and the module name is used as-is (hint:
+        "::" at the end of a string designates a module name and quotes it
+        appropriately).
+
+        For example, to force the pure perl model (AnyEvent::Loop::Perl) you
         could start your program like this:
 
            PERL_ANYEVENT_MODEL=Perl perl ...
@@ -1806,9 +1878,8 @@ RECOMMENDED/OPTIONAL MODULES
     Time::HiRes
         This module is part of perl since release 5.008. It will be used
         when the chosen event library does not come with a timing source of
-        its own. The pure-perl event loop (AnyEvent::Impl::Perl) will
-        additionally use it to try to use a monotonic clock for timing
-        stability.
+        its own. The pure-perl event loop (AnyEvent::Loop) will additionally
+        load it to try to use a monotonic clock for timing stability.
 
 FORK
     Most event libraries are not fork-safe. The ones who are usually are
@@ -1875,8 +1946,8 @@ SEE ALSO
 
     Utility functions: AnyEvent::Util.
 
-    Event modules: EV, EV::Glib, Glib::EV, Event, Glib::Event, Glib, Tk,
-    Event::Lib, Qt, POE.
+    Event modules: AnyEvent::Loop, EV, EV::Glib, Glib::EV, Event,
+    Glib::Event, Glib, Tk, Event::Lib, Qt, POE.
 
     Implementations: AnyEvent::Impl::EV, AnyEvent::Impl::Event,
     AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,

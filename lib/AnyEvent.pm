@@ -1208,7 +1208,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '5.34';
+our $VERSION = '6.0';
 our $MODEL;
 
 our @ISA;
