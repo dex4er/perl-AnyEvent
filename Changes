@@ -48,8 +48,6 @@ TODO: logging?
         - many read types in AnyEvent::Handle would malfunction during
           transitions to TLS because of a "delete $self->{rbuf}".
           (reported by Gerald Galster).
-        - resolve AnyEvent::Util::guard at first-use-time, not at load time,
-          for further speed and memory savings when not used.
         - improve condvar blocking wait performance (probably only noticable
           with faster backends), also make it easier for event loops that
           do not support blocking waits.
