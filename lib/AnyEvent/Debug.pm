@@ -27,6 +27,7 @@ code, e.g. to look at global variables.
 package AnyEvent::Debug;
 
 use Errno ();
+use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
@@ -43,8 +44,8 @@ All commands will be executed "blockingly" with the socket C<select>ed for
 output. For a less "blocking" interface see L<Coro::Debug>.
 
 The commands will be executed in the C<AnyEvent::Debug::shell> package,
-which is initially empty and up to use by all shells. Code is evaluated
-under C<use strict 'subs'>.
+which currently has "help", "wl" and "wlv" commands, and can be freely
+modified by all shells. Code is evaluated under C<use strict 'subs'>.
 
 Consider the beneficial aspects of using more global (our) variables than
 local ones (my) in package scope: Earlier all my modules tended to hide
@@ -86,7 +87,7 @@ sub shell($$) {
    AnyEvent::Socket::tcp_server $_[0], $_[1], sub {
       my ($fh, $host, $port) = @_;
 
-      syswrite $fh, "Welcome, $host:$port!\015\012> ";
+      syswrite $fh, "Welcome, $host:$port, use 'help' for more info!\015\012> ";
       my $rbuf;
       my $rw; $rw = AE::io $fh, 0, sub {
          my $len = sysread $fh, $rbuf, 1024, length $rbuf;
@@ -129,6 +130,60 @@ sub shell($$) {
    }
 }
 
+{
+   package AnyEvent::Debug::shell;
+
+   sub help() {
+      <<EOF
+help         this command
+wr [level]   sets wrap level to level (or toggles if missing)
+t [level]    sets trace level (or toggles if missing)
+wl 'regex'   print wrapped watchers matching the regex (or all if missing)
+w id,...     prints the watcher with the given ids in more detail
+EOF
+   }
+
+   sub wl(;$) {
+      my $re = @_ ? qr<$_[0]>i : qr<.>;
+
+      my %res;
+
+      while (my ($k, $v) = each %AnyEvent::Debug::Wrapped) {
+         my $s = "$v";
+         $res{$s} = $k . (exists $v->{error} ? "*" : " ")
+            if $s =~ $re;
+      }
+
+      join "", map "$res{$_} $_\n", sort keys %res
+   }
+
+   sub w(@) {
+      my $res;
+
+      for my $id (@_) {
+         if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
+            $res .= "$id $w\n" . $w->verbose;
+         } else {
+            $res .= "$id: no such wrapped watcher.\n";
+         }
+      }
+
+      $res
+   }
+
+   sub wr {
+      AnyEvent::Debug::wrap (@_);
+
+      "wrap level now $AnyEvent::Debug::WRAP_LEVEL"
+   }
+
+   sub t {
+      $AnyEvent::Debug::TRACE_LEVEL = @_ ? shift : $AnyEvent::Debug::TRACE_LEVEL ? 0 : 9;
+
+      "trace level now $AnyEvent::Debug::TRACE_LEVEL"
+   }
+}
+
 =item AnyEvent::Debug::wrap [$level]
 
 Sets the instrumenting/wrapping level of all watchers that are being
@@ -148,6 +203,10 @@ created and wraps the callback so invocations of it can be traced.
 A level of C<2> does everything that level C<1> does, but also stores a
 full backtrace of the location the watcher was created.
 
+Every wrapped watcher will be linked into C<%AnyEvent::Debug::Wrapped>,
+with its address as key. The C<wl> command in the debug shell cna be used
+to list watchers.
+
 Instrumenting can increase the size of each watcher multiple times, and,
 especially when backtraces are involved, also slows down watcher creation
 a lot.
@@ -163,7 +222,6 @@ not be relied upon.
 
 our $WRAP_LEVEL;
 our $TRACE_LEVEL = 2;
-our $TRACE_NEST = 0;
 our $TRACE_CUR;
 our $POST_DETECT;
 
@@ -259,6 +317,15 @@ sub cb2str($) {
    return $gv->STASH->NAME . "::" . $gv->NAME;
 }
 
+# Format Time, not public - yet?
+sub ft($) {
+   my $t = shift;
+   my $i = int $t;
+   my $f = sprintf "%06d", 1e6 * ($t - $i);
+
+   POSIX::strftime "%Y-%m-%d %H:%M:%S.$f %z", localtime $i
+}
+
 package AnyEvent::Debug::Wrap;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
@@ -279,26 +346,29 @@ sub _reset {
          $w = 0;
          do {
             ($pkg, $file, $line) = caller $w++;
-         } while $pkg =~ /^(?:AE|AnyEvent::Socket|AnyEvent::Util|AnyEvent::Debug|AnyEvent::Strict)$/;
+         } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*))$/;
 
          $sub = (caller $w++)[3];
 
          my $cb = $arg{cb};
          $arg{cb} = sub {
+            ++$w->{called};
+
             return &$cb
                unless $TRACE_LEVEL;
 
-            local $TRACE_NEST = $TRACE_NEST + 1;
             local $TRACE_CUR  = "$w";
-            print "$TRACE_NEST enter $TRACE_CUR\n" if $TRACE_LEVEL;
+            print AnyEvent::Debug::ft AE::now, " enter $TRACE_CUR\n" if $TRACE_LEVEL;
             eval {
-               local $SIG{__DIE__};
+               local $SIG{__DIE__} = sub { die Carp::longmess "$_[0]Backtrace starting" };
                &$cb;
             };
             if ($@) {
-               print "$TRACE_NEST ERROR $TRACE_CUR $@";
+               push @{ $w->{error} }, [AE::now, $@]
+                  if @{ $w->{error} } < 10;
+               print AnyEvent::Debug::ft AE::now, " ERROR $TRACE_CUR $@";
             }
-            print "$TRACE_NEST leave $TRACE_CUR\n" if $TRACE_LEVEL;
+            print AnyEvent::Debug::ft AE::now, " leave $TRACE_CUR\n" if $TRACE_LEVEL;
          };
 
          $self = bless {
@@ -308,7 +378,9 @@ sub _reset {
             line   => $line,
             sub    => $sub,
             cur    => $TRACE_CUR,
+            now    => AE::now,
             cb     => $cb,
+            called => 0,
          }, "AnyEvent::Debug::Wrapped";
 
          $w->{bt} = Carp::longmess ""
@@ -317,7 +389,7 @@ sub _reset {
          Scalar::Util::weaken ($w = $self);
          Scalar::Util::weaken ($AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $self} = $self);
 
-         print "$TRACE_NEST creat $w\n" if $TRACE_LEVEL;
+         print AnyEvent::Debug::ft AE::now, " creat $w\n" if $TRACE_LEVEL;
 
          $self
       };
@@ -335,22 +407,45 @@ sub _init {
          $_[0]{str} ||= do {
             my ($pkg, $line) = @{ $_[0]{caller} };
 
-            ($_[0]{cur} ? "$_[0]{cur}/" : "")
-            . (AnyEvent::Debug::path2mod $_[0]{file})
-            .":"
-            . $_[0]{line}
-            . ($_[0]{sub} =~ /^[^(]/ ? "($_[0]{sub})" : "")
-            . ">"
-            . $_[0]{type}
-            . ">"
+            my $mod = AnyEvent::Debug::path2mod $_[0]{file};
+            my $sub = $_[0]{sub};
+
+            if (defined $sub) {
+               $sub =~ s/^\Q$mod\E:://;
+               $sub = "($sub)";
+            }
+
+            "$mod:$_[0]{line}$sub>$_[0]{type}>"
             . (AnyEvent::Debug::cb2str $_[0]{cb})
          };
       },
       fallback => 1;
 }
 
+sub verbose {
+   my ($self) = @_;
+
+   my $res = "created: " . (AnyEvent::Debug::ft $self->{now}) . " ($self->{now}\n"
+           . "type:    $self->{type} watcher\n"
+           . "file:    $self->{file}\n"
+           . "line:    $self->{line}\n"
+           . "subname: $self->{sub}\n"
+           . "context: $self->{cur}\n"
+           . "cb:      $self->{cb} (" . (AnyEvent::Debug::cb2str $self->{cb}) . ")\n"
+           . "invoked: $self->{called} times\n";
+
+   if ($self->{error}) {
+      $res .= "errors:   " . @{$self->{error}} . "\n";
+
+      $res .= "error: " . (AnyEvent::Debug::ft $_->[0]) . " ($_->[0]) $_->[1]\n"
+         for @{$self->{error}};
+   }
+
+   $res
+}
+
 sub DESTROY {
-   print "$TRACE_NEST dstry $_[0]\n" if $TRACE_LEVEL;
+   print AnyEvent::Debug::ft AE::now, " dstry $_[0]\n" if $TRACE_LEVEL;
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }
