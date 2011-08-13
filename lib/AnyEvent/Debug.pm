@@ -383,7 +383,7 @@ sub _reset {
             called => 0,
          }, "AnyEvent::Debug::Wrapped";
 
-         $w->{bt} = Carp::longmess ""
+         $self->{bt} = Carp::longmess ""
             if $WRAP_LEVEL >= 2;
 
          Scalar::Util::weaken ($w = $self);
