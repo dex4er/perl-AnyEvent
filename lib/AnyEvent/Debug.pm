@@ -426,7 +426,7 @@ sub verbose {
    my ($self) = @_;
 
    my $res = "type:    $self->{type} watcher\n"
-           . "created: " . (AnyEvent::Debug::ft $self->{now}) . " ($self->{now}\n"
+           . "created: " . (AnyEvent::Debug::ft $self->{now}) . " ($self->{now})\n"
            . "file:    $self->{file}\n"
            . "line:    $self->{line}\n"
            . "subname: $self->{sub}\n"
