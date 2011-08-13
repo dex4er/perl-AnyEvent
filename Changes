@@ -5,17 +5,15 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
-TODO: redesign Impl
-TODO: make ae::run mroe robust against eintr, Andrew Suffield
 TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wait for IO::Async release.
 TODO: wrap
-TODO: shell on env
 TODO: parse_unix???
-TODO: debug shell pid?
+TODO: logging?
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
-          such as AnyEvent::DNS::{a,txt,mx,srv} are not affected.
+          such as AnyEvent::DNS::{a,txt,mx,srv} are not affected, neither
+          is AnyEvent::Socket.
         - INCOMPATIBLE CHANGE: backend authors now should not implement
           one_event or loop, but instead the AnyEvent::CondVar::_wait and _poll
           methods.
@@ -29,11 +27,12 @@ TODO: debug shell pid?
           this is hard to avoid for applications, AnyEvent:.DNS::request now checks for
           for too long domain names explicitly and passes an undef to the callback
           instead (reported by James Bromberger).
+        - make AnyEvent::Util more robust against EINTR (analyzed by Andrew Suffield).
         - new function: AnyEvent::postpone.
         - new env variable, PERL_ANYEVENT_DEBUG_SHELL, to automatically start
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
-          watcher instrumentation/wrapping.
+          watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
         - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
           Invest extra overhead to work around this peculiar behaviour.
         - split the pure perl backend into a loop module and an impl

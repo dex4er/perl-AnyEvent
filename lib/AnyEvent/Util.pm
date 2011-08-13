@@ -251,7 +251,9 @@ sub _fork_schedule {
          my $ww; $ww = AE::io $r, 0, sub {
             my $len = sysread $r, $buf, 65536, length $buf;
 
-            if ($len <= 0) {
+            return unless defined $len or $! != Errno::EINTR;
+
+            if (!$len) {
                undef $ww;
                close $r;
                --$forks;
@@ -293,7 +295,7 @@ sub _fork_schedule {
 
             $len = syswrite $w, $result, $len < 65536 ? $len : 65536, $ofs;
 
-            last if $len <= 0;
+            last unless $len || (!defined $len && $! == Errno::EINTR);
 
             $ofs += $len;
          }
@@ -607,14 +609,16 @@ sub run_cmd {
             my $w; $w = AE::io $pr, 0,
                "SCALAR" eq ref $ob
                   ? sub {
-                       sysread $pr, $$ob, 16384, length $$ob
-                          and return;
+                       defined (sysread $pr, $$ob, 16384, length $$ob
+                                and return)
+                          or ($! == Errno::EINTR and return);
                        undef $w; $cv->end;
                     }
                   : sub {
                        my $buf;
-                       sysread $pr, $buf, 16384
-                          and return $ob->($buf);
+                       defined (sysread $pr, $buf, 16384
+                                and return $ob->($buf))
+                          or ($! == Errno::EINTR and return);
                        undef $w; $cv->end;
                        $ob->();
                     }
@@ -649,7 +653,9 @@ sub run_cmd {
             my $w; $w = AE::io $pw, 1, sub {
                my $len = syswrite $pw, $data;
 
-               if ($len <= 0) {
+               return unless defined $len or $! != Errno::EINTR;
+
+               if (!$len) {
                   undef $w; $cv->end;
                } else {
                   substr $data, 0, $len, "";

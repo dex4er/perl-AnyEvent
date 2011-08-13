@@ -936,6 +936,10 @@ if necessary. You should only call this function right before you would
 have created an AnyEvent watcher anyway, that is, as late as possible at
 runtime, and not e.g. during initialisation of your module.
 
+The effect of calling this function is as if a watcher had been created
+(specifically, actions that happen "when the first watcher is created"
+happen when calling detetc as well).
+
 If you need to do some initialisation before AnyEvent watchers are
 created, use C<post_detect>.
 
@@ -1380,7 +1384,10 @@ sub detect() {
       require AnyEvent::Socket;
       require AnyEvent::Debug;
 
-      my ($host, $service) = AnyEvent::Socket::parse_hostport ($ENV{PERL_ANYEVENT_DEBUG_SHELL});
+      my $shell = $ENV{PERL_ANYEVENT_DEBUG_SHELL};
+      $shell =~ s/\$\$/$$/g;
+
+      my ($host, $service) = AnyEvent::Socket::parse_hostport ($shell);
       $AnyEvent::Debug::SHELL = AnyEvent::Debug::shell ($host, $service);
    }
 
@@ -1957,15 +1964,20 @@ can be very useful, however.
 
 =item C<PERL_ANYEVENT_DEBUG_SHELL>
 
-If this env variable is set, then its contents will be
-interpreted by C<AnyEvent::Socket::parse_hostport> and an
-C<AnyEvent::Debug::shell> is bound on that port. The shell object is saved
-in C<$AnyEvent::Debug::SHELL>.
+If this env variable is set, then its contents will be interpreted by
+C<AnyEvent::Socket::parse_hostport> (after replacing every occurance of
+C<$$> by the process pid) and an C<AnyEvent::Debug::shell> is bound on
+that port. The shell object is saved in C<$AnyEvent::Debug::SHELL>.
+
+This takes place when the first watcher is created.
 
 For example, to bind a debug shell on a unix domain socket in
-F</tmp/debug.sock>, you could use this:
+F<< /tmp/debug<pid>.sock >>, you could use this:
 
-   PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug.sock perlprog
+   PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug\$\$.sock perlprog
+
+Note that creating sockets in F</tmp> is very unsafe on multiuser
+systems.
 
 =item C<PERL_ANYEVENT_DEBUG_WRAP>
 
