@@ -1377,8 +1377,11 @@ sub detect() {
    }
 
    if (exists $ENV{PERL_ANYEVENT_DEBUG_SHELL}) {
+      require AnyEvent::Socket;
       require AnyEvent::Debug;
-      #d#
+
+      my ($host, $service) = AnyEvent::Socket::parse_hostport ($ENV{PERL_ANYEVENT_DEBUG_SHELL});
+      $AnyEvent::Debug::SHELL = AnyEvent::Debug::shell ($host, $service);
    }
 
    (shift @post_detect)->() while @post_detect;
@@ -1951,6 +1954,23 @@ Unlike C<use strict> (or its modern cousin, C<< use L<common::sense>
 >>, it is definitely recommended to keep it off in production. Keeping
 C<PERL_ANYEVENT_STRICT=1> in your environment while developing programs
 can be very useful, however.
+
+=item C<PERL_ANYEVENT_DEBUG_SHELL>
+
+If this env variable is set, then its contents will be
+interpreted by C<AnyEvent::Socket::parse_hostport> and an
+C<AnyEvent::Debug::shell> is bound on that port. The shell object is saved
+in C<$AnyEvent::Debug::SHELL>.
+
+For example, to bind a debug shell on a unix domain socket in
+F</tmp/debug.sock>, you could use this:
+
+   PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug.sock perlprog
+
+=item C<PERL_ANYEVENT_DEBUG_WRAP>
+
+Can be set to C<0>, C<1> or C<2> and enables wrapping of all watchers for
+debugging purposes. See C<AnyEvent::Debug::wrap> for details.
 
 =item C<PERL_ANYEVENT_MODEL>
 

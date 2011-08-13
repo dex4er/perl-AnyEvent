@@ -135,6 +135,9 @@ Sets the instrumenting/wrapping level of all watchers that are being
 created after this call. If no C<$level> has been specified, then it
 toggles between C<0> and C<1>.
 
+The default wrap level is C<0>, or whatever
+C<$ENV{PERL_ANYEVENT_DEBUG_WRAP}> specifies.
+
 A level of C<0> disables wrapping, i.e. AnyEvent works normally, and in
 its most efficient mode.
 

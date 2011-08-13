@@ -10,7 +10,8 @@ TODO: make ae::run mroe robust against eintr, Andrew Suffield
 TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wait for IO::Async release.
 TODO: wrap
 TODO: shell on env
-TODO: FLTK docs
+TODO: parse_unix???
+TODO: debug shell pid?
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
