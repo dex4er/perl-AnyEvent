@@ -134,7 +134,7 @@ sub _poll {
 }
 
 sub AnyEvent::CondVar::Base::_wait {
-   $mainloop->iteration (1) until $_[0]{_ae_sent};
+   $mainloop->iteration (1) until exists $_[0]{_ae_sent};
 }
 
 1;

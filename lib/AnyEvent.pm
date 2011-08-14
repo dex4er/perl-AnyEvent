@@ -1208,7 +1208,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '6.0';
+our $VERSION = '6.01';
 our $MODEL;
 
 our @ISA;
@@ -1294,6 +1294,27 @@ our @models = (
    [FLTK::                 => AnyEvent::Impl::FLTK2::],
 );
 
+our @isa_hook;
+
+sub _isa_set {
+   my @pkg = ("AnyEvent", (grep defined, map $_->[0], @isa_hook), $MODEL);
+
+   @{"$pkg[$_-1]::ISA"} = $pkg[$_]
+      for 1 .. $#pkg;
+
+   grep $_->[1], @isa_hook
+      and AE::_reset ();
+}
+
+# used for hooking AnyEvent::Strict and AnyEvent::Debug::Wrap into the class hierarchy
+sub _isa_hook($$;$) {
+   my ($i, $pkg, $reset_ae) = @_;
+
+   $isa_hook[$i] = [$pkg, $reset_ae];
+
+   _isa_set;
+}
+
 # all autoloaded methods reserve the complete glob, not just the method slot.
 # due to bugs in perls method cache implementation.
 our @methods = qw(io timer time now now_update signal child idle condvar);
@@ -1362,7 +1383,6 @@ sub detect() {
    undef @REGISTRY;
 
    push @{"$MODEL\::ISA"}, "AnyEvent::Base";
-   unshift @ISA, $MODEL;
 
    # now nuke some methods that are overridden by the backend.
    # SUPER usage is not allowed in these.
@@ -1370,6 +1390,8 @@ sub detect() {
       undef &{"AnyEvent::Base::$_"}
          if defined &{"$MODEL\::$_"};
    }
+
+   _isa_set;
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       require AnyEvent::Strict;
@@ -1501,14 +1523,16 @@ sub time {
       # probe for availability of Time::HiRes
       if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
          warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
-         *AE::time = \&Time::HiRes::time;
+         *time     = sub { Time::HiRes::time () };
+         *AE::time = \&    Time::HiRes::time     ;
          # if (eval "use POSIX (); (POSIX::times())...
       } else {
          warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
-         *AE::time = sub (){ time }; # epic fail
+         *time     = sub   { CORE::time };
+         *AE::time = sub (){ CORE::time };
       }
 
-      *time = sub { AE::time }; # different prototypes
+      *now = \&time;
    };
    die if $@;
 
@@ -1516,7 +1540,6 @@ sub time {
 }
 
 *now = \&time;
-
 sub now_update { }
 
 sub _poll {

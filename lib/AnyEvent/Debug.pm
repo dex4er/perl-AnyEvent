@@ -235,13 +235,10 @@ sub wrap(;$) {
       }
 
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
-         require AnyEvent::Strict;
-         @AnyEvent::Debug::Wrap::ISA = @AnyEvent::ISA;
-         @AnyEvent::ISA = "AnyEvent::Debug::Wrap";
-         AE::_reset;
+         AnyEvent::_isa_hook 1 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
       } elsif (!$WRAP_LEVEL && $PREV_LEVEL) {
-         @AnyEvent::ISA = @AnyEvent::Debug::Wrap::ISA;
+         AnyEvent::_isa_hook 0 => undef;
       }
    } else {
       $POST_DETECT ||= AnyEvent::post_detect {

@@ -85,7 +85,7 @@ sub _poll {
 }
 
 sub AnyEvent::CondVar::Base::_wait {
-   EV::run EV::RUN_ONCE until $_[0]{_ae_sent};
+   EV::run EV::RUN_ONCE until exists $_[0]{_ae_sent};
 }
 
 #sub loop {

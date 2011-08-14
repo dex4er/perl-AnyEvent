@@ -142,7 +142,7 @@ sub _poll {
 }
 
 sub AnyEvent::CondVar::Base::_wait {
-   Tk::DoOneEvent (0) until $_[0]{_ae_sent};
+   Tk::DoOneEvent (0) until exists $_[0]{_ae_sent};
 }
 
 1;

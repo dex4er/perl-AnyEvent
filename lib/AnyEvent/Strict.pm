@@ -30,16 +30,7 @@ use Carp qw(croak);
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
-our @ISA;
-
-AnyEvent::post_detect {
-   # assume the first ISA member is the implementation
-   # # and link us in before it in the chain.
-   my $MODEL = shift @AnyEvent::ISA;
-   unshift @ISA, $MODEL;
-   unshift @AnyEvent::ISA, AnyEvent::Strict::;
-   AE::_reset;
-};
+AnyEvent::_isa_hook 0 => "AnyEvent::Strict", 1;
 
 sub io {
    my $class = shift;

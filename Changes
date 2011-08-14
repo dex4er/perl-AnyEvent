@@ -10,6 +10,8 @@ TODO: wrap
 TODO: parse_unix???
 TODO: logging?
 
+6.01
+
 6.0 (not officially released)
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,

@@ -120,7 +120,7 @@ sub _poll {
 }
 
 sub AnyEvent::CondVar::Base::_wait {
-   Qt::app->processOneEvent until $_[0]{_ae_sent};
+   Qt::app->processOneEvent until exists $_[0]{_ae_sent};
 }
 
 1;

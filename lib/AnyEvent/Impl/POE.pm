@@ -401,7 +401,7 @@ sub _poll {
 }
 
 sub AnyEvent::CondVar::Base::_wait {
-   POE::Kernel->loop_do_timeslice until $_[0]{_ae_sent};
+   POE::Kernel->loop_do_timeslice until exists $_[0]{_ae_sent};
 }
 
 1;

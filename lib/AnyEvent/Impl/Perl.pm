@@ -43,7 +43,7 @@ sub now        { $AnyEvent::Loop::NOW }
 sub now_update { AE::now_update       }
 
 sub AnyEvent::CondVar::Base::_wait {
-   AnyEvent::Loop::one_event until $_[0]{_ae_sent};
+   AnyEvent::Loop::one_event until exists $_[0]{_ae_sent};
 }
 
 sub io {
