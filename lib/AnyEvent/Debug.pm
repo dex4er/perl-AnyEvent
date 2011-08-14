@@ -383,6 +383,7 @@ sub _reset {
 
          delete $arg{cb};
 
+         # backtraces leak like hell
          $self->{bt} = Carp::longmess ""
             if $WRAP_LEVEL >= 2;
 
