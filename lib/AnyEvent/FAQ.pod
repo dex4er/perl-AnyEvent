@@ -106,7 +106,7 @@ CPU usage will be normal.
 Because L<AnyEvent::Handle> has a NONFAQ on its own that already deals
 with common issues.
 
-=head2 How can I combine L>Win32::GUI> applications with AnyEvent?
+=head2 How can I combine L<Win32::GUI> applications with AnyEvent?
 
 Well, not in the same OS thread, that's for sure :) What you can do is
 create another ithread (or fork) and run AnyEvent inside that thread, or

@@ -6,11 +6,9 @@ TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
 TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wait for IO::Async release.
-TODO: wrap
 TODO: parse_unix???
 TODO: logging?
-TODO: check wrap for leaks
-TODO: check for $_ changes in strict?
+TODO: check wrap for leaks - check Carp::longmess for leaks, or rather, how to avoid them
 
 6.01
 
@@ -39,6 +37,7 @@ TODO: check for $_ changes in strict?
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
           watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
+        - AnyEvent::Strict now checks for modifications $_ by the callback.
         - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
           Invest extra overhead to work around this peculiar behaviour.
         - split the pure perl backend into a loop module and an impl

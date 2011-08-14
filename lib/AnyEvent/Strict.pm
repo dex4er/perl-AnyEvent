@@ -13,10 +13,8 @@ This module implements AnyEvent's strict mode.
 
 Loading it makes AnyEvent check all arguments to AnyEvent-methods, at the
 expense of being slower (often the argument checking takes longer than the
-actual function).
-
-B<< Currently, only AnyEvent I<methods> are checked, the AE:: I<functions> are not
-affected. >>
+actual function). It also wraps all callbacks to check for modifications
+of C<$_>, which indicates a programming bug inside the watcher callback.
 
 Normally, you don't load this module yourself but instead use it
 indirectly via the C<PERL_ANYEVENT_STRICT> environment variable (see
@@ -32,13 +30,30 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 AnyEvent::_isa_hook 0 => "AnyEvent::Strict", 1;
 
+my $magic = [];
+
+sub wrap {
+   my $cb = shift;
+
+   sub {
+      local $_ = $magic;
+
+      &$cb;
+
+      if (!ref $_ || $_ != $magic) {
+         require AnyEvent::Debug;
+         die "callback $cb (" . AnyEvent::Debug::cb2str ($cb) . ") modified \$_ without restoring it.\n";
+      }
+   }
+}
+
 sub io {
    my $class = shift;
    my %arg = @_;
 
    ref $arg{cb}
       or croak "AnyEvent->io called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my $cb = wrap delete $arg{cb};
  
    $arg{poll} =~ /^[rw]$/
       or croak "AnyEvent->io called with illegal poll argument '$arg{poll}'";
@@ -59,7 +74,7 @@ sub io {
    croak "AnyEvent->io called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::io (@_)
+   $class->SUPER::io (@_, cb => $cb)
 }
 
 sub timer {
@@ -68,7 +83,7 @@ sub timer {
 
    ref $arg{cb}
       or croak "AnyEvent->timer called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my $cb = wrap delete $arg{cb};
  
    exists $arg{after}
       or croak "AnyEvent->timer called without mandatory 'after' parameter";
@@ -81,7 +96,7 @@ sub timer {
    croak "AnyEvent->timer called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::timer (@_)
+   $class->SUPER::timer (@_, cb => $cb)
 }
 
 sub signal {
@@ -90,7 +105,7 @@ sub signal {
 
    ref $arg{cb}
       or croak "AnyEvent->signal called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my $cb = wrap delete $arg{cb};
  
    defined AnyEvent::Base::sig2num $arg{signal} and $arg{signal} == 0
       or croak "AnyEvent->signal called with illegal signal name '$arg{signal}'";
@@ -99,7 +114,7 @@ sub signal {
    croak "AnyEvent->signal called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::signal (@_)
+   $class->SUPER::signal (@_, cb => $cb)
 }
 
 sub child {
@@ -108,7 +123,7 @@ sub child {
 
    ref $arg{cb}
       or croak "AnyEvent->child called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my $cb = wrap delete $arg{cb};
  
    $arg{pid} =~ /^-?\d+$/
       or croak "AnyEvent->child called with malformed pid value '$arg{pid}'";
@@ -117,7 +132,7 @@ sub child {
    croak "AnyEvent->child called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::child (@_)
+   $class->SUPER::child (@_, cb => $cb)
 }
 
 sub idle {
@@ -126,12 +141,12 @@ sub idle {
 
    ref $arg{cb}
       or croak "AnyEvent->idle called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my $cb = wrap delete $arg{cb};
  
    croak "AnyEvent->idle called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::idle (@_)
+   $class->SUPER::idle (@_, cb => $cb)
 }
 
 sub condvar {
@@ -140,12 +155,12 @@ sub condvar {
 
    !exists $arg{cb} or ref $arg{cb}
       or croak "AnyEvent->condvar called with illegal cb argument '$arg{cb}'";
-   delete $arg{cb};
+   my @cb = exists $arg{cb} ? (cb => wrap delete $arg{cb}) : ();
  
    croak "AnyEvent->condvar called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::condvar (@_)
+   $class->SUPER::condvar (@_, @cb);
 }
 
 sub time {
