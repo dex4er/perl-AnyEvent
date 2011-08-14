@@ -1320,6 +1320,8 @@ sub _isa_hook($$;$) {
 our @methods = qw(io timer time now now_update signal child idle condvar);
 
 sub detect() {
+   return $MODEL if $MODEL; # some programs keep references to detect
+
    local $!; # for good measure
    local $SIG{__DIE__}; # we use eval
 

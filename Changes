@@ -63,6 +63,8 @@ TODO: check for $_ changes in strict?
         - add t/80_ssltext.t.
         - no longer use AUTOLOAD for the initial loading (for no very good reason).
         - tcp_server now tries to unlink unix domain sockets when it gets destroyed.
+        - do not run event loop detection multiple times when programs call their cached
+          copies of AnyEvent::detect.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,
