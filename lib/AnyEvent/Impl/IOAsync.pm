@@ -121,7 +121,10 @@ sub timer {
 
    } else {
       # IO::Async has problems with overloaded objects
-      $id = $LOOP->enqueue_timer (delay => $arg{after}, code => sub { &$cb });
+      $id = $LOOP->enqueue_timer (delay => $arg{after}, code => sub {
+         undef $id; # IO::Async <= 0.43 bug workaround
+         &$cb;
+      });
    }
 
    bless \\$id, "AnyEvent::Impl::IOAsync::timer"
@@ -129,8 +132,8 @@ sub timer {
 
 sub AnyEvent::Impl::IOAsync::timer::DESTROY {
    # Need to be well-behaved during global destruction
-#   warn "destroy ${${$_[0]}}\n";#d#
-   $LOOP->cancel_timer (${${$_[0]}});
+   $LOOP->cancel_timer (${${$_[0]}})
+      if defined ${${$_[0]}}; # IO::Async <= 0.43 bug workaround
 }
 
 sub io {

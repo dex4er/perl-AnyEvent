@@ -2,8 +2,9 @@
 
 BEGIN { eval "use Net::SSLeay 1.33 (); 1" or ((print "1..0 # SKIP no usable Net::SSLeay\n"), exit 0) }
 
-use Test::More tests => 410;
+use Test::More tests => 415;
 
+no warnings;
 use strict qw(vars subs);
 
 use AnyEvent::Socket;
@@ -13,6 +14,8 @@ use AnyEvent::TLS;
 my $ctx = new AnyEvent::TLS cert_file => $0;
 
 for my $mode (1..5) {
+   ok (1, "mode $mode");
+
    my $server_done = AnyEvent->condvar;
    my $client_done = AnyEvent->condvar;
 
@@ -136,6 +139,7 @@ for my $mode (1..5) {
 
       for my $i (1..$cnt) {
          $hd->push_read (line => sub {
+            my ($i, $cnt, $block) = ($i, $cnt, $block); # 5.8.9. bug workaround
             my $len = $_[1];
             ok (1, "client block $len/1");
             $hd->unshift_read (packstring => "N", sub {
@@ -144,7 +148,7 @@ for my $mode (1..5) {
                if ($i != $cnt) {
                   $block->();
                } else {
-                  ok (1, "client_drain");
+                  ok (1, "client_drain 5");
                   $client_done->send; undef $hd;
                }
             });

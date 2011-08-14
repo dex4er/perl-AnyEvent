@@ -62,19 +62,7 @@ eg/ae2.pl
 util/gen_uts46data
 util/tst_uts46data
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+mktest			builds the test scripts below
 t/61_fltk_01_basic.t
 t/61_fltk_02_signals.t
 t/61_fltk_03_child.t
