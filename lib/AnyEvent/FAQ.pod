@@ -106,7 +106,28 @@ CPU usage will be normal.
 Because L<AnyEvent::Handle> has a NONFAQ on its own that already deals
 with common issues.
 
-=head1 Authors
+=head2 How can I combine L>Win32::GUI> applications with AnyEvent?
+
+Well, not in the same OS thread, that's for sure :) What you can do is
+create another ithread (or fork) and run AnyEvent inside that thread, or
+better yet, run all your GUI code in a second ithread.
+
+For example, you could load L<Win32::GUI> and L<AnyEvent::Util>, then
+create a portable socketpair for GUI->AnyEvent communication.
+
+Then fork/create a new ithread, in there, create a Window and send the C<<
+$WINDOW->{-Handle} >> to the AnyEvent ithread so it can C<PostMessage>.
+
+GUI to AnyEvent communication could work by pushing some data into a
+L<Thread::Queue> and writing a byte into the socket. The AnyEvent watcher
+on the other side will then look at the queue.
+
+AnyEvent to GUI communications can also use a L<Thread::Queue>, but to
+wake up the GUI thread, it would instead use C<< Win32::GUI::PostMessage
+$WINDOW, 1030, 0, "" >>, and the GUI thread would listen for these
+messages by using C<< $WINDOW->Hook (1030 (), sub { ... }) >>.
+
+=head1 Author
 
 Marc Lehmann <schmorp@schmorp.de>.
 
