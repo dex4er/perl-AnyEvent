@@ -9,6 +9,8 @@ TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wa
 TODO: wrap
 TODO: parse_unix???
 TODO: logging?
+TODO: check wrap for leaks
+TODO: check for $_ changes in strict?
 
 6.01
 

@@ -1297,12 +1297,12 @@ our @models = (
 our @isa_hook;
 
 sub _isa_set {
-   my @pkg = ("AnyEvent", (grep defined, map $_->[0], @isa_hook), $MODEL);
+   my @pkg = ("AnyEvent", (map $_->[0], grep defined, @isa_hook), $MODEL);
 
    @{"$pkg[$_-1]::ISA"} = $pkg[$_]
       for 1 .. $#pkg;
 
-   grep $_->[1], @isa_hook
+   grep $_ && $_->[1], @isa_hook
       and AE::_reset ();
 }
 
@@ -1310,7 +1310,7 @@ sub _isa_set {
 sub _isa_hook($$;$) {
    my ($i, $pkg, $reset_ae) = @_;
 
-   $isa_hook[$i] = [$pkg, $reset_ae];
+   $isa_hook[$i] = $pkg ? [$pkg, $reset_ae] : undef;
 
    _isa_set;
 }
@@ -2422,7 +2422,7 @@ performance with or without AnyEvent.
 
 =item * The overhead AnyEvent adds is usually much smaller than the overhead of
 the actual event loop, only with extremely fast event loops such as EV
-adds AnyEvent significant overhead.
+does AnyEvent add significant overhead.
 
 =item * You should avoid POE like the plague if you want performance or
 reasonable memory usage.
