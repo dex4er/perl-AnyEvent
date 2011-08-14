@@ -343,7 +343,7 @@ sub _reset {
          $w = 0;
          do {
             ($pkg, $file, $line) = caller $w++;
-         } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*))$/;
+         } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Handle|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*))$/;
 
          $sub = (caller $w++)[3];
 

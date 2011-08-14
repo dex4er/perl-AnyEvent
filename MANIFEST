@@ -22,6 +22,7 @@ lib/AnyEvent/Loop.pm
 lib/AnyEvent/Impl/EV.pm
 lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Event.pm
+lib/AnyEvent/Impl/FLTK2.pm
 lib/AnyEvent/Impl/Glib.pm
 lib/AnyEvent/Impl/Tk.pm
 lib/AnyEvent/Impl/Qt.pm
