@@ -19,6 +19,7 @@ lib/AnyEvent/TLS.pm
 lib/AnyEvent/Handle.pm
 lib/AnyEvent/Socket.pm
 lib/AnyEvent/Loop.pm
+lib/AnyEvent/Log.pm
 lib/AnyEvent/Impl/EV.pm
 lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Event.pm

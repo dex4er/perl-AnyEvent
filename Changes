@@ -1,13 +1,8 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
-TODO: catch AE::xxx for anyevent strict and anyevent debug
-TODO: anyevent::trace? or debug tracing all watchers?
-TODO: anyevent strict checking for $_ changes?
 
-TODO: parse_unix???
-TODO: logging? / trace_level
-
+TODO: logging? / trace_level AnyEvent::Log
 6.01
 
 6.0 (not officially released)
