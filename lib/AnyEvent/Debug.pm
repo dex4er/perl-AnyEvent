@@ -26,6 +26,7 @@ code, e.g. to look at global variables.
 
 package AnyEvent::Debug;
 
+use Carp ();
 use Errno ();
 use POSIX ();
 
@@ -229,11 +230,7 @@ sub wrap(;$) {
    my $PREV_LEVEL = $WRAP_LEVEL;
    $WRAP_LEVEL = @_ ? 0+shift : $WRAP_LEVEL ? 0 : 1;
 
-   if (defined $AnyEvent::MODEL) {
-      unless (defined $PREV_LEVEL) {
-         AnyEvent::Debug::Wrapped::_init ();
-      }
-
+   if ($AnyEvent::MODEL) {
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
          AnyEvent::_isa_hook 1 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
@@ -291,7 +288,7 @@ Using various gambits, tries to convert a callback (e.g. a code reference)
 into a more useful string.
 
 Very useful if you debug a program and have some callback, but you want to
-know where in the program the callbakc is actually defined.
+know where in the program the callback is actually defined.
 
 =cut
 
@@ -312,6 +309,73 @@ sub cb2str($) {
       if $gv->NAME eq "__ANON__";
 
    return $gv->STASH->NAME . "::" . $gv->NAME;
+}
+
+sub sv2str($) {
+   if (ref $_[0]) {
+      if (ref $_[0] eq "CODE") {
+         return "$_[0]=" . cb2str $_[0];
+      } else {
+         return "$_[0]";
+      }
+   } else {
+      for ("\'$_[0]\'") { # make copy
+         substr $_, $Carp::MaxArgLen, length, "'..."
+            if length > $Carp::MaxArgLen;
+         return $_;
+      }
+   }
+}
+
+=item AnyEvent::Debug::backtrace
+
+Creates a backtrace (actually an AnyEvent::Debug::Backtrace object
+that you can stringify), not unlike the Carp module would. Unlike the
+Carp module it resolves some references (euch as callbacks) to more
+user-friendly strings, has a more succinct output format and most
+importantly: doesn't leak memory like hell.
+
+The reason it creates an object is to save time, as formatting can be
+done at a later time. Still, creating a backtrace is a relatively slow
+operation.
+
+=cut
+
+our %PATHCACHE; # purely to save memory
+
+sub backtrace() {
+   my (@bt, $w, @c);
+   my ($modlen, $sub);
+
+   for (;;) {
+      #         0          1      2            3         4           5          6            7       8         9         10
+      # ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash)
+      package DB;
+      @c = caller $w++
+         or last;
+      package AnyEvent::Debug; # no block for speed reasons
+
+      if ($c[7]) {
+         $sub = "require $c[6]";
+      } elsif (defined $c[6]) {
+         $sub = "eval \"\"";
+      } else {
+         $sub = ($c[4] ? "" : "&") . $c[3];
+
+         $sub .= "("
+                 . (join ",",
+                       map sv2str $DB::args[$_],
+                          0 .. (@DB::args < $Carp::MaxArgNums ? @DB::args : $Carp::MaxArgNums) - 1)
+                 . ")"
+            if $c[4];
+      }
+
+      push @bt, [\($PATHCACHE{$c[1]} ||= $c[1]), $c[2], $sub];
+   }
+
+   @DB::args = ();
+
+   bless \@bt, "AnyEvent::Debug::Backtrace"
 }
 
 # Format Time, not public - yet?
@@ -345,7 +409,7 @@ sub _reset {
             ($pkg, $file, $line) = caller $w++;
          } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Handle|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*))$/;
 
-         $sub = (caller $w++)[3];
+         $sub = (caller $w)[3];
 
          my $cb = $arg{cb};
          $arg{cb} = sub {
@@ -357,7 +421,7 @@ sub _reset {
             local $TRACE_CUR  = "$w";
             print AnyEvent::Debug::ft AE::now, " enter $TRACE_CUR\n" if $TRACE_LEVEL;
             eval {
-               local $SIG{__DIE__} = sub { die Carp::longmess "$_[0]Backtrace starting" };
+               local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
                &$cb;
             };
             if ($@) {
@@ -383,8 +447,7 @@ sub _reset {
 
          delete $arg{cb};
 
-         # backtraces leak like hell
-         $self->{bt} = Carp::longmess ""
+         $self->{bt} = AnyEvent::Debug::backtrace
             if $WRAP_LEVEL >= 2;
 
          Scalar::Util::weaken ($w = $self);
@@ -401,27 +464,25 @@ package AnyEvent::Debug::Wrapped;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
-sub _init {
-   require overload;
-   import overload
-      '""'     => sub {
-         $_[0]{str} ||= do {
-            my ($pkg, $line) = @{ $_[0]{caller} };
+use overload
+   '""'     => sub {
+      $_[0]{str} ||= do {
+         my ($pkg, $line) = @{ $_[0]{caller} };
 
-            my $mod = AnyEvent::Debug::path2mod $_[0]{file};
-            my $sub = $_[0]{sub};
+         my $mod = AnyEvent::Debug::path2mod $_[0]{file};
+         my $sub = $_[0]{sub};
 
-            if (defined $sub) {
-               $sub =~ s/^\Q$mod\E:://;
-               $sub = "($sub)";
-            }
+         if (defined $sub) {
+            $sub =~ s/^\Q$mod\E:://;
+            $sub = "($sub)";
+         }
 
-            "$mod:$_[0]{line}$sub>$_[0]{type}>"
-            . (AnyEvent::Debug::cb2str $_[0]{cb})
-         };
-      },
-      fallback => 1;
-}
+         "$mod:$_[0]{line}$sub>$_[0]{type}>"
+         . (AnyEvent::Debug::cb2str $_[0]{cb})
+      };
+   },
+   fallback => 1,
+;
 
 sub verbose {
    my ($self) = @_;
@@ -455,6 +516,35 @@ sub DESTROY {
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }
+
+package AnyEvent::Debug::Backtrace;
+
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
+
+sub as_string {
+   my ($self) = @_;
+
+   my @bt;
+   my $modlen;
+
+   for (@$self) {
+      my ($rpath, $line, $sub) = @$_;
+
+      $rpath = (AnyEvent::Debug::path2mod $$rpath) . " line $line";
+      $modlen = length $rpath if $modlen < length $rpath;
+
+      push @bt, [$rpath, $sub];
+   }
+
+   join "",
+      map { sprintf "%*s %s\n", -$modlen, $_->[0], $_->[1] }
+         @bt
+}
+
+use overload
+   '""'     => \&as_string,
+   fallback => 1,
+;
 
 1;
 

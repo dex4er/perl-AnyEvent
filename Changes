@@ -7,7 +7,6 @@ TODO: anyevent strict checking for $_ changes?
 
 TODO: parse_unix???
 TODO: logging? / trace_level
-TODO: check wrap for leaks - check Carp::longmess for leaks, or rather, how to avoid them
 
 6.01
 
@@ -36,6 +35,7 @@ TODO: check wrap for leaks - check Carp::longmess for leaks, or rather, how to a
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
           watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
+        - lots of new AnyEvent::Debug functionality.
         - AnyEvent::Strict now checks for modifications $_ by the callback.
         - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
           Invest extra overhead to work around this peculiar behaviour.
