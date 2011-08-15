@@ -143,6 +143,17 @@ sub parse_ipv6($) {
    pack "n*", map hex, @h, @t
 }
 
+=item $token = parse_unix $hostname
+
+This fucntion exists mainly for symmetry to the other C<parse_protocol>
+functions - it takes a hostname and, if it is C<unix/>, it returns a
+special address token, otherwise C<undef>.
+
+The only use for this function is probably to detect whether a hostname
+matches whatever AnyEvent uses for unix domain sockets.
+
+=cut
+
 sub parse_unix($) {
    $_[0] eq "unix/"
       ? pack "S", AF_UNIX
@@ -231,14 +242,17 @@ following formats, where C<port> can be a numerical port number of a
 service name, or a C<name=port> string, and the C< port> and C<:port>
 parts are optional. Also, everywhere where an IP address is supported
 a hostname or unix domain socket address is also supported (see
-C<parse_unix>).
+C<parse_unix>), and strings starting with C</> will also be interpreted as
+unix domain sockets.
 
-   hostname:port    e.g. "www.linux.org", "www.x.de:443", "www.x.de:https=443"
+   hostname:port    e.g. "www.linux.org", "www.x.de:443", "www.x.de:https=443",
    ipv4:port        e.g. "198.182.196.56", "127.1:22"
    ipv6             e.g. "::1", "affe::1"
    [ipv4or6]:port   e.g. "[::1]", "[10.0.1]:80"
    [ipv4or6] port   e.g. "[127.0.0.1]", "[www.x.org] 17"
    ipv4or6 port     e.g. "::1 443", "10.0.0.1 smtp"
+   unix/:path       e.g. "unix/:/path/to/socket"
+   /path            e.g. "/path/to/socket"
 
 It also supports defaulting the service name in a simple way by using
 C<$default_service> if no service was detected. If neither a service was
@@ -257,12 +271,19 @@ Example:
   print join ",", parse_hostport "[::1]";
   # => "," (empty list)
 
+  print join ",", parse_host_port "/tmp/debug.sock";
+  # => "unix/", "/tmp/debug.sock"
+
 =cut
 
 sub parse_hostport($;$) {
    my ($host, $port);
 
    for ("$_[0]") { # work on a copy, just in case, and also reset pos
+
+      # shortcut for /path
+      return ("unix/", $_)
+         if m%^/%;
 
       # parse host, special cases: "ipv6" or "ipv6 port"
       unless (
@@ -288,6 +309,7 @@ sub parse_hostport($;$) {
       } else {
          return;
       }
+
    }
 
    # hostnames must not contain :'s

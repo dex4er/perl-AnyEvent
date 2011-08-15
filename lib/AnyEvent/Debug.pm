@@ -215,8 +215,8 @@ Also, enabling and disabling instrumentation will not recover the full
 performance that you had before wrapping (the AE::xxx functions will stay
 slower, for example).
 
-Currently, enabling wrapping will also load AnyEvent::Strict, but this is
-not be relied upon.
+If you are developing your program, also consider using AnyEvent::Strict
+to check for common mistakes.
 
 =cut
 

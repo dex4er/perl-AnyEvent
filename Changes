@@ -5,9 +5,8 @@ TODO: catch AE::xxx for anyevent strict and anyevent debug
 TODO: anyevent::trace? or debug tracing all watchers?
 TODO: anyevent strict checking for $_ changes?
 
-TODO: IO::Async sometimes cancels the wrong timer when you call cancel_timer -wait for IO::Async release.
 TODO: parse_unix???
-TODO: logging?
+TODO: logging? / trace_level
 TODO: check wrap for leaks - check Carp::longmess for leaks, or rather, how to avoid them
 
 6.01
@@ -64,6 +63,7 @@ TODO: check wrap for leaks - check Carp::longmess for leaks, or rather, how to a
         - tcp_server now tries to unlink unix domain sockets when it gets destroyed.
         - do not run event loop detection multiple times when programs call their cached
           copies of AnyEvent::detect.
+        - parse_hostport now accepts absolute paths als unix domain sockets.
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,

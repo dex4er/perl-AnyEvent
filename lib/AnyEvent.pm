@@ -1999,7 +1999,7 @@ This takes place when the first watcher is created.
 For example, to bind a debug shell on a unix domain socket in
 F<< /tmp/debug<pid>.sock >>, you could use this:
 
-   PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug\$\$.sock perlprog
+   PERL_ANYEVENT_DEBUG_SHELL=/tmp/debug\$\$.sock perlprog
 
 Note that creating sockets in F</tmp> is very unsafe on multiuser
 systems.
