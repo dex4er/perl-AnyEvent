@@ -232,7 +232,7 @@ sub wrap(;$) {
 
    if ($AnyEvent::MODEL) {
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
-         AnyEvent::_isa_hook 1 => "AnyEvent::Debug::Wrap", 1;
+         AnyEvent::_isa_hook 0 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
       } elsif (!$WRAP_LEVEL && $PREV_LEVEL) {
          AnyEvent::_isa_hook 0 => undef;
@@ -327,7 +327,7 @@ sub sv2str($) {
    }
 }
 
-=item AnyEvent::Debug::backtrace
+=item AnyEvent::Debug::backtrace [$skip]
 
 Creates a backtrace (actually an AnyEvent::Debug::Backtrace object
 that you can stringify), not unlike the Carp module would. Unlike the
@@ -343,8 +343,10 @@ operation.
 
 our %PATHCACHE; # purely to save memory
 
-sub backtrace() {
-   my (@bt, $w, @c);
+sub backtrace(;$) {
+   my $w = shift;
+
+   my (@bt, @c);
    my ($modlen, $sub);
 
    for (;;) {
@@ -447,7 +449,7 @@ sub _reset {
 
          delete $arg{cb};
 
-         $self->{bt} = AnyEvent::Debug::backtrace
+         $self->{bt} = AnyEvent::Debug::backtrace 1
             if $WRAP_LEVEL >= 2;
 
          Scalar::Util::weaken ($w = $self);
