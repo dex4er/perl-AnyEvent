@@ -34,6 +34,9 @@ use AnyEvent::Util ();
 use AnyEvent::Socket ();
 use AnyEvent::Log ();
 
+# cache often-used strings, purely to save memory, at the expense of speed
+our %STRCACHE;
+
 =item $shell = AnyEvent;::Debug::shell $host, $service
 
 This function binds on the given host and service port and returns a
@@ -199,10 +202,12 @@ its most efficient mode.
 
 A level of C<1> enables wrapping, which replaces all watchers by
 AnyEvent::Debug::Wrapped objects, stores the location where a watcher was
-created and wraps the callback so invocations of it can be traced.
+created and wraps the callback to log all invocations at "trace" loglevel
+(see L<AnyEvent::Log>).
 
 A level of C<2> does everything that level C<1> does, but also stores a
-full backtrace of the location the watcher was created.
+full backtrace of the location the watcher was created, which slows down
+watcher creation considerably.
 
 Every wrapped watcher will be linked into C<%AnyEvent::Debug::Wrapped>,
 with its address as key. The C<wl> command in the debug shell cna be used
@@ -341,8 +346,6 @@ operation.
 
 =cut
 
-our %PATHCACHE; # purely to save memory
-
 sub backtrace(;$) {
    my $w = shift;
 
@@ -372,13 +375,17 @@ sub backtrace(;$) {
             if $c[4];
       }
 
-      push @bt, [\($PATHCACHE{$c[1]} ||= $c[1]), $c[2], $sub];
+      push @bt, [\($STRCACHE{$c[1]} ||= $c[1]), $c[2], $sub];
    }
 
    @DB::args = ();
 
    bless \@bt, "AnyEvent::Debug::Backtrace"
 }
+
+=back
+
+=cut
 
 package AnyEvent::Debug::Wrap;
 
@@ -411,8 +418,9 @@ sub _reset {
             return &$cb
                unless $TRACE_LEVEL;
 
-            local $TRACE_CUR  = "$w";
-            AE::log trace => "enter $TRACE_CUR";
+            local $TRACE_CUR  = $w;
+            AE::log 9 => "enter $TRACE_CUR"
+               if $AnyEvent::VERBOSE >= 9;
             eval {
                local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
                &$cb;
@@ -422,13 +430,14 @@ sub _reset {
                   if @{ $w->{error} } < 10;
                AE::log error => "$TRACE_CUR $@";
             }
-            AE::log trace => "leave $TRACE_CUR";
+            AE::log 9 => "leave $TRACE_CUR"
+               if $AnyEvent::VERBOSE >= 9;
          };
 
          $self = bless {
             type   => $name,
             w      => $self->$super (%arg),
-            file   => $file,
+            rfile  => \($STRCACHE{$file} ||= $file),
             line   => $line,
             sub    => $sub,
             cur    => $TRACE_CUR,
@@ -446,7 +455,8 @@ sub _reset {
          Scalar::Util::weaken ($w = $self);
          Scalar::Util::weaken ($AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $self} = $self);
 
-         AE::log trace => "creat $w";
+         AE::log trace => "creat $w"
+            if $AnyEvent::VERBOSE >= 9;
 
          $self
       };
@@ -455,6 +465,36 @@ sub _reset {
 
 package AnyEvent::Debug::Wrapped;
 
+=head1 THE AnyEvent::Debug::Wrapped CLASS
+
+All watchers created while the wrap level is non-zero will be wrapped
+inside an AnyEvent::Debug::Wrapped object. The address of the
+wrapped watcher will become its ID - every watcher will be stored in
+C<$AnyEvent::Debug::Wrapped{$id}>.
+
+These wrapper objects, as of now, can be stringified, and you can call the
+C<< ->verbose >> method to get a multiline string describing the watcher
+in great detail, but otherwise has no other public methods.
+
+For debugging, of course, it can be helpful to look into these objects,
+which is why this is documented here, but this might change at any time in
+future versions.
+
+Each object is a relatively standard hash with the following members:
+
+   type   => name of the method used ot create the watcher (e.g. C<io>, C<timer>).
+   w      => the actual watcher
+   rfile  => reference to the filename of the file the watcher was created in
+   line   => line number where it was created
+   sub    => function name (or a special string) which created the watcher
+   cur    => if created inside another watcher callback, this is the string rep of the other watcher
+   now    => the timestamp (AE::now) when the watcher was created
+   arg    => the arguments used to create the watcher (sans C<cb>)
+   cb     => the original callback used to create the watcher
+   called => the number of times the callback was called
+
+=cut
+
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use overload
@@ -462,7 +502,7 @@ use overload
       $_[0]{str} ||= do {
          my ($pkg, $line) = @{ $_[0]{caller} };
 
-         my $mod = AnyEvent::Debug::path2mod $_[0]{file};
+         my $mod = AnyEvent::Debug::path2mod ${ $_[0]{rfile} };
          my $sub = $_[0]{sub};
 
          if (defined $sub) {
@@ -483,7 +523,7 @@ sub verbose {
    my $res = "type:    $self->{type} watcher\n"
            . "args:    " . (join " ", %{ $self->{arg} }) . "\n" # TODO: decode fh?
            . "created: " . (AnyEvent::Log::ft $self->{now}) . " ($self->{now})\n"
-           . "file:    $self->{file}\n"
+           . "file:    ${ $self->{rfile} }\n"
            . "line:    $self->{line}\n"
            . "subname: $self->{sub}\n"
            . "context: $self->{cur}\n"
@@ -505,7 +545,8 @@ sub verbose {
 }
 
 sub DESTROY {
-   AE::log trace => "dstry $_[0]";
+   AE::log trace => "dstry $_[0]"
+      if $AnyEvent::VERBOSE >= 9;
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }
@@ -540,8 +581,6 @@ use overload
 ;
 
 1;
-
-=back
 
 =head1 AUTHOR
 
