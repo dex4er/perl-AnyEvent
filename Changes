@@ -14,6 +14,8 @@ TODO: logging? / trace_level AnyEvent::Log
         - INCOMPATIBLE CHANGE: backend authors now should not implement
           one_event or loop, but instead the AnyEvent::CondVar::_wait and _poll
           methods.
+        - INCOMPATIBLE CHANGE: verbosity levels have been redefined, see
+          AnyEvent (PERL_ANYEVENT_VERBOSE) and AnyEvent::Log for details.
         - DEPRECIATION: please change
           "use AnyEvent::Impl::Perl" to "use AnyEvent::Loop" and
           "AnyEvent::Impl::Perl::loop" to "AnyEvent::Loop::run"
@@ -25,7 +27,8 @@ TODO: logging? / trace_level AnyEvent::Log
           for too long domain names explicitly and passes an undef to the callback
           instead (reported by James Bromberger).
         - make AnyEvent::Util more robust against EINTR (analyzed by Andrew Suffield).
-        - new function: AnyEvent::postpone.
+        - new functions: AnyEvent::postpone, AnyEvent::log.
+        - new module: AnyEvent::Log, for simple logging needs.
         - new env variable, PERL_ANYEVENT_DEBUG_SHELL, to automatically start
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable

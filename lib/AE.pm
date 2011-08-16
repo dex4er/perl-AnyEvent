@@ -161,6 +161,10 @@ Return the current time (not cached, always consults a hardware clock).
 
 Exactly the same as C<AnyEvent:::postpone>.
 
+=item AE::log $level, $msg[, @args]
+
+Exactly the same as C<AnyEvent::log> (or C<AnyEvent::Log::log>).
+
 =back
 
 =head1 AUTHOR

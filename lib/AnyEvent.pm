@@ -1051,6 +1051,13 @@ It should use C<postpone>:
    AnyEvent::postpone { $cb->(undef) }, return # signal error to callback, later
       if $some_error_condition;
 
+=item AnyEvent::log $level, $msg[, @args]
+
+Log the given C<$msg> at the given C<$level>.
+
+Loads AnyEvent::Log on first use and calls C<AnyEvent::Log::log> -
+consequently, look at the L<AnyEvent::Log> documentation for details.
+
 =back
 
 =head1 WHAT TO DO IN A MODULE
@@ -1226,7 +1233,6 @@ BEGIN {
       if ${^TAINT};
 
    $VERBOSE = $ENV{PERL_ANYEVENT_VERBOSE}*1;
-
 }
 
 our $MAX_SIGNAL_LATENCY = 10;
@@ -1272,6 +1278,12 @@ sub postpone(&) {
    $POSTPONE_W ||= AE::timer (0, 0, \&_postpone_exec);
 
    ()
+}
+
+sub log($$;@) {
+   require AnyEvent::Log;
+   # AnyEvent::Log overwrites this function
+   goto &log;
 }
 
 our @models = (
@@ -1340,9 +1352,10 @@ sub detect() {
       $model = "AnyEvent::Impl::$model" unless $model =~ s/::$//;
       if (eval "require $model") {
          $MODEL = $model;
-         warn "AnyEvent: loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.\n" if $VERBOSE >= 2;
+         AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it."
+            if $VERBOSE >= 7;
       } else {
-         warn "AnyEvent: unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@" if $VERBOSE;
+         AnyEvent::log warn => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
       }
    }
 
@@ -1353,7 +1366,8 @@ sub detect() {
          if (${"$package\::VERSION"} > 0) {
             if (eval "require $model") {
                $MODEL = $model;
-               warn "AnyEvent: autodetected model '$model', using it.\n" if $VERBOSE >= 2;
+               AnyEvent::log 7 => "autodetected model '$model', using it."
+                  if $VERBOSE >= 7;
                last;
             }
          }
@@ -1370,13 +1384,14 @@ sub detect() {
                and eval "require $model"
             ) {
                $MODEL = $model;
-               warn "AnyEvent: autoloaded model '$model', using it.\n" if $VERBOSE >= 2;
+               AnyEvent::log 7 => "autoloaded model '$model', using it."
+                  if $VERBOSE >= 7;
                last;
             }
          }
 
          $MODEL
-           or die "AnyEvent: backend autodetection failed - did you properly install AnyEvent?\n";
+           or die "AnyEvent: backend autodetection failed - did you properly install AnyEvent?";
       }
    }
 
@@ -1510,6 +1525,7 @@ sub _reset() {
       }
 
       *postpone = \&AnyEvent::postpone;
+      *log      = \&AnyEvent::log;
    };
    die if $@;
 }
@@ -1524,12 +1540,13 @@ sub time {
    eval q{ # poor man's autoloading {}
       # probe for availability of Time::HiRes
       if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
-         warn "AnyEvent: using Time::HiRes for sub-second timing accuracy.\n" if $VERBOSE >= 8;
+         AnyEvent::log 8 => "AnyEvent: using Time::HiRes for sub-second timing accuracy."
+            if $AnyEvent::VERBOSE >= 8;
          *time     = sub { Time::HiRes::time () };
          *AE::time = \&    Time::HiRes::time     ;
          # if (eval "use POSIX (); (POSIX::times())...
       } else {
-         warn "AnyEvent: using built-in time(), WARNING, no sub-second resolution!\n" if $VERBOSE;
+         AnyEvent::log critical => "using built-in time(), WARNING, no sub-second resolution!";
          *time     = sub   { CORE::time };
          *AE::time = sub (){ CORE::time };
       }
@@ -1637,13 +1654,15 @@ sub signal {
    eval q{ # poor man's autoloading {}
       # probe for availability of Async::Interrupt 
       if (_have_async_interrupt) {
-         warn "AnyEvent: using Async::Interrupt for race-free signal handling.\n" if $VERBOSE >= 8;
+         AnyEvent::log 8 => "using Async::Interrupt for race-free signal handling."
+            if $AnyEvent::VERBOSE >= 8;
 
          $SIGPIPE_R = new Async::Interrupt::EventPipe;
          $SIG_IO = AE::io $SIGPIPE_R->fileno, 0, \&_signal_exec;
 
       } else {
-         warn "AnyEvent: using emulated perl signal handling with latency timer.\n" if $VERBOSE >= 8;
+         AnyEvent::log 8 => "using emulated perl signal handling with latency timer."
+            if $AnyEvent::VERBOSE >= 8;
 
          if (AnyEvent::WIN32) {
             require AnyEvent::Util;
@@ -1962,11 +1981,11 @@ By default, AnyEvent will be completely silent except in fatal
 conditions. You can set this environment variable to make AnyEvent more
 talkative.
 
-When set to C<1> or higher, causes AnyEvent to warn about unexpected
+When set to C<5> or higher, causes AnyEvent to warn about unexpected
 conditions, such as not being able to load the event model specified by
 C<PERL_ANYEVENT_MODEL>.
 
-When set to C<2> or higher, cause AnyEvent to report to STDERR which event
+When set to C<7> or higher, cause AnyEvent to report to STDERR which event
 model it chooses.
 
 When set to C<8> or higher, then AnyEvent will report extra information on
@@ -2809,17 +2828,23 @@ Tutorial/Introduction: L<AnyEvent::Intro>.
 
 FAQ: L<AnyEvent::FAQ>.
 
-Utility functions: L<AnyEvent::Util>.
+Utility functions: L<AnyEvent::Util> (misc. grab-bag), L<AnyEvent::Log>
+(simply logging).
 
-Event modules: L<AnyEvent::Loop>, L<EV>, L<EV::Glib>, L<Glib::EV>,
-L<Event>, L<Glib::Event>, L<Glib>, L<Tk>, L<Event::Lib>, L<Qt>, L<POE>.
+Development/Debugging: L<AnyEvent::Strict> (stricter checking),
+L<AnyEvent::Debug> (interactive shell, watcher tracing).
+
+Supported event modules: L<AnyEvent::Loop>, L<EV>, L<EV::Glib>,
+L<Glib::EV>, L<Event>, L<Glib::Event>, L<Glib>, L<Tk>, L<Event::Lib>,
+L<Qt>, L<POE>, L<FLTK>.
 
 Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
 L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
-L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>, L<Anyevent::Impl::Irssi>.
+L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>, L<Anyevent::Impl::Irssi>,
+L<AnyEvent::Impl::FLTK>.
 
-Non-blocking file handles, sockets, TCP clients and
+Non-blocking handles, pipes, stream sockets, TCP clients and
 servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
 
 Asynchronous DNS: L<AnyEvent::DNS>.

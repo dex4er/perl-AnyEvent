@@ -28,11 +28,11 @@ package AnyEvent::Debug;
 
 use Carp ();
 use Errno ();
-use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
 use AnyEvent::Socket ();
+use AnyEvent::Log ();
 
 =item $shell = AnyEvent;::Debug::shell $host, $service
 
@@ -138,7 +138,7 @@ sub shell($$) {
       <<EOF
 help         this command
 wr [level]   sets wrap level to level (or toggles if missing)
-t [level]    sets trace level (or toggles if missing)
+v [level]    sets verbosity (or toggles if missing)
 wl 'regex'   print wrapped watchers matching the regex (or all if missing)
 w id,...     prints the watcher with the given ids in more detail
 EOF
@@ -178,10 +178,10 @@ EOF
       "wrap level now $AnyEvent::Debug::WRAP_LEVEL"
    }
 
-   sub t {
-      $AnyEvent::Debug::TRACE_LEVEL = @_ ? shift : $AnyEvent::Debug::TRACE_LEVEL ? 0 : 9;
+   sub v {
+      $AnyEvent::VERBOSE = @_ ? shift : $AnyEvent::VERBOSE ? 0 : 9;
 
-      "trace level now $AnyEvent::Debug::TRACE_LEVEL"
+      "verbosity level now $AnyEvent::VEBROSE"
    }
 }
 
@@ -380,15 +380,6 @@ sub backtrace(;$) {
    bless \@bt, "AnyEvent::Debug::Backtrace"
 }
 
-# Format Time, not public - yet?
-sub ft($) {
-   my $t = shift;
-   my $i = int $t;
-   my $f = sprintf "%06d", 1e6 * ($t - $i);
-
-   POSIX::strftime "%Y-%m-%d %H:%M:%S.$f %z", localtime $i
-}
-
 package AnyEvent::Debug::Wrap;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
@@ -421,7 +412,7 @@ sub _reset {
                unless $TRACE_LEVEL;
 
             local $TRACE_CUR  = "$w";
-            print AnyEvent::Debug::ft AE::now, " enter $TRACE_CUR\n" if $TRACE_LEVEL;
+            AE::log trace => "enter $TRACE_CUR";
             eval {
                local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
                &$cb;
@@ -429,9 +420,9 @@ sub _reset {
             if ($@) {
                push @{ $w->{error} }, [AE::now, $@]
                   if @{ $w->{error} } < 10;
-               print AnyEvent::Debug::ft AE::now, " ERROR $TRACE_CUR $@";
+               AE::log error => "$TRACE_CUR $@";
             }
-            print AnyEvent::Debug::ft AE::now, " leave $TRACE_CUR\n" if $TRACE_LEVEL;
+            AE::log trace => "leave $TRACE_CUR";
          };
 
          $self = bless {
@@ -455,7 +446,7 @@ sub _reset {
          Scalar::Util::weaken ($w = $self);
          Scalar::Util::weaken ($AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $self} = $self);
 
-         print AnyEvent::Debug::ft AE::now, " creat $w\n" if $TRACE_LEVEL;
+         AE::log trace => "creat $w";
 
          $self
       };
@@ -491,7 +482,7 @@ sub verbose {
 
    my $res = "type:    $self->{type} watcher\n"
            . "args:    " . (join " ", %{ $self->{arg} }) . "\n" # TODO: decode fh?
-           . "created: " . (AnyEvent::Debug::ft $self->{now}) . " ($self->{now})\n"
+           . "created: " . (AnyEvent::Log::ft $self->{now}) . " ($self->{now})\n"
            . "file:    $self->{file}\n"
            . "line:    $self->{line}\n"
            . "subname: $self->{sub}\n"
@@ -506,7 +497,7 @@ sub verbose {
    if (exists $self->{error}) {
       $res .= "errors:   " . @{$self->{error}} . "\n";
 
-      $res .= "error: " . (AnyEvent::Debug::ft $_->[0]) . " ($_->[0]) $_->[1]\n"
+      $res .= "error: " . (AnyEvent::Log::ft $_->[0]) . " ($_->[0]) $_->[1]\n"
          for @{$self->{error}};
    }
 
@@ -514,7 +505,7 @@ sub verbose {
 }
 
 sub DESTROY {
-   print AnyEvent::Debug::ft AE::now, " dstry $_[0]\n" if $TRACE_LEVEL;
+   AE::log trace => "dstry $_[0]";
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }
