@@ -2,10 +2,8 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-TODO: logging? / trace_level AnyEvent::Log
+TODO: AnyEvent::Log
 6.01
-
-6.0 (not officially released)
 	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve directly,
           and ->request and ->dns_unpack indirectly. Convenience functions
@@ -62,6 +60,8 @@ TODO: logging? / trace_level AnyEvent::Log
         - do not run event loop detection multiple times when programs call their cached
           copies of AnyEvent::detect.
         - parse_hostport now accepts absolute paths als unix domain sockets.
+
+6.0 (not officially released, but was on CPAN for about 15 minutes :/)
 
 5.34  Thu May 12 09:59:41 CEST 2011
 	- AE::TLS didn't support both cert_file and key at the same time,
