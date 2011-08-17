@@ -2,8 +2,8 @@
 
 AnyEvent - the DBI of event loop programming
 
-EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async, Qt
-and POE are various supported event loops/environments.
+EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async, Qt,
+FLTK and POE are various supported event loops/environments.
 
 =head1 SYNOPSIS
 
@@ -1126,9 +1126,12 @@ exit cleanly.
 =head1 OTHER MODULES
 
 The following is a non-exhaustive list of additional modules that use
-AnyEvent as a client and can therefore be mixed easily with other AnyEvent
-modules and other event loops in the same program. Some of the modules
-come as part of AnyEvent, the others are available via CPAN.
+AnyEvent as a client and can therefore be mixed easily with other
+AnyEvent modules and other event loops in the same program. Some of the
+modules come as part of AnyEvent, the others are available via CPAN (see
+L<http://search.cpan.org/search?m=module&q=anyevent%3A%3A*1> for
+a longer non-exhaustive list), and the list is heavily biased towards
+modules of the AnyEvent author himself :)
 
 =over 4
 
