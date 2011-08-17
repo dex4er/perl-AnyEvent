@@ -55,12 +55,8 @@ Also, some backends (Perl and EV) are so fast that the method call
 overhead is very noticeable (with EV it increases the execution time five-
 to six-fold, with Perl the method call overhead is about a factor of two).
 
-At the moment, there is no checking (L<AnyEvent::Strict> does not
-affect this API), so the L<AnyEvent> API still has a definite advantage
-here.
-
 Note that the C<AE> API is an alternative to, not the future version of,
-the AnyEvent API. Both APIs can be used interchangeably and and there are
+the AnyEvent API. Both APIs can be used interchangeably and there are
 no plans to "switch", so if in doubt, feel free to use the L<AnyEvent>
 API in new code.
 
@@ -68,6 +64,9 @@ As the AE API is complementary, not everything in the AnyEvent API is
 available, and you still need to use AnyEvent for the finer stuff. Also,
 you should not C<use AE> directly, C<use AnyEvent> will provide the AE
 namespace.
+
+At the moment, these functions will become slower then their method-call
+counterparts when using L<AnyEvent::Strict> or L<AnyEvent::Debug>::wrap.
 
 =head2 FUNCTIONS
 

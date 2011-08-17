@@ -14,9 +14,9 @@ AnyEvent - AnyEvent simply creates logging messages internally, and this
 module more or less exposes the mechanism, with some extra spiff to allow
 using it from other modules as well.
 
-Remember that the default verbosity level is C<0>, so nothing
-will be logged, ever, unless you set C<$Anyvent::VERBOSE> or
-C<PERL_ANYEVENT_VERBOSE> to a higher number.
+Remember that the default verbosity level is C<0>, so nothing will be
+logged, ever, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
+before starting your program.#TODO
 
 Possible future extensions are to allow custom log targets (where the
 level is an object), log filtering based on package, formatting, aliasing
@@ -54,7 +54,7 @@ sub ft($) {
    "$now_str1$f$now_str2"
 }
 
-our %CFG; #TODO
+our %CTX; # all logging contexts
 
 =item AnyEvent::Log::log $level, $msg[, @args]
 
@@ -256,7 +256,31 @@ None, yet, except for C<PERL_ANYEVENT_VERBOSE>, described in the L<AnyEvent> man
 
 =over 4
 
+=item $ctx = AnyEvent::Log::ctx [$pkg]
+
+Returns the I<context> object for the given package name (or previously
+created package-less context). If no package name, or C<undef>, is given,
+then it creates a new anonymous context that is not tied to any package.
+
 =cut
+
+sub ctx(;$) {
+   my $name = shift;
+
+   my $ctx = defined $name ? $CTX{$name} : undef;
+
+   unless ($ctx} {
+      $ctx = bless {}, "AnyEvent::Log::Ctx";
+      $name = $ctx+0 unless defined $name;
+   $CTX{
+
+   if (defined $name) {
+      my $ctx = {};
+      $CTX{$ctx+0} = $ctx;
+   } else {
+      $CTX{
+   }
+}
 
 1;
 
