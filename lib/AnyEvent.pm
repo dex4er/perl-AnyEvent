@@ -1129,7 +1129,7 @@ The following is a non-exhaustive list of additional modules that use
 AnyEvent as a client and can therefore be mixed easily with other
 AnyEvent modules and other event loops in the same program. Some of the
 modules come as part of AnyEvent, the others are available via CPAN (see
-L<http://search.cpan.org/search?m=module&q=anyevent%3A%3A*1> for
+L<http://search.cpan.org/search?m=module&q=anyevent%3A%3A*> for
 a longer non-exhaustive list), and the list is heavily biased towards
 modules of the AnyEvent author himself :)
 
