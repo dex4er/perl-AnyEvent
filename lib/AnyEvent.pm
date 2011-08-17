@@ -1419,7 +1419,7 @@ sub detect() {
       AnyEvent::Debug::wrap ($ENV{PERL_ANYEVENT_DEBUG_WRAP});
    }
 
-   if (exists $ENV{PERL_ANYEVENT_DEBUG_SHELL}) {
+   if (length $ENV{PERL_ANYEVENT_DEBUG_SHELL}) {
       require AnyEvent::Socket;
       require AnyEvent::Debug;
 

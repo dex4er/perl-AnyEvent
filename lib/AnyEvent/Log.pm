@@ -39,6 +39,7 @@ use Carp ();
 use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
+use AnyEvent::Util ();
 
 our ($now_int, $now_str1, $now_str2);
 
@@ -52,6 +53,8 @@ sub ft($) {
 
    "$now_str1$f$now_str2"
 }
+
+our %CFG; #TODO
 
 =item AnyEvent::Log::log $level, $msg[, @args]
 
@@ -68,8 +71,10 @@ C<$msg> is interpreted as an sprintf format string.
 The C<$msg> should not end with C<\n>, but may if that is convenient for
 you. Also, multiline messages are handled properly.
 
-In addition, for possible future expansion, C<$msg> must not start with an
-angle bracket (C<< < >>).
+Last not least, C<$msg> might be a code reference, in which case it is
+supposed to return the message. It will be called only then the message
+actually gets logged, which is useful if it is costly to create the
+message in the first place.
 
 Whether the given message will be logged depends on the maximum log level
 and the caller's package.
@@ -77,6 +82,18 @@ and the caller's package.
 Note that you can (and should) call this function as C<AnyEvent::log> or
 C<AE::log>, without C<use>-ing this module if possible, as those functions
 will laod the logging module on demand only.
+
+Example: log something at error level.
+
+   AE::log error => "something";
+
+Example: use printf-formatting.
+
+   AE::log info => "%5d %-10.10s %s", $index, $category, $msg;
+
+Example: only generate a costly dump when the message is actually being logged.
+
+   AE::log debug => sub { require Data::Dump; Data::Dump::dump \%cache };
 
 =cut
 
@@ -95,8 +112,8 @@ our %STR2LEVEL = (
 
 our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 
-sub log($$;@) {
-   my ($targ, $msg, @args) = @_;
+sub _log {
+   my ($pkg, $targ, $msg, @args) = @_;
 
    my $level = ref $targ ? die "Can't use reference as logging level (yet)"
              : $targ > 0 && $targ <= 9 ? $targ+0
@@ -104,15 +121,14 @@ sub log($$;@) {
 
    return if $level > $AnyEvent::VERBOSE;
 
-   my $pkg = (caller)[0];
-
+   $msg = $msg->() if ref $msg;
    $msg = sprintf $msg, @args if @args;
    $msg =~ s/\n$//;
 
    # now we have a message, log it
    #TODO: could do LOTS of stuff here, and should, at least in some later version
 
-   $msg = sprintf "%5s (%s) %s", $LEVEL2STR[$level], $pkg, $msg;
+   $msg = sprintf "%5s %s: %s", $LEVEL2STR[$level], $pkg, $msg;
    my $pfx = ft AE::now;
 
    for (split /\n/, $msg) {
@@ -123,7 +139,104 @@ sub log($$;@) {
    exit 1 if $level <= 1;
 }
 
+sub log($$;@) {
+   _log +(caller)[0], @_;
+}
+
 *AnyEvent::log = *AE::log = \&log;
+
+=item $logger = AnyEvent::Log::logger $level[, \$enabled]
+
+Creates a code reference that, when called, acts as if the
+C<AnyEvent::Log::log> function was called at this point with the givne
+level. C<$logger> is passed a C<$msg> and optional C<@args>, just as with
+the C<AnyEvent::Log::log> function:
+
+   my $debug_log = AnyEvent::Log::logger "debug";
+
+   $debug_log->("debug here");
+   $debug_log->("%06d emails processed", 12345);
+   $debug_log->(sub { $obj->as_string });
+
+The idea behind this function is to decide whether to log before actually
+logging - when the C<logger> function is called once, but the returned
+logger callback often, then this can be a tremendous speed win.
+
+Despite this speed advantage, changes in logging configuration will
+still be reflected by the logger callback, even if configuration changes
+I<after> it was created.
+
+To further speed up logging, you can bind a scalar variable to the logger,
+which contains true if the logger should be called or not - if it is
+false, calling the logger can be safely skipped. This variable will be
+updated as long as C<$logger> is alive.
+
+Full example:
+
+   # near the init section
+   use AnyEvent::Log;
+
+   my $debug_log = AnyEvent:Log::logger debug => \my $debug;
+
+   # and later in your program
+   $debug_log->("yo, stuff here") if $debug;
+
+   $debug and $debug_log->("123");
+
+Note: currently the enabled var is always true - that will be fixed in a
+future version :)
+
+=cut
+
+our %LOGGER;
+
+# re-assess logging status for all loggers
+sub _reassess {
+   for (@_ ? $LOGGER{$_[0]} : values %LOGGER) {
+      my ($pkg, $level, $renabled) = @$_;
+
+      # to detetc whether a message would be logged, we # actually
+      # try to log one and die. this isn't # fast, but we can be
+      # sure that the logging decision is correct :)
+
+      $$renabled = !eval {
+         local $SIG{__DIE__};
+
+         _log $pkg, $level, sub { die };
+
+         1
+      };
+
+      $$renabled = 1; # TODO
+   }
+}
+
+sub logger($;$) {
+   my ($level, $renabled) = @_;
+
+   $renabled ||= \my $enabled;
+   my $pkg = (caller)[0];
+
+   $$renabled = 1;
+
+   my $logger = [$pkg, $level, $renabled];
+
+   $LOGGER{$logger+0} = $logger;
+
+   _reassess $logger+0;
+
+   my $guard = AnyEvent::Util::guard {
+      # "clean up"
+      delete $LOGGER{$logger+0};
+   };
+
+   sub {
+      $guard if 0; # keep guard alive, but don't cause runtime overhead
+
+      _log $pkg, $level, @_
+         if $$renabled;
+   }
+}
 
 #TODO
 

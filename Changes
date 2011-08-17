@@ -3,12 +3,12 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 
 TODO: AnyEvent::Log
-6.01
-	- INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
-          the TTL as fourth element - this affects ->resolve directly,
-          and ->request and ->dns_unpack indirectly. Convenience functions
-          such as AnyEvent::DNS::{a,txt,mx,srv} are not affected, neither
-          is AnyEvent::Socket.
+6.01 
+        - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
+          the TTL as fourth element - this affects ->resolve, ->request
+          and ->dns_unpack indirectly. Convenience functions such as
+          AnyEvent::DNS::{a,txt,mx,srv} are not affected, neither is
+          AnyEvent::Socket.
         - INCOMPATIBLE CHANGE: backend authors now should not implement
           one_event or loop, but instead the AnyEvent::CondVar::_wait and _poll
           methods.
