@@ -1058,6 +1058,9 @@ Log the given C<$msg> at the given C<$level>.
 Loads AnyEvent::Log on first use and calls C<AnyEvent::Log::log> -
 consequently, look at the L<AnyEvent::Log> documentation for details.
 
+If you want to sprinkle loads of logging calls around your code, consider
+creating a logger callback with the C<AnyEvent::Log::logger< function.
+
 =back
 
 =head1 WHAT TO DO IN A MODULE
@@ -1410,6 +1413,8 @@ sub detect() {
 
    _isa_set;
 
+   # we're officially open!
+
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       require AnyEvent::Strict;
    }
@@ -1429,6 +1434,9 @@ sub detect() {
       my ($host, $service) = AnyEvent::Socket::parse_hostport ($shell);
       $AnyEvent::Debug::SHELL = AnyEvent::Debug::shell ($host, $service);
    }
+
+   # now the anyevent environment is set up as the user told us to, so
+   # call the actual user code - post detects
 
    (shift @post_detect)->() while @post_detect;
    undef @post_detect;
