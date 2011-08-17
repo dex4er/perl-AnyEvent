@@ -1059,7 +1059,7 @@ Loads AnyEvent::Log on first use and calls C<AnyEvent::Log::log> -
 consequently, look at the L<AnyEvent::Log> documentation for details.
 
 If you want to sprinkle loads of logging calls around your code, consider
-creating a logger callback with the C<AnyEvent::Log::logger< function.
+creating a logger callback with the C<AnyEvent::Log::logger> function.
 
 =back
 

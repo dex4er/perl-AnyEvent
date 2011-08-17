@@ -34,6 +34,8 @@ use AnyEvent::Util ();
 use AnyEvent::Socket ();
 use AnyEvent::Log ();
 
+our ($TRACE_LOGGER, $TRACE_ENABLED);
+
 # cache often-used strings, purely to save memory, at the expense of speed
 our %STRCACHE;
 
@@ -182,6 +184,7 @@ EOF
    }
 
    sub v {
+      #TODO
       $AnyEvent::VERBOSE = @_ ? shift : $AnyEvent::VERBOSE ? 0 : 9;
 
       "verbosity level now $AnyEvent::VEBROSE"
@@ -237,6 +240,7 @@ sub wrap(;$) {
 
    if ($AnyEvent::MODEL) {
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
+         $TRACE_LOGGER = AnyEvent::Log::logger trace => \$TRACE_ENABLED;
          AnyEvent::_isa_hook 0 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
       } elsif (!$WRAP_LEVEL && $PREV_LEVEL) {
@@ -419,8 +423,7 @@ sub _reset {
                unless $TRACE_LEVEL;
 
             local $TRACE_CUR  = $w;
-            AE::log 9 => "enter $TRACE_CUR"
-               if $AnyEvent::VERBOSE >= 9;
+            $TRACE_LOGGER->("enter $TRACE_CUR") if $TRACE_ENABLED;
             eval {
                local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
                &$cb;
@@ -430,8 +433,7 @@ sub _reset {
                   if @{ $w->{error} } < 10;
                AE::log error => "$TRACE_CUR $@";
             }
-            AE::log 9 => "leave $TRACE_CUR"
-               if $AnyEvent::VERBOSE >= 9;
+            $TRACE_LOGGER->("leave $TRACE_CUR") if $TRACE_ENABLED;
          };
 
          $self = bless {
@@ -455,8 +457,7 @@ sub _reset {
          Scalar::Util::weaken ($w = $self);
          Scalar::Util::weaken ($AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $self} = $self);
 
-         AE::log trace => "creat $w"
-            if $AnyEvent::VERBOSE >= 9;
+         $TRACE_LOGGER->("creat $w") if $TRACE_ENABLED;
 
          $self
       };
@@ -545,8 +546,7 @@ sub verbose {
 }
 
 sub DESTROY {
-   AE::log trace => "dstry $_[0]"
-      if $AnyEvent::VERBOSE >= 9;
+   $TRACE_LOGGER->("dstry $_[0]") if $TRACE_ENABLED;
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }

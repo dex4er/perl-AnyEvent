@@ -110,6 +110,11 @@ our %STR2LEVEL = (
    trace    => 9,
 );
 
+sub now () { time }
+AnyEvent::post_detect {
+   *now = \&AE::now;
+};
+
 our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 
 sub _log {
@@ -119,17 +124,20 @@ sub _log {
              : $targ > 0 && $targ <= 9 ? $targ+0
              : $STR2LEVEL{$targ} || Carp::croak "$targ: not a valid logging level, caught";
 
-   return if $level > $AnyEvent::VERBOSE;
+   #TODO: find actual targets, see if we even have to log
+
+   return unless $level <= $AnyEvent::VERBOSE;
 
    $msg = $msg->() if ref $msg;
    $msg = sprintf $msg, @args if @args;
    $msg =~ s/\n$//;
 
    # now we have a message, log it
-   #TODO: could do LOTS of stuff here, and should, at least in some later version
 
-   $msg = sprintf "%5s %s: %s", $LEVEL2STR[$level], $pkg, $msg;
-   my $pfx = ft AE::now;
+   # TODO: writers/processors/filters/formatters?
+
+   $msg = sprintf "%-5s %s: %s", $LEVEL2STR[$level], $pkg, $msg;
+   my $pfx = ft now;
 
    for (split /\n/, $msg) {
       printf STDERR "$pfx $_\n";
