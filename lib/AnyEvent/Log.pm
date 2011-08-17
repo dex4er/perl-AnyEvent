@@ -253,33 +253,40 @@ sub logger($;$) {
 =head1 CONFIGURATION FUNCTIONALITY
 
 None, yet, except for C<PERL_ANYEVENT_VERBOSE>, described in the L<AnyEvent> manpage.
+#TODO
 
 =over 4
 
-=item $ctx = AnyEvent::Log::ctx [$pkg]
+=item $ctx = AnyEvent::Log::cfg [$pkg]
 
-Returns the I<context> object for the given package name (or previously
-created package-less context). If no package name, or C<undef>, is given,
-then it creates a new anonymous context that is not tied to any package.
+Returns a I<config> object for the given package name (or previously
+created package-less configuration). If no package name, or C<undef>, is
+given, then it creates a new anonymous context that is not tied to any
+package.
 
 =cut
 
-sub ctx(;$) {
+sub cfg(;$) {
    my $name = shift;
 
    my $ctx = defined $name ? $CTX{$name} : undef;
 
-   unless ($ctx} {
+   unless ($ctx) {
       $ctx = bless {}, "AnyEvent::Log::Ctx";
-      $name = $ctx+0 unless defined $name;
-   $CTX{
-
-   if (defined $name) {
-      my $ctx = {};
-      $CTX{$ctx+0} = $ctx;
-   } else {
-      $CTX{
+      $name = -$ctx unless defined $name;
+      $ctx->{name} = $name;
+      $CTX{$name} = $ctx;
    }
+
+   $ctx
+}
+
+package AnyEvent::Log::Ctx;
+
+sub DESTROY {
+   # if only one member is remaining (name!) then delete this context
+   delete $CTX{$_[0]{name}}
+      if 1 == scalar keys %{ $_[0] };
 }
 
 1;

@@ -70,9 +70,10 @@ counterparts when using L<AnyEvent::Strict> or L<AnyEvent::Debug>::wrap.
 
 =head2 FUNCTIONS
 
-This section briefly describes the alternative watcher
-constructors. Semantics are not described here; please
-refer to the L<AnyEvent> manpage for the details.
+This section briefly describes the alternative watcher constructors and
+other functions available inside the C<AE> namespace. Semantics are not
+described here; please refer to the description of the function or method
+with the same name in the L<AnyEvent> manpage for the details.
 
 =over 4
 
