@@ -33,7 +33,8 @@ TODO: check for #TODO
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
           watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
         - lots of new AnyEvent::Debug functionality.
-        - AnyEvent::Strict now checks for modifications $_ by the callback.
+        - AnyEvent::Strict now checks for modifications $_ by the callback
+          (by setting it to readonly while executing the callback, if possible).
         - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
           Invest extra overhead to work around this peculiar behaviour.
         - split the pure perl backend into a loop module and an impl

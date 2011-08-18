@@ -28,22 +28,38 @@ use Carp qw(croak);
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
-AnyEvent::_isa_hook 1 => "AnyEvent::Strict", 1;
+AnyEvent::_isa_hook 0 => "AnyEvent::Strict", 1;
 
-my $magic = [];
+BEGIN {
+   if (defined &Internals::SvREADONLY) {
+      # readonly available (at least 5.8.9+, working better in 5.10.1+)
+      *wrap = sub {
+         my $cb = shift;
 
-sub wrap {
-   my $cb = shift;
+         sub {
+            Internals::SvREADONLY $_, 1;
+            &$cb;
+            Internals::SvREADONLY $_, 0;
+         }
+      };
+   } else {
+      # or not :/
+      my $magic = []; # a unique magic value
 
-   sub {
-      local $_ = $magic;
+      *wrap = sub {
+         my $cb = shift;
 
-      &$cb;
+         sub {
+            local $_ = $magic;
 
-      if (!ref $_ || $_ != $magic) {
-         require AnyEvent::Debug;
-         die "callback $cb (" . AnyEvent::Debug::cb2str ($cb) . ") modified \$_ without restoring it.\n";
-      }
+            &$cb;
+
+            if (!ref $_ || $_ != $magic) {
+               require AnyEvent::Debug;
+               die "callback $cb (" . AnyEvent::Debug::cb2str ($cb) . ") modified \$_ without restoring it.\n";
+            }
+         }
+      };
    }
 }
 

@@ -241,10 +241,10 @@ sub wrap(;$) {
    if ($AnyEvent::MODEL) {
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
          $TRACE_LOGGER = AnyEvent::Log::logger trace => \$TRACE_ENABLED;
-         AnyEvent::_isa_hook 0 => "AnyEvent::Debug::Wrap", 1;
+         AnyEvent::_isa_hook 1 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
       } elsif (!$WRAP_LEVEL && $PREV_LEVEL) {
-         AnyEvent::_isa_hook 0 => undef;
+         AnyEvent::_isa_hook 1 => undef;
       }
    } else {
       $POST_DETECT ||= AnyEvent::post_detect {
