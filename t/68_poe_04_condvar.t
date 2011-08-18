@@ -5,7 +5,7 @@ use AnyEvent;
          $^W = 0;
       
 
-$| = 1; print "1..21\n";
+$| = 1; print "1..28\n";
 
 print "ok 1\n";
 
@@ -72,5 +72,27 @@ print "ok 1\n";
    print "ok 20\n";
    $cv->recv;
    print "ok 21\n";
+}
+
+{
+   my $cv = AE::cv {
+      print +($_[0]->recv)[0] == 6 ? "" : "not ", "ok 27\n";
+   };
+
+   print "ok 22\n";
+
+   $cv->begin (sub {
+      print "ok 26\n";
+      $_[0](6);
+   });
+
+   print "ok 23\n";
+   $cv->begin;
+   print "ok 24\n";
+   $cv->end;
+   print "ok 25\n";
+   $cv->end;
+
+   print "ok 28\n";
 }
 

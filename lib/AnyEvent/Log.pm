@@ -25,9 +25,9 @@ or package groups.
 =head1 LOG FUNCTIONS
 
 These functions allow you to log messages. They always use the caller's
-package as a "logging module/source". Also, The main logging function is
-easily available as C<AnyEvent::log> or C<AE::log> when the C<AnyEvent>
-module is loaded.
+package as a "logging module/source". Also, the main logging function is
+callable as C<AnyEvent::log> or C<AE::log> when the C<AnyEvent> module is
+loaded.
 
 =over 4
 

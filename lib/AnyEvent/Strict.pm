@@ -160,7 +160,7 @@ sub condvar {
    croak "AnyEvent->condvar called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   $class->SUPER::condvar (@_, @cb);
+   $class->SUPER::condvar (@cb);
 }
 
 sub time {
