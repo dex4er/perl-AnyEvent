@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::Socket - useful IPv4 and IPv6 stuff.
+AnyEvent::Socket - useful IPv4 and IPv6 stuff. also unix domain sockets. and stuff.
 
 =head1 SYNOPSIS
 
