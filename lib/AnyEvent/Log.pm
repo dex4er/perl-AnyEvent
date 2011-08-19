@@ -4,7 +4,24 @@ AnyEvent::Log - simple logging "framework"
 
 =head1 SYNOPSIS
 
+   # simple use
+   use AnyEvent;
+
+   AE::log debug => "hit my knee";
+   AE::log warn  => "it's a bit too hot";
+   AE::log error => "the flag was false!";
+   AE::log fatal => "the bit toggled! run!";
+
+   # complex use
    use AnyEvent::Log;
+
+   my $tracer = AnyEvent::Log::logger trace => \$my $trace;
+
+   $tracer->("i am here") if $trace;
+   $tracer->(sub { "lots of data: " . Dumper $self }) if $trace;
+
+   #TODO: config
+   #TODO: ctx () becomes caller[0]...
 
 =head1 DESCRIPTION
 
@@ -56,6 +73,21 @@ sub ft($) {
 
 our %CTX; # all logging contexts
 
+my $default_log_cb = sub { 0 };
+
+# creates a default package context object for the given package
+sub _pkg_ctx($) {
+   my $ctx = bless [$_[0], 0, {}, $default_log_cb], "AnyEvent::Log::Ctx";
+
+   # link "parent" package
+   my $pkg = $_[0] =~ /^(.+)::/ ? $1 : "";
+
+   $pkg = $CTX{$pkg} ||= &_pkg_ctx ($pkg);
+   $ctx->[2]{$pkg+0} = $pkg;
+
+   $ctx
+}
+
 =item AnyEvent::Log::log $level, $msg[, @args]
 
 Requests logging of the given C<$msg> with the given log level (1..9).
@@ -80,8 +112,13 @@ Whether the given message will be logged depends on the maximum log level
 and the caller's package.
 
 Note that you can (and should) call this function as C<AnyEvent::log> or
-C<AE::log>, without C<use>-ing this module if possible, as those functions
-will laod the logging module on demand only.
+C<AE::log>, without C<use>-ing this module if possible (i.e. you don't
+need any additional functionality), as those functions will load the
+logging module on demand only. They are also much shorter to write.
+
+Also, if you otpionally generate a lot of debug messages (such as when
+tracing some code), you should look into using a logger callback and a
+boolean enabler (see C<logger>, below).
 
 Example: log something at error level.
 
@@ -117,38 +154,58 @@ AnyEvent::post_detect {
 
 our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 
+# time, ctx, level, msg
+sub _format($$$$) {
+   my $pfx = ft $_[0];
+
+   join "",
+      map "$pfx $_\n",
+         split /\n/,
+            sprintf "%-5s %s: %s", $LEVEL2STR[$_[2]], $_[1][0], $_[3]
+}
+
 sub _log {
-   my ($pkg, $targ, $msg, @args) = @_;
+   my ($ctx, $level, $format, @args) = @_;
 
-   my $level = ref $targ ? die "Can't use reference as logging level (yet)"
-             : $targ > 0 && $targ <= 9 ? $targ+0
-             : $STR2LEVEL{$targ} || Carp::croak "$targ: not a valid logging level, caught";
+   $level = $level > 0 && $level <= 9 ? $level+0 : $STR2LEVEL{$level} || Carp::croak "$level: not a valid logging level, caught";
 
-   #TODO: find actual targets, see if we even have to log
+   my $mask = 1 << $level;
+   my $now = AE::now;
 
-   return unless $level <= $AnyEvent::VERBOSE;
+   my (@ctx, $did_format, $fmt);
 
-   $msg = $msg->() if ref $msg;
-   $msg = sprintf $msg, @args if @args;
-   $msg =~ s/\n$//;
+   do {
+      if ($ctx->[1] & $mask) {
+         # logging target found
 
-   # now we have a message, log it
+         # get raw message
+         unless ($did_format) {
+            $format = $format->() if ref $format;
+            $format = sprintf $format, @args if @args;
+            $format =~ s/\n$//;
+            $did_format = 1;
+         };
 
-   # TODO: writers/processors/filters/formatters?
+         # format msg
+         my $str = $ctx->[4]
+            ? $ctx->[4]($now, $_[0], $level, $format)
+            : $fmt ||= _format $now, $_[0], $level, $format;
 
-   $msg = sprintf "%-5s %s: %s", $LEVEL2STR[$level], $pkg, $msg;
-   my $pfx = ft now;
+         $ctx->[3]($str)
+            and next;
+      }
 
-   for (split /\n/, $msg) {
-      printf STDERR "$pfx $_\n";
-      $pfx = "\t";
-   }
+      # not consume - push parent contexts
+      push @ctx, values %{ $ctx->[2] };
+   } while $ctx = pop @ctx;
 
    exit 1 if $level <= 1;
 }
 
 sub log($$;@) {
-   _log +(caller)[0], @_;
+   _log
+      $CTX{ (caller)[0] } ||= _pkg_ctx +(caller)[0],
+      @_;
 }
 
 *AnyEvent::log = *AE::log = \&log;
@@ -201,7 +258,7 @@ our %LOGGER;
 # re-assess logging status for all loggers
 sub _reassess {
    for (@_ ? $LOGGER{$_[0]} : values %LOGGER) {
-      my ($pkg, $level, $renabled) = @$_;
+      my ($ctx, $level, $renabled) = @$_;
 
       # to detetc whether a message would be logged, we # actually
       # try to log one and die. this isn't # fast, but we can be
@@ -210,7 +267,7 @@ sub _reassess {
       $$renabled = !eval {
          local $SIG{__DIE__};
 
-         _log $pkg, $level, sub { die };
+         _log $ctx, $level, sub { die };
 
          1
       };
@@ -219,15 +276,14 @@ sub _reassess {
    }
 }
 
-sub logger($;$) {
-   my ($level, $renabled) = @_;
+sub _logger($;$) {
+   my ($ctx, $level, $renabled) = @_;
 
    $renabled ||= \my $enabled;
-   my $pkg = (caller)[0];
 
    $$renabled = 1;
 
-   my $logger = [$pkg, $level, $renabled];
+   my $logger = [$ctx, $level, $renabled];
 
    $LOGGER{$logger+0} = $logger;
 
@@ -241,9 +297,15 @@ sub logger($;$) {
    sub {
       $guard if 0; # keep guard alive, but don't cause runtime overhead
 
-      _log $pkg, $level, @_
+      _log $ctx, $level, @_
          if $$renabled;
    }
+}
+
+sub logger($;$) {
+   _logger
+      $CTX{ (caller)[0] } ||= _pkg_ctx +(caller)[0],
+      @_
 }
 
 #TODO
@@ -253,41 +315,237 @@ sub logger($;$) {
 =head1 CONFIGURATION FUNCTIONALITY
 
 None, yet, except for C<PERL_ANYEVENT_VERBOSE>, described in the L<AnyEvent> manpage.
+
+#TODO: wahst a context
 #TODO
 
 =over 4
 
-=item $ctx = AnyEvent::Log::cfg [$pkg]
+=item $ctx = AnyEvent::Log::ctx [$pkg]
 
-Returns a I<config> object for the given package name (or previously
-created package-less configuration). If no package name, or C<undef>, is
-given, then it creates a new anonymous context that is not tied to any
-package.
+Returns a I<config> object for the given package name.
+
+If no package name is given, returns the context for the current perl
+package (i.e. the same context as a C<AE::log> call would use).
+
+If C<undef> is given, then it creates a new anonymous context that is not
+tied to any package and is destroyed when no longer referenced.
 
 =cut
 
-sub cfg(;$) {
-   my $name = shift;
+sub ctx(;$) {
+   my $pkg = @_ ? shift : (caller)[0];
 
-   my $ctx = defined $name ? $CTX{$name} : undef;
+   ref $pkg
+      ? $pkg
+      : defined $pkg
+         ? $CTX{$pkg} ||= AnyEvent::Log::_pkg_ctx $pkg
+         : bless [undef, 0, undef, $default_log_cb], "AnyEvent::Log::Ctx"
+}
 
-   unless ($ctx) {
-      $ctx = bless {}, "AnyEvent::Log::Ctx";
-      $name = -$ctx unless defined $name;
-      $ctx->{name} = $name;
-      $CTX{$name} = $ctx;
-   }
-
-   $ctx
+# create default root context
+{
+   my $root = ctx undef;
+   $root->[0] = "";
+   $root->title ("default");
+   $root->level ($AnyEvent::VERBOSE);
+   $root->log_cb (sub {
+      print STDERR shift;
+      0
+   });
+   $CTX{""} = $root;
 }
 
 package AnyEvent::Log::Ctx;
 
-sub DESTROY {
-   # if only one member is remaining (name!) then delete this context
-   delete $CTX{$_[0]{name}}
-      if 1 == scalar keys %{ $_[0] };
+#       0       1          2        3        4
+# [$title, $level, %$parents, &$logcb, &$fmtcb]
+
+=item $ctx->title ([$new_title])
+
+Returns the title of the logging context - this is the package name, for
+package contexts, and a user defined string for all others.
+
+If C<$new_title> is given, then it replaces the package name or title.
+
+=cut
+
+sub title {
+   $_[0][0] = $_[1] if @_ > 1;
+   $_[0][0]
 }
+
+=item $ctx->levels ($level[, $level...)
+
+Enables logging fot the given levels and disables it for all others.
+
+=item $ctx->level ($level)
+
+Enables logging for the given level and all lower level (higher priority)
+ones. Specifying a level of C<0> or C<off> disables all logging for this
+level.
+
+Example: log warnings, errors and higher priority messages.
+
+   $ctx->level ("warn");
+   $ctx->level (5); # same thing, just numeric
+
+=item $ctx->enable ($level[, $level...])
+
+Enables logging for the given levels, leaving all others unchanged.
+
+=item $ctx->disable ($level[, $level...])
+
+Disables logging for the given levels, leaving all others unchanged.
+
+=cut
+
+sub _lvl_lst {
+   map { $_ > 0 && $_ <= 9 ? $_+0 : $STR2LEVEL{$_} || Carp::croak "$_: not a valid logging level, caught" }
+      @_
+}
+
+our $NOP_CB = sub { 0 };
+
+sub levels {
+   my $ctx = shift;
+   $ctx->[1] = 0;
+   $ctx->[1] |= 1 << $_
+      for &_lvl_lst;
+   AnyEvent::Log::_reassess;
+}
+
+sub level {
+   my $ctx = shift;
+   my $lvl =  $_[0] =~ /^(?:0|off|none)$/ ? 0 : (_lvl_lst $_[0])[0];
+   $ctx->[1] =  ((1 << $lvl) - 1) << 1;
+   AnyEvent::Log::_reassess;
+}
+
+sub enable {
+   my $ctx = shift;
+   $ctx->[1] |= 1 << $_
+      for &_lvl_lst;
+   AnyEvent::Log::_reassess;
+}
+
+sub disable {
+   my $ctx = shift;
+   $ctx->[1] &= ~(1 << $_)
+      for &_lvl_lst;
+   AnyEvent::Log::_reassess;
+}
+
+=item $ctx->attach ($ctx2[, $ctx3...])
+
+Attaches the given contexts as parents to this context. It is not an error
+to add a context twice (the second add will be ignored).
+
+A context can be specified either as package name or as a context object.
+
+=item $ctx->detach ($ctx2[, $ctx3...])
+
+Removes the given parents from this context - it's not an error to attempt
+to remove a context that hasn't been added.
+
+A context can be specified either as package name or as a context object.
+
+=cut
+
+sub attach {
+   my $ctx = shift;
+
+   $ctx->[2]{$_+0} = $_
+      for map { AnyEvent::Log::ctx $_ } @_;
+}
+
+sub detach {
+   my $ctx = shift;
+
+   delete $ctx->[2]{$_+0}
+      for map { AnyEvent::Log::ctx $_ } @_;
+}
+
+=item $ctx->log_cb ($cb->($str))
+
+Replaces the logging callback on the context (C<undef> disables the
+logging callback).
+
+The logging callback is responsible for handling formatted log messages
+(see C<fmt_cb> below) - normally simple text strings that end with a
+newline (and are possibly multiline themselves).
+
+It also has to return true iff it has consumed the log message, and false
+if it hasn't. Consuming a message means that it will not be sent to any
+parent context. When in doubt, return C<0> from your logging callback.
+
+Example: a very simple logging callback, simply dump the message to STDOUT
+and do not consume it.
+
+   $ctx->log_cb (sub { print STDERR shift; 0 });
+
+=item $ctx->fmt_cb ($fmt_cb->($timestamp, $ctx, $level, $message))
+
+Replaces the fornatting callback on the cobntext (C<undef> restores the
+default formatter).
+
+The callback is passed the (possibly fractional) timestamp, the original
+logging context, the (numeric) logging level and the raw message string and needs to
+return a formatted log message. In most cases this will be a string, but
+it could just as well be an array reference that just stores the values.
+
+Example: format just the raw message, with numeric log level in angle
+brackets.
+
+   $ctx->fmt_cb (sub {
+      my ($time, $ctx, $lvl, $msg) = @_;
+
+      "<$lvl>$msg\n"
+   });
+
+Example: return an array reference with just the log values, and use
+C<PApp::SQL::sql_exec> to store the emssage in a database.
+
+   $ctx->fmt_cb (sub { \@_ });
+   $ctx->log_cb (sub {
+      my ($msg) = @_;
+
+      sql_exec "insert into log (when, subsys, prio, msg) values (?, ?, ?, ?)",
+               $msg->[0] + 0,
+               "$msg->[1]",
+               $msg->[2] + 0,
+               "$msg->[3]";
+
+      0
+   });
+
+=cut
+
+sub log_cb {
+   my ($ctx, $cb) = @_;
+
+   $ctx->[3] = $cb || $default_log_cb;
+}
+
+sub fmt_cb {
+   my ($ctx, $cb) = @_;
+
+   $ctx->[4] = $cb;
+}
+
+=item $ctx->log ($level, $msg[, @params])
+
+Same as C<AnyEvent::Log::log>, but uses the given context as log context.
+
+=item $logger = $ctx->logger ($level[, \$enabled])
+
+Same as C<AnyEvent::Log::logger>, but uses the given context as log
+context.
+
+=cut
+
+*log    = \&AnyEvent::Log::_log;
+*logger = \&AnyEvent::Log::_logger;
 
 1;
 
