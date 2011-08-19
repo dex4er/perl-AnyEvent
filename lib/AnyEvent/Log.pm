@@ -12,7 +12,7 @@ AnyEvent::Log - simple logging "framework"
    AE::log error => "the flag was false!";
    AE::log fatal => "the bit toggled! run!";
 
-   # complex use
+   # "complex" use
    use AnyEvent::Log;
 
    my $tracer = AnyEvent::Log::logger trace => \$my $trace;
@@ -20,8 +20,23 @@ AnyEvent::Log - simple logging "framework"
    $tracer->("i am here") if $trace;
    $tracer->(sub { "lots of data: " . Dumper $self }) if $trace;
 
-   #TODO: config
-   #TODO: ctx () becomes caller[0]...
+   # configuration
+
+   # set logging for this package to maximum
+   AnyEvent::Log::ctx->level ("all");
+
+   # set logging globally to anything below debug
+   (AnyEvent::Log::ctx "")->level ("notice");
+
+   # see also EXAMPLES, below
+
+   # disable logging for package "AnyEvent" and all packages below it
+   AnyEvent->AnyEvent::Log::ctx->level (0);
+
+   # log everything below debug to a file, for the whole program
+   my $ctx = AnyEvent::Log::ctx;
+   $ctx->log_cb (sub { print FILE shift; 0 });
+   (AnyEvent::Log::ctx "")->add ($ctx);
 
 =head1 DESCRIPTION
 
@@ -38,6 +53,11 @@ something like:
 
    use AnyEvent;
    (AnyEvent::Log::ctx "")->level ("info");
+
+The design goal behind this module was to keep it simple (and small),
+but make it powerful enough to be potentially useful for any module, and
+extensive enough for the most common tasks, such as logging to multiple
+targets, or being able to log into a database.
 
 =head1 LOGGING FUNCTIONS
 
@@ -73,11 +93,9 @@ sub ft($) {
 
 our %CTX; # all logging contexts
 
-my $default_log_cb = sub { 0 };
-
 # creates a default package context object for the given package
 sub _pkg_ctx($) {
-   my $ctx = bless [$_[0], 0, {}, $default_log_cb], "AnyEvent::Log::Ctx";
+   my $ctx = bless [$_[0], (1 << 10) - 1 - 1, {}], "AnyEvent::Log::Ctx";
 
    # link "parent" package
    my $pkg = $_[0] =~ /^(.+)::/ ? $1 : "";
@@ -148,6 +166,7 @@ our %STR2LEVEL = (
 );
 
 sub now () { time }
+
 AnyEvent::post_detect {
    *now = \&AE::now;
 };
@@ -157,11 +176,14 @@ our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 # time, ctx, level, msg
 sub _format($$$$) {
    my $pfx = ft $_[0];
+   my @res;
 
-   join "",
-      map "$pfx $_\n",
-         split /\n/,
-            sprintf "%-5s %s: %s", $LEVEL2STR[$_[2]], $_[1][0], $_[3]
+   for (split /\n/, sprintf "%-5s %s: %s", $LEVEL2STR[$_[2]], $_[1][0], $_[3]) {
+      push @res, "$pfx $_\n";
+      $pfx = "\t";
+   }
+
+   join "", @res
 }
 
 sub _log {
@@ -170,20 +192,22 @@ sub _log {
    $level = $level > 0 && $level <= 9 ? $level+0 : $STR2LEVEL{$level} || Carp::croak "$level: not a valid logging level, caught";
 
    my $mask = 1 << $level;
-   my $now = AE::now;
 
-   my (@ctx, $did_format, $fmt);
+   my (@ctx, $now, $fmt);
 
    do {
-      if ($ctx->[1] & $mask) {
+      # skip if masked
+      next unless $ctx->[1] & $mask;
+
+      if ($ctx->[3]) {
          # logging target found
 
-         # get raw message
-         unless ($did_format) {
+         # now get raw message, unless we have it already
+         unless ($now) {
             $format = $format->() if ref $format;
             $format = sprintf $format, @args if @args;
             $format =~ s/\n$//;
-            $did_format = 1;
+            $now = AE::now;
          };
 
          # format msg
@@ -195,7 +219,7 @@ sub _log {
             and next;
       }
 
-      # not consume - push parent contexts
+      # not masked, not consume - propagate to parent contexts
       push @ctx, values %{ $ctx->[2] };
    } while $ctx = pop @ctx;
 
@@ -308,8 +332,6 @@ sub logger($;$) {
       @_
 }
 
-#TODO
-
 =back
 
 =head1 LOGGING CONTEXTS
@@ -318,24 +340,27 @@ This module associates every log message with a so-called I<logging
 context>, based on the package of the caller. Every perl package has its
 own logging context.
 
-A logging context has two major responsibilities: logging the message and
-propagating the message to other contexts.
+A logging context has three major responsibilities: filtering, logging and
+propagating the message.
 
-For logging, the context stores a set of logging levels that it
-potentially wishes to log, a formatting callback that takes the timestamp,
-context, level and string emssage and formats it in the way it should be
-logged, and a logging callback, which is responsible for actually logging
-the formatted message and telling C<AnyEvent::Log> whether it has consumed
-the message, or whether it should be propagated.
+For the first purpose, filtering, each context has a set of logging
+levels, called the log level mask. Messages not in the set will be ignored
+by this context (masked).
+
+For logging, the context stores a formatting callback (which takes the
+timestamp, context, level and string message and formats it in the way
+it should be logged) and a logging callback (which is responsible for
+actually logging the formatted message and telling C<AnyEvent::Log>
+whether it has consumed the message, or whether it should be propagated).
 
 For propagation, a context can have any number of attached I<parent
-contexts>. They will be ignored if the logging callback consumes the
-message, but in all other cases, the log message will be passed to all
-parent contexts attached to a context.
+contexts>. Any message that is neither masked by the logging mask nor
+masked by the logging callback returning true will be passed to all parent
+contexts.
 
 =head2 DEFAULTS
 
-By default, all logging contexts have an empty set of log levels, a
+By default, all logging contexts have an full set of log levels ("all"), a
 disabled logging callback and the default formatting callback.
 
 Package contexts have the package name as logging title by default.
@@ -356,7 +381,7 @@ with the empty string) to simply dump all log messages to C<STDERR>,
 and sets it's log level set to all levels up to the one specified by
 C<$ENV{PERL_ANYEVENT_VERBOSE}>.
 
-The effetc of all this is that log messages, by default, wander up to the
+The effect of all this is that log messages, by default, wander up to the
 root context and will be logged to STDERR if their log level is less than
 or equal to C<$ENV{PERL_ANYEVENT_VERBOSE}>.
 
@@ -385,7 +410,7 @@ sub ctx(;$) {
       ? $pkg
       : defined $pkg
          ? $CTX{$pkg} ||= AnyEvent::Log::_pkg_ctx $pkg
-         : bless [undef, 0, undef, $default_log_cb], "AnyEvent::Log::Ctx"
+         : bless [undef, (1 << 10) - 1 - 1], "AnyEvent::Log::Ctx"
 }
 
 # create default root context
@@ -434,22 +459,26 @@ sub title {
 
 =head3 LOGGING LEVELS
 
-The following methods deal with the logging level set associated wiht the log context.
+The following methods deal with the logging level set associated with the
+log context.
 
 The most common method to use is probably C<< $ctx->level ($level) >>,
 which configures the specified and any higher priority levels.
+
+All functions which accept a list of levels also accept the special string
+C<all> which expands to all logging levels.
 
 =over 4
 
 =item $ctx->levels ($level[, $level...)
 
-Enables logging fot the given levels and disables it for all others.
+Enables logging for the given levels and disables it for all others.
 
 =item $ctx->level ($level)
 
 Enables logging for the given level and all lower level (higher priority)
-ones. Specifying a level of C<0> or C<off> disables all logging for this
-level.
+ones. In addition to normal logging levels, specifying a level of C<0> or
+C<off> disables all logging for this level.
 
 Example: log warnings, errors and higher priority messages.
 
@@ -467,8 +496,11 @@ Disables logging for the given levels, leaving all others unchanged.
 =cut
 
 sub _lvl_lst {
-   map { $_ > 0 && $_ <= 9 ? $_+0 : $STR2LEVEL{$_} || Carp::croak "$_: not a valid logging level, caught" }
-      @_
+   map {
+      $_ > 0 && $_ <= 9 ? $_+0
+      : $_ eq "all"     ? (1 .. 9)
+      : $STR2LEVEL{$_} || Carp::croak "$_: not a valid logging level, caught"
+   } @_
 }
 
 our $NOP_CB = sub { 0 };
@@ -483,7 +515,8 @@ sub levels {
 
 sub level {
    my $ctx = shift;
-   my $lvl =  $_[0] =~ /^(?:0|off|none)$/ ? 0 : (_lvl_lst $_[0])[0];
+   my $lvl = $_[0] =~ /^(?:0|off|none)$/ ? 0 : (_lvl_lst $_[0])[-1];
+
    $ctx->[1] =  ((1 << $lvl) - 1) << 1;
    AnyEvent::Log::_reassess;
 }
@@ -549,7 +582,7 @@ sub detach {
 =head3 MESSAGE LOGGING
 
 The following methods configure how the logging context actually does
-the logging (which consists of foratting the message and printing it or
+the logging (which consists of formatting the message and printing it or
 whatever it wants to do with it) and also allows you to log messages
 directly to a context, without going via your package context.
 
@@ -573,9 +606,20 @@ and do not consume it.
 
    $ctx->log_cb (sub { print STDERR shift; 0 });
 
+You can filter messages by having a log callback that simply returns C<1>
+and does not do anything with the message, but this counts as "message
+being logged" and might not be very efficient.
+
+Example: propagate all messages except for log levels "debug" and
+"trace". The messages will still be generated, though, which can slow down
+your program.
+
+   $ctx->levels ("debug", "trace");
+   $ctx->log_cb (sub { 1 }); # do not log, but eat debug and trace messages
+
 =item $ctx->fmt_cb ($fmt_cb->($timestamp, $ctx, $level, $message))
 
-Replaces the fornatting callback on the cobntext (C<undef> restores the
+Replaces the formatting callback on the context (C<undef> restores the
 default formatter).
 
 The callback is passed the (possibly fractional) timestamp, the original
@@ -613,7 +657,7 @@ C<PApp::SQL::sql_exec> to store the emssage in a database.
 sub log_cb {
    my ($ctx, $cb) = @_;
 
-   $ctx->[3] = $cb || $default_log_cb;
+   $ctx->[3] = $cb;
 }
 
 sub fmt_cb {
