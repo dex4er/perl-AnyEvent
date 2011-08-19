@@ -33,13 +33,13 @@ using it from other modules as well.
 
 Remember that the default verbosity level is C<0>, so nothing will be
 logged, ever, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
-before starting your program.#TODO
+before starting your program, or change the logging level at runtime wiht
+something like:
 
-Possible future extensions are to allow custom log targets (where the
-level is an object), log filtering based on package, formatting, aliasing
-or package groups.
+   use AnyEvent;
+   (AnyEvent::Log::ctx "")->level ("info");
 
-=head1 LOG FUNCTIONS
+=head1 LOGGING FUNCTIONS
 
 These functions allow you to log messages. They always use the caller's
 package as a "logging module/source". Also, the main logging function is
@@ -312,21 +312,66 @@ sub logger($;$) {
 
 =back
 
-=head1 CONFIGURATION FUNCTIONALITY
+=head1 LOGGING CONTEXTS
 
-None, yet, except for C<PERL_ANYEVENT_VERBOSE>, described in the L<AnyEvent> manpage.
+This module associates every log message with a so-called I<logging
+context>, based on the package of the caller. Every perl package has its
+own logging context.
 
-#TODO: wahst a context
-#TODO
+A logging context has two major responsibilities: logging the message and
+propagating the message to other contexts.
+
+For logging, the context stores a set of logging levels that it
+potentially wishes to log, a formatting callback that takes the timestamp,
+context, level and string emssage and formats it in the way it should be
+logged, and a logging callback, which is responsible for actually logging
+the formatted message and telling C<AnyEvent::Log> whether it has consumed
+the message, or whether it should be propagated.
+
+For propagation, a context can have any number of attached I<parent
+contexts>. They will be ignored if the logging callback consumes the
+message, but in all other cases, the log message will be passed to all
+parent contexts attached to a context.
+
+=head2 DEFAULTS
+
+By default, all logging contexts have an empty set of log levels, a
+disabled logging callback and the default formatting callback.
+
+Package contexts have the package name as logging title by default.
+
+They have exactly one parent - the context of the "parent" package. The
+parent package is simply defined to be the package name without the last
+component, i.e. C<AnyEvent::Debug::Wrapped> becomes C<AnyEvent::Debug>,
+and C<AnyEvent> becomes the empty string.
+
+Since perl packages form only an approximate hierarchy, this parent
+context can of course be removed.
+
+All other (anonymous) contexts have no parents and an empty title by
+default.
+
+When the module is first loaded, it configures the root context (the one
+with the empty string) to simply dump all log messages to C<STDERR>,
+and sets it's log level set to all levels up to the one specified by
+C<$ENV{PERL_ANYEVENT_VERBOSE}>.
+
+The effetc of all this is that log messages, by default, wander up to the
+root context and will be logged to STDERR if their log level is less than
+or equal to C<$ENV{PERL_ANYEVENT_VERBOSE}>.
+
+=head2 CREATING/FINDING A CONTEXT
 
 =over 4
 
 =item $ctx = AnyEvent::Log::ctx [$pkg]
 
-Returns a I<config> object for the given package name.
+This function creates or returns a logging context (which is an object).
 
-If no package name is given, returns the context for the current perl
-package (i.e. the same context as a C<AE::log> call would use).
+If a package name is given, then the context for that packlage is
+returned. If it is called without any arguments, then the context for the
+callers package is returned (i.e. the same context as a C<AE::log> call
+would use).
 
 If C<undef> is given, then it creates a new anonymous context that is not
 tied to any package and is destroyed when no longer referenced.
@@ -348,7 +393,7 @@ sub ctx(;$) {
    my $root = ctx undef;
    $root->[0] = "";
    $root->title ("default");
-   $root->level ($AnyEvent::VERBOSE);
+   $root->level ($AnyEvent::VERBOSE); undef $AnyEvent::VERBOSE;
    $root->log_cb (sub {
       print STDERR shift;
       0
@@ -356,10 +401,20 @@ sub ctx(;$) {
    $CTX{""} = $root;
 }
 
+=back
+
+=cut
+
 package AnyEvent::Log::Ctx;
 
 #       0       1          2        3        4
 # [$title, $level, %$parents, &$logcb, &$fmtcb]
+
+=head2 CONFIGURING A LOG CONTEXT
+
+The following methods can be used to configure the logging context.
+
+=over 4
 
 =item $ctx->title ([$new_title])
 
@@ -374,6 +429,17 @@ sub title {
    $_[0][0] = $_[1] if @_ > 1;
    $_[0][0]
 }
+
+=back
+
+=head3 LOGGING LEVELS
+
+The following methods deal with the logging level set associated wiht the log context.
+
+The most common method to use is probably C<< $ctx->level ($level) >>,
+which configures the specified and any higher priority levels.
+
+=over 4
 
 =item $ctx->levels ($level[, $level...)
 
@@ -436,6 +502,18 @@ sub disable {
    AnyEvent::Log::_reassess;
 }
 
+=back
+
+=head3 PARENT CONTEXTS
+
+The following methods attach and detach another logging context to a
+logging context.
+
+Log messages are propagated to all parent contexts, unless the logging
+callback consumes the message.
+
+=over 4
+
 =item $ctx->attach ($ctx2[, $ctx3...])
 
 Attaches the given contexts as parents to this context. It is not an error
@@ -465,6 +543,17 @@ sub detach {
    delete $ctx->[2]{$_+0}
       for map { AnyEvent::Log::ctx $_ } @_;
 }
+
+=back
+
+=head3 MESSAGE LOGGING
+
+The following methods configure how the logging context actually does
+the logging (which consists of foratting the message and printing it or
+whatever it wants to do with it) and also allows you to log messages
+directly to a context, without going via your package context.
+
+=over 4
 
 =item $ctx->log_cb ($cb->($str))
 
