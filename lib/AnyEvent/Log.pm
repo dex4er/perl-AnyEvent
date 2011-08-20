@@ -280,22 +280,21 @@ our %LOGGER;
 
 # re-assess logging status for all loggers
 sub _reassess {
+   local $SIG{__DIE__};
+   my $die = sub { die };
+
    for (@_ ? $LOGGER{$_[0]} : values %LOGGER) {
       my ($ctx, $level, $renabled) = @$_;
 
-      # to detect whether a message would be logged, we # actually
+      # to detect whether a message would be logged, we actually
       # try to log one and die. this isn't fast, but we can be
       # sure that the logging decision is correct :)
 
       $$renabled = !eval {
-         local $SIG{__DIE__};
-
-         _log $ctx, $level, sub { die };
+         _log $ctx, $level, $die;
 
          1
       };
-
-      $$renabled = 1; # TODO
    }
 }
 

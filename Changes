@@ -4,7 +4,6 @@ TODO: document TCP_*** constants
 
 TODO: AnyEvent::Log
 TODO: check for #TODO
-TODO: new context
 TODO: consume--
 TODO: ae::log examples
 TODO: consolide slogging, e.g AnyEvent::Debug
