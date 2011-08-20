@@ -22,11 +22,11 @@ AnyEvent::Log - simple logging "framework"
 
    # configuration
 
-   # set logging for this package to errors and higher only
+   # set logging for the current package to errors and higher only
    AnyEvent::Log::ctx->level ("error");
 
    # set logging globally to anything below debug
-   $AnyEvent::Log::Root->level ("notice");
+   $AnyEvent::Log::FILTER->level ("notice");
 
    # see also EXAMPLES, below
 
@@ -43,8 +43,8 @@ logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number before
 starting your program, or change the logging level at runtime with
 something like:
 
-   use AnyEvent;
-   (AnyEvent::Log::ctx "")->level ("info");
+   use AnyEvent::Log;
+   AnyEvent::Log::FILTER->level ("info");
 
 The design goal behind this module was to keep it simple (and small),
 but make it powerful enough to be potentially useful for any module, and
@@ -52,12 +52,44 @@ extensive enough for the most common tasks, such as logging to multiple
 targets, or being able to log into a database.
 
 The amount of documentation might indicate otherwise, but the module is
-still just 240 lines or so.
+still just below 300 lines of code.
+
+=head1 LOGGING LEVELS
+
+Logging levels in this module range from C<1> (highest priority) to C<9>
+(lowest priority). Note that the lowest numerical value is the highest
+priority, so when this document says "higher priority" it means "lower
+numerical value".
+
+Instead of specifying levels by name you can also specify them by aliases:
+
+   LVL NAME      SYSLOG   PERL  NOTE
+   1   fatal     emerg    exit  aborts program!
+   2   alert
+   3   critical  crit     
+   4   error     err      die
+   5   warn      warning  
+   6   note      notice   
+   7   info
+   8   debug
+   9   trace
+
+As you can see, some logging levels have multiple aliases - the first one
+is the "official" name, the second one the "syslog" name (if it differs)
+and the third one the "perl" name, suggesting that you log C<die> messages
+at C<error> priority.
+
+You can normally only log a single message at highest priority level
+(C<1>, C<fatal>), because logging a fatal message will also quit the
+program - so use it sparingly :)
+
+Some methods also offer some extra levels, such as C<0>, C<off>, C<none>
+or C<all> - these are only valid in the methods they are documented for.
 
 =head1 LOGGING FUNCTIONS
 
 These functions allow you to log messages. They always use the caller's
-package as a "logging module/source". Also, the main logging function is
+package as a "logging context". Also, the main logging function C<log> is
 callable as C<AnyEvent::log> or C<AE::log> when the C<AnyEvent> module is
 loaded.
 
@@ -75,6 +107,8 @@ use AnyEvent::Util ();
 
 our $VERSION = $AnyEvent::VERSION;
 
+our ($COLLECT, $FILTER, $LOG);
+
 our ($now_int, $now_str1, $now_str2);
 
 # Format Time, not public - yet?
@@ -88,27 +122,25 @@ sub ft($) {
    "$now_str1$f$now_str2"
 }
 
-our %CTX; # all logging contexts
+our %CTX; # all package contexts
 
 # creates a default package context object for the given package
 sub _pkg_ctx($) {
    my $ctx = bless [$_[0], (1 << 10) - 1 - 1, {}], "AnyEvent::Log::Ctx";
 
    # link "parent" package
-   my $pkg = $_[0] =~ /^(.+)::/ ? $1 : "AE::Log::Top";
+   my $parent = $_[0] =~ /^(.+)::/
+      ? $CTX{$1} ||= &_pkg_ctx ("$1")
+      : $COLLECT;
 
-   $pkg = $CTX{$pkg} ||= &_pkg_ctx ($pkg);
-   $ctx->[2]{$pkg+0} = $pkg;
+   $ctx->[2]{$parent+0} = $parent;
 
    $ctx
 }
 
 =item AnyEvent::Log::log $level, $msg[, @args]
 
-Requests logging of the given C<$msg> with the given log level (1..9).
-You can also use the following strings as log level: C<fatal> (1),
-C<alert> (2), C<critical> (3), C<error> (4), C<warn> (5), C<note> (6),
-C<info> (7), C<debug> (8), C<trace> (9).
+Requests logging of the given C<$msg> with the given log level.
 
 For C<fatal> log levels, the program will abort.
 
@@ -151,10 +183,10 @@ Example: only generate a costly dump when the message is actually being logged.
 
 # also allow syslog equivalent names
 our %STR2LEVEL = (
-   fatal    => 1, emerg    => 1,
+   fatal    => 1, emerg    => 1, exit => 1,
    alert    => 2,
    critical => 3, crit     => 3,
-   error    => 4, err      => 4,
+   error    => 4, err      => 4, die  => 4,
    warn     => 5, warning  => 5,
    note     => 6, notice   => 6,
    info     => 7,
@@ -216,11 +248,11 @@ sub _log {
                   ? $ctx->[4]($now, $_[0], $level, $format)
                   : $fmt ||= _format $now, $_[0], $level, $format;
 
-               $ctx->[3]($str);
+               $ctx->[3]($str)
+                  or push @ctx, values %{ $ctx->[2] }; # not consumed - propagate
+            } else {
+               push @ctx, values %{ $ctx->[2] }; # not masked - propagate
             }
-
-            # not masked, not consumed - propagate to parent contexts
-            push @ctx, values %{ $ctx->[2] };
          }
       }
    while $ctx = pop @ctx;
@@ -349,9 +381,9 @@ it should be logged) and a logging callback (which is responsible for
 actually logging the formatted message and telling C<AnyEvent::Log>
 whether it has consumed the message, or whether it should be propagated).
 
-For propagation, a context can have any number of attached I<parent
+For propagation, a context can have any number of attached I<slave
 contexts>. Any message that is neither masked by the logging mask nor
-masked by the logging callback returning true will be passed to all parent
+masked by the logging callback returning true will be passed to all slave
 contexts.
 
 Each call to a logging function will log the message at most once per
@@ -365,56 +397,56 @@ disabled logging callback and the default formatting callback.
 
 Package contexts have the package name as logging title by default.
 
-They have exactly one parent - the context of the "parent" package. The
+They have exactly one slave - the context of the "parent" package. The
 parent package is simply defined to be the package name without the last
 component, i.e. C<AnyEvent::Debug::Wrapped> becomes C<AnyEvent::Debug>,
-and C<AnyEvent> becomes ... C<AnyEvent::Log::Top> which is the
-exception of the rule - just like the parent of any package name in
-Perl is C<main>, the default parent of any top-level package context is
-C<AnyEvent::Log::Top>.
+and C<AnyEvent> becomes ... C<$AnyEvent::Log::COLLECT> which is the
+exception of the rule - just like the "parent" of any single-component
+package name in Perl is C<main>, the default slave of any top-level
+package context is C<$AnyEvent::Log::COLLECT>.
 
-Since perl packages form only an approximate hierarchy, this parent
+Since perl packages form only an approximate hierarchy, this slave
 context can of course be removed.
 
-All other (anonymous) contexts have no parents and an empty title by
+All other (anonymous) contexts have no slaves and an empty title by
 default.
 
-When the module is loaded it creates the default context called
-C<AnyEvent::Log::Default> (also stored in C<$AnyEvent::Log::Default>),
-which simply logs everything via C<warn> and doesn't propagate anything
-anywhere by default. The purpose of the default context is to provide
+When the module is loaded it creates the C<$AnyEvent::Log::LOG> logging
+context that simply logs everything via C<warn>, without propagating
+anything anywhere by default.  The purpose of this context is to provide
 a convenient place to override the global logging target or to attach
 additional log targets. It's not meant for filtering.
 
-It then creates the root context called C<AnyEvent::Log::Root> (also
-stored in C<$AnyEvent::Log::Root>) and sets its log level set to all
-levels up to the one specified by C<$ENV{PERL_ANYEVENT_VERBOSE}>. It
-then attached the default logging context to it. The purpose of the root
-context is to simply provide filtering according to some global log level.
+It then creates the C<$AnyEvent::Log::FILTER> context whose
+purpose is to suppress all messages with priority higher
+than C<$ENV{PERL_ANYEVENT_VERBOSE}>. It then attached the
+C<$AnyEvent::Log::LOG> context to it. The purpose of the filter context
+is to simply provide filtering according to some global log level.
 
-Finally it creates the top-level package context called
-C<AnyEvent::Log::Top> (also stored in, you might have guessed,
-C<$AnyEvent::Log::Top>) and attached the root context but otherwise leaves
-it at default config. It's purpose is simply to collect all log messages
-system-wide.
+Finally it creates the top-level package context C<$AnyEvent::Log::COLLECT>
+and attaches the C<$AnyEvent::Log::FILTER> context to it, but otherwise
+leaves it at default config. Its purpose is simply to collect all log
+messages system-wide.
 
-These three special contexts can also be referred to by the
-package/context names C<AE::Log::Default>, C<AE::Log::Root> and
-C<AE::Log::Top>.
+The hierarchy is then:
 
-The effect of all this is that log messages, by default, wander up
-to the root context where log messages with lower priority then
-C<$ENV{PERL_ANYEVENT_VERBOSE}> will be filtered away and then to the
-AnyEvent::Log::Default context to be passed to C<warn>.
+   any package, eventually -> $COLLECT -> $FILTER -> $LOG
 
-Splitting the top level context into three contexts makes it easy to set
-a global logging level (by modifying the root context), but still allow
-other contexts to log, for example, their debug and trace messages to the
-default target despite the global logging level, or to attach additional
-log targets that log messages, regardless of the global logging level.
+The effect of all this is that log messages, by default, wander up to the
+C<$AnyEvent::Log::COLLECT> context where all messages normally end up,
+from there to C<$AnyEvent::Log::FILTER> where log messages with lower
+priority then C<$ENV{PERL_ANYEVENT_VERBOSE}> will be filtered out and then
+to the C<$AnyEvent::Log::LOG> context to be passed to C<warn>.
 
-It also makes it easy to replace the default warn-logger by something that
-logs to a file, or to attach additional logging targets.
+This makes it easy to set a global logging level (by modifying $FILTER),
+but still allow other contexts to send, for example, their debug and trace
+messages to the $LOG target despite the global logging level, or to attach
+additional log targets that log messages, regardless of the global logging
+level.
+
+It also makes it easy to modify the default warn-logger ($LOG) to
+something that logs to a file, or to attach additional logging targets
+(such as loggign to a file) by attaching it to $FILTER.
 
 =head2 CREATING/FINDING/DESTROYING CONTEXTS
 
@@ -458,53 +490,52 @@ configuration, reset all contexts.
 
 sub reset {
    # hard to kill complex data structures
-   # we recreate all package loggers and reset the hierarchy
+   # we "recreate" all package loggers and reset the hierarchy
    while (my ($k, $v) = each %CTX) {
       @$v = ($k, (1 << 10) - 1 - 1, { });
 
-      my $pkg = $k =~ /^(.+)::/ ? $1 : "AE::Log::Top";
-      $v->attach ($CTX{$pkg});
+      $v->attach ($k =~ /^(.+)::/ ? $CTX{$1} : $AnyEvent::Log::COLLECT);
    }
 
-   $AnyEvent::Log::Default->parents;
-   $AnyEvent::Log::Default->title ("AnyEvent::Log::Default");
-   $AnyEvent::Log::Default->log_cb (sub {
+   @$_ = ($_->[0], (1 << 10) - 1 - 1)
+      for $LOG, $FILTER, $COLLECT;
+
+   $LOG->slaves;
+   $LOG->title ('$AnyEvent::Log::LOG');
+   $LOG->log_cb (sub {
       warn shift;
       0
    });
-   $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $AnyEvent::Log::Default;
 
-   $AnyEvent::Log::Root->parents ($AnyEvent::Log::Default);
-   $AnyEvent::Log::Root->title ("AnyEvent::Log::Root");
-   $AnyEvent::Log::Root->level ($AnyEvent::VERBOSE);
-   $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $AnyEvent::Log::Root;
+   $FILTER->slaves ($LOG);
+   $FILTER->title ('$AnyEvent::Log::FILTER');
+   $FILTER->level ($AnyEvent::VERBOSE);
 
-   $AnyEvent::Log::Top->parents ($AnyEvent::Log::Root);
-   $AnyEvent::Log::Top->title ("AnyEvent::Log::Top");
-   $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $AnyEvent::Log::Top;
+   $COLLECT->slaves ($FILTER);
+   $COLLECT->title ('$AnyEvent::Log::COLLECT');
 
    _reassess;
 }
 
 # create the default logger contexts
-$AnyEvent::Log::Default = ctx undef;
-$AnyEvent::Log::Root    = ctx undef;
-$AnyEvent::Log::Top     = ctx undef;
+$LOG     = ctx undef;
+$FILTER  = ctx undef;
+$COLLECT = ctx undef;
 
 AnyEvent::Log::reset;
 
 # hello, CPAN, please catch me
-package AnyEvent::Log::Default;
-package AE::Log::Default;
-package AnyEvent::Log::Root;
-package AE::Log::Root;
-package AnyEvent::Log::Top;
-package AE::Log::Top;
+package AnyEvent::Log::LOG;
+package AE::Log::LOG;
+package AnyEvent::Log::FILTER;
+package AE::Log::FILTER;
+package AnyEvent::Log::COLLECT;
+package AE::Log::COLLECT;
 
 package AnyEvent::Log::Ctx;
 
-#       0       1          2        3        4
-# [$title, $level, %$parents, &$logcb, &$fmtcb]
+#       0       1         2        3        4
+# [$title, $level, %$slaves, &$logcb, &$fmtcb]
 
 =item $ctx = new AnyEvent::Log::Ctx methodname => param...
 
@@ -517,13 +548,13 @@ arrayref, in which case it calls the method with the contents of the
 array. The methods are called in the same order as specified.
 
 Example: create a new logging context and set both the default logging
-level, some parent contexts and a logging callback.
+level, some slave contexts and a logging callback.
 
    $ctx = new AnyEvent::Log::Ctx
       title   => "dubious messages",
       level   => "error",
       log_cb  => sub { print STDOUT shift; 0 },
-      parents => [$ctx1, $ctx, $ctx2],
+      slaves  => [$ctx1, $ctx, $ctx2],
    ;
 
 =back
@@ -646,33 +677,33 @@ sub disable {
 
 =back
 
-=head3 PARENT CONTEXTS
+=head3 SLAVE CONTEXTS
 
 The following methods attach and detach another logging context to a
 logging context.
 
-Log messages are propagated to all parent contexts, unless the logging
+Log messages are propagated to all slave contexts, unless the logging
 callback consumes the message.
 
 =over 4
 
 =item $ctx->attach ($ctx2[, $ctx3...])
 
-Attaches the given contexts as parents to this context. It is not an error
+Attaches the given contexts as slaves to this context. It is not an error
 to add a context twice (the second add will be ignored).
 
 A context can be specified either as package name or as a context object.
 
 =item $ctx->detach ($ctx2[, $ctx3...])
 
-Removes the given parents from this context - it's not an error to attempt
+Removes the given slaves from this context - it's not an error to attempt
 to remove a context that hasn't been added.
 
 A context can be specified either as package name or as a context object.
 
-=item $ctx->parents ($ctx2[, $ctx3...])
+=item $ctx->slaves ($ctx2[, $ctx3...])
 
-Replaces all parents attached to this context by the ones given.
+Replaces all slaves attached to this context by the ones given.
 
 =cut
 
@@ -690,19 +721,18 @@ sub detach {
       for map { AnyEvent::Log::ctx $_ } @_;
 }
 
-sub parents {
+sub slaves {
    undef $_[0][2];
    &attach;
 }
 
 =back
 
-=head3 MESSAGE LOGGING
+=head3 LOG TARGETS
 
 The following methods configure how the logging context actually does
 the logging (which consists of formatting the message and printing it or
-whatever it wants to do with it) and also allows you to log messages
-directly to a context, without going via your package context.
+whatever it wants to do with it).
 
 =over 4
 
@@ -717,7 +747,7 @@ newline (and are possibly multiline themselves).
 
 It also has to return true iff it has consumed the log message, and false
 if it hasn't. Consuming a message means that it will not be sent to any
-parent context. When in doubt, return C<0> from your logging callback.
+slave context. When in doubt, return C<0> from your logging callback.
 
 Example: a very simple logging callback, simply dump the message to STDOUT
 and do not consume it.
@@ -735,15 +765,30 @@ your program.
    $ctx->levels ("debug", "trace");
    $ctx->log_cb (sub { 1 }); # do not log, but eat debug and trace messages
 
+=item $ctx->log_to_file ($path)
+
+Sets the C<log_cb> to log to a file (by appending), unbuffered.
+
+=item $ctx->log_to_path ($path)
+
+Same as C<< ->log_to_file >>, but opens the file for each message. This
+is much slower, but allows you to change/move/rename/delete the file at
+basically any time.
+
 =item $ctx->fmt_cb ($fmt_cb->($timestamp, $ctx, $level, $message))
 
 Replaces the formatting callback on the context (C<undef> restores the
 default formatter).
 
 The callback is passed the (possibly fractional) timestamp, the original
-logging context, the (numeric) logging level and the raw message string and needs to
-return a formatted log message. In most cases this will be a string, but
-it could just as well be an array reference that just stores the values.
+logging context, the (numeric) logging level and the raw message string
+and needs to return a formatted log message. In most cases this will be a
+string, but it could just as well be an array reference that just stores
+the values.
+
+If, for some reaosn, you want to use C<caller> to find out more baout the
+logger then you should walk up the call stack until you are no longer
+inside the C<AnyEvent::Log> package.
 
 Example: format just the raw message, with numeric log level in angle
 brackets.
@@ -784,6 +829,39 @@ sub fmt_cb {
    $ctx->[4] = $cb;
 }
 
+sub log_to_file {
+   my ($ctx, $path) = @_;
+
+   open my $fh, ">>", $path
+      or die "$path: $!";
+
+   $ctx->log_cb (sub {
+      syswrite $fh, shift;
+      0
+   });
+}
+
+sub log_to_file {
+   my ($ctx, $path) = @_;
+
+   $ctx->log_cb (sub {
+      open my $fh, ">>", $path
+         or die "$path: $!";
+
+      syswrite $fh, shift;
+      0
+   });
+}
+
+=back
+
+=head3 MESSAGE LOGGING
+
+These methods allow you to log messages directly to a context, without
+going via your package context.
+
+=over 4
+
 =item $ctx->log ($level, $msg[, @params])
 
 Same as C<AnyEvent::Log::log>, but uses the given context as log context.
@@ -815,19 +893,13 @@ running your program, or modify the log level of the root context:
 
    PERL_ANYEVENT_VERBOSE=5 ./myprog
 
-   $AnyEvent::Log::Root->level ("warn");
+   $AnyEvent::Log::FILTER->level ("warn");
 
 =item Append all messages to a file instead of sending them to STDERR.
 
 This is affected by the global logging level.
 
-   open my $fh, ">>", $path
-      or die "$path: $!";
-
-   $AnyEvent::Log::Default->log_cb (sub {
-      syswrite $fh, shift;
-      0
-   });
+   $AnyEvent::Log::LOG->log_to_file ($path); (sub {
 
 =item Write all messages with priority C<error> and higher to a file.
 
@@ -835,32 +907,29 @@ This writes them only when the global logging level allows it, because
 it is attached to the default context which is invoked I<after> global
 filtering.
 
-   open my $fh, ">>", $path
-      or die "$path: $!";
-
-   $AnyEvent::Log::Default->attach (new AnyEvent::Log::Ctx
-      log_cb => sub { syswrite $fh, shift; 0 });
+   $AnyEvent::Log::FILTER->attach 
+      new AnyEvent::Log::Ctx log_to_file => $path);
 
 This writes them regardless of the global logging level, because it is
 attached to the toplevel context, which receives all messages I<before>
 the global filtering.
 
-   $AnyEvent::Log::Top->attach (new AnyEvent::Log::Ctx
-      log_cb => sub { syswrite $fh, shift; 0 });
+   $AnyEvent::Log::COLLECT->attach (
+      new AnyEvent::Log::Ctx log_to_file => $path);
 
-In both cases, messages are still written to STDOUT.
+In both cases, messages are still written to STDERR.
 
 =item Write trace messages (only) from L<AnyEvent::Debug> to the default logging target(s).
 
-Attach the CyAnyEvent::Log::Default> context to the C<AnyEvent::Debug>
-context and increase the C<AnyEvent::Debug> logging level - this simply
-circumvents the global filtering for trace messages.
+Attach the C<$AnyEvent::Log::LOG> context to the C<AnyEvent::Debug>
+context - this simply circumvents the global filtering for trace messages.
 
    my $debug = AnyEvent::Debug->AnyEvent::Log::ctx;
-   $debug->attach ($AnyEvent::Log::Default);
-   $debug->levels ("trace"); # not "level"!
+   $debug->attach ($AnyEvent::Log::LOG);
 
-This of course works for any package.
+This of course works for any package, not just L<AnyEvent::Debug>, but
+assumes the log level for AnyEvent::Debug hasn't been changed from the
+default.
 
 =back
 

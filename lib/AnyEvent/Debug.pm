@@ -204,9 +204,16 @@ A level of C<0> disables wrapping, i.e. AnyEvent works normally, and in
 its most efficient mode.
 
 A level of C<1> enables wrapping, which replaces all watchers by
-AnyEvent::Debug::Wrapped objects, stores the location where a watcher was
-created and wraps the callback to log all invocations at "trace" loglevel
-(see L<AnyEvent::Log>).
+AnyEvent::Debug::Wrapped objects, stores the location where a watcher
+was created and wraps the callback to log all invocations at "trace"
+loglevel. The wrapper will also count how many times the callback was
+invoked and will record up to ten runtime errors with corresponding
+backtraces. It will also log runtime errors at "error" loglevel.
+
+To see the trace messages, you can invoke your program with
+C<PERL_ANYEVENT_VERBOSE=9>, or you can use AnyEvent::Log to divert
+the trace messages in any way you like (the EXAMPLES section in
+L<AnyEvent::Log> has some examples).
 
 A level of C<2> does everything that level C<1> does, but also stores a
 full backtrace of the location the watcher was created, which slows down
@@ -230,7 +237,6 @@ to check for common mistakes.
 =cut
 
 our $WRAP_LEVEL;
-our $TRACE_LEVEL;
 our $TRACE_CUR;
 our $POST_DETECT;
 
@@ -419,10 +425,8 @@ sub _reset {
          $arg{cb} = sub {
             ++$w->{called};
 
-            return &$cb
-               unless $TRACE_LEVEL;
-
             local $TRACE_CUR  = $w;
+
             $TRACE_LOGGER->("enter $TRACE_CUR") if $TRACE_ENABLED;
             eval {
                local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
@@ -431,7 +435,7 @@ sub _reset {
             if ($@) {
                push @{ $w->{error} }, [AE::now, $@]
                   if @{ $w->{error} } < 10;
-               AE::log error => "$TRACE_CUR $@";
+               AE::log error => "($TRACE_CUR) $@";
             }
             $TRACE_LOGGER->("leave $TRACE_CUR") if $TRACE_ENABLED;
          };

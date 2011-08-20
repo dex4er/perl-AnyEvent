@@ -34,8 +34,12 @@ WriteMakefile(
     NAME         => "AnyEvent",
     VERSION_FROM => "lib/AnyEvent.pm",
     PMLIBDIRS    => ["lib"],
+#    PREREQ_PM    => {
+#       Task::Weaken => 0,
+#    },
     META_MERGE => {
         recommends => {
+           "Task::Weaken"     => 0,
            "Net::SSLeay"      => 1.33,
            "JSON"             => 2.09,
            "JSON::XS"         => 2.2,

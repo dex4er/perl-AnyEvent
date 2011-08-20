@@ -6,6 +6,7 @@ TODO: AnyEvent::Log
 TODO: consume--
 TODO: ae::log examples
 TODO: consolide slogging, e.g AnyEvent::Debug
+TODO: log_to_xyz
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request
@@ -64,6 +65,7 @@ TODO: consolide slogging, e.g AnyEvent::Debug
         - do not run event loop detection multiple times when programs call their cached
           copies of AnyEvent::detect.
         - parse_hostport now accepts absolute paths als unix domain sockets.
+        - add Task::Weaken as dependency (as recommends only at this time).
 
 6.0 (not officially released, but was on CPAN for about 15 minutes :/)
 
