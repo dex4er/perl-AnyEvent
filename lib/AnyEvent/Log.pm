@@ -490,15 +490,12 @@ configuration, reset all contexts.
 
 sub reset {
    # hard to kill complex data structures
-   # we "recreate" all package loggers and reset the hierarchy
+   # we recreate all package loggers and reset the hierarchy
    while (my ($k, $v) = each %CTX) {
       @$v = ($k, (1 << 10) - 1 - 1, { });
 
-      $v->attach ($k =~ /^(.+)::/ ? $CTX{$1} : $AnyEvent::Log::COLLECT);
+      $v->attach ($k =~ /^(.+)::/ ? $CTX{$1} : $AnyEvent::Log);
    }
-
-   @$_ = ($_->[0], (1 << 10) - 1 - 1)
-      for $LOG, $FILTER, $COLLECT;
 
    $LOG->slaves;
    $LOG->title ('$AnyEvent::Log::LOG');
@@ -512,7 +509,7 @@ sub reset {
    $FILTER->level ($AnyEvent::VERBOSE);
 
    $COLLECT->slaves ($FILTER);
-   $COLLECT->title ('$AnyEvent::Log::COLLECT');
+   $COLLECT->title ('$AnyEvent::Log::FILTER');
 
    _reassess;
 }
