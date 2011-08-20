@@ -38,9 +38,9 @@ AnyEvent - AnyEvent simply creates logging messages internally, and this
 module more or less exposes the mechanism, with some extra spiff to allow
 using it from other modules as well.
 
-Remember that the default verbosity level is C<0>, so nothing will be
-logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number before
-starting your program, or change the logging level at runtime with
+Remember that the default verbosity level is C<0> (C<off>), so nothing
+will be logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
+before starting your program, or change the logging level at runtime with
 something like:
 
    use AnyEvent::Log;
@@ -246,9 +246,9 @@ sub _log {
                # format msg
                my $str = $ctx->[4]
                   ? $ctx->[4]($now, $_[0], $level, $format)
-                  : $fmt ||= _format $now, $_[0], $level, $format;
+                  : ($fmt ||= _format $now, $_[0], $level, $format);
 
-               $ctx->[3]($str)
+               $ctx->[3]($str, $_[0], $level)
                   or push @ctx, values %{ $ctx->[2] }; # not consumed - propagate
             } else {
                push @ctx, values %{ $ctx->[2] }; # not masked - propagate
@@ -490,12 +490,15 @@ configuration, reset all contexts.
 
 sub reset {
    # hard to kill complex data structures
-   # we recreate all package loggers and reset the hierarchy
+   # we "recreate" all package loggers and reset the hierarchy
    while (my ($k, $v) = each %CTX) {
       @$v = ($k, (1 << 10) - 1 - 1, { });
 
-      $v->attach ($k =~ /^(.+)::/ ? $CTX{$1} : $AnyEvent::Log);
+      $v->attach ($k =~ /^(.+)::/ ? $CTX{$1} : $AnyEvent::Log::COLLECT);
    }
+
+   @$_ = ($_->[0], (1 << 10) - 1 - 1)
+      for $LOG, $FILTER, $COLLECT;
 
    $LOG->slaves;
    $LOG->title ('$AnyEvent::Log::LOG');
@@ -509,7 +512,7 @@ sub reset {
    $FILTER->level ($AnyEvent::VERBOSE);
 
    $COLLECT->slaves ($FILTER);
-   $COLLECT->title ('$AnyEvent::Log::FILTER');
+   $COLLECT->title ('$AnyEvent::Log::COLLECT');
 
    _reassess;
 }
@@ -733,14 +736,16 @@ whatever it wants to do with it).
 
 =over 4
 
-=item $ctx->log_cb ($cb->($str))
+=item $ctx->log_cb ($cb->($str, $orig_ctx, $level))
 
 Replaces the logging callback on the context (C<undef> disables the
 logging callback).
 
 The logging callback is responsible for handling formatted log messages
 (see C<fmt_cb> below) - normally simple text strings that end with a
-newline (and are possibly multiline themselves).
+newline (and are possibly multiline themselves). In addition to the
+message, which is often the only argument you need to look at, it is
+passed the numeric log level and originating context.
 
 It also has to return true iff it has consumed the log message, and false
 if it hasn't. Consuming a message means that it will not be sent to any
@@ -772,7 +777,20 @@ Same as C<< ->log_to_file >>, but opens the file for each message. This
 is much slower, but allows you to change/move/rename/delete the file at
 basically any time.
 
-=item $ctx->fmt_cb ($fmt_cb->($timestamp, $ctx, $level, $message))
+=item $ctx->log_to_syslog ([$log_flags])
+
+Logs all messages via L<Sys::Syslog>, mapping C<trace> to C<debug> and all
+the others in the obvious way. If specified, then the C<$log_flags> are
+simply or'ed onto the priority argument and can contain any C<LOG_xxx>
+flags valid for Sys::Syslog::syslog, except for the priority levels.
+
+Note that the default logging format includes a verbose timestamp, which
+is not so suited for syslog, so a simpler C<fmt_cb> might be useful:
+
+   $ctx->log_to_syslog;
+   $ctx->fmt_cb (sub { "($_[1][0]) $_[3]" });
+
+=item $ctx->fmt_cb ($fmt_cb->($timestamp, $orig_ctx, $level, $message))
 
 Replaces the formatting callback on the context (C<undef> restores the
 default formatter).
@@ -846,6 +864,21 @@ sub log_to_file {
          or die "$path: $!";
 
       syswrite $fh, shift;
+      0
+   });
+}
+
+sub log_to_syslog {
+   my ($ctx, $flags) = @_;
+
+   require Sys::Syslog;
+
+   $ctx->log_cb (sub {
+      my $lvl = $_[2] < 9 ? $_[2] : 8;
+
+      Sys::Syslog::syslog ($flags | ($lvl - 1), $_)
+         for split /\n/, shift;
+
       0
    });
 }
