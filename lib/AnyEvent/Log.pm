@@ -856,6 +856,8 @@ circumvents the global filtering for trace messages.
    $debug->attach ($AnyEvent::Log::Default);
    $debug->levels ("trace"); # not "level"!
 
+This of course works for any package.
+
 =back
 
 =head1 AUTHOR
