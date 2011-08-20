@@ -248,7 +248,7 @@ sub _log {
                   ? $ctx->[4]($now, $_[0], $level, $format)
                   : ($fmt ||= _format $now, $_[0], $level, $format);
 
-               $ctx->[3]($str, $_[0], $level)
+               $ctx->[3]($str)
                   or push @ctx, values %{ $ctx->[2] }; # not consumed - propagate
             } else {
                push @ctx, values %{ $ctx->[2] }; # not masked - propagate
@@ -736,16 +736,14 @@ whatever it wants to do with it).
 
 =over 4
 
-=item $ctx->log_cb ($cb->($str, $orig_ctx, $level))
+=item $ctx->log_cb ($cb->($str)
 
 Replaces the logging callback on the context (C<undef> disables the
 logging callback).
 
 The logging callback is responsible for handling formatted log messages
 (see C<fmt_cb> below) - normally simple text strings that end with a
-newline (and are possibly multiline themselves). In addition to the
-message, which is often the only argument you need to look at, it is
-passed the numeric log level and originating context.
+newline (and are possibly multiline themselves).
 
 It also has to return true iff it has consumed the log message, and false
 if it hasn't. Consuming a message means that it will not be sent to any
@@ -766,29 +764,6 @@ your program.
 
    $ctx->levels ("debug", "trace");
    $ctx->log_cb (sub { 1 }); # do not log, but eat debug and trace messages
-
-=item $ctx->log_to_file ($path)
-
-Sets the C<log_cb> to log to a file (by appending), unbuffered.
-
-=item $ctx->log_to_path ($path)
-
-Same as C<< ->log_to_file >>, but opens the file for each message. This
-is much slower, but allows you to change/move/rename/delete the file at
-basically any time.
-
-=item $ctx->log_to_syslog ([$log_flags])
-
-Logs all messages via L<Sys::Syslog>, mapping C<trace> to C<debug> and all
-the others in the obvious way. If specified, then the C<$log_flags> are
-simply or'ed onto the priority argument and can contain any C<LOG_xxx>
-flags valid for Sys::Syslog::syslog, except for the priority levels.
-
-Note that the default logging format includes a verbose timestamp, which
-is not so suited for syslog, so a simpler C<fmt_cb> might be useful:
-
-   $ctx->log_to_syslog;
-   $ctx->fmt_cb (sub { "($_[1][0]) $_[3]" });
 
 =item $ctx->fmt_cb ($fmt_cb->($timestamp, $orig_ctx, $level, $message))
 
@@ -829,6 +804,26 @@ C<PApp::SQL::sql_exec> to store the emssage in a database.
 
       0
    });
+
+=item $ctx->log_to_file ($path)
+
+Sets the C<log_cb> to log to a file (by appending), unbuffered.
+
+=item $ctx->log_to_path ($path)
+
+Same as C<< ->log_to_file >>, but opens the file for each message. This
+is much slower, but allows you to change/move/rename/delete the file at
+basically any time.
+
+=item $ctx->log_to_syslog ([$log_flags])
+
+Logs all messages via L<Sys::Syslog>, mapping C<trace> to C<debug> and all
+the others in the obvious way. If specified, then the C<$log_flags> are
+simply or'ed onto the priority argument and can contain any C<LOG_xxx>
+flags valid for Sys::Syslog::syslog, except for the priority levels.
+
+Note that this function also sets a C<fmt_cb> - the logging part requires
+an array reference with [$level, $str] as input.
 
 =cut
 
@@ -873,11 +868,18 @@ sub log_to_syslog {
 
    require Sys::Syslog;
 
+   $ctx->fmt_cb (sub {
+      my $str = $_[3];
+      $str =~ s/\n(?=.)/\n+ /g;
+
+      [$_[2], "($_[1][0]) $str"]
+   });
+
    $ctx->log_cb (sub {
-      my $lvl = $_[2] < 9 ? $_[2] : 8;
+      my $lvl = $_[0][0] < 9 ? $_[0][0] : 8;
 
       Sys::Syslog::syslog ($flags | ($lvl - 1), $_)
-         for split /\n/, shift;
+         for split /\n/, $_[0][1];
 
       0
    });
