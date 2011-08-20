@@ -379,7 +379,7 @@ parent package is simply defined to be the package name without the last
 component, i.e. C<AnyEvent::Debug::Wrapped> becomes C<AnyEvent::Debug>,
 and C<AnyEvent> becomes ... C<AnyEvent::Log::Top> which is the
 exception of the rule - just like the parent of any package name in
-Perl is C<main>, the default parent of any toplevel package context is
+Perl is C<main>, the default parent of any top-level package context is
 C<AnyEvent::Log::Top>.
 
 Since perl packages form only an approximate hierarchy, this parent
@@ -389,24 +389,27 @@ All other (anonymous) contexts have no parents and an empty title by
 default.
 
 When the module is loaded it creates the default context called
-C<AnyEvent::Log::Default>, which simply logs everything to STDERR and
-doesn't propagate anything anywhere by default. The purpose of the default
-context is to provide a convenient place to override the global logging
-target or to attach additional log targets. It's not meant for filtering.
+C<AnyEvent::Log::Default> (also stored in C<$AnyEvent::Log::Default>),
+which simply logs everything to STDERR and doesn't propagate anything
+anywhere by default. The purpose of the default context is to provide
+a convenient place to override the global logging target or to attach
+additional log targets. It's not meant for filtering.
 
-It then creates the root context called C<AnyEvent::Log::Root> and
-sets its log level set to all levels up to the one specified by
-C<$ENV{PERL_ANYEVENT_VERBOSE}>. It then attached the default logging
-context to it. The purpose of the root context is to simply provide
-filtering according to some global log level.
+It then creates the root context called C<AnyEvent::Log::Root> (also
+stored in C<$AnyEvent::Log::Root>) and sets its log level set to all
+levels up to the one specified by C<$ENV{PERL_ANYEVENT_VERBOSE}>. It
+then attached the default logging context to it. The purpose of the root
+context is to simply provide filtering according to some global log level.
 
-Finally it creates the toplevel package context called
-C<AnyEvent::Log::Top> and attached the root context but otherwise leaves
+Finally it creates the top-level package context called
+C<AnyEvent::Log::Top> (also stored in, you might have guessed,
+C<$AnyEvent::Log::Top>) and attached the root context but otherwise leaves
 it at default config. It's purpose is simply to collect all log messages
 system-wide.
 
-These three special contexts can also be referred to by the names
-C<AE::Log::Default>, C<AE::Log::Root> and C<AE::Log::Top>.
+These three special contexts can also be referred to by the
+package/context names C<AE::Log::Default>, C<AE::Log::Root> and
+C<AE::Log::Top>.
 
 The effect of all this is that log messages, by default, wander up
 to the root context where log messages with lower priority then
@@ -470,22 +473,23 @@ sub reset {
       print STDERR shift;
       0
    });
-   $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $default;
+   $AnyEvent::Log::Default = $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $default;
 
    my $root = ctx undef;
    $root->title ("AnyEvent::Log::Root");
    $root->level ($AnyEvent::VERBOSE);
    $root->attach ($default);
-   $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $root;
+   $AnyEvent::Log::Root    = $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $root;
 
    my $top = ctx undef;
    $top->title ("AnyEvent::Log::Top");
    $top->attach ($root);
-   $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $top;
+   $AnyEvent::Log::Top     = $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $top;
 }
 
 AnyEvent::Log::reset;
 
+# hello, CPAN, please catch me
 package AnyEvent::Log::Default;
 package AE::Log::Default;
 package AnyEvent::Log::Root;
@@ -493,14 +497,48 @@ package AE::Log::Root;
 package AnyEvent::Log::Top;
 package AE::Log::Top;
 
-=back
-
-=cut
-
 package AnyEvent::Log::Ctx;
 
 #       0       1          2        3        4
 # [$title, $level, %$parents, &$logcb, &$fmtcb]
+
+=item $ctx = new AnyEvent::Log::Ctx methodname => param...
+
+This is a convenience constructor that makes it simpler to construct
+anonymous logging contexts.
+
+Each key-value pair results in an invocation of the method of the same
+name as the key with the value as parameter, unless the value is an
+arrayref, in which case it calls the method with the contents of the
+array. The methods are called in the same order as specified.
+
+Example: create a new logging context and set both the default logging
+level, some parent contexts and a logging callback.
+
+   $ctx = new AnyEvent::Log::Ctx
+      title   => "dubious messages",
+      level   => "error",
+      log_cb  => sub { print STDOUT shift; 0 },
+      parents => [$ctx1, $ctx, $ctx2],
+   ;
+
+=back
+
+=cut
+
+sub new {
+   my $class = shift;
+
+   my $ctx = AnyEvent::Log::ctx undef;
+
+   while (@_) {
+      my ($k, $v) = splice @_, 0, 2;
+      $ctx->$k (ref $v eq "ARRAY" ? @$v : $v);
+   }
+
+   bless $ctx, $class # do we really support subclassing, hmm?
+}
+
 
 =head2 CONFIGURING A LOG CONTEXT
 
@@ -757,6 +795,66 @@ context.
 *logger = \&AnyEvent::Log::_logger;
 
 1;
+
+=back
+
+=head1 EXAMPLES
+
+This section shows some common configurations.
+
+=over 4
+
+=item Setting the global logging level.
+
+Either put PERL_ANYEVENT_VERBOSE=<number> into your environment before
+running your program, or modify the log level of the root context:
+
+   PERL_ANYEVENT_VERBOSE=5 ./myprog
+
+   $AnyEvent::Log::Root->level ("warn");
+
+=item Append all messages to a file instead of sending them to STDERR.
+
+This is affected by the global logging level.
+
+   open my $fh, ">>", $path
+      or die "$path: $!";
+
+   $AnyEvent::Log::Default->log_cb (sub {
+      syswrite $fh, shift;
+      0
+   });
+
+=item Write all messages with priority C<error> and higher to a file.
+
+This writes them only when the global logging level allows it, because
+it is attached to the default context which is invoked I<after> global
+filtering.
+
+   open my $fh, ">>", $path
+      or die "$path: $!";
+
+   $AnyEvent::Log::Default->attach (new AnyEvent::Log::Ctx
+      log_cb => sub { syswrite $fh, shift; 0 });
+
+This writes them regardless of the global logging level, because it is
+attached to the toplevel context, which receives all messages I<before>
+the global filtering.
+
+   $AnyEvent::Log::Top->attach (new AnyEvent::Log::Ctx
+      log_cb => sub { syswrite $fh, shift; 0 });
+
+In both cases, messages are still written to STDOUT.
+
+=item Write trace messages (only) from L<AnyEvent::Debug> to the default logging target(s).
+
+Attach the CyAnyEvent::Log::Default> context to the C<AnyEvent::Debug>
+context and increase the C<AnyEvent::Debug> logging level - this simply
+circumvents the global filtering for trace messages.
+
+   my $debug = AnyEvent::Debug->AnyEvent::Log::ctx;
+   $debug->attach ($AnyEvent::Log::Default);
+   $debug->levels ("trace"); # not "level"!
 
 =back
 
