@@ -4,6 +4,9 @@ TODO: document TCP_*** constants
 
 TODO: AnyEvent::Log
 TODO: check for #TODO
+TODO: new context
+TODO: consume--
+TODO: ae::log examples
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request

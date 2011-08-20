@@ -47,8 +47,8 @@ module more or less exposes the mechanism, with some extra spiff to allow
 using it from other modules as well.
 
 Remember that the default verbosity level is C<0>, so nothing will be
-logged, ever, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
-before starting your program, or change the logging level at runtime wiht
+logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number before
+starting your program, or change the logging level at runtime with
 something like:
 
    use AnyEvent;
@@ -98,7 +98,7 @@ sub _pkg_ctx($) {
    my $ctx = bless [$_[0], (1 << 10) - 1 - 1, {}], "AnyEvent::Log::Ctx";
 
    # link "parent" package
-   my $pkg = $_[0] =~ /^(.+)::/ ? $1 : "";
+   my $pkg = $_[0] =~ /^(.+)::/ ? $1 : "AE::Log::Top";
 
    $pkg = $CTX{$pkg} ||= &_pkg_ctx ($pkg);
    $ctx->[2]{$pkg+0} = $pkg;
@@ -134,7 +134,7 @@ C<AE::log>, without C<use>-ing this module if possible (i.e. you don't
 need any additional functionality), as those functions will load the
 logging module on demand only. They are also much shorter to write.
 
-Also, if you otpionally generate a lot of debug messages (such as when
+Also, if you optionally generate a lot of debug messages (such as when
 tracing some code), you should look into using a logger callback and a
 boolean enabler (see C<logger>, below).
 
@@ -175,12 +175,14 @@ our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 
 # time, ctx, level, msg
 sub _format($$$$) {
-   my $pfx = ft $_[0];
+   my $ts = ft $_[0];
+   my $ct = " ";
+
    my @res;
 
    for (split /\n/, sprintf "%-5s %s: %s", $LEVEL2STR[$_[2]], $_[1][0], $_[3]) {
-      push @res, "$pfx $_\n";
-      $pfx = "\t";
+      push @res, "$ts$ct$_\n";
+      $ct = " + ";
    }
 
    join "", @res
@@ -189,39 +191,42 @@ sub _format($$$$) {
 sub _log {
    my ($ctx, $level, $format, @args) = @_;
 
-   $level = $level > 0 && $level <= 9 ? $level+0 : $STR2LEVEL{$level} || Carp::croak "$level: not a valid logging level, caught";
+   $level = $level > 0 && $level <= 9
+            ? $level+0
+            : $STR2LEVEL{$level} || Carp::croak "$level: not a valid logging level, caught";
 
    my $mask = 1 << $level;
 
-   my (@ctx, $now, $fmt);
+   my (%seen, @ctx, $now, $fmt);
 
-   do {
-      # skip if masked
-      next unless $ctx->[1] & $mask;
+   do
+      {
+         # skip if masked
+         if ($ctx->[1] & $mask && !$seen{$ctx+0}++) {
+            if ($ctx->[3]) {
+               # logging target found
 
-      if ($ctx->[3]) {
-         # logging target found
+               # now get raw message, unless we have it already
+               unless ($now) {
+                  $format = $format->() if ref $format;
+                  $format = sprintf $format, @args if @args;
+                  $format =~ s/\n$//;
+                  $now = AE::now;
+               };
 
-         # now get raw message, unless we have it already
-         unless ($now) {
-            $format = $format->() if ref $format;
-            $format = sprintf $format, @args if @args;
-            $format =~ s/\n$//;
-            $now = AE::now;
-         };
+               # format msg
+               my $str = $ctx->[4]
+                  ? $ctx->[4]($now, $_[0], $level, $format)
+                  : $fmt ||= _format $now, $_[0], $level, $format;
 
-         # format msg
-         my $str = $ctx->[4]
-            ? $ctx->[4]($now, $_[0], $level, $format)
-            : $fmt ||= _format $now, $_[0], $level, $format;
+               $ctx->[3]($str);
+            }
 
-         $ctx->[3]($str)
-            and next;
+            # not masked, not consumed - propagate to parent contexts
+            push @ctx, values %{ $ctx->[2] };
+         }
       }
-
-      # not masked, not consume - propagate to parent contexts
-      push @ctx, values %{ $ctx->[2] };
-   } while $ctx = pop @ctx;
+   while $ctx = pop @ctx;
 
    exit 1 if $level <= 1;
 }
@@ -284,8 +289,8 @@ sub _reassess {
    for (@_ ? $LOGGER{$_[0]} : values %LOGGER) {
       my ($ctx, $level, $renabled) = @$_;
 
-      # to detetc whether a message would be logged, we # actually
-      # try to log one and die. this isn't # fast, but we can be
+      # to detect whether a message would be logged, we # actually
+      # try to log one and die. this isn't fast, but we can be
       # sure that the logging decision is correct :)
 
       $$renabled = !eval {
@@ -358,6 +363,10 @@ contexts>. Any message that is neither masked by the logging mask nor
 masked by the logging callback returning true will be passed to all parent
 contexts.
 
+Each call to a logging function will log the message at most once per
+context, so it does not matter (much) if there are cycles or if the
+message can arrive at the same context via multiple paths.
+
 =head2 DEFAULTS
 
 By default, all logging contexts have an full set of log levels ("all"), a
@@ -368,7 +377,10 @@ Package contexts have the package name as logging title by default.
 They have exactly one parent - the context of the "parent" package. The
 parent package is simply defined to be the package name without the last
 component, i.e. C<AnyEvent::Debug::Wrapped> becomes C<AnyEvent::Debug>,
-and C<AnyEvent> becomes the empty string.
+and C<AnyEvent> becomes ... C<AnyEvent::Log::Top> which is the
+exception of the rule - just like the parent of any package name in
+Perl is C<main>, the default parent of any toplevel package context is
+C<AnyEvent::Log::Top>.
 
 Since perl packages form only an approximate hierarchy, this parent
 context can of course be removed.
@@ -376,16 +388,41 @@ context can of course be removed.
 All other (anonymous) contexts have no parents and an empty title by
 default.
 
-When the module is first loaded, it configures the root context (the one
-with the empty string) to simply dump all log messages to C<STDERR>,
-and sets it's log level set to all levels up to the one specified by
-C<$ENV{PERL_ANYEVENT_VERBOSE}>.
+When the module is loaded it creates the default context called
+C<AnyEvent::Log::Default>, which simply logs everything to STDERR and
+doesn't propagate anything anywhere by default. The purpose of the default
+context is to provide a convenient place to override the global logging
+target or to attach additional log targets. It's not meant for filtering.
 
-The effect of all this is that log messages, by default, wander up to the
-root context and will be logged to STDERR if their log level is less than
-or equal to C<$ENV{PERL_ANYEVENT_VERBOSE}>.
+It then creates the root context called C<AnyEvent::Log::Root> and
+sets its log level set to all levels up to the one specified by
+C<$ENV{PERL_ANYEVENT_VERBOSE}>. It then attached the default logging
+context to it. The purpose of the root context is to simply provide
+filtering according to some global log level.
 
-=head2 CREATING/FINDING A CONTEXT
+Finally it creates the toplevel package context called
+C<AnyEvent::Log::Top> and attached the root context but otherwise leaves
+it at default config. It's purpose is simply to collect all log messages
+system-wide.
+
+These three special contexts can also be referred to by the names
+C<AE::Log::Default>, C<AE::Log::Root> and C<AE::Log::Top>.
+
+The effect of all this is that log messages, by default, wander up
+to the root context where log messages with lower priority then
+C<$ENV{PERL_ANYEVENT_VERBOSE}> will be filtered away and then to the
+AnyEvent::Log::Default context to be logged to STDERR.
+
+Splitting the top level context into three contexts makes it easy to set
+a global logging level (by modifying the root context), but still allow
+other contexts to log, for example, their debug and trace messages to the
+default target despite the global logging level, or to attach additional
+log targets that log messages, regardless of the global logging level.
+
+It also makes it easy to replace the default STDERR-logger by something
+that logs to a file, or to attach additional logging targets.
+
+=head2 CREATING/FINDING/DESTROYING CONTEXTS
 
 =over 4
 
@@ -413,18 +450,48 @@ sub ctx(;$) {
          : bless [undef, (1 << 10) - 1 - 1], "AnyEvent::Log::Ctx"
 }
 
-# create default root context
-{
-   my $root = ctx undef;
-   $root->[0] = "";
-   $root->title ("default");
-   $root->level ($AnyEvent::VERBOSE); undef $AnyEvent::VERBOSE;
-   $root->log_cb (sub {
+=item AnyEvent::Log::reset
+
+Deletes all contexts and recreates the default hierarchy, i.e. resets the
+logging subsystem to defaults.
+
+This can be used to implement config-file (re-)loading: before loading a
+configuration, reset all contexts.
+
+=cut
+
+sub reset {
+   @$_ = () for values %CTX; # just to be sure - to kill circular logging dependencies
+   %CTX = ();
+
+   my $default = ctx undef;
+   $default->title ("AnyEvent::Log::Default");
+   $default->log_cb (sub {
       print STDERR shift;
       0
    });
-   $CTX{""} = $root;
+   $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $default;
+
+   my $root = ctx undef;
+   $root->title ("AnyEvent::Log::Root");
+   $root->level ($AnyEvent::VERBOSE);
+   $root->attach ($default);
+   $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $root;
+
+   my $top = ctx undef;
+   $top->title ("AnyEvent::Log::Top");
+   $top->attach ($root);
+   $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $top;
 }
+
+AnyEvent::Log::reset;
+
+package AnyEvent::Log::Default;
+package AE::Log::Default;
+package AnyEvent::Log::Root;
+package AE::Log::Root;
+package AnyEvent::Log::Top;
+package AE::Log::Top;
 
 =back
 
@@ -561,6 +628,10 @@ to remove a context that hasn't been added.
 
 A context can be specified either as package name or as a context object.
 
+=item $ctx->parents ($ctx2[, $ctx3...])
+
+Replaces all parents attached to this context by the ones given.
+
 =cut
 
 sub attach {
@@ -575,6 +646,11 @@ sub detach {
 
    delete $ctx->[2]{$_+0}
       for map { AnyEvent::Log::ctx $_ } @_;
+}
+
+sub parents {
+   undef $_[0][2];
+   &attach;
 }
 
 =back
