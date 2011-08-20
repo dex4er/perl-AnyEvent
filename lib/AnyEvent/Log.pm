@@ -310,10 +310,8 @@ sub _reassess {
    }
 }
 
-sub _logger($;$) {
+sub _logger {
    my ($ctx, $level, $renabled) = @_;
-
-   $renabled ||= \my $enabled;
 
    $$renabled = 1;
 
@@ -395,7 +393,7 @@ default.
 
 When the module is loaded it creates the default context called
 C<AnyEvent::Log::Default> (also stored in C<$AnyEvent::Log::Default>),
-which simply logs everything to STDERR and doesn't propagate anything
+which simply logs everything via C<warn> and doesn't propagate anything
 anywhere by default. The purpose of the default context is to provide
 a convenient place to override the global logging target or to attach
 additional log targets. It's not meant for filtering.
@@ -419,7 +417,7 @@ C<AE::Log::Top>.
 The effect of all this is that log messages, by default, wander up
 to the root context where log messages with lower priority then
 C<$ENV{PERL_ANYEVENT_VERBOSE}> will be filtered away and then to the
-AnyEvent::Log::Default context to be logged to STDERR.
+AnyEvent::Log::Default context to be passed to C<warn>.
 
 Splitting the top level context into three contexts makes it easy to set
 a global logging level (by modifying the root context), but still allow
@@ -427,8 +425,8 @@ other contexts to log, for example, their debug and trace messages to the
 default target despite the global logging level, or to attach additional
 log targets that log messages, regardless of the global logging level.
 
-It also makes it easy to replace the default STDERR-logger by something
-that logs to a file, or to attach additional logging targets.
+It also makes it easy to replace the default warn-logger by something that
+logs to a file, or to attach additional logging targets.
 
 =head2 CREATING/FINDING/DESTROYING CONTEXTS
 
@@ -460,37 +458,51 @@ sub ctx(;$) {
 
 =item AnyEvent::Log::reset
 
-Deletes all contexts and recreates the default hierarchy, i.e. resets the
-logging subsystem to defaults.
+Resets all package contexts contexts and recreates the default hierarchy
+if necessary, i.e. resets the logging subsystem to defaults.
 
 This can be used to implement config-file (re-)loading: before loading a
 configuration, reset all contexts.
 
+Note that this currently destroys all logger callbacks - bug me if you
+need this fixed :)
+
 =cut
 
 sub reset {
-   @$_ = () for values %CTX; # just to be sure - to kill circular logging dependencies
-   %CTX = ();
+   # hard to kill complex data structures
+   # we recreate all package loggers and reset the hierarchy
+   while (my ($k, $v) = each %CTX) {
+      @$v = ($k, (1 << 10) - 1 - 1, { });
 
-   my $default = ctx undef;
-   $default->title ("AnyEvent::Log::Default");
-   $default->log_cb (sub {
-      print STDERR shift;
+      my $pkg = $k =~ /^(.+)::/ ? $1 : "AE::Log::Top";
+      $v->attach ($CTX{$pkg});
+   }
+
+   $AnyEvent::Log::Default->parents;
+   $AnyEvent::Log::Default->title ("AnyEvent::Log::Default");
+   $AnyEvent::Log::Default->log_cb (sub {
+      warn shift;
       0
    });
-   $AnyEvent::Log::Default = $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $default;
+   $CTX{"AnyEvent::Log::Default"} = $CTX{"AE::Log::Default"} = $AnyEvent::Log::Default;
 
-   my $root = ctx undef;
-   $root->title ("AnyEvent::Log::Root");
-   $root->level ($AnyEvent::VERBOSE);
-   $root->attach ($default);
-   $AnyEvent::Log::Root    = $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $root;
+   $AnyEvent::Log::Root->parents ($AnyEvent::Log::Default);
+   $AnyEvent::Log::Root->title ("AnyEvent::Log::Root");
+   $AnyEvent::Log::Root->level ($AnyEvent::VERBOSE);
+   $CTX{"AnyEvent::Log::Root"}    = $CTX{"AE::Log::Root"}    = $AnyEvent::Log::Root;
 
-   my $top = ctx undef;
-   $top->title ("AnyEvent::Log::Top");
-   $top->attach ($root);
-   $AnyEvent::Log::Top     = $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $top;
+   $AnyEvent::Log::Top->parents ($AnyEvent::Log::Root);
+   $AnyEvent::Log::Top->title ("AnyEvent::Log::Top");
+   $CTX{"AnyEvent::Log::Top"}     = $CTX{"AE::Log::Top"}     = $AnyEvent::Log::Top;
+
+   _reassess;
 }
+
+# create the default logger contexts
+$AnyEvent::Log::Default = ctx undef;
+$AnyEvent::Log::Root    = ctx undef;
+$AnyEvent::Log::Top     = ctx undef;
 
 AnyEvent::Log::reset;
 
