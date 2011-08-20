@@ -3,7 +3,6 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 
 TODO: AnyEvent::Log
-TODO: check for #TODO
 TODO: consume--
 TODO: ae::log examples
 TODO: consolide slogging, e.g AnyEvent::Debug
