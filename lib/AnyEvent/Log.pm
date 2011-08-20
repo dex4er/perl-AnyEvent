@@ -22,21 +22,13 @@ AnyEvent::Log - simple logging "framework"
 
    # configuration
 
-   # set logging for this package to maximum
-   AnyEvent::Log::ctx->level ("all");
+   # set logging for this package to errors and higher only
+   AnyEvent::Log::ctx->level ("error");
 
    # set logging globally to anything below debug
-   (AnyEvent::Log::ctx "")->level ("notice");
+   $AnyEvent::Log::Root->level ("notice");
 
    # see also EXAMPLES, below
-
-   # disable logging for package "AnyEvent" and all packages below it
-   AnyEvent->AnyEvent::Log::ctx->level (0);
-
-   # log everything below debug to a file, for the whole program
-   my $ctx = AnyEvent::Log::ctx;
-   $ctx->log_cb (sub { print FILE shift; 0 });
-   (AnyEvent::Log::ctx "")->add ($ctx);
 
 =head1 DESCRIPTION
 
@@ -282,9 +274,6 @@ Full example:
 
    $debug and $debug_log->("123");
 
-Note: currently the enabled var is always true - that will be fixed in a
-future version :)
-
 =cut
 
 our %LOGGER;
@@ -458,14 +447,13 @@ sub ctx(;$) {
 
 =item AnyEvent::Log::reset
 
-Resets all package contexts contexts and recreates the default hierarchy
-if necessary, i.e. resets the logging subsystem to defaults.
+Resets all package contexts and recreates the default hierarchy if
+necessary, i.e. resets the logging subsystem to defaults, as much as
+possible. This process keeps references to contexts held by other parts of
+the program intact.
 
 This can be used to implement config-file (re-)loading: before loading a
 configuration, reset all contexts.
-
-Note that this currently destroys all logger callbacks - bug me if you
-need this fixed :)
 
 =cut
 
