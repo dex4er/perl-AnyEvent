@@ -59,6 +59,9 @@ but make it powerful enough to be potentially useful for any module, and
 extensive enough for the most common tasks, such as logging to multiple
 targets, or being able to log into a database.
 
+The amount of documentation might indicate otherwise, but the module is
+still just 240 lines or so.
+
 =head1 LOGGING FUNCTIONS
 
 These functions allow you to log messages. They always use the caller's
@@ -77,6 +80,8 @@ use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util ();
+
+our $VERSION = $AnyEvent::VERSION;
 
 our ($now_int, $now_str1, $now_str2);
 
