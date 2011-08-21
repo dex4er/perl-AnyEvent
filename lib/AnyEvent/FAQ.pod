@@ -127,6 +127,20 @@ wake up the GUI thread, it would instead use C<< Win32::GUI::PostMessage
 $WINDOW, 1030, 0, "" >>, and the GUI thread would listen for these
 messages by using C<< $WINDOW->Hook (1030 (), sub { ... }) >>.
 
+=head2 My callback dies and...
+
+It must not - part of the contract betwene AnyEvent and user code is that
+callbacks do not throw exceptions (and don't do even more evil things,
+such as using C<last> outside a loop :). If your callback might die
+sometimes, you need to use C<eval>.
+
+If you want to track down such a case and you can reproduce it, you can
+enable wrapping (by calling C<< L<AnyEvent::Debug>::wrap >> or by setting
+C<PERL_ANYEVENT_DEBUG_WRAP=1> before starting your program). This will
+wrap every callback into an eval and will report any exception complete
+with a backtrace and some information about which watcher died, where it
+was created and so on.
+
 =head1 Author
 
 Marc Lehmann <schmorp@schmorp.de>.
