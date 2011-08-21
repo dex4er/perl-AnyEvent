@@ -247,10 +247,10 @@ sub wrap(;$) {
    if ($AnyEvent::MODEL) {
       if ($WRAP_LEVEL && !$PREV_LEVEL) {
          $TRACE_LOGGER = AnyEvent::Log::logger trace => \$TRACE_ENABLED;
-         AnyEvent::_isa_hook 1 => "AnyEvent::Debug::Wrap", 1;
+         AnyEvent::_isa_hook 0 => "AnyEvent::Debug::Wrap", 1;
          AnyEvent::Debug::Wrap::_reset ();
       } elsif (!$WRAP_LEVEL && $PREV_LEVEL) {
-         AnyEvent::_isa_hook 1 => undef;
+         AnyEvent::_isa_hook 0 => undef;
       }
    } else {
       $POST_DETECT ||= AnyEvent::post_detect {
@@ -417,7 +417,7 @@ sub _reset {
          $w = 0;
          do {
             ($pkg, $file, $line) = caller $w++;
-         } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Handle|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*))$/;
+         } while $pkg =~ /^(?:AE|AnyEvent::(?:Socket|Handle|Util|Debug|Strict|Base|CondVar|CondVar::Base|Impl::.*)|Coro::AnyEvent::CondVar)$/;
 
          $sub = (caller $w)[3];
 
@@ -425,20 +425,23 @@ sub _reset {
          $arg{cb} = sub {
             ++$w->{called};
 
-            local $TRACE_CUR  = $w;
+            local $TRACE_CUR = $w;
 
-            $TRACE_LOGGER->("enter $TRACE_CUR") if $TRACE_ENABLED;
+            $TRACE_LOGGER->("enter $w") if $TRACE_ENABLED;
             eval {
-               local $SIG{__DIE__} = sub { die $_[0] . AnyEvent::Debug::backtrace };
+               local $SIG{__DIE__} = sub {
+                  die $_[0] . AnyEvent::Debug::backtrace
+                     if defined $^S;
+               };
                &$cb;
             };
             if ($@) {
-               push @{ $w->{error} }, [AE::now, $@]
+               push @{ $w->{error} }, [AE::now, "$@"]
                   if @{ $w->{error} } < 10;
-               AE::log die => "($TRACE_CUR) $@"
-                  or warn "($RRACE_CUR) $@";
+               AE::log die => "($w) $@"
+                  or warn "($w) $@";
             }
-            $TRACE_LOGGER->("leave $TRACE_CUR") if $TRACE_ENABLED;
+            $TRACE_LOGGER->("leave $w") if $TRACE_ENABLED;
          };
 
          $self = bless {
@@ -447,7 +450,7 @@ sub _reset {
             rfile  => \($STRCACHE{$file} ||= $file),
             line   => $line,
             sub    => $sub,
-            cur    => $TRACE_CUR,
+            cur    => "$TRACE_CUR",
             now    => AE::now,
             arg    => \%arg,
             cb     => $cb,

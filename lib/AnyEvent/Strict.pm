@@ -28,7 +28,7 @@ use Carp qw(croak);
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
-AnyEvent::_isa_hook 0 => "AnyEvent::Strict", 1;
+AnyEvent::_isa_hook 1 => "AnyEvent::Strict", 1;
 
 BEGIN {
    if (defined &Internals::SvREADONLY) {

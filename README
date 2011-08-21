@@ -2,7 +2,7 @@ NAME
     AnyEvent - the DBI of event loop programming
 
     EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async,
-    Qt and POE are various supported event loops/environments.
+    Qt, FLTK and POE are various supported event loops/environments.
 
 SYNOPSIS
        use AnyEvent;
@@ -1004,6 +1004,16 @@ GLOBAL VARIABLES AND FUNCTIONS
            AnyEvent::postpone { $cb->(undef) }, return # signal error to callback, later
               if $some_error_condition;
 
+    AnyEvent::log $level, $msg[, @args]
+        Log the given $msg at the given $level.
+
+        Loads AnyEvent::Log on first use and calls "AnyEvent::Log::log" -
+        consequently, look at the AnyEvent::Log documentation for details.
+
+        If you want to sprinkle loads of logging calls around your code,
+        consider creating a logger callback with the "AnyEvent::Log::logger"
+        function.
+
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods
     freely, but you should not load a specific event module or rely on it.
@@ -1066,7 +1076,10 @@ OTHER MODULES
     The following is a non-exhaustive list of additional modules that use
     AnyEvent as a client and can therefore be mixed easily with other
     AnyEvent modules and other event loops in the same program. Some of the
-    modules come as part of AnyEvent, the others are available via CPAN.
+    modules come as part of AnyEvent, the others are available via CPAN (see
+    <http://search.cpan.org/search?m=module&q=anyevent%3A%3A*> for a longer
+    non-exhaustive list), and the list is heavily biased towards modules of
+    the AnyEvent author himself :)
 
     AnyEvent::Util
         Contains various utility functions that replace often-used blocking
@@ -1164,11 +1177,11 @@ ENVIRONMENT VARIABLES
         conditions. You can set this environment variable to make AnyEvent
         more talkative.
 
-        When set to 1 or higher, causes AnyEvent to warn about unexpected
+        When set to 5 or higher, causes AnyEvent to warn about unexpected
         conditions, such as not being able to load the event model specified
         by "PERL_ANYEVENT_MODEL".
 
-        When set to 2 or higher, cause AnyEvent to report to STDERR which
+        When set to 7 or higher, cause AnyEvent to report to STDERR which
         event model it chooses.
 
         When set to 8 or higher, then AnyEvent will report extra information
@@ -1201,7 +1214,7 @@ ENVIRONMENT VARIABLES
         For example, to bind a debug shell on a unix domain socket in
         /tmp/debug<pid>.sock, you could use this:
 
-           PERL_ANYEVENT_DEBUG_SHELL=unix/:/tmp/debug\$\$.sock perlprog
+           PERL_ANYEVENT_DEBUG_SHELL=/tmp/debug\$\$.sock perlprog
 
         Note that creating sockets in /tmp is very unsafe on multiuser
         systems.
@@ -1608,7 +1621,7 @@ BENCHMARKS
 
     *   The overhead AnyEvent adds is usually much smaller than the overhead
         of the actual event loop, only with extremely fast event loops such
-        as EV adds AnyEvent significant overhead.
+        as EV does AnyEvent add significant overhead.
 
     *   You should avoid POE like the plague if you want performance or
         reasonable memory usage.
@@ -1944,17 +1957,21 @@ SEE ALSO
 
     FAQ: AnyEvent::FAQ.
 
-    Utility functions: AnyEvent::Util.
+    Utility functions: AnyEvent::Util (misc. grab-bag), AnyEvent::Log
+    (simply logging).
 
-    Event modules: AnyEvent::Loop, EV, EV::Glib, Glib::EV, Event,
-    Glib::Event, Glib, Tk, Event::Lib, Qt, POE.
+    Development/Debugging: AnyEvent::Strict (stricter checking),
+    AnyEvent::Debug (interactive shell, watcher tracing).
+
+    Supported event modules: AnyEvent::Loop, EV, EV::Glib, Glib::EV, Event,
+    Glib::Event, Glib, Tk, Event::Lib, Qt, POE, FLTK.
 
     Implementations: AnyEvent::Impl::EV, AnyEvent::Impl::Event,
     AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,
     AnyEvent::Impl::EventLib, AnyEvent::Impl::Qt, AnyEvent::Impl::POE,
-    AnyEvent::Impl::IOAsync, Anyevent::Impl::Irssi.
+    AnyEvent::Impl::IOAsync, Anyevent::Impl::Irssi, AnyEvent::Impl::FLTK.
 
-    Non-blocking file handles, sockets, TCP clients and servers:
+    Non-blocking handles, pipes, stream sockets, TCP clients and servers:
     AnyEvent::Handle, AnyEvent::Socket, AnyEvent::TLS.
 
     Asynchronous DNS: AnyEvent::DNS.
