@@ -435,7 +435,8 @@ sub _reset {
             if ($@) {
                push @{ $w->{error} }, [AE::now, $@]
                   if @{ $w->{error} } < 10;
-               AE::log error => "($TRACE_CUR) $@";
+               AE::log die => "($TRACE_CUR) $@"
+                  or warn "($RRACE_CUR) $@";
             }
             $TRACE_LOGGER->("leave $TRACE_CUR") if $TRACE_ENABLED;
          };

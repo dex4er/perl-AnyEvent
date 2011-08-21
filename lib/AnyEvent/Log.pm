@@ -140,7 +140,8 @@ sub _pkg_ctx($) {
 
 =item AnyEvent::Log::log $level, $msg[, @args]
 
-Requests logging of the given C<$msg> with the given log level.
+Requests logging of the given C<$msg> with the given log level, and
+returns true if the message was logged I<somewhere>.
 
 For C<fatal> log levels, the program will abort.
 
@@ -156,7 +157,10 @@ actually gets logged, which is useful if it is costly to create the
 message in the first place.
 
 Whether the given message will be logged depends on the maximum log level
-and the caller's package.
+and the caller's package. The return value can be used to ensure that
+messages or not "lost" - for example, when L<AnyEvent::Debug> detects a
+runtime error it tries to log it at C<die> level, but if that message is
+lost it simply uses warn.
 
 Note that you can (and should) call this function as C<AnyEvent::log> or
 C<AE::log>, without C<use>-ing this module if possible (i.e. you don't
@@ -226,7 +230,7 @@ sub _log {
 
    my $mask = 1 << $level;
 
-   my (%seen, @ctx, $now, $fmt);
+   my ($success, %seen, @ctx, $now, $fmt);
 
    do
       {
@@ -248,6 +252,8 @@ sub _log {
                   ? $ctx->[4]($now, $_[0], $level, $format)
                   : ($fmt ||= _format $now, $_[0], $level, $format);
 
+               $success = 1;
+
                $ctx->[3]($str)
                   or push @ctx, values %{ $ctx->[2] }; # not consumed - propagate
             } else {
@@ -258,6 +264,8 @@ sub _log {
    while $ctx = pop @ctx;
 
    exit 1 if $level <= 1;
+
+   $success
 }
 
 sub log($$;@) {
@@ -271,7 +279,7 @@ sub log($$;@) {
 =item $logger = AnyEvent::Log::logger $level[, \$enabled]
 
 Creates a code reference that, when called, acts as if the
-C<AnyEvent::Log::log> function was called at this point with the givne
+C<AnyEvent::Log::log> function was called at this point with the given
 level. C<$logger> is passed a C<$msg> and optional C<@args>, just as with
 the C<AnyEvent::Log::log> function:
 
