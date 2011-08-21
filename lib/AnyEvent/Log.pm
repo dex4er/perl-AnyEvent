@@ -791,7 +791,7 @@ and needs to return a formatted log message. In most cases this will be a
 string, but it could just as well be an array reference that just stores
 the values.
 
-If, for some reaosn, you want to use C<caller> to find out more baout the
+If, for some reason, you want to use C<caller> to find out more baout the
 logger then you should walk up the call stack until you are no longer
 inside the C<AnyEvent::Log> package.
 
