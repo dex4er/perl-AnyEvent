@@ -4,7 +4,8 @@ AnyEvent::Log - simple logging "framework"
 
 =head1 SYNOPSIS
 
-   # simple use
+   # simple use:
+
    use AnyEvent;
 
    AE::log debug => "hit my knee";
@@ -12,7 +13,8 @@ AnyEvent::Log - simple logging "framework"
    AE::log error => "the flag was false!";
    AE::log fatal => "the bit toggled! run!"; # never returns
 
-   # "complex" use (for speed sensitive code)
+   # "complex" use (for speed sensitive code):
+
    use AnyEvent::Log;
 
    my $tracer = AnyEvent::Log::logger trace => \$my $trace;
@@ -20,7 +22,7 @@ AnyEvent::Log - simple logging "framework"
    $tracer->("i am here") if $trace;
    $tracer->(sub { "lots of data: " . Dumper $self }) if $trace;
 
-   # configuration
+   # configuration:
 
    # set logging for the current package to errors and higher only
    AnyEvent::Log::ctx->level ("error");
