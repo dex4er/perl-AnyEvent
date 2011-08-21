@@ -540,7 +540,7 @@ sub verbose {
            . "invoked: $self->{called} times\n";
 
    if (exists $self->{bt}) {
-      $res .= "created$self->{bt}";
+      $res .= "created\n$self->{bt}";
    }
 
    if (exists $self->{error}) {
