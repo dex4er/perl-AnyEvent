@@ -10,9 +10,9 @@ AnyEvent::Log - simple logging "framework"
    AE::log debug => "hit my knee";
    AE::log warn  => "it's a bit too hot";
    AE::log error => "the flag was false!";
-   AE::log fatal => "the bit toggled! run!";
+   AE::log fatal => "the bit toggled! run!"; # never returns
 
-   # "complex" use
+   # "complex" use (for speed sensitive code)
    use AnyEvent::Log;
 
    my $tracer = AnyEvent::Log::logger trace => \$my $trace;
@@ -25,8 +25,15 @@ AnyEvent::Log - simple logging "framework"
    # set logging for the current package to errors and higher only
    AnyEvent::Log::ctx->level ("error");
 
-   # set logging globally to anything below debug
+   # set logging level to suppress anything below "notice"
    $AnyEvent::Log::FILTER->level ("notice");
+
+   # send all critical and higher priority messages to syslog,
+   # regardless of (most) other settings
+   $AnyEvent::Log::COLLECT->attach (new AnyEvent::Log::Ctx
+      level         => "critical",
+      log_to_syslog => 0,
+   );
 
    # see also EXAMPLES, below
 
