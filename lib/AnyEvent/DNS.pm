@@ -700,12 +700,11 @@ sub resolver() {
    $RESOLVER || do {
       $RESOLVER = new AnyEvent::DNS
          untaint         => 1,
-         exists $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}
-            ? (max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 1) : (),
+         max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 1,
       ;
 
-      exists $ENV{PERL_ANYEVENT_RESOLV_CONF}
-         ? length $ENV{PERL_ANYEVENT_RESOLV_CONF} && $RESOLVER->_parse_resolv_conf_file ($ENV{PERL_ANYEVENT_RESOLV_CONF})
+      $ENV{PERL_ANYEVENT_RESOLV_CONF}
+         ? $RESOLVER->_parse_resolv_conf_file ($ENV{PERL_ANYEVENT_RESOLV_CONF})
          : $RESOLVER->os_config;
 
       $RESOLVER

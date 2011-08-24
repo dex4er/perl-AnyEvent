@@ -5,7 +5,7 @@ TODO: document TCP_*** constants
 TODO: AnyEvent::Log
 TODO: ae::log examples
 TODO: consolide slogging, e.g AnyEvent::Debug
-TODO: log_to_xyz
+TODO: /etc/hosts, for resolve_sockaddr?
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request
@@ -34,6 +34,10 @@ TODO: log_to_xyz
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
           watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
+        - an empty PERL_ANYEVENT_RESOLV_CONF now selects the default
+          configuration.
+        - env variables can now be specified using AE_xyz instead of
+          PERL_ANYEVENT_xyz, subject to some rules.
         - lots of new AnyEvent::Debug functionality.
         - AnyEvent::Strict now checks for modifications $_ by the callback
           (by setting it to readonly while executing the callback, if possible).

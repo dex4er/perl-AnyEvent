@@ -1238,6 +1238,12 @@ BEGIN {
    delete @ENV{grep /^PERL_ANYEVENT_/, keys %ENV}
       if ${^TAINT};
 
+   $ENV{"PERL_ANYEVENT_$_"} = $ENV{"AE_$_"}
+      for grep s/^AE_// && !exists $ENV{"PERL_ANYEVENT_$_"}, keys %ENV;
+
+   @ENV{grep /^PERL_ANYEVENT_/, keys %ENV} = ()
+      if ${^TAINT};
+
    $VERBOSE = $ENV{PERL_ANYEVENT_VERBOSE}*1;
 }
 
@@ -1417,6 +1423,10 @@ sub detect() {
    _isa_set;
 
    # we're officially open!
+
+   if (length $ENV{PERL_ANYEVENT_LOG}) {
+      require AnyEvent::Log; # AnyEvent::Log does the thing for us
+   }
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       require AnyEvent::Strict;
@@ -1977,12 +1987,43 @@ so on.
 
 =head1 ENVIRONMENT VARIABLES
 
-The following environment variables are used by this module or its
-submodules.
+AnyEvent supports a number of environment variables that tune the
+runtime behaviour. They are usually evaluated when AnyEvent is
+loaded, initialised, or a submodule that uses them is loaded. Many of
+them also cause AnyEvent to load additional modules - for example,
+C<PERL_ANYEVENT_DEBUG_WRAP> causes the L<AnyEvent::Debug> module to be
+loaded.
 
-Note that AnyEvent will remove I<all> environment variables starting with
-C<PERL_ANYEVENT_> from C<%ENV> when it is loaded while taint mode is
-enabled.
+All the environment variables documented here start with
+C<PERL_ANYEVENT_>, which is what AnyEvent considers its own
+namespace. Other modules are encouraged (but by no means required) to use
+C<PERL_ANYEVENT_SUBMODULE> if they have registered the AnyEvent::Submodule
+namespace on CPAN, for any submodule. For example, L<AnyEvent::HTTP> could
+be expected to use C<PERL_ANYEVENT_HTTP_PROXY> (it should not access env
+variables starting with C<AE_>, see below).
+
+All variables can also be set via the C<AE_> prefix, that is, instead
+of setting C<PERL_ANYEVENT_VERBOSE> you can also set C<AE_VERBOSE>. In
+case there is a clash btween anyevent and another program that uses
+C<AE_something> you can set the corresponding C<PERL_ANYEVENT_something>
+variable to the empty string, as those variables take precedence.
+
+When AnyEvent is first loaded, it copies all C<AE_xxx> env variables
+to their C<PERL_ANYEVENT_xxx> counterpart unless that variable already
+exists. If taint mode is on, then AnyEvent will remove I<all> environment
+variables starting with C<PERL_ANYEVENT_> from C<%ENV> (or replace them
+with C<undef> or the empty string, if the corresaponding C<AE_> variable
+is set).
+
+The exact algorithm is currently:
+
+   1. if taint mode enabled, delete all PERL_ANYEVENT_xyz variables from %ENV
+   2. copy over AE_xyz to PERL_ANYEVENT_xyz unless the latter alraedy exists
+   3. if taint mode enabled, set all PERL_ANYEVENT_xyz variables to undef.
+
+This ensures that child processes will not see the C<AE_> variables.
+
+The following environment variables are currently known to AnyEvent:
 
 =over 4
 
@@ -1990,7 +2031,9 @@ enabled.
 
 By default, AnyEvent will be completely silent except in fatal
 conditions. You can set this environment variable to make AnyEvent more
-talkative.
+talkative. If you want to do more than just set the global logging level
+you should have a look at C<PERL_ANYEVENT_LOG>, which allows much more
+complex specifications.
 
 When set to C<5> or higher, causes AnyEvent to warn about unexpected
 conditions, such as not being able to load the event model specified by
@@ -2001,6 +2044,21 @@ model it chooses.
 
 When set to C<8> or higher, then AnyEvent will report extra information on
 which optional modules it loads and how it implements certain features.
+
+=item C<PERL_ANYEVENT_LOG>
+
+Accepts rather complex logging specifications. For example, you could log
+all C<debug> messages of some module to stderr, warnings and above to
+stderr, and errors and above to syslog, with:
+
+   PERL_ANYEVENT_LOG=Some::Module=debug,+log:filter=warn,+%syslog:%syslog=error,syslog
+
+For the rather extensive details, see L<AnyEvent::Log>.
+
+Note that specifying this environment variable causes the L<AnyEvent::Log>
+module to be loaded, while C<PERL_ANYEVENT_VERBOSE> does not, so only
+using the latter saves a few hundred kB of memory until the first message
+is being logged.
 
 =item C<PERL_ANYEVENT_STRICT>
 
@@ -2082,10 +2140,10 @@ IPv6, but prefer IPv6 over IPv4.
 
 =item C<PERL_ANYEVENT_EDNS0>
 
-Used by L<AnyEvent::DNS> to decide whether to use the EDNS0 extension
-for DNS. This extension is generally useful to reduce DNS traffic, but
-some (broken) firewalls drop such DNS packets, which is why it is off by
-default.
+Used by L<AnyEvent::DNS> to decide whether to use the EDNS0 extension for
+DNS. This extension is generally useful to reduce DNS traffic, especially
+when DNSSEC is involved, but some (broken) firewalls drop such DNS
+packets, which is why it is off by default.
 
 Setting this variable to C<1> will cause L<AnyEvent::DNS> to announce
 EDNS0 in its DNS requests.
@@ -2103,16 +2161,16 @@ sent to the DNS server.
 
 =item C<PERL_ANYEVENT_RESOLV_CONF>
 
-The file to use instead of F</etc/resolv.conf> (or OS-specific
-configuration) in the default resolver. When set to the empty string, no
-default config will be used.
+The absolute path to a F<resolv.conf>-style file to use instead of
+F</etc/resolv.conf> (or the OS-specific configuration) in the default
+resolver, or the empty string to select the default configuration.
 
 =item C<PERL_ANYEVENT_CA_FILE>, C<PERL_ANYEVENT_CA_PATH>.
 
 When neither C<ca_file> nor C<ca_path> was specified during
 L<AnyEvent::TLS> context creation, and either of these environment
-variables exist, they will be used to specify CA certificate locations
-instead of a system-dependent default.
+variables are nonempty, they will be used to specify CA certificate
+locations instead of a system-dependent default.
 
 =item C<PERL_ANYEVENT_AVOID_GUARD> and C<PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT>
 

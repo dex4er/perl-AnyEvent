@@ -517,10 +517,7 @@ sub reset {
 
    $LOG->slaves;
    $LOG->title ('$AnyEvent::Log::LOG');
-   $LOG->log_cb (sub {
-      warn shift;
-      0
-   });
+   $LOG->log_to_warn;
 
    $FILTER->slaves ($LOG);
    $FILTER->title ('$AnyEvent::Log::FILTER');
@@ -820,6 +817,11 @@ C<PApp::SQL::sql_exec> to store the emssage in a database.
       0
    });
 
+=item $ctx->log_to_warn
+
+Sets the C<log_cb> to simply use C<CORE::warn> to report any messages
+(usually this logs to STDERR).
+
 =item $ctx->log_to_file ($path)
 
 Sets the C<log_cb> to log to a file (by appending), unbuffered.
@@ -829,6 +831,10 @@ Sets the C<log_cb> to log to a file (by appending), unbuffered.
 Same as C<< ->log_to_file >>, but opens the file for each message. This
 is much slower, but allows you to change/move/rename/delete the file at
 basically any time.
+
+Needless(?) to say, if you do not want to be bitten by some evil person
+calling C<chdir>, the path should be absolute. Doesn't help with
+C<chroot>, but hey...
 
 =item $ctx->log_to_syslog ([$log_flags])
 
@@ -854,6 +860,15 @@ sub fmt_cb {
    $ctx->[4] = $cb;
 }
 
+sub log_to_warn {
+   my ($ctx, $path) = @_;
+
+   $ctx->log_cb (sub {
+      warn shift;
+      0
+   });
+}
+
 sub log_to_file {
    my ($ctx, $path) = @_;
 
@@ -866,7 +881,7 @@ sub log_to_file {
    });
 }
 
-sub log_to_file {
+sub log_to_path {
    my ($ctx, $path) = @_;
 
    $ctx->log_cb (sub {
@@ -923,9 +938,206 @@ context.
 *log    = \&AnyEvent::Log::_log;
 *logger = \&AnyEvent::Log::_logger;
 
-1;
+=back
+
+=cut
+
+package AnyEvent::Log;
+
+=head1 CONFIGURATION VIA $ENV{PERL_ANYEVENT_LOG}
+
+Logging can also be configured by setting the environment variable
+C<PERL_ANYEVENT_LOG> (or C<AE_LOG>).
+
+The value consists of one or more logging context specifications separated
+by C<:> or whitespace. Each logging specification in turn starts with a
+context name, followed by C<=>, followed by zero or more comma-separated
+configuration directives, here are some examples:
+
+   # set default logging level
+   filter=warn
+
+   # log to file instead of to stderr
+   log=file=/tmp/mylog
+
+   # log to file in addition to stderr
+   log=+%file:%file=file=/tmp/mylog
+
+   # enable debug log messages, log warnings and above to syslog
+   filter=debug:log=+%warnings:%warnings=warn,syslog=LOG_LOCAL0
+
+   # log trace messages (only) from AnyEvent::Debug to file
+   AnyEvent::Debug=+%trace:%trace=only,trace,file=/tmp/tracelog
+
+A context name in the log specification can be any of the following:
+
+=over 4
+
+=item C<collect>, C<filter>, C<log>
+
+Correspond to the three predefined C<$AnyEvent::Log::COLLECT>,
+C<AnyEvent::Log::FILTER> and C<$AnyEvent::Log::LOG> contexts.
+
+=item C<%name>
+
+Context names starting with a C<%> are anonymous contexts created when the
+name is first mentioned. The difference to package contexts is that by
+default they have no attached slaves.
+
+=item a perl package name
+
+Any other string references the logging context associated with the given
+Perl C<package>. In the unlikely case where you want to specify a package
+context that matches on of the other context name forms, you can add a
+C<::> to the package name to force interpretation as a package.
 
 =back
+
+The configuration specifications can be any number of the following:
+
+=over 4
+
+=item C<stderr>
+
+Configures the context to use Perl's C<warn> function (which typically
+logs to C<STDERR>). Works like C<log_to_warn>.
+
+=item C<file=>I<path>
+
+Configures the context to log to a file with the given path. Works like
+C<log_to_file>.
+
+=item C<path=>I<path>
+
+Configures the context to log to a file with the given path. Works like
+C<log_to_path>.
+
+=item C<syslog> or C<syslog=>I<expr>
+
+Configured the context to log to syslog. If I<expr> is given, then it is
+evaluated in the L<Sys::Syslog> package, so you could use:
+
+   log=syslog=LOG_LOCAL0
+
+=item C<nolog>
+
+Configures the context to not log anything by itself, which is the
+default. Same as C<< $ctx->log_cb (undef) >>.
+
+=item C<0> or C<off>
+
+Sets the logging level of the context ot C<0>, i.e. all messages will be
+filtered out.
+
+=item C<all>
+
+Enables all logging levels, i.e. filtering will effectively be switched
+off (the default).
+
+=item C<only>
+
+Disables all logging levels, and changes the interpretation of following
+level specifications to enable the specified level only.
+
+Example: only enable debug messages for a context.
+
+   context=only,debug
+
+=item C<except>
+
+Enables all logging levels, and changes the interpretation of following
+level specifications to disable that level. Rarely used.
+
+Example: enable all logging levels except fatal and trace (this is rather
+nonsensical).
+
+   filter=exept,fatal,trace
+
+=item C<level>
+
+Enables all logging levels, and changes the interpretation of following
+level specifications to be "that level or any higher priority
+message". This is the default.
+
+Example: log anything at or above warn level.
+
+   filter=warn
+
+   # or, more verbose
+   filter=only,level,warn
+
+=item C<1>..C<9>, a logging level name (C<error>, C<debug> etc.)
+
+A numeric loglevel or the name of a loglevel will be interpreted according
+to the most recent C<only>, C<except> or C<level> directive. By default,
+specifying a logging level enables that and any higher priority messages.
+
+=item C<+>I<context>
+
+Adds/attaches the named context as slave to the context.
+
+=item C<+>
+
+A line C<+> clears the slave list form the context. Anonymous (C<%name>)
+contexts have no slaves by default, but package contexts have the parent
+context as slave by default.
+
+Example: log messages from My::Module to a file, do not send them to the
+default log collector.
+
+   My::Module=+,file=/tmp/mymodulelog
+
+=back
+
+=cut
+
+for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
+   my %anon;
+
+   my $pkg = sub {
+      $_[0] eq "log" ? $LOG
+      : $_[0] eq "filter" ? $FILTER
+      : $_[0] eq "collect" ? $COLLECT
+      : $_[0] =~ /^%(.+)$/ && $anon{$1} ||= ctx undef
+      : $_[0] =~ /^(.*?)(?:::)?$/ && ctx "$1" # egad :/
+   };
+
+   while (/\G((?:[^:=]+|::|\\.)+)=/gc) {
+      my $ctx = $pkg->($1);
+      my $level = "level";
+
+      while (/\G((?:[^,:[:space:]]+|::|\\.)+)/gc) {
+         for ("$1") {
+            if ($_ eq "stderr"               ) { $ctx->log_to_warn;
+            } elsif (/^file=(.+)/            ) { $ctx->log_to_file ("$1");
+            } elsif (/^path=(.+)/            ) { $ctx->log_to_path ("$1");
+            } elsif (/syslog(?:=(.*))?/      ) { require Sys::Syslog; $ctx->log_to_syslog (eval "package Sys::Syslog; $1");
+            } elsif ($_ eq "nolog"           ) { $ctx->log_cb (undef);
+            } elsif (/^\+(.+)$/              ) { $ctx->attach ($pkg->("$1"));
+            } elsif ($_ eq "+"               ) { $ctx->slaves;
+            } elsif ($_ eq "off" or $_ eq "0") { $ctx->level (0);
+            } elsif ($_ eq "all"             ) { $ctx->level ("all");
+            } elsif ($_ eq "level"           ) { $ctx->level ("all"); $level = "level";
+            } elsif ($_ eq "only"            ) { $ctx->level ("off"); $level = "enable";
+            } elsif ($_ eq "except"          ) { $ctx->level ("all"); $level = "disable";
+            } elsif (/^\d$/                  ) { $ctx->$level ($_);
+            } elsif (exists $STR2LEVEL{$_}   ) { $ctx->$level ($_);
+            } else                             { die "PERL_ANYEVENT_LOG ($spec): parse error at '$_'\n";
+            }
+         }
+
+         /\G,/gc or last;
+      }
+
+      /\G[:[:space:]]/gc or last;
+   }
+
+   if (/\G(.+)/g) {
+      die "PERL_ANYEVENT_LOG ($spec): parse error at '$1'\n";
+   }
+}
+
+1;
 
 =head1 EXAMPLES
 
