@@ -58,6 +58,9 @@ but make it powerful enough to be potentially useful for any module, and
 extensive enough for the most common tasks, such as logging to multiple
 targets, or being able to log into a database.
 
+The module is also usable before AnyEvent itself is initialised, in which
+case some of the functionality might be reduced.
+
 The amount of documentation might indicate otherwise, but the runtime part
 of the module is still just below 300 lines of code.
 

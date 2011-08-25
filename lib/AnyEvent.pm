@@ -2055,6 +2055,9 @@ stderr, and errors and above to syslog, with:
 
 For the rather extensive details, see L<AnyEvent::Log>.
 
+This variable is evaluated when AnyEvent (or L<AnyEvent::Log>) is loaded,
+so will take effect even before AnyEvent has initialised itself.
+
 Note that specifying this environment variable causes the L<AnyEvent::Log>
 module to be loaded, while C<PERL_ANYEVENT_VERBOSE> does not, so only
 using the latter saves a few hundred kB of memory until the first message
