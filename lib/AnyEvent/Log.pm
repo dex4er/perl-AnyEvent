@@ -58,8 +58,8 @@ but make it powerful enough to be potentially useful for any module, and
 extensive enough for the most common tasks, such as logging to multiple
 targets, or being able to log into a database.
 
-The amount of documentation might indicate otherwise, but the module is
-still just below 300 lines of code.
+The amount of documentation might indicate otherwise, but the runtime part
+of the module is still just below 300 lines of code.
 
 =head1 LOGGING LEVELS
 
@@ -1090,8 +1090,8 @@ default log collector.
 =back
 
 Any character can be escaped by prefixing it with a C<\> (backslash), as
-usual, so to log to a file containing a comma, colon, backslash and space in the
-filename, you would do this:
+usual, so to log to a file containing a comma, colon, backslash and some
+spaces in the filename, you would do this:
 
    PERL_ANYEVENT_LOG='log=file=/some\ \:file\ with\,\ \\-escapes'
 
