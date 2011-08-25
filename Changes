@@ -2,10 +2,8 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-TODO: AnyEvent::Log
 TODO: ae::log examples
-TODO: consolide slogging, e.g AnyEvent::Debug
-TODO: /etc/hosts, for resolve_sockaddr?
+TODO: trace-per-watcher AnyEvent::Debug
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request
