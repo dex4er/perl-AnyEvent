@@ -1141,16 +1141,20 @@ for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
 
 =head1 EXAMPLES
 
-This section shows some common configurations.
+This section shows some common configurations, both as code, and as
+C<PERL_ANYEVENT_LOG> string.
 
 =over 4
 
 =item Setting the global logging level.
 
-Either put PERL_ANYEVENT_VERBOSE=<number> into your environment before
-running your program, or modify the log level of the root context:
+Either put C<PERL_ANYEVENT_VERBOSE=><number> into your environment before
+running your program, use C<PERL_ANYEVENT_LOG> or modify the log level of
+the root context at runtime:
 
    PERL_ANYEVENT_VERBOSE=5 ./myprog
+
+   PERL_ANYEVENT_LOG=log=warn
 
    $AnyEvent::Log::FILTER->level ("warn");
 
@@ -1158,7 +1162,9 @@ running your program, or modify the log level of the root context:
 
 This is affected by the global logging level.
 
-   $AnyEvent::Log::LOG->log_to_file ($path); (sub {
+   $AnyEvent::Log::LOG->log_to_file ($path);
+
+   PERL_ANYEVENT_LOG=log=file=/some/path
 
 =item Write all messages with priority C<error> and higher to a file.
 
@@ -1169,12 +1175,16 @@ filtering.
    $AnyEvent::Log::FILTER->attach 
       new AnyEvent::Log::Ctx log_to_file => $path);
 
+   PERL_ANYEVENT_LOG=filter=+%filelogger:%filelogger=file=/some/path
+
 This writes them regardless of the global logging level, because it is
 attached to the toplevel context, which receives all messages I<before>
 the global filtering.
 
    $AnyEvent::Log::COLLECT->attach (
       new AnyEvent::Log::Ctx log_to_file => $path);
+
+   PERL_ANYEVENT_LOG=%filelogger=file=/some/path:collect=+%filelogger
 
 In both cases, messages are still written to STDERR.
 
@@ -1185,6 +1195,8 @@ context - this simply circumvents the global filtering for trace messages.
 
    my $debug = AnyEvent::Debug->AnyEvent::Log::ctx;
    $debug->attach ($AnyEvent::Log::LOG);
+
+   PERL_ANYEVENT_LOG=AnyEvent::Debug=+log
 
 This of course works for any package, not just L<AnyEvent::Debug>, but
 assumes the log level for AnyEvent::Debug hasn't been changed from the
@@ -1198,3 +1210,4 @@ default.
  http://home.schmorp.de/
 
 =cut
+
