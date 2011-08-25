@@ -515,7 +515,7 @@ sub reset {
    @$_ = ($_->[0], (1 << 10) - 1 - 1)
       for $LOG, $FILTER, $COLLECT;
 
-   $LOG->slaves;
+   #$LOG->slaves;
    $LOG->title ('$AnyEvent::Log::LOG');
    $LOG->log_to_warn;
 
