@@ -6,6 +6,9 @@ TODO: ae::log examples
 TODO: trace-per-watcher AnyEvent::Debug
 TODO: logging during AnyEvent::detect
 TODO: AnyEvent::Filesys::Notify
+TODO: maybe study log4perl and see how they could interface?
+TODO: ae::now vs. ae::time - make configurable?
+TODO: AE_VERBOSE=8 mt
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request

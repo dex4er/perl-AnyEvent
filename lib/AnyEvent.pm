@@ -1055,11 +1055,17 @@ It should use C<postpone>:
 
 Log the given C<$msg> at the given C<$level>.
 
-Loads AnyEvent::Log on first use and calls C<AnyEvent::Log::log> -
-consequently, look at the L<AnyEvent::Log> documentation for details.
+If L<AnyEvent::Log> is not loaded then this function makes a simple test
+to see whether the message will be logged. If the test succeeds it will
+load AnyEvent::Log and call C<AnyEvent::Log::log> - consequently, look at
+the L<AnyEvent::Log> documentation for details.
+
+If the test fails it will simply return.
 
 If you want to sprinkle loads of logging calls around your code, consider
-creating a logger callback with the C<AnyEvent::Log::logger> function.
+creating a logger callback with the C<AnyEvent::Log::logger> function,
+which can reduce typing, codesize and can reduce the logging overhead
+enourmously.
 
 =back
 
@@ -1293,12 +1299,14 @@ sub postpone(&) {
 }
 
 sub log($$;@) {
-   # only load the bug bloated module when we actually are about to log something
-   if ($_[0] <= $VERBOSE) {
+   # only load the big bloated module when we actually are about to log something
+   if ($_[0] <= $VERBOSE) { # also catches non-numeric levels(!)
       require AnyEvent::Log;
       # AnyEvent::Log overwrites this function
       goto &log;
    }
+
+   0 # not logged
 }
 
 if (length $ENV{PERL_ANYEVENT_LOG}) {
@@ -1373,7 +1381,7 @@ sub detect() {
          AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.";
          $MODEL = $model;
       } else {
-         AnyEvent::log warn => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
+         AnyEvent::log 5 => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
       }
    }
 
@@ -1561,18 +1569,17 @@ sub time {
    eval q{ # poor man's autoloading {}
       # probe for availability of Time::HiRes
       if (eval "use Time::HiRes (); Time::HiRes::time (); 1") {
-         AnyEvent::log 8 => "AnyEvent: using Time::HiRes for sub-second timing accuracy."
-            if $AnyEvent::VERBOSE >= 8;
          *time     = sub { Time::HiRes::time () };
          *AE::time = \&    Time::HiRes::time     ;
+         *now      = \&time;
+         AnyEvent::log 8 => "AnyEvent: using Time::HiRes for sub-second timing accuracy.";
          # if (eval "use POSIX (); (POSIX::times())...
       } else {
-         AnyEvent::log critical => "using built-in time(), WARNING, no sub-second resolution!";
          *time     = sub   { CORE::time };
          *AE::time = sub (){ CORE::time };
+         *now      = \&time;
+         AnyEvent::log 3 => "using built-in time(), WARNING, no sub-second resolution!";
       }
-
-      *now = \&time;
    };
    die if $@;
 
@@ -1675,15 +1682,13 @@ sub signal {
    eval q{ # poor man's autoloading {}
       # probe for availability of Async::Interrupt 
       if (_have_async_interrupt) {
-         AnyEvent::log 8 => "using Async::Interrupt for race-free signal handling."
-            if $AnyEvent::VERBOSE >= 8;
+         AnyEvent::log 8 => "using Async::Interrupt for race-free signal handling.";
 
          $SIGPIPE_R = new Async::Interrupt::EventPipe;
          $SIG_IO = AE::io $SIGPIPE_R->fileno, 0, \&_signal_exec;
 
       } else {
-         AnyEvent::log 8 => "using emulated perl signal handling with latency timer."
-            if $AnyEvent::VERBOSE >= 8;
+         AnyEvent::log 8 => "using emulated perl signal handling with latency timer.";
 
          if (AnyEvent::WIN32) {
             require AnyEvent::Util;
@@ -2035,14 +2040,15 @@ talkative. If you want to do more than just set the global logging level
 you should have a look at C<PERL_ANYEVENT_LOG>, which allows much more
 complex specifications.
 
-When set to C<5> or higher, causes AnyEvent to warn about unexpected
+When set to C<5> or higher (warn), causes AnyEvent to warn about unexpected
 conditions, such as not being able to load the event model specified by
-C<PERL_ANYEVENT_MODEL>.
+C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an exception - this
+is the minimum recommended level.
 
-When set to C<7> or higher, cause AnyEvent to report to STDERR which event
-model it chooses.
+When set to C<7> or higher (info), cause AnyEvent to report which event model it
+chooses.
 
-When set to C<8> or higher, then AnyEvent will report extra information on
+When set to C<8> or higher (debug), then AnyEvent will report extra information on
 which optional modules it loads and how it implements certain features.
 
 =item C<PERL_ANYEVENT_LOG>

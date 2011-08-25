@@ -113,7 +113,7 @@ use Carp ();
 use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
-use AnyEvent::Util ();
+#use AnyEvent::Util (); need to load this in a delayed fashion, as it uses AE::log
 
 our $VERSION = $AnyEvent::VERSION;
 
@@ -359,10 +359,11 @@ sub _logger {
 
    _reassess $logger+0;
 
-   my $guard = AnyEvent::Util::guard {
+   require AnyEvent::Util;
+   my $guard = AnyEvent::Util::guard (sub {
       # "clean up"
       delete $LOGGER{$logger+0};
-   };
+   });
 
    sub {
       $guard if 0; # keep guard alive, but don't cause runtime overhead
