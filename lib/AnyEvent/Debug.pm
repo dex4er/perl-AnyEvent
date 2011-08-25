@@ -26,6 +26,7 @@ code, e.g. to look at global variables.
 
 package AnyEvent::Debug;
 
+use B ();
 use Carp ();
 use Errno ();
 
@@ -373,20 +374,22 @@ know where in the program the callback is actually defined.
 sub cb2str($) {
    my $cb = shift;
 
-   require B;
-
    "CODE" eq ref $cb
       or return "$cb";
 
-   my $cv = B::svref_2object ($cb);
+   eval {
+      my $cv = B::svref_2object ($cb);
 
-   my $gv = $cv->GV
-      or return "$cb";
+      my $gv = $cv->GV
+         or return "$cb";
 
-   return (AnyEvent::Debug::path2mod $gv->FILE) . ":" . $gv->LINE
-      if $gv->NAME eq "__ANON__";
+      my $name = $gv->NAME;
 
-   return $gv->STASH->NAME . "::" . $gv->NAME;
+      return (AnyEvent::Debug::path2mod $gv->FILE) . ":" . $gv->LINE
+         if $name eq "__ANON__";
+
+      $gv->STASH->NAME . "::" . $name;
+   } || "$cb"
 }
 
 sub sv2str($) {
@@ -501,10 +504,11 @@ sub _reset {
                &$cb;
             };
             if ($@) {
-               push @{ $w->{error} }, [AE::now, "$@"]
+               my $err = "$@";
+               push @{ $w->{error} }, [AE::now, $err]
                   if @{ $w->{error} } < 10;
-               AE::log die => "($w) $@"
-                  or warn "($w) $@";
+               AE::log die => "($w) $err"
+                  or warn "($w) $err";
             }
             $TRACE_LOGGER->("leave $w") if $TRACE_ENABLED && $t;
          };
