@@ -196,12 +196,10 @@ EOF
 
    sub t {
       if (@_) {
-         for my $id (@_) {
-            if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
-               $w->trace (1);
-            }
-         }
-         "tracing for @_ enabled."
+         @_ = &w;
+         $_->trace (1)
+            for @_;
+         "tracing enabled for @_."
       } else {
          $AnyEvent::Debug::TRACE = 1;
          "tracing for newly created watchers is now enabled."
@@ -210,12 +208,10 @@ EOF
 
    sub u {
       if (@_) {
-         for my $id (@_) {
-            if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
-               $w->trace (0);
-            }
-         }
-         "tracing for @_ disabled."
+         @_ = &w;
+         $_->trace (0)
+            for @_;
+         "tracing disabled for @_."
       } else {
          $AnyEvent::Debug::TRACE = 0;
          "tracing for newly created watchers is now disabled."
