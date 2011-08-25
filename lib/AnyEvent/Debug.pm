@@ -34,12 +34,14 @@ use AnyEvent::Util ();
 use AnyEvent::Socket ();
 use AnyEvent::Log ();
 
+our $TRACE = 1; # trace status
+
 our ($TRACE_LOGGER, $TRACE_ENABLED);
 
 # cache often-used strings, purely to save memory, at the expense of speed
 our %STRCACHE;
 
-=item $shell = AnyEvent;::Debug::shell $host, $service
+=item $shell = AnyEvent::Debug::shell $host, $service
 
 This function binds on the given host and service port and returns a
 shell object, which determines the lifetime of the shell. Any number
@@ -203,12 +205,20 @@ C<$ENV{PERL_ANYEVENT_DEBUG_WRAP}> specifies.
 A level of C<0> disables wrapping, i.e. AnyEvent works normally, and in
 its most efficient mode.
 
-A level of C<1> enables wrapping, which replaces all watchers by
-AnyEvent::Debug::Wrapped objects, stores the location where a watcher
-was created and wraps the callback to log all invocations at "trace"
-loglevel. The wrapper will also count how many times the callback was
-invoked and will record up to ten runtime errors with corresponding
-backtraces. It will also log runtime errors at "error" loglevel.
+A level of C<1> or higher enables wrapping, which replaces all watchers
+by AnyEvent::Debug::Wrapped objects, stores the location where a
+watcher was created and wraps the callback to log all invocations at
+"trace" loglevel if tracing is enabled fore the watcher. The initial
+state of tracing when creating a watcher is taken from the global
+variable C<$AnyEvent:Debug::TRACE>. The default value of that variable
+is C<1>, but it can make sense to set it to C<0> and then do C<< local
+$AnyEvent::Debug::TRACE = 1 >> in a block where you create "interesting"
+watchers. Tracing can also be enabled and disabled later by calling the
+watcher's C<trace> method.
+
+The wrapper will also count how many times the callback was invoked and
+will record up to ten runtime errors with corresponding backtraces. It
+will also log runtime errors at "error" loglevel.
 
 To see the trace messages, you can invoke your program with
 C<PERL_ANYEVENT_VERBOSE=9>, or you can use AnyEvent::Log to divert
@@ -412,6 +422,8 @@ sub _reset {
 
          my $w;
 
+         my $t = $TRACE;
+
          my ($pkg, $file, $line, $sub);
          
          $w = 0;
@@ -427,7 +439,7 @@ sub _reset {
 
             local $TRACE_CUR = $w;
 
-            $TRACE_LOGGER->("enter $w") if $TRACE_ENABLED;
+            $TRACE_LOGGER->("enter $w") if $TRACE_ENABLED && $t;
             eval {
                local $SIG{__DIE__} = sub {
                   die $_[0] . AnyEvent::Debug::backtrace
@@ -441,7 +453,7 @@ sub _reset {
                AE::log die => "($w) $@"
                   or warn "($w) $@";
             }
-            $TRACE_LOGGER->("leave $w") if $TRACE_ENABLED;
+            $TRACE_LOGGER->("leave $w") if $TRACE_ENABLED && $t;
          };
 
          $self = bless {
@@ -455,6 +467,7 @@ sub _reset {
             arg    => \%arg,
             cb     => $cb,
             called => 0,
+            rt     => \$t,
          }, "AnyEvent::Debug::Wrapped";
 
          delete $arg{cb};
@@ -465,7 +478,7 @@ sub _reset {
          Scalar::Util::weaken ($w = $self);
          Scalar::Util::weaken ($AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $self} = $self);
 
-         $TRACE_LOGGER->("creat $w") if $TRACE_ENABLED;
+         $TRACE_LOGGER->("creat $w") if $TRACE_ENABLED && $t;
 
          $self
       };
@@ -536,6 +549,7 @@ sub verbose {
            . "line:    $self->{line}\n"
            . "subname: $self->{sub}\n"
            . "context: $self->{cur}\n"
+           . "tracing: " . (${ $self->{rt} } ? "enabled" : "disabled") . "\n"
            . "cb:      $self->{cb} (" . (AnyEvent::Debug::cb2str $self->{cb}) . ")\n"
            . "invoked: $self->{called} times\n";
 
@@ -554,7 +568,7 @@ sub verbose {
 }
 
 sub DESTROY {
-   $TRACE_LOGGER->("dstry $_[0]") if $TRACE_ENABLED;
+   $TRACE_LOGGER->("dstry $_[0]") if $TRACE_ENABLED && ${ $_[0]{rt} };
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }

@@ -4,6 +4,7 @@ TODO: document TCP_*** constants
 
 TODO: ae::log examples
 TODO: trace-per-watcher AnyEvent::Debug
+TODO: logging during AnyEvent::detect
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request

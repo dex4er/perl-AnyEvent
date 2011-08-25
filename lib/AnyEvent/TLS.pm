@@ -876,7 +876,7 @@ later. It is harmless to call C<AnyEvent::TLS::init> multiple times.
 sub init() {
    return if $REF_IDX;
 
-   warn "AnyEvent::TLS: Net::SSLeay versions older than 1.33 might malfunction.\n"
+   AE::log warn => "AnyEvent::TLS: Net::SSLeay versions older than 1.33 might malfunction."
       if $AnyEvent::VERBOSE && $Net::SSLeay::VERSION < 1.33;
 
    Net::SSLeay::load_error_strings ();

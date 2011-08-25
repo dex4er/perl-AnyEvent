@@ -846,7 +846,7 @@ sub parse_resolv_conf {
          if (my $ipn = AnyEvent::Socket::parse_address ($ip)) {
             push @{ $self->{server} }, $ipn;
          } else {
-            warn "nameserver $ip invalid and ignored\n";
+            AE::log warn => "nameserver $ip invalid and ignored, while parsing resolver config.";
          }
       } elsif (/^\s*domain\s+(\S*)\s*$/i) {
          $self->{search} = [$1];

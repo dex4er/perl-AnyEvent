@@ -1293,9 +1293,16 @@ sub postpone(&) {
 }
 
 sub log($$;@) {
-   require AnyEvent::Log;
-   # AnyEvent::Log overwrites this function
-   goto &log;
+   # only load the bug bloated module when we actually are about to log something
+   if ($_[0] <= $VERBOSE) {
+      require AnyEvent::Log;
+      # AnyEvent::Log overwrites this function
+      goto &log;
+   }
+}
+
+if (length $ENV{PERL_ANYEVENT_LOG}) {
+   require AnyEvent::Log; # AnyEvent::Log does the thing for us
 }
 
 our @models = (
@@ -1363,9 +1370,8 @@ sub detect() {
       my $model = $1;
       $model = "AnyEvent::Impl::$model" unless $model =~ s/::$//;
       if (eval "require $model") {
+         AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.";
          $MODEL = $model;
-         AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it."
-            if $VERBOSE >= 7;
       } else {
          AnyEvent::log warn => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
       }
@@ -1377,9 +1383,8 @@ sub detect() {
          my ($package, $model) = @$_;
          if (${"$package\::VERSION"} > 0) {
             if (eval "require $model") {
+               AnyEvent::log 7 => "autodetected model '$model', using it.";
                $MODEL = $model;
-               AnyEvent::log 7 => "autodetected model '$model', using it."
-                  if $VERBOSE >= 7;
                last;
             }
          }
@@ -1395,9 +1400,8 @@ sub detect() {
                and ${"$package\::VERSION"} > 0
                and eval "require $model"
             ) {
+               AnyEvent::log 7 => "autoloaded model '$model', using it.";
                $MODEL = $model;
-               AnyEvent::log 7 => "autoloaded model '$model', using it."
-                  if $VERBOSE >= 7;
                last;
             }
          }
@@ -1423,10 +1427,6 @@ sub detect() {
    _isa_set;
 
    # we're officially open!
-
-   if (length $ENV{PERL_ANYEVENT_LOG}) {
-      require AnyEvent::Log; # AnyEvent::Log does the thing for us
-   }
 
    if ($ENV{PERL_ANYEVENT_STRICT}) {
       require AnyEvent::Strict;

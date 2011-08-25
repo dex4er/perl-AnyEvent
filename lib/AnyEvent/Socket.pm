@@ -921,12 +921,12 @@ to 15 seconds.
          $handle = new AnyEvent::Handle
             fh     => $fh,
             on_error => sub {
-               warn "error $_[2]\n";
+               AE::log error => "error $_[2]";
                $_[0]->destroy;
             },
             on_eof => sub {
                $handle->destroy; # destroy handle
-               warn "done.\n";
+               AE::log info => "done.";
             };
 
          $handle->push_write ("GET / HTTP/1.0\015\012\015\012");
@@ -1111,7 +1111,7 @@ to go away.
       syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
    }, sub {
       my ($fh, $thishost, $thisport) = @_;
-      warn "bound to $thishost, port $thisport\n";
+      AE::log info => "bound to $thishost, port $thisport";
    };
 
 Example: bind a server on a unix domain socket.

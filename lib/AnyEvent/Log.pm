@@ -251,7 +251,7 @@ sub _log {
                   $format = $format->() if ref $format;
                   $format = sprintf $format, @args if @args;
                   $format =~ s/\n$//;
-                  $now = AE::now;
+                  $now = now;
                };
 
                # format msg

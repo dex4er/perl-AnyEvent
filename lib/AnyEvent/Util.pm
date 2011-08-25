@@ -60,7 +60,7 @@ BEGIN {
 
    while (my ($k, $v) = each %ERR) {
       next if eval "Errno::$k ()";
-      warn "AnyEvent::Util: broken Errno module, adding Errno::$k.\n" if $AnyEvent::VERBOSE >= 8;
+      AE::log info => "AnyEvent::Util: broken Errno module, adding Errno::$k.";
 
       eval "sub Errno::$k () { $v }";
       push @Errno::EXPORT_OK, $k;
@@ -387,10 +387,10 @@ guard.
 
 BEGIN {
    if (!$ENV{PERL_ANYEVENT_AVOID_GUARD} && eval { require Guard; $Guard::VERSION >= 0.5 }) {
-      warn "AnyEvent::Util: using Guard module to implement guards.\n" if $AnyEvent::VERBOSE >= 8;
+      AE::log info => "AnyEvent::Util: using Guard module to implement guards.";
       *guard = \&Guard::guard;
    } else {
-      warn "AnyEvent::Util: using pure-perl guard implementation.\n" if $AnyEvent::VERBOSE >= 8;
+      AE::log info => "AnyEvent::Util: using pure-perl guard implementation.";
 
       *AnyEvent::Util::guard::DESTROY = sub {
          local $@;
@@ -400,7 +400,7 @@ BEGIN {
             ${$_[0]}->();
          };
 
-         warn "runtime error in AnyEvent::guard callback: $@" if $@;
+         AE::log warn => "runtime error in AnyEvent::guard callback: $@" if $@;
       };
 
       *AnyEvent::Util::guard::cancel = sub ($) {
