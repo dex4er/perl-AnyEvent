@@ -2082,7 +2082,7 @@ C<AnyEvent::Socket::parse_hostport> (after replacing every occurance of
 C<$$> by the process pid) and an C<AnyEvent::Debug::shell> is bound on
 that port. The shell object is saved in C<$AnyEvent::Debug::SHELL>.
 
-This takes place when the first watcher is created.
+This happens when the first watcher is created.
 
 For example, to bind a debug shell on a unix domain socket in
 F<< /tmp/debug<pid>.sock >>, you could use this:

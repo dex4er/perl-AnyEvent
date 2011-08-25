@@ -92,11 +92,14 @@ And then:
 =cut
 
 sub shell($$) {
+   local $TRACE = 0;
+
    AnyEvent::Socket::tcp_server $_[0], $_[1], sub {
       my ($fh, $host, $port) = @_;
 
       syswrite $fh, "Welcome, $host:$port, use 'help' for more info!\015\012> ";
       my $rbuf;
+      local $TRACE = 0;
       my $rw; $rw = AE::io $fh, 0, sub {
          my $len = sysread $fh, $rbuf, 1024, length $rbuf;
 
@@ -145,9 +148,13 @@ sub shell($$) {
       <<EOF
 help         this command
 wr [level]   sets wrap level to level (or toggles if missing)
-v [level]    sets verbosity (or toggles if missing)
+v [level]    sets verbosity (or toggles between 0 and 9 if missing)
 wl 'regex'   print wrapped watchers matching the regex (or all if missing)
 w id,...     prints the watcher with the given ids in more detail
+t            enable tracing for newly created watchers (enabled by default)
+ut           disable tracing for newly created watchers
+t  id,...    enable tracing for the given watcher (enabled by default)
+ut id,...    disable tracing for the given weatcher
 EOF
    }
 
@@ -185,11 +192,40 @@ EOF
       "wrap level now $AnyEvent::Debug::WRAP_LEVEL"
    }
 
-   sub v {
-      #TODO
-      $AnyEvent::VERBOSE = @_ ? shift : $AnyEvent::VERBOSE ? 0 : 9;
+   sub t {
+      if (@_) {
+         for my $id (@_) {
+            if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
+               $w->trace (1);
+            }
+         }
+         "tracing for @_ enabled."
+      } else {
+         $AnyEvent::Debug::TRACE = 1;
+         "tracing for newly created watchers is now enabled."
+      }
+   }
 
-      "verbosity level now $AnyEvent::VEBROSE"
+   sub u {
+      if (@_) {
+         for my $id (@_) {
+            if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
+               $w->trace (0);
+            }
+         }
+         "tracing for @_ disabled."
+      } else {
+         $AnyEvent::Debug::TRACE = 0;
+         "tracing for newly created watchers is now disabled."
+      }
+   }
+
+   sub v {
+      require AnyEvent::Log;
+
+      $AnyEvent::Log::FILTER->level (@_ ? $_[0] : $AnyEvent::Log::FILTER->[1] ? 0 : 9);
+
+      "verbosity level " . (@_ ? "set to $_[0]" : "toggled")
    }
 }
 
@@ -494,9 +530,8 @@ inside an AnyEvent::Debug::Wrapped object. The address of the
 wrapped watcher will become its ID - every watcher will be stored in
 C<$AnyEvent::Debug::Wrapped{$id}>.
 
-These wrapper objects, as of now, can be stringified, and you can call the
-C<< ->verbose >> method to get a multiline string describing the watcher
-in great detail, but otherwise has no other public methods.
+These wrapper objects can be stringified and have some methods defined on
+them.
 
 For debugging, of course, it can be helpful to look into these objects,
 which is why this is documented here, but this might change at any time in
@@ -514,6 +549,12 @@ Each object is a relatively standard hash with the following members:
    arg    => the arguments used to create the watcher (sans C<cb>)
    cb     => the original callback used to create the watcher
    called => the number of times the callback was called
+
+Each object supports the following mehtods (warning: these are only
+available on wrapped watchers, so are best for interactive use via the
+debug shell).
+
+=over 4
 
 =cut
 
@@ -538,6 +579,13 @@ use overload
    },
    fallback => 1,
 ;
+
+=item $w->verbose
+
+Returns a multiline textual description of the watcher, including the
+first ten exceptions caught while executing the callback.
+
+=cut
 
 sub verbose {
    my ($self) = @_;
@@ -567,11 +615,36 @@ sub verbose {
    $res
 }
 
+=item $w->trace ($on)
+
+Enables (C<$on> is true) or disables (C<$on> is false) tracing on this
+watcher.
+
+To get tracing messages, both the global logging settings must have trace
+messages enabled for the context C<AnyEvent::Debug> and tracing must be
+enabled for the wrapped watcher.
+
+To enable trace messages globally, the simplest way is to start the
+program with C<PERL_ANYEVENT_VERBOSE=9> in the environment.
+
+Tracing for each individual watcher is enabled by default (unless
+C<$AnyEvent::Debug::TRACE> has been set to false).
+
+=cut
+
+sub trace {
+   ${ $_[0]{rt} } = $_[1];
+}
+
 sub DESTROY {
    $TRACE_LOGGER->("dstry $_[0]") if $TRACE_ENABLED && ${ $_[0]{rt} };
 
    delete $AnyEvent::Debug::Wrapped{Scalar::Util::refaddr $_[0]};
 }
+
+=back
+
+=cut
 
 package AnyEvent::Debug::Backtrace;
 
