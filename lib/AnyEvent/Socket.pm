@@ -611,11 +611,11 @@ used as-is. If you know that the service name is not in your services
 database, then you can specify the service in the format C<name=port>
 (e.g. C<http=80>).
 
-Hostnames will be looked up in F</etc/hosts> (or the file specified
-via C<< $ENV{PERL_ANYEVENT_HOSTS} >>). If they are found, the entries
-there will be used instead of querying DNS (SRV records will still be
-queried). The effect is as if entries from F</etc/hosts> would replace any
-existing C<A> and C<AAAA> records for the given host name and aliases.
+If a host cannot be found via DNS, then it will be looked up in
+F</etc/hosts> (or the file specified via C<< $ENV{PERL_ANYEVENT_HOSTS}
+>>). If they are found, the addresses there will be used. The effect is as
+if entries from F</etc/hosts> would yield C<A> and C<AAAA> records for the
+host name unless DNS already had records for them.
 
 For UNIX domain sockets, C<$node> must be the string C<unix/> and
 C<$service> must be the absolute pathname of the socket. In this case,
@@ -668,6 +668,7 @@ sub _parse_hosts() {
    for (split /\n/, $HOSTS) {
       s/#.*$//;
       s/^[ \t]+//;
+      y/A-Z/a-z/;
 
       my ($addr, @aliases) = split /[ \t]+/;
       next unless @aliases;
@@ -755,36 +756,40 @@ sub resolve_sockaddr($$$$$$) {
                push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
                            pack_sockaddr $port, $noden]]
             }
-         } elsif (my $hosts = $HOSTS{$node}) {
-            # hosts
-            if (exists $HOSTS{$node}) {
-               push @res,
-                  map [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, $_]],
-                     @{ $hosts->[0] }
-                  if $family != 6;
-
-               push @res,
-                  map [$idx, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
-                     @{ $hosts->[1] }
-                  if $family != 4;
-            }
          } else {
-            # ipv4
+            $node =~ y/A-Z/a-z/;
+
+            my $hosts = $HOSTS{$node};
+
+            # a records
             if ($family != 6) {
                $cv->begin;
                AnyEvent::DNS::a $node, sub {
                   push @res, [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, parse_ipv4 $_]]
                      for @_;
+
+                  # dns takes precedence over hosts
+                  push @res,
+                     map [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, $_]],
+                        @{ $hosts->[0] }
+                     unless @_;
+
                   $cv->end;
                };
             }
 
-            # ipv6
+            # aaaa records
             if ($family != 4) {
                $cv->begin;
                AnyEvent::DNS::aaaa $node, sub {
                   push @res, [$idx, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, parse_ipv6 $_]]
                      for @_;
+
+               push @res,
+                  map [$idx + 0.5, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
+                     @{ $hosts->[1] }
+                  unless @_;
+
                   $cv->end;
                };
             }
