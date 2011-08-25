@@ -30,6 +30,7 @@ TODO: /etc/hosts, for resolve_sockaddr?
         - make AnyEvent::Util more robust against EINTR (analyzed by Andrew Suffield).
         - new functions: AnyEvent::postpone, AnyEvent::log.
         - new module: AnyEvent::Log, for simple logging needs.
+        - new env variable, PERL_ANYEVENT_LOG, for fine-grained logging config.
         - new env variable, PERL_ANYEVENT_DEBUG_SHELL, to automatically start
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable

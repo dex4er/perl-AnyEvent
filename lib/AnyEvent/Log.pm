@@ -969,15 +969,6 @@ configuration directives, here are some examples:
    # log trace messages (only) from AnyEvent::Debug to file
    AnyEvent::Debug=+%trace:%trace=only,trace,file=/tmp/tracelog
 
-Since whitespace (which includes newlines) is allowed, it is fine to
-specify multiple lines in C<PERL_ANYEVENT_LOG>, e.g.:
-
-   PERL_ANYEVENT_LOG="
-      filter=warn
-      AnyEvent::Debug=+%trace
-      %trace=only,trace,+log
-   " myprog
-
 A context name in the log specification can be any of the following:
 
 =over 4
@@ -1097,6 +1088,27 @@ default log collector.
    My::Module=+,file=/tmp/mymodulelog
 
 =back
+
+Any character can be escaped by prefixing it with a C<\> (backslash), as
+usual, so to log to a file containing a comma, colon, backslash and space in the
+filename, you would do this:
+
+   PERL_ANYEVENT_LOG='log=file=/some\ \:file\ with\,\ \\-escapes'
+
+Since whitespace (which includes newlines) is allowed, it is fine to
+specify multiple lines in C<PERL_ANYEVENT_LOG>, e.g.:
+
+   PERL_ANYEVENT_LOG="
+      filter=warn
+      AnyEvent::Debug=+%trace
+      %trace=only,trace,+log
+   " myprog
+
+Also, in the unlikely case when you want to concatenate specifications,
+use whitespace as separator, as C<::> will be interpreted as part of a
+module name, an empty spec with two separators:
+
+   PERL_ANYEVENT_LOG="$PERL_ANYEVENT_LOG MyMod=debug"
 
 =cut
 
