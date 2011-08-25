@@ -1014,7 +1014,7 @@ C<log_to_path>.
 
 =item C<syslog> or C<syslog=>I<expr>
 
-Configured the context to log to syslog. If I<expr> is given, then it is
+Configures the context to log to syslog. If I<expr> is given, then it is
 evaluated in the L<Sys::Syslog> package, so you could use:
 
    log=syslog=LOG_LOCAL0
@@ -1066,7 +1066,7 @@ Example: log anything at or above warn level.
    # or, more verbose
    filter=only,level,warn
 
-=item C<1>..C<9>, a logging level name (C<error>, C<debug> etc.)
+=item C<1>..C<9> or a logging level name (C<error>, C<debug> etc.)
 
 A numeric loglevel or the name of a loglevel will be interpreted according
 to the most recent C<only>, C<except> or C<level> directive. By default,
@@ -1074,13 +1074,13 @@ specifying a logging level enables that and any higher priority messages.
 
 =item C<+>I<context>
 
-Adds/attaches the named context as slave to the context.
+Attaches the named context as slave to the context.
 
 =item C<+>
 
-A line C<+> clears the slave list form the context. Anonymous (C<%name>)
-contexts have no slaves by default, but package contexts have the parent
-context as slave by default.
+A line C<+> detaches all contexts, i.e. clears the slave list from the
+context. Anonymous (C<%name>) contexts have no attached slaves by default,
+but package contexts have the parent context as slave by default.
 
 Example: log messages from My::Module to a file, do not send them to the
 default log collector.
