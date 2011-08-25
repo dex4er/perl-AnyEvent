@@ -99,9 +99,23 @@ sub shell($$) {
 
       syswrite $fh, "Welcome, $host:$port, use 'help' for more info!\015\012> ";
       my $rbuf;
+
+      my $logger = new AnyEvent::Log::Ctx
+         log_cb => sub {
+            syswrite $fh, shift;
+            0
+         };
+
+      my $logger_guard = AnyEvent::Util::guard {
+         $AnyEvent::Log::COLLECT->detach ($logger);
+      };
+      $AnyEvent::Log::COLLECT->attach ($logger);
+
       local $TRACE = 0;
       my $rw; $rw = AE::io $fh, 0, sub {
          my $len = sysread $fh, $rbuf, 1024, length $rbuf;
+
+         $logger_guard if 0; # reference it
 
          if (defined $len ? $len == 0 : $! != Errno::EAGAIN) {
             undef $rw;
@@ -117,6 +131,7 @@ sub shell($$) {
                   package AnyEvent::Debug::shell;
 
                   no strict 'vars';
+                  local $LOGGER = $logger;
                   my $old_stdout = select $fh;
                   local $| = 1;
 
@@ -143,6 +158,8 @@ sub shell($$) {
 
 {
    package AnyEvent::Debug::shell;
+
+   our $LOGGER;
 
    sub help() {
       <<EOF
@@ -219,11 +236,9 @@ EOF
    }
 
    sub v {
-      require AnyEvent::Log;
+      $LOGGER->level (@_ ? $_[0] : $LOGGER->[1] ? 0 : 9);
 
-      $AnyEvent::Log::FILTER->level (@_ ? $_[0] : $AnyEvent::Log::FILTER->[1] ? 0 : 9);
-
-      "verbosity level " . (@_ ? "set to $_[0]" : "toggled") . "."
+      "verbose logging is now " . ($LOGGER->[1] ? "enabled" : "disabled") . "."
    }
 }
 
