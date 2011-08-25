@@ -1168,34 +1168,30 @@ Implement event-based interfaces to the protocols of the same name (for
 the curious, IGS is the International Go Server and FCP is the Freenet
 Client Protocol).
 
-=item L<AnyEvent::Handle::UDP>
-
-Here be danger!
-
-As Pauli would put it, "Not only is it not right, it's not even wrong!" -
-there are so many things wrong with AnyEvent::Handle::UDP, most notably
-its use of a stream-based API with a protocol that isn't streamable, that
-the only way to improve it is to delete it.
-
-It features data corruption (but typically only under load) and general
-confusion. On top, the author is not only clueless about UDP but also
-fact-resistant - some gems of his understanding: "connect doesn't work
-with UDP", "UDP packets are not IP packets", "UDP only has datagrams, not
-packets", "I don't need to implement proper error checking as UDP doesn't
-support error checking" and so on - he doesn't even understand what's
-wrong with his module when it is explained to him.
-
-=item L<AnyEvent::DBI>
-
-Executes L<DBI> requests asynchronously in a proxy process for you,
-notifying you in an event-based way when the operation is finished.
-
 =item L<AnyEvent::AIO>
 
 Truly asynchronous (as opposed to non-blocking) I/O, should be in the
 toolbox of every event programmer. AnyEvent::AIO transparently fuses
 L<IO::AIO> and AnyEvent together, giving AnyEvent access to event-based
 file I/O, and much more.
+
+=item L<AnyEvent::Filesys::Notify>
+
+AnyEvent is good for non-blocking stuff, but it can't detect file or
+path changes (e.g. "watch this directory for new files", "watch this
+file for changes"). The L<AnyEvent::Filesys::Notify> module promises to
+do just that in a portbale fashion, supporting inotify on GNU/Linux and
+some weird, without doubt broken, stuff on OS X to monitor files. It can
+fall back to blocking scans at regular intervals transparently on other
+platforms, so it's about as portable as it gets.
+
+(I haven't used it myself, but I haven't heard anybody complaining about
+it yet).
+
+=item L<AnyEvent::DBI>
+
+Executes L<DBI> requests asynchronously in a proxy process for you,
+notifying you in an event-based way when the operation is finished.
 
 =item L<AnyEvent::HTTPD>
 
@@ -1207,7 +1203,19 @@ The fastest ping in the west.
 
 =item L<Coro>
 
-Has special support for AnyEvent via L<Coro::AnyEvent>.
+Has special support for AnyEvent via L<Coro::AnyEvent>, which allows you
+to simply invert the flow control - don't call us, we will call you:
+
+   async {
+      Coro::AnyEvent::sleep 5; # creates a 5s timer and waits for it
+      print "5 seconds later!\n";
+
+      Coro::AnyEvent::readable *STDIN; # uses an I/O watcher
+      my $line = <STDIN>; # works for ttys
+
+      AnyEvent::HTTP::http_get "url", Coro::rouse_cb;
+      my ($body, $hdr) = Coro::rouse_wait;
+   };
 
 =back
 
