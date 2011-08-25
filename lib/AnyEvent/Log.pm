@@ -51,7 +51,7 @@ before starting your program, or change the logging level at runtime with
 something like:
 
    use AnyEvent::Log;
-   AnyEvent::Log::FILTER->level ("info");
+   $AnyEvent::Log::FILTER->level ("info");
 
 The design goal behind this module was to keep it simple (and small),
 but make it powerful enough to be potentially useful for any module, and
