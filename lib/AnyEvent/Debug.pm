@@ -52,15 +52,19 @@ All commands will be executed "blockingly" with the socket C<select>ed for
 output. For a less "blocking" interface see L<Coro::Debug>.
 
 The commands will be executed in the C<AnyEvent::Debug::shell> package,
-which currently has "help", "wl" and "wlv" commands, and can be freely
+which currently has "help" and a few other commands, and can be freely
 modified by all shells. Code is evaluated under C<use strict 'subs'>.
 
-Consider the beneficial aspects of using more global (our) variables than
-local ones (my) in package scope: Earlier all my modules tended to hide
-internal variables inside C<my> variables, so users couldn't accidentally
-access them. Having interactive access to your programs changed that:
-having internal variables still in the global scope means you can debug
-them easier.
+Every shell has a logging context (C<$LOGGER>) that is attached to
+C<$AnyEvent::Log::COLLECT>), which is especially useful to gether debug
+and trace messages.
+
+As a general programming guide, consider the beneficial aspects of
+using more global (C<our>) variables than local ones (C<my>) in package
+scope: Earlier all my modules tended to hide internal variables inside
+C<my> variables, so users couldn't accidentally access them. Having
+interactive access to your programs changed that: having internal
+variables still in the global scope means you can debug them easier.
 
 As no authentication is done, in most cases it is best not to use a TCP
 port, but a unix domain socket, whcih can be put wherever you can access
