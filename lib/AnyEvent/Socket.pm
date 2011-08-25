@@ -785,10 +785,10 @@ sub resolve_sockaddr($$$$$$) {
                   push @res, [$idx, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, parse_ipv6 $_]]
                      for @_;
 
-               push @res,
-                  map [$idx + 0.5, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
-                     @{ $hosts->[1] }
-                  unless @_;
+                  push @res,
+                     map [$idx + 0.5, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
+                        @{ $hosts->[1] }
+                     unless @_;
 
                   $cv->end;
                };
