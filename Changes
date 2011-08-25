@@ -35,6 +35,8 @@ TODO: /etc/hosts, for resolve_sockaddr?
           a debug shell.
         - new env variable, PERL_ANYEVENT_DEBUG_WRAP, to automatically enable
           watcher instrumentation/wrapping (see AnyEvent::Debug::wrap).
+        - new env variable, PERL_ANYEVENT_HOSTS, to override the place where
+          F</etc/hosts> can be found.
         - an empty PERL_ANYEVENT_RESOLV_CONF now selects the default
           configuration.
         - env variables can now be specified using AE_xyz instead of
@@ -49,6 +51,8 @@ TODO: /etc/hosts, for resolve_sockaddr?
         - some read types (regex, netstring, json, storable) could
           errornously keep an AE::Handle object alive on their own
           (reported by Mohammad Toossi).
+        - AnyEvent::Socket::resolve_sockaddr and all functions using it now
+          supports /etc/hosts overrides.
         - add more workarounds around child watcher bugs in IO::Async
           and (newly introduced) in POE.
         - use glib child watchers and try to work around its limitations,

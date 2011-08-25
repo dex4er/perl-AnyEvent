@@ -2138,6 +2138,12 @@ but support both and try to use both.  C<PERL_ANYEVENT_PROTOCOLS=ipv4>
 addresses. C<PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4> support either IPv4 or
 IPv6, but prefer IPv6 over IPv4.
 
+=item C<PERL_ANYEVENT_HOSTS>
+
+This variable, if specified, overrides the F</etc/hosts> file used by
+L<AnyEvent::Socket>C<::resolve_sockaddr>, i.e. hosts aliases will be read
+from that file instead.
+
 =item C<PERL_ANYEVENT_EDNS0>
 
 Used by L<AnyEvent::DNS> to decide whether to use the EDNS0 extension for
