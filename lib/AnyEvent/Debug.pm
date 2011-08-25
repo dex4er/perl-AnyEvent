@@ -150,11 +150,12 @@ help         this command
 wr [level]   sets wrap level to level (or toggles if missing)
 v [level]    sets verbosity (or toggles between 0 and 9 if missing)
 wl 'regex'   print wrapped watchers matching the regex (or all if missing)
-w id,...     prints the watcher with the given ids in more detail
+i id,...     prints the watcher with the given ids in more detail
 t            enable tracing for newly created watchers (enabled by default)
 ut           disable tracing for newly created watchers
 t  id,...    enable tracing for the given watcher (enabled by default)
 ut id,...    disable tracing for the given weatcher
+w id,...     converts the watcher ids to watcher objects (for scripting)
 EOF
    }
 
@@ -172,18 +173,19 @@ EOF
       join "", map "$res{$_} $_\n", sort keys %res
    }
 
-   sub w(@) {
-      my $res;
-
-      for my $id (@_) {
-         if (my $w = $AnyEvent::Debug::Wrapped{$id}) {
-            $res .= "$id $w\n" . $w->verbose;
-         } else {
-            $res .= "$id: no such wrapped watcher.\n";
+   sub w {
+      map {
+         $AnyEvent::Debug::Wrapped{$_} || do {
+            print "$_: no such wrapped watcher.\n";
+            ()
          }
-      }
+      } @_
+   }
 
-      $res
+   sub i {
+      join "",
+         map $_->id . " $_\n" . $_->verbose . "\n",
+            &w
    }
 
    sub wr {
@@ -225,7 +227,7 @@ EOF
 
       $AnyEvent::Log::FILTER->level (@_ ? $_[0] : $AnyEvent::Log::FILTER->[1] ? 0 : 9);
 
-      "verbosity level " . (@_ ? "set to $_[0]" : "toggled")
+      "verbosity level " . (@_ ? "set to $_[0]" : "toggled") . "."
    }
 }
 
@@ -579,6 +581,16 @@ use overload
    },
    fallback => 1,
 ;
+
+=item $w->id
+
+Returns the numerical id of the watcher, as used in the debug shell.
+
+=cut
+
+sub id {
+   Scalar::Util::refaddr shift
+}
 
 =item $w->verbose
 
