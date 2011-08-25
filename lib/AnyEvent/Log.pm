@@ -969,6 +969,15 @@ configuration directives, here are some examples:
    # log trace messages (only) from AnyEvent::Debug to file
    AnyEvent::Debug=+%trace:%trace=only,trace,file=/tmp/tracelog
 
+Since whitespace (which includes newlines) is allowed, it is fine to
+specify multiple lines in C<PERL_ANYEVENT_LOG>, e.g.:
+
+   PERL_ANYEVENT_LOG="
+      filter=warn
+      AnyEvent::Debug=+%trace
+      %trace=only,trace,+log
+   " myprog
+
 A context name in the log specification can be any of the following:
 
 =over 4
@@ -1095,14 +1104,17 @@ for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
    my %anon;
 
    my $pkg = sub {
-      $_[0] eq "log" ? $LOG
-      : $_[0] eq "filter" ? $FILTER
-      : $_[0] eq "collect" ? $COLLECT
-      : $_[0] =~ /^%(.+)$/ && $anon{$1} ||= ctx undef
-      : $_[0] =~ /^(.*?)(?:::)?$/ && ctx "$1" # egad :/
+      $_[0] eq "log"              ? $LOG
+      : $_[0] eq "filter"         ? $FILTER
+      : $_[0] eq "collect"        ? $COLLECT
+      : $_[0] =~ /^%(.+)$/        ? ($anon{$1} ||= ctx undef)
+      : $_[0] =~ /^(.*?)(?:::)?$/ ? ctx "$1" # egad :/
+      : die # never reached?
    };
 
-   while (/\G((?:[^:=]+|::|\\.)+)=/gc) {
+   /\G[[:space:]]+/gc; # skip initial whitespace
+
+   while (/\G((?:[^:=[:space:]]+|::|\\.)+)=/gc) {
       my $ctx = $pkg->($1);
       my $level = "level";
 
@@ -1129,8 +1141,10 @@ for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
          /\G,/gc or last;
       }
 
-      /\G[:[:space:]]/gc or last;
+      /\G[:[:space:]]+/gc or last;
    }
+
+   /\G[[:space:]]+/gc; # skip trailing whitespace
 
    if (/\G(.+)/g) {
       die "PERL_ANYEVENT_LOG ($spec): parse error at '$1'\n";
