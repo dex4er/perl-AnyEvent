@@ -7,6 +7,7 @@ TODO: document TCP_*** constants
           *literally* means that string. sheesh.
         - the CPAN parser got confused and thought we provide Sys::Syslog, try
           to work around.
+        - renamed AnyEvent::Impl::FLTK2 to FLTK.
 
 6.01  Fri Aug 26 07:04:11 CEST 2011
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include

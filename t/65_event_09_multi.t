@@ -139,7 +139,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    kill 9, $pid;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.01, 0, $cv;
+   $wt = AE::timer 0.2, 0, $cv; # cygwin needs ages for this
 
    $s = 0;
    $cv->recv;

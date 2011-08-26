@@ -880,7 +880,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::Irssi     used when running within irssi.
    AnyEvent::Impl::IOAsync   based on IO::Async.
    AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
-   AnyEvent::Impl::FLTK2     based on FLTK (fltk 2 binding).
+   AnyEvent::Impl::FLTK      based on FLTK (fltk 2 binding).
 
 =item Backends with special needs.
 
@@ -1338,7 +1338,7 @@ our @models = (
    [Prima::                => AnyEvent::Impl::POE::],
    [IO::Async::Loop::      => AnyEvent::Impl::IOAsync::],  # a bitch to autodetect
    [Cocoa::EventLoop::     => AnyEvent::Impl::Cocoa::],
-   [FLTK::                 => AnyEvent::Impl::FLTK2::],
+   [FLTK::                 => AnyEvent::Impl::FLTK::],
 );
 
 our @isa_hook;

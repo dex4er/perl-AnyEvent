@@ -20,7 +20,7 @@ use AnyEvent;
 use AnyEvent::Util;
 
          BEGIN { $ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\n}), exit 0) }
-         BEGIN { eval q{use AnyEvent::Impl::FLTK2;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::FLTK2 not loadable\n}), exit 0) }
+         BEGIN { eval q{use AnyEvent::Impl::FLTK;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::FLTK not loadable\n}), exit 0) }
          
       
 
@@ -139,7 +139,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    kill 9, $pid;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.01, 0, $cv;
+   $wt = AE::timer 0.2, 0, $cv; # cygwin needs ages for this
 
    $s = 0;
    $cv->recv;

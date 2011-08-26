@@ -6,7 +6,7 @@
 
 (
 cat <<EOF
-61_fltk         AnyEvent::Impl::FLTK2
+61_fltk         AnyEvent::Impl::FLTK
 62_cocoa        AnyEvent::Impl::Cocoa
 63_eventlib     AnyEvent::Impl::EventLib
 64_glib         AnyEvent::Impl::Glib

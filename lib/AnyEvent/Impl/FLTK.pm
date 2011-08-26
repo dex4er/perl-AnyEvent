@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::Impl::FLTK2 - AnyEvent adaptor for FLTK (Fast Light Toolkit version two)
+AnyEvent::Impl::FLTK - AnyEvent adaptor for FLTK (Fast Light Toolkit version two)
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ emulated.
 
 =cut
 
-package AnyEvent::Impl::FLTK2;
+package AnyEvent::Impl::FLTK;
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use FLTK 0.532 ();
@@ -62,7 +62,7 @@ sub timer {
 
       $id->[0] = FLTK::add_timeout $arg{after}, \&timer_interval_cb, $id;
 
-      return bless $id, "AnyEvent::Impl::FLTK2::timer"
+      return bless $id, "AnyEvent::Impl::FLTK::timer"
    } else {
       # non-repeating timers can be done very efficiently
       # also, FLTK doesn't like callable objects
@@ -70,7 +70,7 @@ sub timer {
    }
 }
 
-sub AnyEvent::Impl::FLTK2::timer::DESTROY {
+sub AnyEvent::Impl::FLTK::timer::DESTROY {
    undef $_[0][0];
 }
 
