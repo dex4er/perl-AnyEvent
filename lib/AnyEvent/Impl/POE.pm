@@ -43,18 +43,12 @@ program exit:
 The message is correct, the question is why POE prints it in the first
 place in a correct program (this is not a singular case though).
 
-The only way I found to work around this bug was to call C<<
-->run >> at AnyEvent loading time and stop the kernel immediately
-again. Unfortunately, due to another design bug in POE, this cannot be
-done (by documented means at least) without throwing away events in the
-event queue.
+AnyEvent consequently patches the POE kernel so it thinks it already
+ran. Other workarounds, even the one cited in the POE documentation
+itself, have serious side effects, such as throwing away events.
 
 The author of POE verified that this is indeed true, and has no plans to
 change this.
-
-This means that you will either have to live with lost events or you have
-to make sure to load AnyEvent early enough (this is usually not that
-difficult in a main program, but hard in a module).
 
 POE has other weird messages, and sometimes weird behaviour, for example,
 it doesn't support overloaded code references as callbacks for no apparent
@@ -277,28 +271,8 @@ package AnyEvent::Impl::POE;
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use POE;
 
-# if POE is already running
-if (${ $poe_kernel->[POE::Kernel::KR_RUN] } && POE::Kernel::KR_RUN_CALLED) {
-    print STDERR <<EOF;
-
-***
-*** POE is going to complain about:
-***
-***    Sessions were started, but POE::Kernel's run() method was never...
-***
-*** Try putting:
-***
-***    use AnyEvent::Impl::POE;
-***
-*** at the very top of your main program to suppress these spurious warnings.
-***
-
-EOF
-} else {
-   # workaround to suppress noise
-   POE::Session->create (inline_states => { _start => sub { @_[KERNEL]->stop } });
-   POE::Kernel->run;
-}
+# suppress an idiotic warning inside POE
+${ POE::Kernel->new->[POE::Kernel::KR_RUN] } |= POE::Kernel::KR_RUN_CALLED;
 
 sub io {
    my ($class, %arg) = @_;

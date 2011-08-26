@@ -69,6 +69,8 @@ TODO: document TCP_*** constants
         - do not run event loop detection multiple times when programs call their cached
           copies of AnyEvent::detect.
         - parse_hostport now accepts absolute paths als unix domain sockets.
+        - suppress the idiotic warning inside POE by patching the POE::Kernel
+          run flags instead of asking the user to jump through contortions.
         - add Task::Weaken as dependency (as recommends only at this time).
         - replace PF_UNSPEC by 0, for good old minix.
 
