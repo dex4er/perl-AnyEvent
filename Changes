@@ -2,6 +2,12 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
+        - log_to_syslog now accepts facility strings.
+	- log_to_syslog would not allow facilities - "$facility|$level"
+          *literally* means that string. sheesh.
+        - the CPAN parser got confused and thought we provide Sys::Syslog, try
+          to work around.
+
 6.01  Fri Aug 26 07:04:11 CEST 2011
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request

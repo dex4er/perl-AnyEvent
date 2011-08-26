@@ -34,7 +34,7 @@ Configuration (also look at the EXAMPLES section):
    # regardless of (most) other settings
    $AnyEvent::Log::COLLECT->attach (new AnyEvent::Log::Ctx
       level         => "critical",
-      log_to_syslog => 0,
+      log_to_syslog => "user",
    );
 
 =head1 DESCRIPTION
@@ -866,12 +866,12 @@ Needless(?) to say, if you do not want to be bitten by some evil person
 calling C<chdir>, the path should be absolute. Doesn't help with
 C<chroot>, but hey...
 
-=item $ctx->log_to_syslog ([$log_flags])
+=item $ctx->log_to_syslog ([$facility])
 
-Logs all messages via L<Sys::Syslog>, mapping C<trace> to C<debug> and all
-the others in the obvious way. If specified, then the C<$log_flags> are
-simply or'ed onto the priority argument and can contain any C<LOG_xxx>
-flags valid for Sys::Syslog::syslog, except for the priority levels.
+Logs all messages via L<Sys::Syslog>, mapping C<trace> to C<debug> and
+all the others in the obvious way. If specified, then the C<$facility> is
+used as the facility (C<user>, C<auth>, C<local0> and so on). The default
+facility is C<user>.
 
 Note that this function also sets a C<fmt_cb> - the logging part requires
 an array reference with [$level, $str] as input.
@@ -924,7 +924,7 @@ sub log_to_path {
 }
 
 sub log_to_syslog {
-   my ($ctx, $flags) = @_;
+   my ($ctx, $facility) = @_;
 
    require Sys::Syslog;
 
@@ -935,10 +935,12 @@ sub log_to_syslog {
       [$_[2], "($_[1][0]) $str"]
    });
 
+   $facility ||= "user";
+
    $ctx->log_cb (sub {
       my $lvl = $_[0][0] < 9 ? $_[0][0] : 8;
 
-      Sys::Syslog::syslog ($flags | ($lvl - 1), $_)
+      Sys::Syslog::syslog ("$facility|" . ($lvl - 1), $_)
          for split /\n/, $_[0][1];
 
       0
@@ -1165,7 +1167,7 @@ for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
             if ($_ eq "stderr"               ) { $ctx->log_to_warn;
             } elsif (/^file=(.+)/            ) { $ctx->log_to_file ("$1");
             } elsif (/^path=(.+)/            ) { $ctx->log_to_path ("$1");
-            } elsif (/syslog(?:=(.*))?/      ) { require Sys::Syslog; $ctx->log_to_syslog (eval "package Sys::Syslog; $1");
+            } elsif (/syslog(?:=(.*))?/      ) { require Sys::Syslog; $ctx->log_to_syslog ($1);
             } elsif ($_ eq "nolog"           ) { $ctx->log_cb (undef);
             } elsif (/^\+(.+)$/              ) { $ctx->attach ($pkg->("$1"));
             } elsif ($_ eq "+"               ) { $ctx->slaves;
