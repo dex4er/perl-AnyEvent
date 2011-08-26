@@ -841,7 +841,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::Irssi     used when running within irssi.
            AnyEvent::Impl::IOAsync   based on IO::Async.
            AnyEvent::Impl::Cocoa     based on Cocoa::EventLoop.
-           AnyEvent::Impl::FLTK2     based on FLTK (fltk 2 binding).
+           AnyEvent::Impl::FLTK      based on FLTK (fltk 2 binding).
 
     Backends with special needs.
         Qt requires the Qt::Application to be instantiated first, but will
