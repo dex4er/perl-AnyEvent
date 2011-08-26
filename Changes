@@ -2,8 +2,6 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-TODO: ae::log examples
-TODO: ae::now vs. ae::time - make configurable?
 6.01 
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request
@@ -72,6 +70,7 @@ TODO: ae::now vs. ae::time - make configurable?
           copies of AnyEvent::detect.
         - parse_hostport now accepts absolute paths als unix domain sockets.
         - add Task::Weaken as dependency (as recommends only at this time).
+        - replace PF_UNSPEC by 0, for good old minix.
 
 6.0 (not officially released, but was on CPAN for about 15 minutes :/)
 

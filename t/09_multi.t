@@ -14,6 +14,8 @@ EOF
    }
 }
 
+$^W = 0; # 5.8.6 bugs
+
 use AnyEvent;
 use AnyEvent::Util;
 BEGIN { require AnyEvent::Impl::Perl unless $ENV{PERL_ANYEVENT_MODEL} }
@@ -133,7 +135,7 @@ $AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
    kill 9, $pid;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.01, 0, $cv;
+   $wt = AE::timer 0.2, 0, $cv; # cygwin needs ages for this
 
    $s = 0;
    $cv->recv;

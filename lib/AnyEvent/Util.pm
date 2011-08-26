@@ -156,7 +156,7 @@ BEGIN {
       };
 
       *portable_socketpair = sub () {
-         socketpair my $fh1, my $fh2, Socket::AF_UNIX(), Socket::SOCK_STREAM(), Socket::PF_UNSPEC()
+         socketpair my $fh1, my $fh2, Socket::AF_UNIX(), Socket::SOCK_STREAM(), 0
             or return;
 
          ($fh1, $fh2)

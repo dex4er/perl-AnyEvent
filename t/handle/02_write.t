@@ -4,6 +4,7 @@ use strict;
 
 use AnyEvent;
 BEGIN { require AnyEvent::Impl::Perl unless $ENV{PERL_ANYEVENT_MODEL} }
+use AnyEvent::Util;
 use AnyEvent::Handle;
 use Socket;
 
@@ -11,7 +12,7 @@ print "1..7\n";
 
 my $cv = AnyEvent->condvar;
 
-socketpair my $rd, my $wr, AF_UNIX, SOCK_STREAM, PF_UNSPEC;
+my ($rd, $wr) = portable_socketpair;
 
 my $rd_ae =
    AnyEvent::Handle->new (

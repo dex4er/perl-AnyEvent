@@ -14,6 +14,8 @@ EOF
    }
 }
 
+$^W = 0; # 5.8.6 bugs
+
 use AnyEvent;
 use AnyEvent::Util;
 
