@@ -2,7 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-6.01 
+6.01  Fri Aug 26 07:04:11 CEST 2011
         - INCOMPATIBLE CHANGE: AnyEvent::DNS resource records now include
           the TTL as fourth element - this affects ->resolve, ->request
           and ->dns_unpack indirectly. Convenience functions such as

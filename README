@@ -1007,12 +1007,17 @@ GLOBAL VARIABLES AND FUNCTIONS
     AnyEvent::log $level, $msg[, @args]
         Log the given $msg at the given $level.
 
-        Loads AnyEvent::Log on first use and calls "AnyEvent::Log::log" -
+        If AnyEvent::Log is not loaded then this function makes a simple
+        test to see whether the message will be logged. If the test succeeds
+        it will load AnyEvent::Log and call "AnyEvent::Log::log" -
         consequently, look at the AnyEvent::Log documentation for details.
+
+        If the test fails it will simply return.
 
         If you want to sprinkle loads of logging calls around your code,
         consider creating a logger callback with the "AnyEvent::Log::logger"
-        function.
+        function, which can reduce typing, codesize and can reduce the
+        logging overhead enourmously.
 
 WHAT TO DO IN A MODULE
     As a module author, you should "use AnyEvent" and call AnyEvent methods
@@ -1105,32 +1110,28 @@ OTHER MODULES
         (for the curious, IGS is the International Go Server and FCP is the
         Freenet Client Protocol).
 
-    AnyEvent::Handle::UDP
-        Here be danger!
-
-        As Pauli would put it, "Not only is it not right, it's not even
-        wrong!" - there are so many things wrong with AnyEvent::Handle::UDP,
-        most notably its use of a stream-based API with a protocol that
-        isn't streamable, that the only way to improve it is to delete it.
-
-        It features data corruption (but typically only under load) and
-        general confusion. On top, the author is not only clueless about UDP
-        but also fact-resistant - some gems of his understanding: "connect
-        doesn't work with UDP", "UDP packets are not IP packets", "UDP only
-        has datagrams, not packets", "I don't need to implement proper error
-        checking as UDP doesn't support error checking" and so on - he
-        doesn't even understand what's wrong with his module when it is
-        explained to him.
-
-    AnyEvent::DBI
-        Executes DBI requests asynchronously in a proxy process for you,
-        notifying you in an event-based way when the operation is finished.
-
     AnyEvent::AIO
         Truly asynchronous (as opposed to non-blocking) I/O, should be in
         the toolbox of every event programmer. AnyEvent::AIO transparently
         fuses IO::AIO and AnyEvent together, giving AnyEvent access to
         event-based file I/O, and much more.
+
+    AnyEvent::Filesys::Notify
+        AnyEvent is good for non-blocking stuff, but it can't detect file or
+        path changes (e.g. "watch this directory for new files", "watch this
+        file for changes"). The AnyEvent::Filesys::Notify module promises to
+        do just that in a portbale fashion, supporting inotify on GNU/Linux
+        and some weird, without doubt broken, stuff on OS X to monitor
+        files. It can fall back to blocking scans at regular intervals
+        transparently on other platforms, so it's about as portable as it
+        gets.
+
+        (I haven't used it myself, but I haven't heard anybody complaining
+        about it yet).
+
+    AnyEvent::DBI
+        Executes DBI requests asynchronously in a proxy process for you,
+        notifying you in an event-based way when the operation is finished.
 
     AnyEvent::HTTPD
         A simple embedded webserver.
@@ -1139,7 +1140,20 @@ OTHER MODULES
         The fastest ping in the west.
 
     Coro
-        Has special support for AnyEvent via Coro::AnyEvent.
+        Has special support for AnyEvent via Coro::AnyEvent, which allows
+        you to simply invert the flow control - don't call us, we will call
+        you:
+
+           async {
+              Coro::AnyEvent::sleep 5; # creates a 5s timer and waits for it
+              print "5 seconds later!\n";
+
+              Coro::AnyEvent::readable *STDIN; # uses an I/O watcher
+              my $line = <STDIN>; # works for ttys
+
+              AnyEvent::HTTP::http_get "url", Coro::rouse_cb;
+              my ($body, $hdr) = Coro::rouse_wait;
+           };
 
 SIMPLIFIED AE API
     Starting with version 5.0, AnyEvent officially supports a second, much
@@ -1165,28 +1179,80 @@ ERROR AND EXCEPTION HANDLING
     Glib uses "install_exception_handler" and so on.
 
 ENVIRONMENT VARIABLES
-    The following environment variables are used by this module or its
-    submodules.
+    AnyEvent supports a number of environment variables that tune the
+    runtime behaviour. They are usually evaluated when AnyEvent is loaded,
+    initialised, or a submodule that uses them is loaded. Many of them also
+    cause AnyEvent to load additional modules - for example,
+    "PERL_ANYEVENT_DEBUG_WRAP" causes the AnyEvent::Debug module to be
+    loaded.
 
-    Note that AnyEvent will remove *all* environment variables starting with
-    "PERL_ANYEVENT_" from %ENV when it is loaded while taint mode is
-    enabled.
+    All the environment variables documented here start with
+    "PERL_ANYEVENT_", which is what AnyEvent considers its own namespace.
+    Other modules are encouraged (but by no means required) to use
+    "PERL_ANYEVENT_SUBMODULE" if they have registered the
+    AnyEvent::Submodule namespace on CPAN, for any submodule. For example,
+    AnyEvent::HTTP could be expected to use "PERL_ANYEVENT_HTTP_PROXY" (it
+    should not access env variables starting with "AE_", see below).
+
+    All variables can also be set via the "AE_" prefix, that is, instead of
+    setting "PERL_ANYEVENT_VERBOSE" you can also set "AE_VERBOSE". In case
+    there is a clash btween anyevent and another program that uses
+    "AE_something" you can set the corresponding "PERL_ANYEVENT_something"
+    variable to the empty string, as those variables take precedence.
+
+    When AnyEvent is first loaded, it copies all "AE_xxx" env variables to
+    their "PERL_ANYEVENT_xxx" counterpart unless that variable already
+    exists. If taint mode is on, then AnyEvent will remove *all* environment
+    variables starting with "PERL_ANYEVENT_" from %ENV (or replace them with
+    "undef" or the empty string, if the corresaponding "AE_" variable is
+    set).
+
+    The exact algorithm is currently:
+
+       1. if taint mode enabled, delete all PERL_ANYEVENT_xyz variables from %ENV
+       2. copy over AE_xyz to PERL_ANYEVENT_xyz unless the latter alraedy exists
+       3. if taint mode enabled, set all PERL_ANYEVENT_xyz variables to undef.
+
+    This ensures that child processes will not see the "AE_" variables.
+
+    The following environment variables are currently known to AnyEvent:
 
     "PERL_ANYEVENT_VERBOSE"
         By default, AnyEvent will be completely silent except in fatal
         conditions. You can set this environment variable to make AnyEvent
-        more talkative.
+        more talkative. If you want to do more than just set the global
+        logging level you should have a look at "PERL_ANYEVENT_LOG", which
+        allows much more complex specifications.
 
-        When set to 5 or higher, causes AnyEvent to warn about unexpected
-        conditions, such as not being able to load the event model specified
-        by "PERL_ANYEVENT_MODEL".
+        When set to 5 or higher (warn), causes AnyEvent to warn about
+        unexpected conditions, such as not being able to load the event
+        model specified by "PERL_ANYEVENT_MODEL", or a guard callback
+        throwing an exception - this is the minimum recommended level.
 
-        When set to 7 or higher, cause AnyEvent to report to STDERR which
-        event model it chooses.
+        When set to 7 or higher (info), cause AnyEvent to report which event
+        model it chooses.
 
-        When set to 8 or higher, then AnyEvent will report extra information
-        on which optional modules it loads and how it implements certain
-        features.
+        When set to 8 or higher (debug), then AnyEvent will report extra
+        information on which optional modules it loads and how it implements
+        certain features.
+
+    "PERL_ANYEVENT_LOG"
+        Accepts rather complex logging specifications. For example, you
+        could log all "debug" messages of some module to stderr, warnings
+        and above to stderr, and errors and above to syslog, with:
+
+           PERL_ANYEVENT_LOG=Some::Module=debug,+log:filter=warn,+%syslog:%syslog=error,syslog
+
+        For the rather extensive details, see AnyEvent::Log.
+
+        This variable is evaluated when AnyEvent (or AnyEvent::Log) is
+        loaded, so will take effect even before AnyEvent has initialised
+        itself.
+
+        Note that specifying this environment variable causes the
+        AnyEvent::Log module to be loaded, while "PERL_ANYEVENT_VERBOSE"
+        does not, so only using the latter saves a few hundred kB of memory
+        until the first message is being logged.
 
     "PERL_ANYEVENT_STRICT"
         AnyEvent does not do much argument checking by default, as thorough
@@ -1209,7 +1275,7 @@ ENVIRONMENT VARIABLES
         is bound on that port. The shell object is saved in
         $AnyEvent::Debug::SHELL.
 
-        This takes place when the first watcher is created.
+        This happens when the first watcher is created.
 
         For example, to bind a debug shell on a unix domain socket in
         /tmp/debug<pid>.sock, you could use this:
@@ -1265,11 +1331,16 @@ ENVIRONMENT VARIABLES
         "PERL_ANYEVENT_PROTOCOLS=ipv6,ipv4" support either IPv4 or IPv6, but
         prefer IPv6 over IPv4.
 
+    "PERL_ANYEVENT_HOSTS"
+        This variable, if specified, overrides the /etc/hosts file used by
+        AnyEvent::Socket"::resolve_sockaddr", i.e. hosts aliases will be
+        read from that file instead.
+
     "PERL_ANYEVENT_EDNS0"
         Used by AnyEvent::DNS to decide whether to use the EDNS0 extension
         for DNS. This extension is generally useful to reduce DNS traffic,
-        but some (broken) firewalls drop such DNS packets, which is why it
-        is off by default.
+        especially when DNSSEC is involved, but some (broken) firewalls drop
+        such DNS packets, which is why it is off by default.
 
         Setting this variable to 1 will cause AnyEvent::DNS to announce
         EDNS0 in its DNS requests.
@@ -1284,14 +1355,14 @@ ENVIRONMENT VARIABLES
         requests that are sent to the DNS server.
 
     "PERL_ANYEVENT_RESOLV_CONF"
-        The file to use instead of /etc/resolv.conf (or OS-specific
-        configuration) in the default resolver. When set to the empty
-        string, no default config will be used.
+        The absolute path to a resolv.conf-style file to use instead of
+        /etc/resolv.conf (or the OS-specific configuration) in the default
+        resolver, or the empty string to select the default configuration.
 
     "PERL_ANYEVENT_CA_FILE", "PERL_ANYEVENT_CA_PATH".
         When neither "ca_file" nor "ca_path" was specified during
         AnyEvent::TLS context creation, and either of these environment
-        variables exist, they will be used to specify CA certificate
+        variables are nonempty, they will be used to specify CA certificate
         locations instead of a system-dependent default.
 
     "PERL_ANYEVENT_AVOID_GUARD" and "PERL_ANYEVENT_AVOID_ASYNC_INTERRUPT"
