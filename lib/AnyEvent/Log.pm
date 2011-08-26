@@ -208,10 +208,21 @@ our %STR2LEVEL = (
    trace    => 9,
 );
 
-sub now () { time }
+our $TIME_EXACT;
+
+sub exact_time($) {
+   $TIME_EXACT = shift;
+   *_ts = $AnyEvent::MODEL
+      ? $TIME_EXACT ? \&AE::now : \&AE::time
+      : sub () { $TIME_EXACT ? do { require Time::HiRes; Time::HiRes::time () } : time };
+}
+
+BEGIN {
+   exact_time 0;
+}
 
 AnyEvent::post_detect {
-   *now = \&AE::now;
+   exact_time $TIME_EXACT;
 };
 
 our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
@@ -254,7 +265,7 @@ sub _log {
                   $format = $format->() if ref $format;
                   $format = sprintf $format, @args if @args;
                   $format =~ s/\n$//;
-                  $now = now;
+                  $now = _ts;
                };
 
                # format msg
@@ -378,6 +389,19 @@ sub logger($;$) {
       $CTX{ (caller)[0] } ||= _pkg_ctx +(caller)[0],
       @_
 }
+
+=item AnyEvent::Log::exact_time $on
+
+By default, C<AnyEvent::Log> will use C<AE::now>, i.e. the cached
+eventloop time, for the log timestamps. After calling this function with a
+true value it will instead resort to C<AE::time>, i.e. fetch the current
+time on each log message. This only makes a difference for event loops
+that actually cache the time (such as L<EV> or L<AnyEvent::Loop>).
+
+Since C<AnyEvent::Log> has to work even before the L<AnyEvent> has been
+initialised, this switch will also decide whether to use C<CORE::time> or
+C<Time::HiRes::time> when logging a message before L<AnyEvent> becomes
+available.
 
 =back
 
