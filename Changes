@@ -2,6 +2,8 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
+	- increase signal latency test timer considerably for poor little osx.
+
 6.02  Fri Aug 26 20:08:31 CEST 2011
         - log_to_syslog now accepts facility strings.
 	- log_to_syslog would not allow facilities - "$facility|$level"

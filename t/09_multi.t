@@ -24,6 +24,8 @@ $| = 1; print "1..15\n";
 
 print "ok 1\n";
 
+$AnyEvent::MAX_SIGNAL_LATENCY = 0.05;
+
 my ($a, $b) = AnyEvent::Util::portable_socketpair;
 
 # I/O write
@@ -107,8 +109,6 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
 
    print $s == 0 ? "" : "not ", "ok 8 # $s\n";
 }
-
-$AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
 
 # child
 {
