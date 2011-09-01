@@ -185,23 +185,17 @@ is that AnyEvent does not allow passing parameters to the callback, so
 closures are the only way to achieve that in most cases :->
 
 
-=head3 A hint on debugging
+=head3 A little hint to catch mistakes
 
-AnyEvent does not, by default, do any argument checking. This can lead to
-strange and unexpected results especially if you are trying to find your
-way with AnyEvent.
+AnyEvent does not check the parameters you pass in, at least not by
+default. to enable checking, simply start your program with C<AE_STRICT=1>
+in the environment, or put C<use AnyEvent::Strict> near the top of your
+program:
 
-AnyEvent supports a special "strict" mode - off by default - which does very
-strict argument checking, at the expense of being somewhat slower. During
-development, however, this mode is very useful.
+   AE_STRICT=1 perl myprogram
 
-You can enable this strict mode either by having an environment variable
-C<PERL_ANYEVENT_STRICT> with a true value in your environment:
-
-   PERL_ANYEVENT_STRICT=1 perl test.pl
-
-Or you can write C<use AnyEvent::Strict> in your program, which has the
-same effect (do not do this in production, however).
+You can find more info on this and additional debugging aids later in this
+introduction.
 
 
 =head2 Condition Variables
@@ -468,6 +462,7 @@ relative timers, and is usually what you want. It is often cached (which
 means it can be a bit outdated). In that case, you can use the more costly
 C<< AnyEvent->time >> method which will ask your operating system for the
 current time, which is slower, but also more up to date.
+
 
 =head1 Network programming and AnyEvent
 
@@ -1241,7 +1236,112 @@ The example above could be coded like this:
       1
    });
 
+
+=head1 Debugging aids
+
+Now that you have seen how to use AnyEvent, here's what to use when you
+don't use it correctly, or simply hit a bug somewhere and want to debug
+it:
+
+=over 4
+
+=item Enable strict argument checking during development
+
+AnyEvent does not, by default, do any argument checking. This can lead to
+strange and unexpected results especially if you are just trying to find
+your way with AnyEvent.
+
+AnyEvent supports a special "strict" mode - off by default - which does
+very strict argument checking, at the expense of slowing down your
+program. During development, however, this mode is very useful because it
+quickly catches the msot common errors.
+
+You can enable this strict mode either by having an environment variable
+C<AE_STRICT> with a true value in your environment:
+
+   AE_STRICT=1 perl myprog
+
+Or you can write C<use AnyEvent::Strict> in your program, which has the
+same effect (do not do this in production, however).
+
+=item Increase verbosity, configure logging
+
+AnyEvent, by default, only logs critical messages. If something doesn't
+work, maybe there was a warning about it that you didn't see because it
+was suppressed.
+
+So during development it is recommended to push up the logging level to at
+least warn level (C<5>):
+
+   AE_VERBOSE=5 perl myprog
+
+Other levels that might be helpful are debug (C<8>) or even trace (C<9>).
+
+AnyEvent's logging is quite versatile - the L<AnyEvent::Log> manpage has
+all the details.
+
+=item Watcher wrapping, tracing, the shell
+
+For even more debugging, you can enable watcher wrapping:
+
+  AE_DEBUG_WRAP=2 perl myprog
+
+This will have the effect of wrapping every watcher into a special object
+that stores a backtrace of when it was created, stores a backtrace
+when an exception occurs during watcher execution, and stores a lot
+of other information. If that slows down your program too much, then
+C<AE_DEBUG_WRAP=1> avoids the costly backtraces.
+
+Here is an example of what of information is stored:
+
+   59148536 DC::DB:472(Server::run)>io>DC::DB::Server::fh_read
+   type:    io watcher
+   args:    poll r fh GLOB(0x35283f0)
+   created: 2011-09-01 23:13:46.597336 +0200 (1314911626.59734)
+   file:    ./blib/lib/Deliantra/Client/private/DC/DB.pm
+   line:    472
+   subname: DC::DB::Server::run
+   context: 
+   tracing: enabled
+   cb:      CODE(0x2d1fb98) (DC::DB::Server::fh_read)
+   invoked: 0 times
+   created
+   (eval 25) line 6        AnyEvent::Debug::Wrap::__ANON__('AnyEvent','fh',GLOB(0x35283f0),'poll','r','cb',CODE(0x2d1fb98)=DC::DB::Server::fh_read)
+   DC::DB line 472         AE::io(GLOB(0x35283f0),'0',CODE(0x2d1fb98)=DC::DB::Server::fh_read)
+   bin/deliantra line 2776 DC::DB::Server::run()
+   bin/deliantra line 2941 main::main()
+
+There are many ways to get at this data - see the L<AnyEvent::Debug> and
+L<AnyEvent::Log> manpages for more details.
+
+The most interesting and interactive way is to create a debug shell, for
+example by setting C<AE_DEBUG_SHELL>:
+
+  AE_DEBUG_WRAP=2 AE_DEBUG_SHELL=$HOME/myshell ./myprog
+
+  # while myprog is running:
+  socat readline $HOME/myshell
+
+Note that anybody who can access F<$HOME/myshell> can make your program
+do anything he or she wants, so if you are not the only user on your
+machine, better put it into a secure location (F<$HOME> might not be
+secure enough).
+
+If you don't have C<socat> (a shame!) and care even less about security,
+you can also use TCP and C<telnet>:
+
+  AE_DEBUG_WRAP=2 AE_DEBUG_SHELL=127.0.0.1:1234 ./myprog
+
+  telnet 127.0.0.1 1234
+
+The debug shell can enable and disable tracing of watcher invocations,
+can display the trace output, give you a list of watchers and lets you
+investigate watchers in detail.
+
+=back
+
 This concludes our little tutorial.
+
 
 =head1 Where to go from here?
 

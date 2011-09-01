@@ -1260,6 +1260,8 @@ BEGIN {
    @ENV{grep /^PERL_ANYEVENT_/, keys %ENV} = ()
       if ${^TAINT};
 
+   # $ENV{PERL_ANYEVENT_xxx} now valid
+
    $VERBOSE = length $ENV{PERL_ANYEVENT_VERBOSE} ? $ENV{PERL_ANYEVENT_VERBOSE}*1 : 3;
 }
 

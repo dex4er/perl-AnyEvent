@@ -1054,8 +1054,8 @@ sub tcp_connect($$$;$) {
 
 =item $guard = tcp_server $host, $service, $accept_cb[, $prepare_cb]
 
-Create and bind a stream socket to the given host, and port, set the
-SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
+Create and bind a stream socket to the given host address and port, set
+the SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
 implies, this function can also bind on UNIX domain sockets.
 
 For internet sockets, C<$host> must be an IPv4 or IPv6 address (or
@@ -1066,8 +1066,8 @@ future versions, as applicable).
 To bind to the IPv4 wildcard address, use C<0>, to bind to the IPv6
 wildcard address, use C<::>.
 
-The port is specified by C<$service>, which must be either a service name or
-a numeric port number (or C<0> or C<undef>, in which case an ephemeral
+The port is specified by C<$service>, which must be either a service name
+or a numeric port number (or C<0> or C<undef>, in which case an ephemeral
 port will be used).
 
 For UNIX domain sockets, C<$host> must be C<unix/> and C<$service> must be

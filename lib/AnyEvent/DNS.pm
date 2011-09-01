@@ -44,9 +44,10 @@ our @DNS_FALLBACK = (
    ("04020201", "04020203", "04020204", "04020205", "04020206")[rand 4], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
    ("cdd22ad2", "4044c8c8")[rand 2], # 205.210.42.205, 64.68.200.20 - cache1/2.dnsresolvers.com - verified public
    # ("8d010101"), # 141.1.1.1 - cable&wireless - status unknown
-   die,
 );
 push @DNS_FALLBACK, splice @DNS_FALLBACK, rand $_, 1 for reverse 1..@DNS_FALLBACK; # do not prefer
+@DNS_FALLBACK=();#d#
+die;#d#
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 

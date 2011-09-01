@@ -10,6 +10,7 @@ TODO: set loglevel to warn, even, as thats recommended?
 TODO: document default loglevel in table
 TODO: AE_LOG in tutorial?
 TODO: add google ipv6 public dns
+TODO: #TODO in Intro
 	- increase signal latency test timer considerably for poor little osx.
 
 6.02  Fri Aug 26 20:08:31 CEST 2011
