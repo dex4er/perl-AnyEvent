@@ -35,19 +35,36 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(AF_INET6);
 
 our $VERSION = $AnyEvent::VERSION;
+our @DNS_FALLBACK; # some public dns servers as fallback
 
-# some public dns servers
-our @DNS_FALLBACK = (
-   ("08080808", "08080404")[rand 2], # 8.8.8.8, 8.8.4.4 - google public dns
-   ("20014860486000000000000000008888", "20014860486000000000000000008844")[rand 2], # 2001:4860:4860::8888/8844 - google ipv6
-#   ("d1f40003", "d1f30004"){[rand 2], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
-   ("04020201", "04020203", "04020204", "04020205", "04020206")[rand 4], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
-   ("cdd22ad2", "4044c8c8")[rand 2], # 205.210.42.205, 64.68.200.20 - cache1/2.dnsresolvers.com - verified public
-   # ("8d010101"), # 141.1.1.1 - cable&wireless - status unknown
-);
-push @DNS_FALLBACK, splice @DNS_FALLBACK, rand $_, 1 for reverse 1..@DNS_FALLBACK; # do not prefer
-@DNS_FALLBACK=();#d#
-die;#d#
+{
+   my $prep = sub {
+      $_ = $_->[rand @$_] for @_;
+      push @_, splice @_, rand $_, 1 for reverse 1..@_; # shuffle
+      $_ = pack "H*", $_ for @_;
+      \@_
+   };
+
+   my $ipv4 = $prep->(
+      ["08080808", "08080404"], # 8.8.8.8, 8.8.4.4 - google public dns
+#      ["d1f40003", "d1f30004"], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
+      ["04020201", "04020203", "04020204", "04020205", "04020206"], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
+      ["cdd22ad2", "4044c8c8"], # 205.210.42.205, 64.68.200.20 - cache1/2.dnsresolvers.com - verified public
+#      ["8d010101"], # 141.1.1.1 - cable&wireless - status unknown
+   );
+
+   my $ipv6 = $prep->(
+      ["20014860486000000000000000008888", "20014860486000000000000000008844"], # 2001:4860:4860::8888/8844 - google ipv6
+   );
+
+   undef $ipv4 unless $AnyEvent::PROTOCOL{ipv4};
+   undef $ipv6 unless $AnyEvent::PROTOCOL{ipv6};
+
+   ($ipv6, $ipv4) = ($ipv4, $ipv6)
+      if $AnyEvent::PROTOCOL{ipv6} > $AnyEvent::PROTOCOL{ipv4};
+
+   @DNS_FALLBACK = (@$ipv4, @$ipv6);
+}
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 
@@ -726,9 +743,9 @@ The following options are supported:
 
 =item server => [...]
 
-A list of server addresses (default: C<v127.0.0.1>) in network format
-(i.e. as returned by C<AnyEvent::Socket::parse_address> - both IPv4 and
-IPv6 are supported).
+A list of server addresses (default: C<v127.0.0.1> or C<::1>) in network
+format (i.e. as returned by C<AnyEvent::Socket::parse_address> - both IPv4
+and IPv6 are supported).
 
 =item timeout => [...]
 
@@ -968,7 +985,7 @@ sub os_config {
          }
       }
 
-      # always add the fallback servers
+      # always add the fallback servers on windows
       push @{ $self->{server} }, @DNS_FALLBACK;
 
       $self->_compile;
@@ -1015,8 +1032,10 @@ sub _compile {
    my %server; $self->{server} = [grep 0 < length, grep !$server{$_}++, @{ $self->{server} }];
 
    unless (@{ $self->{server} }) {
-      # use 127.0.0.1 by default, and one opendns nameserver as fallback
-      $self->{server} = [v127.0.0.1, $DNS_FALLBACK[rand @DNS_FALLBACK]];
+      # use 127.0.0.1/::1 by default, add public nameservers as fallback
+      my $default = $AnyEvent::PROTOCOL{ipv6} > $AnyEvent::PROTOCOL{ipv4}
+                    ? "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1" : "\x7f\x00\x00\x01";
+      $self->{server} = [$default, @DNS_FALLBACK];
    }
 
    my @retry;

@@ -1239,12 +1239,11 @@ use Carp ();
 
 our $VERSION = '6.02';
 our $MODEL;
-
 our @ISA;
-
 our @REGISTRY;
-
 our $VERBOSE;
+our $MAX_SIGNAL_LATENCY = 10;
+our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
 
 BEGIN {
    require "AnyEvent/constants.pl";
@@ -1263,13 +1262,7 @@ BEGIN {
    # $ENV{PERL_ANYEVENT_xxx} now valid
 
    $VERBOSE = length $ENV{PERL_ANYEVENT_VERBOSE} ? $ENV{PERL_ANYEVENT_VERBOSE}*1 : 3;
-}
 
-our $MAX_SIGNAL_LATENCY = 10;
-
-our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
-
-{
    my $idx;
    $PROTOCOL{$_} = ++$idx
       for reverse split /\s*,\s*/,
