@@ -13,6 +13,9 @@ Simple uses:
    AE::log error => "the flag was false!";
    AE::log fatal => "the bit toggled! run!"; # never returns
 
+   # available log levels in order:
+   # fatal alert critical error warn note info debug trace
+
 "Complex" uses (for speed sensitive code):
 
    use AnyEvent::Log;
@@ -86,8 +89,8 @@ Instead of specifying levels by name you can also specify them by aliases:
 
 As you can see, some logging levels have multiple aliases - the first one
 is the "official" name, the second one the "syslog" name (if it differs)
-and the third one the "perl" name, suggesting that you log C<die> messages
-at C<error> priority.
+and the third one the "perl" name, suggesting (only!) that you log C<die>
+messages at C<error> priority.
 
 You can normally only log a single message at highest priority level
 (C<1>, C<fatal>), because logging a fatal message will also quit the
@@ -153,7 +156,7 @@ sub _pkg_ctx($) {
 Requests logging of the given C<$msg> with the given log level, and
 returns true if the message was logged I<somewhere>.
 
-For C<fatal> log levels, the program will abort.
+For loglevel C<fatal>, the program will abort.
 
 If only a C<$msg> is given, it is logged as-is. With extra C<@args>, the
 C<$msg> is interpreted as an sprintf format string.

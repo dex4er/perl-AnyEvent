@@ -38,11 +38,15 @@ our $VERSION = $AnyEvent::VERSION;
 
 # some public dns servers
 our @DNS_FALLBACK = (
-   (v8.8.8.8, v8.8.4.4)[rand 2], # google public dns
-   (v209.244.0.3, v209.244.0.4)[rand 2], # level3
-   (v4.2.2.1, v4.2.2.3, v4.2.2.4, v4.2.2.5, v4.2.2.6)[rand 4], # vnsc-pri.sys.gtei.net
+   ("08080808", "08080404")[rand 2], # 8.8.8.8, 8.8.4.4 - google public dns
+   ("20014860486000000000000000008888", "20014860486000000000000000008844")[rand 2], # 2001:4860:4860::8888/8844 - google ipv6
+#   ("d1f40003", "d1f30004"){[rand 2], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
+   ("04020201", "04020203", "04020204", "04020205", "04020206")[rand 4], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
+   ("cdd22ad2", "4044c8c8")[rand 2], # 205.210.42.205, 64.68.200.20 - cache1/2.dnsresolvers.com - verified public
+   # ("8d010101"), # 141.1.1.1 - cable&wireless - status unknown
+   die,
 );
-push @DNS_FALLBACK, splice @DNS_FALLBACK, rand $_, 1 for reverse 1..@DNS_FALLBACK;
+push @DNS_FALLBACK, splice @DNS_FALLBACK, rand $_, 1 for reverse 1..@DNS_FALLBACK; # do not prefer
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 

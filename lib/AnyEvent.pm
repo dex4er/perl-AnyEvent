@@ -1060,7 +1060,9 @@ to see whether the message will be logged. If the test succeeds it will
 load AnyEvent::Log and call C<AnyEvent::Log::log> - consequently, look at
 the L<AnyEvent::Log> documentation for details.
 
-If the test fails it will simply return.
+If the test fails it will simply return. Right now this happens when a
+numerical loglevel is used and it is larger than the level specified via
+C<$ENV{PERL_ANYEVENT_VERBOSE}>.
 
 If you want to sprinkle loads of logging calls around your code, consider
 creating a logger callback with the C<AnyEvent::Log::logger> function,
@@ -1258,7 +1260,7 @@ BEGIN {
    @ENV{grep /^PERL_ANYEVENT_/, keys %ENV} = ()
       if ${^TAINT};
 
-   $VERBOSE = $ENV{PERL_ANYEVENT_VERBOSE}*1;
+   $VERBOSE = length $ENV{PERL_ANYEVENT_VERBOSE} ? $ENV{PERL_ANYEVENT_VERBOSE}*1 : 3;
 }
 
 our $MAX_SIGNAL_LATENCY = 10;
@@ -2042,16 +2044,22 @@ The following environment variables are currently known to AnyEvent:
 
 =item C<PERL_ANYEVENT_VERBOSE>
 
-By default, AnyEvent will be completely silent except in fatal
-conditions. You can set this environment variable to make AnyEvent more
-talkative. If you want to do more than just set the global logging level
+By default, AnyEvent will only log messages with loglevel C<3>
+(C<critical>) or higher (see L<AnyEvent::Log>). You can set this
+environment variable to a numerical loglevel to make AnyEvent more (or
+less) talkative.
+
+If you want to do more than just set the global logging level
 you should have a look at C<PERL_ANYEVENT_LOG>, which allows much more
 complex specifications.
 
-When set to C<5> or higher (warn), causes AnyEvent to warn about unexpected
-conditions, such as not being able to load the event model specified by
-C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an exception - this
-is the minimum recommended level.
+When set to C<0> (C<off>), then no messages whatsoever will be logged with
+the default logging settings.
+
+When set to C<5> or higher (C<warn>), causes AnyEvent to warn about
+unexpected conditions, such as not being able to load the event model
+specified by C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an
+exception - this is the minimum recommended level.
 
 When set to C<7> or higher (info), cause AnyEvent to report which event model it
 chooses.
