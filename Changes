@@ -3,15 +3,14 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 
 TODO: ae::stritc, regulalry check for invalid fds?
-TODO: critical messages log by default?
-TODO: document- boosted default logging level to critical.
 TOOD: stop internals abusing
-TODO: set loglevel to warn, even, as thats recommended?
-TODO: document default loglevel in table
-TODO: AE_LOG in tutorial?
 TODO: add google ipv6 public dns
-TODO: #TODO in Intro
+	- INCOMPATIBLE CHANGE: the default log level is now "3" (critical
+          and above), and some emssages inside AnyEvent have bene elevated
+          to critical, so.
+	- give guidelines on how to chose a logging level.
 	- increase signal latency test timer considerably for poor little osx.
+        - mention some debugging aids in the tutorial.
 
 6.02  Fri Aug 26 20:08:31 CEST 2011
         - log_to_syslog now accepts facility strings.

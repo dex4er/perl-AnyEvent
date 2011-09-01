@@ -77,20 +77,26 @@ numerical value".
 Instead of specifying levels by name you can also specify them by aliases:
 
    LVL NAME      SYSLOG   PERL  NOTE
-   1   fatal     emerg    exit  aborts program!
-   2   alert
-   3   critical  crit     
-   4   error     err      die
-   5   warn      warning  
-   6   note      notice   
-   7   info
-   8   debug
-   9   trace
+    1  fatal     emerg    exit  system unusable, aborts program!
+    2  alert                    failure in primary system
+    3  critical  crit           failure in backup system
+    4  error     err      die   non-urgent program errors, a bug
+    5  warn      warning        possible problem, not necessarily error
+    6  note      notice         unusual conditions
+    7  info                     normal messages, no action required
+    8  debug                    debugging messages for development
+    9  trace                    copious tracing output
 
 As you can see, some logging levels have multiple aliases - the first one
 is the "official" name, the second one the "syslog" name (if it differs)
 and the third one the "perl" name, suggesting (only!) that you log C<die>
-messages at C<error> priority.
+messages at C<error> priority. The NOTE column tries to provide some
+rationale on how to chose a logging level.
+
+As a rough guideline, levels 1..3 are primarily meant for users of
+the program (admins, staff), and are the only logged to STDERR by
+default. Levels 4..6 are meant for users and developers alike, while
+levels 7..9 are usually meant for developers.
 
 You can normally only log a single message at highest priority level
 (C<1>, C<fatal>), because logging a fatal message will also quit the
