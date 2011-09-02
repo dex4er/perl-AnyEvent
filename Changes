@@ -2,9 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-TODO: ae::strict, regulalry check for invalid fds?
 TOOD: stop internals abusing
-TODO: add google ipv6 public dns
 	- INCOMPATIBLE CHANGE: the default log level is now "3" (critical
           and above), and some emssages inside AnyEvent have bene elevated
           to critical, so.
@@ -12,6 +10,8 @@ TODO: add google ipv6 public dns
           support ipv6-only operation even with defaults (also use ::1 instead
           of 127.0.0.1).
 	- give guidelines on how to chose a logging level.
+        - AE::Strict now checks that registered fds are still valid at regular
+          intervals.
 	- increase signal latency test timer considerably for poor little osx.
         - mention some debugging aids in the tutorial.
 

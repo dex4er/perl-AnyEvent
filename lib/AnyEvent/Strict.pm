@@ -75,7 +75,7 @@ our $FD_CHECK_W = AE::timer 4, 4, sub {
          or return; # empty
    }
 
-   $cnt = $FD_I + 1 if $cnt > $FD_I;
+   $cnt = $FD_I if $cnt > $FD_I;
 
    eval {
       do {
