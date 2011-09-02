@@ -67,7 +67,7 @@ BEGIN {
 
 our (@FD_INUSE, $FD_I);
 our $FD_CHECK_W = AE::timer 4, 4, sub {
-   my $cnt = (@FD_INUSE < 100 * 10 ? int @FD_INUSE * 0.1 : 100) || 1;
+   my $cnt = (@FD_INUSE < 100 * 10 ? int @FD_INUSE * 0.1 : 100) || 10;
 
    if ($FD_I <= 0) {
       #pop @FD_INUSE while @FD_INUSE && !$FD_INUSE[-1];
