@@ -284,7 +284,7 @@ full backtrace of the location the watcher was created, which slows down
 watcher creation considerably.
 
 Every wrapped watcher will be linked into C<%AnyEvent::Debug::Wrapped>,
-with its address as key. The C<wl> command in the debug shell cna be used
+with its address as key. The C<wl> command in the debug shell can be used
 to list watchers.
 
 Instrumenting can increase the size of each watcher multiple times, and,

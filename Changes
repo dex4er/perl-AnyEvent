@@ -2,6 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
+TODO: log message level redistribute?
 TOOD: stop internals abusing
 	- INCOMPATIBLE CHANGE: the default log level is now "3" (critical
           and above), and some emssages inside AnyEvent have bene elevated

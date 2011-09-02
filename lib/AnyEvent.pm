@@ -2097,10 +2097,10 @@ can be very useful, however.
 
 =item C<PERL_ANYEVENT_DEBUG_SHELL>
 
-If this env variable is set, then its contents will be interpreted by
-C<AnyEvent::Socket::parse_hostport> (after replacing every occurance of
-C<$$> by the process pid) and an C<AnyEvent::Debug::shell> is bound on
-that port. The shell object is saved in C<$AnyEvent::Debug::SHELL>.
+If this env variable is nonempty, then its contents will be interpreted by
+C<AnyEvent::Socket::parse_hostport> and C<AnyEvent::Debug::shell> (after
+replacing every occurance of C<$$> by the process pid). The shell object
+is saved in C<$AnyEvent::Debug::SHELL>.
 
 This happens when the first watcher is created.
 
@@ -2108,9 +2108,15 @@ For example, to bind a debug shell on a unix domain socket in
 F<< /tmp/debug<pid>.sock >>, you could use this:
 
    PERL_ANYEVENT_DEBUG_SHELL=/tmp/debug\$\$.sock perlprog
+   # connect with e.g.: socat readline /tmp/debug123.sock
 
-Note that creating sockets in F</tmp> is very unsafe on multiuser
-systems.
+Or to bind to tcp port 4545 on localhost:
+
+   PERL_ANYEVENT_DEBUG_SHELL=127.0.0.1:4545 perlprog
+   # connect with e.g.: telnet localhost 4545
+
+Note that creating sockets in F</tmp> or on localhost is very unsafe on
+multiuser systems.
 
 =item C<PERL_ANYEVENT_DEBUG_WRAP>
 
