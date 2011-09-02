@@ -25,7 +25,8 @@ L<AnyEvent>). However, this module can be loaded manually at any time.
 package AnyEvent::Strict;
 
 use Carp qw(croak);
-use Fcntl ();
+use Errno ();
+use POSIX ();
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
@@ -64,12 +65,12 @@ BEGIN {
    }
 }
 
-our (@FD_INUSE, @FD_FH, $FD_I);
+our (@FD_INUSE, $FD_I);
 our $FD_CHECK_W = AE::timer 4, 4, sub {
    my $cnt = (@FD_INUSE < 100 * 10 ? int @FD_INUSE * 0.1 : 100) || 1;
 
    if ($FD_I <= 0) {
-      #pop @FD_INUSE while @FD_INUSE && !$FD_INUSE[-1]; # also $FD_FH
+      #pop @FD_INUSE while @FD_INUSE && !$FD_INUSE[-1];
       ($FD_I = @FD_INUSE) >= 0
          or return; # empty
    }
@@ -78,8 +79,9 @@ our $FD_CHECK_W = AE::timer 4, 4, sub {
 
    eval {
       do {
-         !$FD_FH[--$FD_I]
-            or fcntl $FD_FH[$FD_I], Fcntl::F_GETFL(), 0
+         !$FD_INUSE[--$FD_I]
+            or (POSIX::lseek $FD_I, 0, 1) != -1
+            or $! != Errno::EBADF
             or die;
       } while --$cnt;
       1
@@ -88,7 +90,7 @@ our $FD_CHECK_W = AE::timer 4, 4, sub {
 
 sub io {
    my $class = shift;
-   my (%arg, $fh, $cb) = @_;
+   my (%arg, $fh, $cb, $fd) = @_;
 
    ref $arg{cb}
       or croak "AnyEvent->io called with illegal cb argument '$arg{cb}'";
@@ -100,9 +102,10 @@ sub io {
    $fh = delete $arg{fh};
 
    if ($fh =~ /^\s*\d+\s*$/) {
+      $fd = $fh;
       $fh = AnyEvent::_dupfh $arg{poll}, $fh;
    } else {
-      defined eval { fileno $fh }
+      defined eval { $fd = fileno $fh }
          or croak "AnyEvent->io called with illegal fh argument '$fh'";
    }
 
@@ -114,18 +117,16 @@ sub io {
    croak "AnyEvent->io called with unsupported parameter(s) " . join ", ", keys %arg
       if keys %arg;
 
-   ++$FD_INUSE[fileno $fh];
-   $FD_FH[fileno $$fh] = $fh;
+   ++$FD_INUSE[$fd];
 
    bless [
-      fileno $fh,
+      $fd,
       $class->SUPER::io (@_, cb => $cb)
    ], "AnyEvent::Strict::io";
 }
 
 sub AnyEvent::Strict::io::DESTROY {
-   --$FD_INUSE[$_[0][0]]
-      or delete $FD_FH[$_[0][0]];
+   --$FD_INUSE[$_[0][0]];
 }
 
 sub timer {
