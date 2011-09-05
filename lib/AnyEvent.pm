@@ -1349,15 +1349,16 @@ if (length $ENV{PERL_ANYEVENT_LOG}) {
 }
 
 our @models = (
-   [EV::                   => AnyEvent::Impl::EV::   , 1],
-   [AnyEvent::Loop::       => AnyEvent::Impl::Perl:: , 1],
+   [EV::                   => AnyEvent::Impl::EV::],
+   [AnyEvent::Loop::       => AnyEvent::Impl::Perl::],
    # everything below here will not (normally) be autoprobed
    # as the pure perl backend should work everywhere
    # and is usually faster
-   [Event::                => AnyEvent::Impl::Event::, 1],
-   [Glib::                 => AnyEvent::Impl::Glib:: , 1], # becomes extremely slow with many watchers
+   [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package, so msut be near the top
+   [Event::                => AnyEvent::Impl::Event::],    # slow, stable
+   [Glib::                 => AnyEvent::Impl::Glib::],     # becomes extremely slow with many watchers
+   # everything below here should not be autoloaded
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
-   [Irssi::                => AnyEvent::Impl::Irssi::],    # Irssi has a bogus "Event" package
    [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
@@ -1436,10 +1437,9 @@ sub detect() {
       unless ($MODEL) {
          # try to autoload a model
          for (@REGISTRY, @models) {
-            my ($package, $model, $autoload) = @$_;
+            my ($package, $model) = @$_;
             if (
-               $autoload
-               and eval "require $package"
+               eval "require $package"
                and ${"$package\::VERSION"} > 0
                and eval "require $model"
             ) {
