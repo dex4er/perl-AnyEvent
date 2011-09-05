@@ -88,7 +88,8 @@ our $REF_IDX; # our session ex_data id
 
 # create temp file, populate it, and return a guard and filename
 sub _tmpfile($) {
-   require File::Temp;
+   require File::Temp unless $File::Temp::VERSION;
+
    # File::Temp opens the file with mode 0600
    my ($fh, $path) = File::Temp::tempfile ("aetlsXXXXXXXXX", TMPDIR => 1, EXLOCK => 0);
    my $guard = AnyEvent::Util::guard { unlink $path };

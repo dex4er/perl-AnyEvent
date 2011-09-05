@@ -477,7 +477,7 @@ sub inet_aton {
    } elsif ($name eq "localhost") { # rfc2606 et al.
       $cb->(v127.0.0.1, v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1);
    } else {
-      require AnyEvent::DNS;
+      require AnyEvent::DNS unless $AnyEvent::DNS::VERSION;
 
       my $ipv4 = $AnyEvent::PROTOCOL{ipv4};
       my $ipv6 = $AnyEvent::PROTOCOL{ipv6};

@@ -86,7 +86,7 @@ for my $mode (1..5) {
    };
 
    my $hd; $hd = new AnyEvent::Handle
-      connect    => ["localhost", $server_port->recv],
+      connect    => ["127.0.0.1", $server_port->recv],
       tls        => "connect",
       tls_ctx    => $ctx,
       timeout    => 8,

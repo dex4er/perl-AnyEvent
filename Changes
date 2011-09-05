@@ -4,15 +4,21 @@ TODO: document TCP_*** constants
 
 TODO: log message level redistribute?
 TOOD: stop internals abusing
-	- INCOMPATIBLE CHANGE: the default log level is now "3" (critical
-          and above), and some emssages inside AnyEvent have bene elevated
-          to critical, so.
-        - add google public ipv6 dns as flalback servers, so AE::DNS can finally
+TODO: AE::logger
+TODO: add debug/trace logging to some modules
+TODO: poe child watcher hang?
+TODO: $autload model kill?
+	- INCOMPATIBLE CHANGE: the default log level is now "4" (error
+          and above), and some messages inside AnyEvent have been elevated
+          to higher log levels to print by default.
+        - add google public ipv6 dns as fallback servers, so AE::DNS can finally
           support ipv6-only operation even with defaults (also use ::1 instead
           of 127.0.0.1).
-	- give guidelines on how to chose a logging level.
+	- give better guidelines on how to chose a logging level.
         - AE::Strict now checks that registered fds are still valid at regular
           intervals.
+        - AnyEvent::log, unlike AnyEvent::Log::log, did not always exit on fatal.
+        - skip frequently called 'require' calls if the module appears loaded.
 	- increase signal latency test timer considerably for poor little osx.
         - mention some debugging aids in the tutorial.
 

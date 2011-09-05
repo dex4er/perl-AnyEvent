@@ -167,7 +167,7 @@ BEGIN {
       };
 
    } else {
-      die "FATAL: unable to find sub-second time source (is this really perl 5.8.0 or later?)";
+      AE::log fatal => "FATAL: unable to find sub-second time source (is this really perl 5.8.0 or later?)";
    }
 
    $round = 0.001 if $round < 0.001; # 1ms is enough for us

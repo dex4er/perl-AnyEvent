@@ -223,8 +223,8 @@ my @fork_queue;
 
 sub _fork_schedule;
 sub _fork_schedule {
-   require Storable;
-   require POSIX;
+   require Storable unless $Storable::VERSION;
+   require POSIX    unless $Storable::VERSION;
 
    while ($forks < $MAX_FORKS) {
       my $job = shift @fork_queue
@@ -433,7 +433,7 @@ Example: close all fds except 0, 1, 2.
 sub close_all_fds_except {
    my %except; @except{@_} = ();
 
-   require POSIX;
+   require POSIX unless $POSIX::VERSION;
 
    # some OSes have a usable /dev/fd, sadly, very few
    if ($^O =~ /(freebsd|cygwin|linux)/) {
@@ -578,7 +578,7 @@ in the callback and print key and certificate.
 sub run_cmd {
    my $cmd = shift;
 
-   require POSIX;
+   require POSIX unless $POSIX::VERSION;
 
    my $cv = AE::cv;
 

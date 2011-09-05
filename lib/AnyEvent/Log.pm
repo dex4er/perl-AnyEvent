@@ -251,6 +251,10 @@ sub _format($$$$) {
    join "", @res
 }
 
+sub fatal_exit() {
+   exit 1;
+}
+
 sub _log {
    my ($ctx, $level, $format, @args) = @_;
 
@@ -293,7 +297,7 @@ sub _log {
       }
    while $ctx = pop @ctx;
 
-   exit 1 if $level <= 1;
+   fatal_exit if $level <= 1;
 
    $success
 }
@@ -303,8 +307,6 @@ sub log($$;@) {
       $CTX{ (caller)[0] } ||= _pkg_ctx +(caller)[0],
       @_;
 }
-
-*AnyEvent::log = *AE::log = \&log;
 
 =item $logger = AnyEvent::Log::logger $level[, \$enabled]
 
@@ -379,7 +381,7 @@ sub _logger {
 
    _reassess $logger+0;
 
-   require AnyEvent::Util;
+   require AnyEvent::Util unless $AnyEvent::Util::VERSION;
    my $guard = AnyEvent::Util::guard (sub {
       # "clean up"
       delete $LOGGER{$logger+0};
@@ -542,6 +544,9 @@ configuration, reset all contexts.
 
 =cut
 
+our $ORIG_VERBOSE = $AnyEvent::VERBOSE;
+$AnyEvent::VERBOSE = 9;
+
 sub reset {
    # hard to kill complex data structures
    # we "recreate" all package loggers and reset the hierarchy
@@ -560,13 +565,21 @@ sub reset {
 
    $FILTER->slaves ($LOG);
    $FILTER->title ('$AnyEvent::Log::FILTER');
-   $FILTER->level ($AnyEvent::VERBOSE);
+   $FILTER->level ($ORIG_VERBOSE);
 
    $COLLECT->slaves ($FILTER);
    $COLLECT->title ('$AnyEvent::Log::COLLECT');
 
    _reassess;
 }
+
+# override AE::log/logger
+*AnyEvent::log    = *AE::log    = \&log;
+*AnyEvent::logger = *AE::logger = \&logger;
+
+# convert AnyEvent loggers to AnyEvent::Log loggers
+$_->[0] = ctx $_->[0] # convert "pkg" to "ctx"
+   for values %LOGGER;
 
 # create the default logger contexts
 $LOG     = ctx undef;
@@ -1239,7 +1252,7 @@ This writes them only when the global logging level allows it, because
 it is attached to the default context which is invoked I<after> global
 filtering.
 
-   $AnyEvent::Log::FILTER->attach 
+   $AnyEvent::Log::FILTER->attach (
       new AnyEvent::Log::Ctx log_to_file => $path);
 
    PERL_ANYEVENT_LOG=filter=+%filelogger:%filelogger=file=/some/path

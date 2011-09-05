@@ -323,7 +323,7 @@ sub wrap(;$) {
 
          (my $level, $WRAP_LEVEL) = ($WRAP_LEVEL, undef);
 
-         require AnyEvent::Strict;
+         require AnyEvent::Strict unless $AnyEvent::Strict::VERSION;
 
          AnyEvent::post_detect { # make sure we run after AnyEvent::Strict
             wrap ($level);

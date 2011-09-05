@@ -1261,7 +1261,7 @@ BEGIN {
 
    # $ENV{PERL_ANYEVENT_xxx} now valid
 
-   $VERBOSE = length $ENV{PERL_ANYEVENT_VERBOSE} ? $ENV{PERL_ANYEVENT_VERBOSE}*1 : 3;
+   $VERBOSE = length $ENV{PERL_ANYEVENT_VERBOSE} ? $ENV{PERL_ANYEVENT_VERBOSE}*1 : 4;
 
    my $idx;
    $PROTOCOL{$_} = ++$idx
@@ -1305,13 +1305,43 @@ sub postpone(&) {
 
 sub log($$;@) {
    # only load the big bloated module when we actually are about to log something
-   if ($_[0] <= $VERBOSE) { # also catches non-numeric levels(!)
-      require AnyEvent::Log;
+   if ($_[0] <= ($VERBOSE || 1)) { # also catches non-numeric levels(!) and fatal
+      require AnyEvent::Log; # among other things, sets $VERBOSE to 9
       # AnyEvent::Log overwrites this function
       goto &log;
    }
 
    0 # not logged
+}
+
+sub logger($;$) {
+   package AnyEvent::Log;
+
+   my ($level, $renabled) = @_;
+
+   $$renabled = $level <= $VERBOSE;
+
+   my $pkg = (caller)[0];
+
+   my $logger = [$pkg, $level, $renabled];
+
+   our %LOGGER;
+   $LOGGER{$logger+0} = $logger;
+
+   require AnyEvent::Util;
+   my $guard = AnyEvent::Util::guard (sub {
+      # "clean up"
+      delete $LOGGER{$logger+0};
+   });
+
+   sub {
+      return 0 unless $$renabled;
+
+      $guard if 0; # keep guard alive, but don't cause runtime overhead
+      require AnyEvent::Log unless $AnyEvent::Log::VERSION;
+      package AnyEvent::Log;
+      _log ($logger->[0], $level, @_) # logger->[0] has been converted at load time
+   }
 }
 
 if (length $ENV{PERL_ANYEVENT_LOG}) {
@@ -1386,7 +1416,7 @@ sub detect() {
          AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.";
          $MODEL = $model;
       } else {
-         AnyEvent::log 5 => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
+         AnyEvent::log 4 => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
       }
    }
 
@@ -1420,7 +1450,7 @@ sub detect() {
          }
 
          $MODEL
-           or die "AnyEvent: backend autodetection failed - did you properly install AnyEvent?";
+           or AnyEvent::log fatal => "AnyEvent: backend autodetection failed - did you properly install AnyEvent?";
       }
    }
 

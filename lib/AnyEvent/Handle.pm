@@ -1083,7 +1083,7 @@ handle. Uses the C<nfreeze> format.
 register_write_type storable => sub {
    my ($self, $ref) = @_;
 
-   require Storable;
+   require Storable unless $Storable::VERSION;
 
    pack "w/a*", Storable::nfreeze ($ref)
 };
@@ -1713,7 +1713,7 @@ Raises C<EBADMSG> error if the data could not be decoded.
 register_read_type storable => sub {
    my ($self, $cb) = @_;
 
-   require Storable;
+   require Storable unless $Storable::VERSION;
 
    sub {
       # when we can use 5.10 we can use ".", but for 5.8 we use the re-pack method
