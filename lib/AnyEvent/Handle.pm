@@ -13,7 +13,7 @@ AnyEvent::Handle - non-blocking I/O on streaming handles via AnyEvent
       fh => \*STDIN,
       on_error => sub {
          my ($hdl, $fatal, $msg) = @_;
-         AE::log warn => "got error $msg\n";
+         AE::log error => "got error $msg\n";
          $hdl->destroy;
          $cv->send;
       };
@@ -24,7 +24,7 @@ AnyEvent::Handle - non-blocking I/O on streaming handles via AnyEvent
    # read the response line
    $hdl->push_read (line => sub {
       my ($hdl, $line) = @_;
-      AE::log warn => "got line <$line>\n";
+      say "got line <$line>";
       $cv->send;
    });
 
@@ -1434,7 +1434,7 @@ data.
 Example: read 2 bytes.
 
    $handle->push_read (chunk => 2, sub {
-      AE::log debug => "yay " . unpack "H*", $_[1];
+      say "yay " . unpack "H*", $_[1];
    });
 
 =cut

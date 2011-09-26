@@ -1397,6 +1397,14 @@ our @methods = qw(io timer time now now_update signal child idle condvar);
 sub detect() {
    return $MODEL if $MODEL; # some programs keep references to detect
 
+   # IO::Async::Loop::AnyEvent is extremely evil, refuse to work with it
+   # the author knows about the problems and what it does to AnyEvent as a whole
+   # (and the ability of others to use AnyEvent), but simply wants to abuse AnyEvent
+   # anyway.
+   AnyEvent::log fatal => "AnyEvent: IO::Async::Loop::AnyEvent detected - this module is broken by design,\n"
+                          . "abuses internals and breaks AnyEvent, will not continue."
+      if exists $INC{"IO/Async/Loop/AnyEvent.pm"};
+
    local $!; # for good measure
    local $SIG{__DIE__}; # we use eval
 

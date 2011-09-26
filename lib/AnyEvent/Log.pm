@@ -8,15 +8,30 @@ Simple uses:
 
    use AnyEvent;
 
-   AE::log debug => "hit my knee";
-   AE::log warn  => "it's a bit too hot";
-   AE::log error => "the flag was false!";
-   AE::log fatal => "the bit toggled! run!"; # never returns
+   AE::log trace => "going to call function abc";
+   AE::log debug => "the function returned 3";
+   AE::log info  => "file soandso successfully deleted";
+   AE::log note  => "wanted to create config, but config was alraedy created";
+   AE::log warn  => "couldn't delete the file";
+   AE::log error => "failed to retrieve data";
+   AE::log crit  => "the battery temperature is too hot";
+   AE::log alert => "the battery died";
+   AE::log fatal => "no config found, cannot continue"; # never returns
 
-   # available log levels in order:
-   # fatal alert critical error warn note info debug trace
+Log level overview:
 
-"Complex" uses (for speed sensitive code):
+   LVL NAME      SYSLOG   PERL  NOTE
+    1  fatal     emerg    exit  system unusable, aborts program!
+    2  alert                    failure in primary system
+    3  critical  crit           failure in backup system
+    4  error     err      die   non-urgent program errors, a bug
+    5  warn      warning        possible problem, not necessarily error
+    6  note      notice         unusual conditions
+    7  info                     normal messages, no action required
+    8  debug                    debugging messages for development
+    9  trace                    copious tracing output
+
+"Complex" uses (for speed sensitive code, e.g. trace/debug messages):
 
    use AnyEvent::Log;
 

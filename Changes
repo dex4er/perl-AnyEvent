@@ -3,10 +3,10 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 
 TODO: log message level redistribute?
-TOOD: stop internals abusing
 TODO: AE::logger
 TODO: add debug/trace logging to some modules
 TODO: poe child watcher hang?
+TODO: max syslog level,e xg says to cap?
 	- INCOMPATIBLE CHANGE: the default log level is now "4" (error
           and above), and some messages inside AnyEvent have been elevated
           to higher log levels to print by default.
@@ -20,6 +20,11 @@ TODO: poe child watcher hang?
         - skip frequently called 'require' calls if the module appears loaded.
 	- increase signal latency test timer considerably for poor little osx.
         - mention some debugging aids in the tutorial.
+	- detect the extremely evil IO::Async::Loop::AnyEvent module and refuse
+          to work with it - the author is well aware of the issues but refuses
+          to fix them. This extreme step has been taken because the module actively
+          attacks the goals of AnyEvent and makes it harder for module authors to use
+          AnyEvent.
 
 6.02  Fri Aug 26 20:08:31 CEST 2011
         - log_to_syslog now accepts facility strings.
