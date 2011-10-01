@@ -124,12 +124,9 @@ watcher instead - it insist on doing it itself the broken way).
 
 Unfortunately, POE's child handling is inherently racy: if the child
 exits before the handler is created (which is impossible to avoid in
-general, imagine the forked program to exit immediately because of a
-bug, or imagine the POE kernel being busy for a second), one has to
-wait for another event to occur, which can take an indefinite amount of
-time. Apparently POE implements a busy-waiting loop every second, but this
-is not guaranteed or documented, so in practise child status events can be
-delayed for up to a second "only".
+general, imagine the forked program to exit immediately because of a bug,
+or imagine the POE kernel being busy for a second), one has to wait for
+another event to occur, which can take an indefinite amount of time.
 
 Of course, whenever POE reaps an unrelated child it will also output a
 message for it that you cannot suppress (which shouldn't be too surprising
@@ -322,6 +319,9 @@ sub signal {
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
+            # I suck - POE
+         },
+         start => sub {
             $_[KERNEL]->sig ($signal => "catch");
             $_[KERNEL]->refcount_increment ($_[SESSION]->ID => "poe");
          },
@@ -335,6 +335,7 @@ sub signal {
          },
       },
    );
+   POE::Kernel->call ($session, "start");
    bless \\$session, "AnyEvent::Impl::POE"
 }
 
@@ -345,6 +346,9 @@ sub child {
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
+            # I suck - POE
+         },
+         start => sub {
             $_[KERNEL]->sig (CHLD => "child");
             $_[KERNEL]->refcount_increment ($_[SESSION]->ID => "poe");
          },
@@ -359,6 +363,8 @@ sub child {
          },
       },
    );
+   # newer POE versions lose signals unless we call ->sig early.
+   POE::Kernel->call ($session, "start");
    bless \\$session, "AnyEvent::Impl::POE"
 }
 

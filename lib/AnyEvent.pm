@@ -417,9 +417,9 @@ pure perl implementation).
 
 =head3 Safe/Unsafe Signals
 
-Perl signals can be either "safe" (synchronous to opcode handling) or
-"unsafe" (asynchronous) - the former might get delayed indefinitely, the
-latter might corrupt your memory.
+Perl signals can be either "safe" (synchronous to opcode handling)
+or "unsafe" (asynchronous) - the former might delay signal delivery
+indefinitely, the latter might corrupt your memory.
 
 AnyEvent signal handlers are, in addition, synchronous to the event loop,
 i.e. they will not interrupt your running perl program but will only be
@@ -428,23 +428,21 @@ callbacks, too).
 
 =head3 Signal Races, Delays and Workarounds
 
-Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support attaching
-callbacks to signals in a generic way, which is a pity, as you cannot
-do race-free signal handling in perl, requiring C libraries for
-this. AnyEvent will try to do its best, which means in some cases,
-signals will be delayed. The maximum time a signal might be delayed is
-specified in C<$AnyEvent::MAX_SIGNAL_LATENCY> (default: 10 seconds). This
-variable can be changed only before the first signal watcher is created,
-and should be left alone otherwise. This variable determines how often
-AnyEvent polls for signals (in case a wake-up was missed). Higher values
-will cause fewer spurious wake-ups, which is better for power and CPU
-saving.
+Many event loops (e.g. Glib, Tk, Qt, IO::Async) do not support
+attaching callbacks to signals in a generic way, which is a pity,
+as you cannot do race-free signal handling in perl, requiring
+C libraries for this. AnyEvent will try to do its best, which
+means in some cases, signals will be delayed. The maximum time
+a signal might be delayed is 10 seconds by default, but can
+be overriden via C<$ENV{PERL_ANYEVENT_MAX_SIGNAL_LATENCY}> or
+C<$AnyEvent::MAX_SIGNAL_LATENCY> - see the Ö<ENVIRONMENT VARIABLES>
+section for details.
 
 All these problems can be avoided by installing the optional
 L<Async::Interrupt> module, which works with most event loops. It will not
 work with inherently broken event loops such as L<Event> or L<Event::Lib>
-(and not with L<POE> currently, as POE does its own workaround with
-one-second latency). For those, you just have to suffer the delays.
+(and not with L<POE> currently). For those, you just have to suffer the
+delays.
 
 =head2 CHILD PROCESS WATCHERS
 
@@ -1242,8 +1240,8 @@ our $MODEL;
 our @ISA;
 our @REGISTRY;
 our $VERBOSE;
-our $MAX_SIGNAL_LATENCY = 10;
 our %PROTOCOL; # (ipv4|ipv6) => (1|2), higher numbers are preferred
+our $MAX_SIGNAL_LATENCY = $ENV{PERL_ANYEVENT_MAX_SIGNAL_LATENCY} || 10; # executes after the BEGIN block below (tainting!)
 
 BEGIN {
    require "AnyEvent/constants.pl";
@@ -2228,6 +2226,28 @@ will create in parallel.
 The default value for the C<max_outstanding> parameter for the default DNS
 resolver - this is the maximum number of parallel DNS requests that are
 sent to the DNS server.
+
+=item C<PERL_ANYEVENT_MAX_SIGNAL_LATENCY>
+
+Perl has inherently racy signal handling (you can basically choose between
+losing signals and memory corruption) - pure perl event loops (including
+C<AnyEvent::Loop>, when C<Async::Interrupt> isn't available) therefore
+have to poll regularly to avoid losing signals.
+
+Some event loops are racy, but don't poll regularly, and some event loops
+are written in C but are still racy. For those event loops, AnyEvent
+installs a timer that regularly wakes up the event loop.
+
+By default, the interval for this timer is C<10> seconds, but you can
+override this delay with this environment variable (or by setting
+the C<$AnyEvent::MAX_SIGNAL_LATENCY> variable before creating signal
+watchers).
+
+Lower values increase CPU (and energy) usage, higher values can introduce
+long delays when reaping children or waiting for signals.
+
+The L<AnyEvent::Async> module, if available, will be used to avoid this
+polling (with most event loops).
 
 =item C<PERL_ANYEVENT_RESOLV_CONF>
 

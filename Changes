@@ -11,6 +11,8 @@ TODO: timer increase for arm(?)
           and above), and some messages inside AnyEvent have been elevated
           to higher log levels to print by default.
         - AnyEvent::log, unlike AnyEvent::Log::log, did not always exit on fatal.
+        - work around yet another signal race bug, newly introduced by POE. My
+          how that module sucks.
         - add google public ipv6 dns as fallback servers, so AE::DNS can finally
           support ipv6-only operation even with defaults (also use ::1 instead
           of 127.0.0.1).
@@ -20,6 +22,7 @@ TODO: timer increase for arm(?)
         - skip frequently called 'require' calls if the module appears loaded.
 	- increase signal latency test timer considerably for poor little osx.
         - mention some debugging aids in the tutorial.
+        - new env variable PERL_ANYEVENT_MAX_SIGNAL_LATENCY.
 	- detect the extremely evil IO::Async::Loop::AnyEvent module and refuse
           to work with it - the author is well aware of the issues but refuses
           to fix them. This extreme step has been taken because the module actively

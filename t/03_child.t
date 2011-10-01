@@ -40,10 +40,9 @@ for my $it ("", 1, 2, 3, 4) {
    my $cv = AnyEvent->condvar;
 
    unless ($pid) {
-      print "ok ${it}2\n";
+      print "ok ${it}2 # child $$\n";
       POSIX::_exit 3;
    }
-
    my $w = AnyEvent->child (pid => $pid, cb => sub {
       print $pid == $_[0] ? "" : "not ", "ok ${it}3\ # $pid == $_[0]\n";
       print 3 == ($_[1] >> 8) ? "" : "not ", "ok ${it}4 # 3 == $_[1] >> 8 ($_[1])\n";

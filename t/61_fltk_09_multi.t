@@ -28,6 +28,8 @@ $| = 1; print "1..15\n";
 
 print "ok 1\n";
 
+$AnyEvent::MAX_SIGNAL_LATENCY = 0.05;
+
 my ($a, $b) = AnyEvent::Util::portable_socketpair;
 
 # I/O write
@@ -96,7 +98,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    kill INT => $$;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.1, 0, $cv; # maybe OS X needs more time here?
+   $wt = AE::timer 0.2, 0, $cv; # maybe OS X needs more time here?
 
    $s = 0;
    $cv->recv;
@@ -111,8 +113,6 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
 
    print $s == 0 ? "" : "not ", "ok 8 # $s\n";
 }
-
-$AnyEvent::MAX_SIGNAL_LATENCY = 0.2;
 
 # child
 {
