@@ -94,7 +94,7 @@ my ($a, $b) = AnyEvent::Util::portable_socketpair;
    kill INT => $$;
 
    $cv = AE::cv;
-   $wt = AE::timer 0.2, 0, $cv; # maybe OS X needs more time here?
+   $wt = AE::timer 0.2, 0, $cv; # maybe OS X needs more time here? or maybe some buggy arm kernel?
 
    $s = 0;
    $cv->recv;
