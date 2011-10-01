@@ -71,7 +71,7 @@ our $FD_CHECK_W = AE::timer 4, 4, sub {
 
    if ($FD_I <= 0) {
       #pop @FD_INUSE while @FD_INUSE && !$FD_INUSE[-1];
-      ($FD_I = @FD_INUSE) >= 0
+      $FD_I = @FD_INUSE
          or return; # empty
    }
 

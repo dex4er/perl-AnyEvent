@@ -2,11 +2,11 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 
-TODO: log message level redistribute?
 TODO: AE::logger
 TODO: add debug/trace logging to some modules
 TODO: poe child watcher hang?
-TODO: max syslog level,e xg says to cap?
+TODO: general log level "cap"
+TODO: timer increase for arm(?)
 	- INCOMPATIBLE CHANGE: the default log level is now "4" (error
           and above), and some messages inside AnyEvent have been elevated
           to higher log levels to print by default.
