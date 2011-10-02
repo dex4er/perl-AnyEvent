@@ -4,7 +4,6 @@ TODO: document TCP_*** constants
 
 TODO: AE::logger
 TODO: add debug/trace logging to some modules
-TODO: general log level "cap"
 	- INCOMPATIBLE CHANGE: the default log level is now "4" (error
           and above), and some messages inside AnyEvent have been elevated
           to higher log levels to print by default.
@@ -15,6 +14,7 @@ TODO: general log level "cap"
           support ipv6-only operation even with defaults (also use ::1 instead
           of 127.0.0.1).
 	- give better guidelines on how to chose a logging level.
+        - AnyEvent::Log can now cap (limit) log message priority by context.
         - AE::Strict now checks that registered fds are still valid at regular
           intervals.
         - skip frequently called 'require' calls if the module appears loaded.
@@ -23,6 +23,8 @@ TODO: general log level "cap"
           delivery.
         - mention some debugging aids in the tutorial.
         - new env variable PERL_ANYEVENT_MAX_SIGNAL_LATENCY.
+        - private (%namespace) log contexts in PERL_ANYEVENT_LOG now have the name
+          of the context as title.
 	- detect the extremely evil IO::Async::Loop::AnyEvent module and refuse
           to work with it - the author is well aware of the issues but refuses
           to fix them. This extreme step has been taken because the module actively
