@@ -1304,6 +1304,7 @@ sub postpone(&) {
 sub log($$;@) {
    # only load the big bloated module when we actually are about to log something
    if ($_[0] <= ($VERBOSE || 1)) { # also catches non-numeric levels(!) and fatal
+      local ($!, $@);
       require AnyEvent::Log; # among other things, sets $VERBOSE to 9
       # AnyEvent::Log overwrites this function
       goto &log;
@@ -1325,6 +1326,8 @@ sub logger($;$) {
 
    our %LOGGER;
    $LOGGER{$logger+0} = $logger;
+
+   return unless defined wantarray;
 
    require AnyEvent::Util;
    my $guard = AnyEvent::Util::guard (sub {

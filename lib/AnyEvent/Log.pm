@@ -194,6 +194,9 @@ supposed to return the message. It will be called only then the message
 actually gets logged, which is useful if it is costly to create the
 message in the first place.
 
+This function takes care of saving and restoring C<$!> and C<$@>, so you
+don't have to.
+
 Whether the given message will be logged depends on the maximum log level
 and the caller's package. The return value can be used to ensure that
 messages or not "lost" - for example, when L<AnyEvent::Debug> detects a
@@ -302,6 +305,8 @@ sub _log {
             # log if log cb
             if ($ctx->[3]) {
                # logging target found
+
+               local ($!, $@);
 
                # now get raw message, unless we have it already
                unless ($now) {
