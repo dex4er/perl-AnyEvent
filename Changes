@@ -1,8 +1,9 @@
 Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
-
 TODO: add debug/trace logging to some modules
+
+6.1  Tue Oct  4 19:44:30 CEST 2011
 	- INCOMPATIBLE CHANGE: the default log level is now "4" (error
           and above), and some messages inside AnyEvent have been elevated
           to higher log levels to print by default.

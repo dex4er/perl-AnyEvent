@@ -405,8 +405,8 @@ WATCHERS
 
    Safe/Unsafe Signals
     Perl signals can be either "safe" (synchronous to opcode handling) or
-    "unsafe" (asynchronous) - the former might get delayed indefinitely, the
-    latter might corrupt your memory.
+    "unsafe" (asynchronous) - the former might delay signal delivery
+    indefinitely, the latter might corrupt your memory.
 
     AnyEvent signal handlers are, in addition, synchronous to the event
     loop, i.e. they will not interrupt your running perl program but will
@@ -418,19 +418,15 @@ WATCHERS
     callbacks to signals in a generic way, which is a pity, as you cannot do
     race-free signal handling in perl, requiring C libraries for this.
     AnyEvent will try to do its best, which means in some cases, signals
-    will be delayed. The maximum time a signal might be delayed is specified
-    in $AnyEvent::MAX_SIGNAL_LATENCY (default: 10 seconds). This variable
-    can be changed only before the first signal watcher is created, and
-    should be left alone otherwise. This variable determines how often
-    AnyEvent polls for signals (in case a wake-up was missed). Higher values
-    will cause fewer spurious wake-ups, which is better for power and CPU
-    saving.
+    will be delayed. The maximum time a signal might be delayed is 10
+    seconds by default, but can be overriden via
+    $ENV{PERL_ANYEVENT_MAX_SIGNAL_LATENCY} or $AnyEvent::MAX_SIGNAL_LATENCY
+    - see the Ö<ENVIRONMENT VARIABLES> section for details.
 
     All these problems can be avoided by installing the optional
     Async::Interrupt module, which works with most event loops. It will not
     work with inherently broken event loops such as Event or Event::Lib (and
-    not with POE currently, as POE does its own workaround with one-second
-    latency). For those, you just have to suffer the delays.
+    not with POE currently). For those, you just have to suffer the delays.
 
   CHILD PROCESS WATCHERS
        $w = AnyEvent->child (pid => <process id>, cb => <callback>);
@@ -1012,7 +1008,9 @@ GLOBAL VARIABLES AND FUNCTIONS
         it will load AnyEvent::Log and call "AnyEvent::Log::log" -
         consequently, look at the AnyEvent::Log documentation for details.
 
-        If the test fails it will simply return.
+        If the test fails it will simply return. Right now this happens when
+        a numerical loglevel is used and it is larger than the level
+        specified via $ENV{PERL_ANYEVENT_VERBOSE}.
 
         If you want to sprinkle loads of logging calls around your code,
         consider creating a logger callback with the "AnyEvent::Log::logger"
@@ -1218,13 +1216,19 @@ ENVIRONMENT VARIABLES
     The following environment variables are currently known to AnyEvent:
 
     "PERL_ANYEVENT_VERBOSE"
-        By default, AnyEvent will be completely silent except in fatal
-        conditions. You can set this environment variable to make AnyEvent
-        more talkative. If you want to do more than just set the global
-        logging level you should have a look at "PERL_ANYEVENT_LOG", which
-        allows much more complex specifications.
+        By default, AnyEvent will only log messages with loglevel 3
+        ("critical") or higher (see AnyEvent::Log). You can set this
+        environment variable to a numerical loglevel to make AnyEvent more
+        (or less) talkative.
 
-        When set to 5 or higher (warn), causes AnyEvent to warn about
+        If you want to do more than just set the global logging level you
+        should have a look at "PERL_ANYEVENT_LOG", which allows much more
+        complex specifications.
+
+        When set to 0 ("off"), then no messages whatsoever will be logged
+        with the default logging settings.
+
+        When set to 5 or higher ("warn"), causes AnyEvent to warn about
         unexpected conditions, such as not being able to load the event
         model specified by "PERL_ANYEVENT_MODEL", or a guard callback
         throwing an exception - this is the minimum recommended level.
@@ -1269,10 +1273,10 @@ ENVIRONMENT VARIABLES
         programs can be very useful, however.
 
     "PERL_ANYEVENT_DEBUG_SHELL"
-        If this env variable is set, then its contents will be interpreted
-        by "AnyEvent::Socket::parse_hostport" (after replacing every
-        occurance of $$ by the process pid) and an "AnyEvent::Debug::shell"
-        is bound on that port. The shell object is saved in
+        If this env variable is nonempty, then its contents will be
+        interpreted by "AnyEvent::Socket::parse_hostport" and
+        "AnyEvent::Debug::shell" (after replacing every occurance of $$ by
+        the process pid). The shell object is saved in
         $AnyEvent::Debug::SHELL.
 
         This happens when the first watcher is created.
@@ -1281,9 +1285,15 @@ ENVIRONMENT VARIABLES
         /tmp/debug<pid>.sock, you could use this:
 
            PERL_ANYEVENT_DEBUG_SHELL=/tmp/debug\$\$.sock perlprog
+           # connect with e.g.: socat readline /tmp/debug123.sock
 
-        Note that creating sockets in /tmp is very unsafe on multiuser
-        systems.
+        Or to bind to tcp port 4545 on localhost:
+
+           PERL_ANYEVENT_DEBUG_SHELL=127.0.0.1:4545 perlprog
+           # connect with e.g.: telnet localhost 4545
+
+        Note that creating sockets in /tmp or on localhost is very unsafe on
+        multiuser systems.
 
     "PERL_ANYEVENT_DEBUG_WRAP"
         Can be set to 0, 1 or 2 and enables wrapping of all watchers for
@@ -1353,6 +1363,27 @@ ENVIRONMENT VARIABLES
         The default value for the "max_outstanding" parameter for the
         default DNS resolver - this is the maximum number of parallel DNS
         requests that are sent to the DNS server.
+
+    "PERL_ANYEVENT_MAX_SIGNAL_LATENCY"
+        Perl has inherently racy signal handling (you can basically choose
+        between losing signals and memory corruption) - pure perl event
+        loops (including "AnyEvent::Loop", when "Async::Interrupt" isn't
+        available) therefore have to poll regularly to avoid losing signals.
+
+        Some event loops are racy, but don't poll regularly, and some event
+        loops are written in C but are still racy. For those event loops,
+        AnyEvent installs a timer that regularly wakes up the event loop.
+
+        By default, the interval for this timer is 10 seconds, but you can
+        override this delay with this environment variable (or by setting
+        the $AnyEvent::MAX_SIGNAL_LATENCY variable before creating signal
+        watchers).
+
+        Lower values increase CPU (and energy) usage, higher values can
+        introduce long delays when reaping children or waiting for signals.
+
+        The AnyEvent::Async module, if available, will be used to avoid this
+        polling (with most event loops).
 
     "PERL_ANYEVENT_RESOLV_CONF"
         The absolute path to a resolv.conf-style file to use instead of
