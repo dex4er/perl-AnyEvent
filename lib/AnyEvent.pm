@@ -1313,36 +1313,31 @@ sub log($$;@) {
    0 # not logged
 }
 
-sub logger($;$) {
-   package AnyEvent::Log;
-
+sub _logger($;$) {
    my ($level, $renabled) = @_;
 
    $$renabled = $level <= $VERBOSE;
 
-   my $pkg = (caller)[0];
+   my $logger = [(caller)[0], $level, $renabled];
 
-   my $logger = [$pkg, $level, $renabled];
+   $AnyEvent::Log::LOGGER{$logger+0} = $logger;
 
-   our %LOGGER;
-   $LOGGER{$logger+0} = $logger;
-
-   return unless defined wantarray;
-
-   require AnyEvent::Util;
-   my $guard = AnyEvent::Util::guard (sub {
-      # "clean up"
-      delete $LOGGER{$logger+0};
-   });
-
-   sub {
-      return 0 unless $$renabled;
-
-      $guard if 0; # keep guard alive, but don't cause runtime overhead
-      require AnyEvent::Log unless $AnyEvent::Log::VERSION;
-      package AnyEvent::Log;
-      _log ($logger->[0], $level, @_) # logger->[0] has been converted at load time
-   }
+#   return unless defined wantarray;
+# 
+#   require AnyEvent::Util;
+#   my $guard = AnyEvent::Util::guard (sub {
+#      # "clean up"
+#      delete $LOGGER{$logger+0};
+#   });
+# 
+#   sub {
+#      return 0 unless $$renabled;
+# 
+#      $guard if 0; # keep guard alive, but don't cause runtime overhead
+#      require AnyEvent::Log unless $AnyEvent::Log::VERSION;
+#      package AnyEvent::Log;
+#      _log ($logger->[0], $level, @_) # logger->[0] has been converted at load time
+#   }
 }
 
 if (length $ENV{PERL_ANYEVENT_LOG}) {
