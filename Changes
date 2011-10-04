@@ -25,6 +25,8 @@ TODO: add debug/trace logging to some modules
         - new env variable PERL_ANYEVENT_MAX_SIGNAL_LATENCY.
         - private (%namespace) log contexts in PERL_ANYEVENT_LOG now have the name
           of the context as title.
+        - AnyEvent::Strict would not restore read-write access to $_ when a callback
+          died - this is a user bug, but since AE::Strict exists to help dbeugging...
 	- detect the extremely evil IO::Async::Loop::AnyEvent module and refuse
           to work with it - the author is well aware of the issues but refuses
           to fix them. This extreme step has been taken because the module actively

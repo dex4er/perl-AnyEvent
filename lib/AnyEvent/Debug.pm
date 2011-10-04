@@ -412,7 +412,7 @@ sub sv2str($) {
 
 Creates a backtrace (actually an AnyEvent::Debug::Backtrace object
 that you can stringify), not unlike the Carp module would. Unlike the
-Carp module it resolves some references (euch as callbacks) to more
+Carp module it resolves some references (such as callbacks) to more
 user-friendly strings, has a more succinct output format and most
 importantly: doesn't leak memory like hell.
 
@@ -427,6 +427,7 @@ sub backtrace(;$) {
 
    my (@bt, @c);
    my ($modlen, $sub);
+   local $_;#d#
 
    for (;;) {
       #         0          1      2            3         4           5          6            7       8         9         10

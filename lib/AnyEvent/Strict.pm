@@ -39,9 +39,9 @@ BEGIN {
          my $cb = shift;
 
          sub {
+            local $_;
             Internals::SvREADONLY $_, 1;
             &$cb;
-            Internals::SvREADONLY $_, 0;
          }
       };
    } else {
