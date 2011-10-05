@@ -28,11 +28,11 @@ AE - simpler/faster/newer/cooler AnyEvent API
   # called when event loop idle (if applicable)
   my $w = AE::idle sub { ... };
 
-  my $w = AE::cv; # stores whether a condition was flagged
-  $w->send; # wake up current and all future recv's
-  $w->recv; # enters "main loop" till $condvar gets ->send
+  my $cv = AE::cv; # stores whether a condition was flagged
+  $cv->send; # wake up current and all future recv's
+  $cv->recv; # enters "main loop" till $condvar gets ->send
   # use a condvar in callback mode:
-  $w->cb (sub { $_[0]->recv });
+  $cv->cb (sub { $_[0]->recv });
 
 
 =head1 DESCRIPTION
