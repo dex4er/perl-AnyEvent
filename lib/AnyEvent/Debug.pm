@@ -693,6 +693,11 @@ sub as_string {
       $rpath = (AnyEvent::Debug::path2mod $$rpath) . " line $line";
       $modlen = length $rpath if $modlen < length $rpath;
 
+      $sub =~ s/\r/\\r/g;
+      $sub =~ s/\n/\\n/g;
+      $sub =~ s/([\x00-\x1f\x7e-\xff])/sprintf "\\x%02x", ord $1/ge;
+      $sub =~ s/([^\x20-\x7e])/sprintf "\\x{%x}", ord $1/ge;
+
       push @bt, [$rpath, $sub];
    }
 
