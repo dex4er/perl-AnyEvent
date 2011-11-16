@@ -1434,6 +1434,8 @@ sub detect() {
                AnyEvent::log 7 => "autodetected model '$model', using it.";
                $MODEL = $model;
                last;
+            } else {
+               AnyEvent::log 8 => "detected event loop $package, but cannot load '$model', skipping: $@";
             }
          }
       }

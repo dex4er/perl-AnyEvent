@@ -1,3 +1,4 @@
+die;
 =head1 NAME
 
 AnyEvent::Impl::Tk - AnyEvent adaptor for Tk
@@ -55,7 +56,7 @@ package AnyEvent::Impl::Tk;
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Tk ();
 
-our $mw = new MainWindow;
+our $mw = new MainWindow -title => "AnyEvent Dummy Window";
 $mw->withdraw;
 
 END { undef $mw }
