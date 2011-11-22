@@ -1235,7 +1235,7 @@ BEGIN { AnyEvent::common_sense }
 
 use Carp ();
 
-our $VERSION = '6.1';
+our $VERSION = '6.11';
 our $MODEL;
 our @ISA;
 our @REGISTRY;
@@ -1397,8 +1397,8 @@ sub detect() {
    # the author knows about the problems and what it does to AnyEvent as a whole
    # (and the ability of others to use AnyEvent), but simply wants to abuse AnyEvent
    # anyway.
-   AnyEvent::log fatal => "AnyEvent: IO::Async::Loop::AnyEvent detected - this module is broken by design,\n"
-                          . "abuses internals and breaks AnyEvent, will not continue."
+   AnyEvent::log fatal => "AnyEvent: IO::Async::Loop::AnyEvent detected - that module is broken by\n"
+                        . "design, abuses internals and breaks AnyEvent - will not continue."
       if exists $INC{"IO/Async/Loop/AnyEvent.pm"};
 
    local $!; # for good measure

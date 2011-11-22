@@ -3,6 +3,7 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 
+6.11 Tue Nov 22 10:36:05 CET 2011
 	- Tk cannot create windows when tainted unless you set a title, so
           set a dummy title for AnyEvent's dummy mainwindow. How dummy.
 	- escape any nonprintable/nonascii characters when stringifying
