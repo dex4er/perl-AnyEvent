@@ -973,10 +973,12 @@ sub tcp_connect($$$;$) {
       $state{next} = sub {
          return unless exists $state{fh};
 
+         my $errno = $!;
          my $target = shift @target
             or return AE::postpone {
                return unless exists $state{fh};
                %state = ();
+               $! = $errno;
                $connect->();
             };
 
