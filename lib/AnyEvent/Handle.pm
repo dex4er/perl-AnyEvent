@@ -1794,7 +1794,7 @@ attack to be working, as SSL/TLS implementations might stall sending data
 during a rehandshake.
 
 As a guideline, during the initial handshake, you should not stop reading,
-and as a client, it might cause problems, depending on your applciation.
+and as a client, it might cause problems, depending on your application.
 
 =cut
 
