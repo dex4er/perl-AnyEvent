@@ -1478,7 +1478,7 @@ register_read_type line => sub {
       sub {
          $_[0]{rbuf} =~ s/^([^\015\012]*)(\015?\012)// or return;
 
-         $cb->($_[0], $1, $2);
+         $cb->($_[0], "$1", "$2");
          1
       }
    } else {
@@ -1488,7 +1488,7 @@ register_read_type line => sub {
       sub {
          $_[0]{rbuf} =~ s/$eol// or return;
 
-         $cb->($_[0], $1, $2);
+         $cb->($_[0], "$1", "$2");
          1
       }
    }
