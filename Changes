@@ -3,6 +3,12 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 
+6.13
+	- AnyEvent::Handle::push_read (line => did pass $1 directly, so
+          regex-matching inside the callback would change the parameter, despite
+          $1 being dynamically scoped per-block. this perl bug is now being
+          worked around (testcase by Cindy Wang).
+
 6.12 Mon Dec 12 13:21:10 CET 2011
 	- $! was clobbered by subsequent calls in tcp_connect, due to
           the postpone not saving/restoring it (analyzed by Richard Garnish).
