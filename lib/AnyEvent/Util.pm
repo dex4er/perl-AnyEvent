@@ -224,7 +224,7 @@ my @fork_queue;
 sub _fork_schedule;
 sub _fork_schedule {
    require Storable unless $Storable::VERSION;
-   require POSIX    unless $Storable::VERSION;
+   require POSIX    unless $POSIX::VERSION;
 
    while ($forks < $MAX_FORKS) {
       my $job = shift @fork_queue
