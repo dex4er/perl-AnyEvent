@@ -1,4 +1,3 @@
-die;
 =head1 NAME
 
 AnyEvent::Impl::Tk - AnyEvent adaptor for Tk

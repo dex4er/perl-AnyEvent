@@ -3,6 +3,10 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 
+6.14 Tue Jan 31 20:00:24 CET 2012
+	- AnyEvent::Impl::Tk was broken due to a mysterious "die" inside,
+          probably an editing mistake (reported by Darin McBride).
+
 6.13 Thu Jan 12 07:27:01 CET 2012
 	- AnyEvent::Util::fork_call checked for POSIX availability in the wrong way,
           causing it to fail if POSIX wasn't loaded already (analysed by Rock Power).
