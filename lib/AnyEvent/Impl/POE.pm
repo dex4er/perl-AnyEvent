@@ -248,6 +248,28 @@ POE manpage understands.
 The POE-recommended workaround to this is apparently to use
 C<fork>. Consequently, idle watchers will have to be emulated by AnyEvent.
 
+=item Slamming other modules with fabricated statements
+
+The author of POE isn't above fabricating statements in public and posting
+them to random unrelated mailinglists. I don't know what his goal is, but
+I have only two things to say:
+
+=over 4
+
+=item 1. Don't trust him on anything he says. He makes up stuff to reach
+his goal and when challenged, will not come up with the evidence, or
+retract wrong statements. Always verify what he says when in doubt. Always verify what
+you read here, too - everybody must be able to substantiate claims such as
+these.
+
+=item 2. I am disappointed.
+
+=back
+
+Case in question: L<http://www.nntp.perl.org/group/perl.perl5.porters/2012/01/msg182141.html>.
+He was challenged in that thread, to provide evidence for his statement by giving at
+least two examples, but of course couldn't, but also was above retracting his lie.
+
 =back
 
 On the good side, AnyEvent allows you to write your modules in a 100%
