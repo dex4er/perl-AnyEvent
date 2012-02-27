@@ -232,8 +232,8 @@ set, then a fatal error will be raised with C<$!> set to <0>.
 
 =item on_drain => $cb->($handle)
 
-This sets the callback that is called when the write buffer becomes empty
-(or immediately if the buffer is empty already).
+This sets the callback that is called once when the write buffer becomes
+empty (and immediately when the handle object is created).
 
 To append to the write buffer, use the C<< ->push_write >> method.
 
@@ -888,7 +888,7 @@ The write queue is very simple: you can add data to its end, and
 AnyEvent::Handle will automatically try to get rid of it for you.
 
 When data could be written and the write buffer is shorter then the low
-water mark, the C<on_drain> callback will be invoked.
+water mark, the C<on_drain> callback will be invoked once.
 
 =over 4
 
