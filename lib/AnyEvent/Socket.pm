@@ -1089,6 +1089,9 @@ whose lifetime it tied to the TCP server: If the object gets destroyed,
 the server will be stopped (but existing accepted connections will
 not be affected).
 
+Regardless, when the function returns to the caller, the socket is bound
+and in listening state.
+
 If you need more control over the listening socket, you can provide a
 C<< $prepare_cb->($fh, $host, $port) >>, which is called just before the
 C<listen ()> call, with the listen file handle as first argument, and IP
