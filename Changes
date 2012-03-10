@@ -2,6 +2,7 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
+TODO: AnyEvent::IO
 
 	- documented Rocco fabricating statements about AnyEvent and me.
 	- updated uts46data.pl for unicode 6.1.0.

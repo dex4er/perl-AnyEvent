@@ -435,7 +435,7 @@ C libraries for this. AnyEvent will try to do its best, which
 means in some cases, signals will be delayed. The maximum time
 a signal might be delayed is 10 seconds by default, but can
 be overriden via C<$ENV{PERL_ANYEVENT_MAX_SIGNAL_LATENCY}> or
-C<$AnyEvent::MAX_SIGNAL_LATENCY> - see the Ö<ENVIRONMENT VARIABLES>
+C<$AnyEvent::MAX_SIGNAL_LATENCY> - see the L<ENVIRONMENT VARIABLES>
 section for details.
 
 All these problems can be avoided by installing the optional
