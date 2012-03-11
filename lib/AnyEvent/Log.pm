@@ -1199,7 +1199,7 @@ Attaches the named context as slave to the context.
 
 =item C<+>
 
-A line C<+> detaches all contexts, i.e. clears the slave list from the
+A lone C<+> detaches all contexts, i.e. clears the slave list from the
 context. Anonymous (C<%name>) contexts have no attached slaves by default,
 but package contexts have the parent context as slave by default.
 
