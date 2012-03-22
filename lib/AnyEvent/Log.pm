@@ -1048,6 +1048,10 @@ going via your package context.
 
 Same as C<AnyEvent::Log::log>, but uses the given context as log context.
 
+Example: log a message in the context of another package.
+
+   (AnyEvent::Log::ctx "Other::Package")->log (warn => "heely bo");
+
 =item $logger = $ctx->logger ($level[, \$enabled])
 
 Same as C<AnyEvent::Log::logger>, but uses the given context as log
