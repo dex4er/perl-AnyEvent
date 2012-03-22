@@ -11,7 +11,7 @@ Simple uses:
    AE::log trace => "going to call function abc";
    AE::log debug => "the function returned 3";
    AE::log info  => "file soandso successfully deleted";
-   AE::log note  => "wanted to create config, but config was alraedy created";
+   AE::log note  => "wanted to create config, but config was already created";
    AE::log warn  => "couldn't delete the file";
    AE::log error => "failed to retrieve data";
    AE::log crit  => "the battery temperature is too hot";
@@ -63,7 +63,7 @@ AnyEvent - AnyEvent simply creates logging messages internally, and this
 module more or less exposes the mechanism, with some extra spiff to allow
 using it from other modules as well.
 
-Remember that the default verbosity level is C<0> (C<off>), so nothing
+Remember that the default verbosity level is C<3> (C<critical>), so little
 will be logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
 before starting your program, or change the logging level at runtime with
 something like:
@@ -108,24 +108,24 @@ and the third one the "perl" name, suggesting (only!) that you log C<die>
 messages at C<error> priority. The NOTE column tries to provide some
 rationale on how to chose a logging level.
 
-As a rough guideline, levels 1..3 are primarily meant for users of
-the program (admins, staff), and are the only logged to STDERR by
+As a rough guideline, levels 1..3 are primarily meant for users of the
+program (admins, staff), and are the only ones logged to STDERR by
 default. Levels 4..6 are meant for users and developers alike, while
 levels 7..9 are usually meant for developers.
 
-You can normally only log a single message at highest priority level
-(C<1>, C<fatal>), because logging a fatal message will also quit the
-program - so use it sparingly :)
+You can normally only log a message once at highest priority level (C<1>,
+C<fatal>), because logging a fatal message will also quit the program - so
+use it sparingly :)
 
 Some methods also offer some extra levels, such as C<0>, C<off>, C<none>
-or C<all> - these are only valid in the methods they are documented for.
+or C<all> - these are only valid for the methods that documented them.
 
 =head1 LOGGING FUNCTIONS
 
-These functions allow you to log messages. They always use the caller's
-package as a "logging context". Also, the main logging function C<log> is
-callable as C<AnyEvent::log> or C<AE::log> when the C<AnyEvent> module is
-loaded.
+The following functions allow you to log messages. They always use the
+caller's package as a "logging context". Also, the main logging function,
+C<log>, is aliased to C<AnyEvent::log> and C<AE::log> when the C<AnyEvent>
+module is loaded.
 
 =over 4
 
