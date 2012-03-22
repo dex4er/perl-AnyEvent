@@ -921,7 +921,7 @@ to 15 seconds.
          $handle = new AnyEvent::Handle
             fh     => $fh,
             on_error => sub {
-               AE::log error => "error $_[2]";
+               AE::log error => $_[2];
                $_[0]->destroy;
             },
             on_eof => sub {
