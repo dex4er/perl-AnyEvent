@@ -896,10 +896,10 @@ Replaces the formatting callback on the context (C<undef> restores the
 default formatter).
 
 The callback is passed the (possibly fractional) timestamp, the original
-logging context, the (numeric) logging level and the raw message string
-and needs to return a formatted log message. In most cases this will be a
-string, but it could just as well be an array reference that just stores
-the values.
+logging context (object, not title), the (numeric) logging level and
+the raw message string and needs to return a formatted log message. In
+most cases this will be a string, but it could just as well be an array
+reference that just stores the values.
 
 If, for some reason, you want to use C<caller> to find out more about the
 logger then you should walk up the call stack until you are no longer
@@ -915,7 +915,7 @@ brackets.
    });
 
 Example: return an array reference with just the log values, and use
-C<PApp::SQL::sql_exec> to store the emssage in a database.
+C<PApp::SQL::sql_exec> to store the message in a database.
 
    $ctx->fmt_cb (sub { \@_ });
    $ctx->log_cb (sub {
