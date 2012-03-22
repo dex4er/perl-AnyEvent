@@ -5,6 +5,8 @@ TODO: add debug/trace logging to some modules
 TODO: AnyEvent::IO
 
 	- documented Rocco fabricating statements about AnyEvent and me.
+        - the default logging level was not properly documented in a variety of
+          places, this has hopefully been rectified.
 	- updated uts46data.pl for unicode 6.1.0.
         - made log messages genearted by AnyEvent submodules not
           include the package name anymore, as it will be logged

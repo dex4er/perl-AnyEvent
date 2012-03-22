@@ -8,15 +8,15 @@ Simple uses:
 
    use AnyEvent;
 
-   AE::log trace => "going to call function abc";
-   AE::log debug => "the function returned 3";
-   AE::log info  => "file soandso successfully deleted";
-   AE::log note  => "wanted to create config, but config was already created";
-   AE::log warn  => "couldn't delete the file";
-   AE::log error => "failed to retrieve data";
-   AE::log crit  => "the battery temperature is too hot";
-   AE::log alert => "the battery died";
    AE::log fatal => "no config found, cannot continue"; # never returns
+   AE::log alert => "the battery died";
+   AE::log crit  => "the battery temperature is too hot";
+   AE::log error => "division by zero attempted";
+   AE::log warn  => "couldn't delete the file";
+   AE::log note  => "wanted to create config, but config already exists";
+   AE::log info  => "file soandso successfully deleted";
+   AE::log debug => "the function returned 3";
+   AE::log trace => "going to call function abc";
 
 Log level overview:
 
@@ -63,10 +63,11 @@ AnyEvent - AnyEvent simply creates logging messages internally, and this
 module more or less exposes the mechanism, with some extra spiff to allow
 using it from other modules as well.
 
-Remember that the default verbosity level is C<3> (C<critical>), so little
-will be logged, unless you set C<PERL_ANYEVENT_VERBOSE> to a higher number
-before starting your program, or change the logging level at runtime with
-something like:
+Remember that the default verbosity level is C<4> (C<error>), so only
+errors and more important messages will be logged, unless you set
+C<PERL_ANYEVENT_VERBOSE> to a higher number before starting your program
+(C<AE_VERBOSE=5> is recommended during development), or change the logging
+level at runtime with something like:
 
    use AnyEvent::Log;
    $AnyEvent::Log::FILTER->level ("info");
@@ -116,6 +117,10 @@ levels 7..9 are usually meant for developers.
 You can normally only log a message once at highest priority level (C<1>,
 C<fatal>), because logging a fatal message will also quit the program - so
 use it sparingly :)
+
+For example, a program that finds an unknown switch on the commandline
+might well use a fatal logging level to tell users about it - the "system"
+in this case would be the program, or module.
 
 Some methods also offer some extra levels, such as C<0>, C<off>, C<none>
 or C<all> - these are only valid for the methods that documented them.

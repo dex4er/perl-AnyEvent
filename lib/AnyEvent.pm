@@ -2075,28 +2075,28 @@ The following environment variables are currently known to AnyEvent:
 
 =item C<PERL_ANYEVENT_VERBOSE>
 
-By default, AnyEvent will only log messages with loglevel C<3>
-(C<critical>) or higher (see L<AnyEvent::Log>). You can set this
-environment variable to a numerical loglevel to make AnyEvent more (or
-less) talkative.
+By default, AnyEvent will log messages with loglevel C<4> (C<error>) or
+higher (see L<AnyEvent::Log>). You can set this environment variable to a
+numerical loglevel to make AnyEvent more (or less) talkative.
 
 If you want to do more than just set the global logging level
 you should have a look at C<PERL_ANYEVENT_LOG>, which allows much more
 complex specifications.
 
 When set to C<0> (C<off>), then no messages whatsoever will be logged with
-the default logging settings.
+everything else at defaults.
 
-When set to C<5> or higher (C<warn>), causes AnyEvent to warn about
-unexpected conditions, such as not being able to load the event model
-specified by C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an
-exception - this is the minimum recommended level.
+When set to C<5> or higher (C<warn>), AnyEvent warns about unexpected
+conditions, such as not being able to load the event model specified by
+C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an exception - this
+is the minimum recommended level for use during development.
 
-When set to C<7> or higher (info), cause AnyEvent to report which event model it
+When set to C<7> or higher (info), AnyEvent reports which event model it
 chooses.
 
-When set to C<8> or higher (debug), then AnyEvent will report extra information on
-which optional modules it loads and how it implements certain features.
+When set to C<8> or higher (debug), then AnyEvent will report extra
+information on which optional modules it loads and how it implements
+certain features.
 
 =item C<PERL_ANYEVENT_LOG>
 
@@ -2113,8 +2113,8 @@ so will take effect even before AnyEvent has initialised itself.
 
 Note that specifying this environment variable causes the L<AnyEvent::Log>
 module to be loaded, while C<PERL_ANYEVENT_VERBOSE> does not, so only
-using the latter saves a few hundred kB of memory until the first message
-is being logged.
+using the latter saves a few hundred kB of memory unless a module
+explicitly needs the extra features of AnyEvent::Log.
 
 =item C<PERL_ANYEVENT_STRICT>
 
