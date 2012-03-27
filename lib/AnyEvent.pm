@@ -1398,7 +1398,7 @@ sub detect() {
    # the author knows about the problems and what it does to AnyEvent as a whole
    # (and the ability of others to use AnyEvent), but simply wants to abuse AnyEvent
    # anyway.
-   AnyEvent::log fatal => "AnyEvent: IO::Async::Loop::AnyEvent detected - that module is broken by\n"
+   AnyEvent::log fatal => "IO::Async::Loop::AnyEvent detected - that module is broken by\n"
                         . "design, abuses internals and breaks AnyEvent - will not continue."
       if exists $INC{"IO/Async/Loop/AnyEvent.pm"};
 
@@ -1419,10 +1419,10 @@ sub detect() {
       my $model = $1;
       $model = "AnyEvent::Impl::$model" unless $model =~ s/::$//;
       if (eval "require $model") {
-         AnyEvent::log 7 => "loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.";
+         AnyEvent::log 7 => "Loaded model '$model' (forced by \$ENV{PERL_ANYEVENT_MODEL}), using it.";
          $MODEL = $model;
       } else {
-         AnyEvent::log 4 => "unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
+         AnyEvent::log 4 => "Unable to load model '$model' (from \$ENV{PERL_ANYEVENT_MODEL}):\n$@";
       }
    }
 
@@ -1432,11 +1432,11 @@ sub detect() {
          my ($package, $model) = @$_;
          if (${"$package\::VERSION"} > 0) {
             if (eval "require $model") {
-               AnyEvent::log 7 => "autodetected model '$model', using it.";
+               AnyEvent::log 7 => "Autodetected model '$model', using it.";
                $MODEL = $model;
                last;
             } else {
-               AnyEvent::log 8 => "detected event loop $package, but cannot load '$model', skipping: $@";
+               AnyEvent::log 8 => "Detected event loop $package, but cannot load '$model', skipping: $@";
             }
          }
       }
@@ -1450,14 +1450,14 @@ sub detect() {
                and ${"$package\::VERSION"} > 0
                and eval "require $model"
             ) {
-               AnyEvent::log 7 => "autoloaded model '$model', using it.";
+               AnyEvent::log 7 => "Autoloaded model '$model', using it.";
                $MODEL = $model;
                last;
             }
          }
 
          $MODEL
-           or AnyEvent::log fatal => "AnyEvent: backend autodetection failed - did you properly install AnyEvent?";
+           or AnyEvent::log fatal => "Backend autodetection failed - did you properly install AnyEvent?";
       }
    }
 
@@ -1614,13 +1614,13 @@ sub time {
          *time     = sub { Time::HiRes::time () };
          *AE::time = \&    Time::HiRes::time     ;
          *now      = \&time;
-         AnyEvent::log 8 => "AnyEvent: using Time::HiRes for sub-second timing accuracy.";
+         AnyEvent::log 8 => "using Time::HiRes for sub-second timing accuracy.";
          # if (eval "use POSIX (); (POSIX::times())...
       } else {
          *time     = sub   { CORE::time };
          *AE::time = sub (){ CORE::time };
          *now      = \&time;
-         AnyEvent::log 3 => "using built-in time(), WARNING, no sub-second resolution!";
+         AnyEvent::log 3 => "Using built-in time(), no sub-second resolution!";
       }
    };
    die if $@;
@@ -1724,13 +1724,13 @@ sub signal {
    eval q{ # poor man's autoloading {}
       # probe for availability of Async::Interrupt 
       if (_have_async_interrupt) {
-         AnyEvent::log 8 => "using Async::Interrupt for race-free signal handling.";
+         AnyEvent::log 8 => "Using Async::Interrupt for race-free signal handling.";
 
          $SIGPIPE_R = new Async::Interrupt::EventPipe;
          $SIG_IO = AE::io $SIGPIPE_R->fileno, 0, \&_signal_exec;
 
       } else {
-         AnyEvent::log 8 => "using emulated perl signal handling with latency timer.";
+         AnyEvent::log 8 => "Using emulated perl signal handling with latency timer.";
 
          if (AnyEvent::WIN32) {
             require AnyEvent::Util;
@@ -3006,6 +3006,8 @@ L<AnyEvent::Impl::FLTK>.
 
 Non-blocking handles, pipes, stream sockets, TCP clients and
 servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.
+
+Asynchronous File I/O: L<AnyEvent::IO>.
 
 Asynchronous DNS: L<AnyEvent::DNS>.
 

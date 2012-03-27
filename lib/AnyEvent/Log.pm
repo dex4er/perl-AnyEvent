@@ -8,13 +8,13 @@ Simple uses:
 
    use AnyEvent;
 
-   AE::log fatal => "no config found, cannot continue"; # never returns
-   AE::log alert => "the battery died";
-   AE::log crit  => "the battery temperature is too hot";
-   AE::log error => "division by zero attempted";
-   AE::log warn  => "couldn't delete the file";
-   AE::log note  => "wanted to create config, but config already exists";
-   AE::log info  => "file soandso successfully deleted";
+   AE::log fatal => "No config found, cannot continue!"; # never returns
+   AE::log alert => "The battery died!";
+   AE::log crit  => "The battery temperature is too hot!";
+   AE::log error => "Division by zero attempted.";
+   AE::log warn  => "Couldn't delete the file.";
+   AE::log note  => "Wanted to create config, but config already exists.";
+   AE::log info  => "File soandso successfully deleted.";
    AE::log debug => "the function returned 3";
    AE::log trace => "going to call function abc";
 

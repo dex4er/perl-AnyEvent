@@ -3,6 +3,15 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: AnyEvent::IO
+TODO: PERL_ANYEVENT_IO_MODEL docs
+tODO: maxim souffle handle storable
+TODO: t/io
+lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
+lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
+lib/AnyEvent/Log.pm:   open my $fh, ">>", $path
+lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
+lib/AnyEvent/Socket.pm:   open my $fh, "<",
+lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 
 	- documented Rocco fabricating statements about AnyEvent and me.
         - the default logging level was not properly documented in a variety of
@@ -13,6 +22,8 @@ TODO: AnyEvent::IO
           by default already.
         - upgrade to the trick used by common-sense 3.5 to work
           around extra warning torture/breakage under perl 5.15.x.
+        - log messages by anyevent are now ucfirst, are usually full
+          sentences and do no longer include the package name.
 
 6.14 Tue Jan 31 20:00:24 CET 2012
 	- AnyEvent::Impl::Tk was broken due to a mysterious "die" inside,

@@ -136,14 +136,14 @@ BEGIN {
    my $round; # actual granularity
 
    if ($time_hires && eval "&Time::HiRes::clock_gettime (Time::HiRes::CLOCK_MONOTONIC ())") {
-      AE::log 8 => "using CLOCK_MONOTONIC as timebase.";
+      AE::log 8 => "Using CLOCK_MONOTONIC as timebase.";
       *_update_clock = sub {
          $NOW  = &Time::HiRes::time;
          $MNOW = Time::HiRes::clock_gettime (&Time::HiRes::CLOCK_MONOTONIC);
       };
 
    } elsif (100 <= $clk_tck && $clk_tck <= 1000000 && eval { (POSIX::times ())[0] != -1 }) { # -1 is also a valid return value :/
-      AE::log 8 => "using POSIX::times (monotonic) as timebase.";
+      AE::log 8 => "Using POSIX::times (monotonic) as timebase.";
       my $HZ1 = 1 / $clk_tck;
 
       my $last = (POSIX::times ())[0];
@@ -161,13 +161,13 @@ BEGIN {
       $round = $HZ1;
 
    } elsif (eval "use Time::HiRes (); 1") {
-      AE::log 8 => "using Time::HiRes::time (non-monotonic) clock as timebase.";
+      AE::log 8 => "Using Time::HiRes::time (non-monotonic) clock as timebase.";
       *_update_clock = sub {
          $NOW = $MNOW = &Time::HiRes::time;
       };
 
    } else {
-      AE::log fatal => "unable to find sub-second time source (is this really perl 5.8.0 or later?)";
+      AE::log fatal => "Unable to find sub-second time source (is this really perl 5.8.0 or later?)";
    }
 
    $round = 0.001 if $round < 0.001; # 1ms is enough for us

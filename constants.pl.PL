@@ -45,6 +45,16 @@ print "package AnyEvent::Base;\n";
 
 i WNOHANG    => eval { POSIX::WNOHANG() } || 1;
 
+print "package AnyEvent::IO;\n";
+
+i O_RDONLY   => eval { Fcntl::O_RDONLY() } || 0;
+i O_WRONLY   => eval { Fcntl::O_WRONLY() } || 1;
+i O_RDWR     => eval { Fcntl::O_RDWR  () } || 2;
+i O_CREAT    => eval { Fcntl::O_CREAT () } || 64;
+i O_EXCL     => eval { Fcntl::O_EXCL  () } || 128;
+i O_TRUNC    => eval { Fcntl::O_TRUNC () } || 512;
+i O_APPEND   => eval { Fcntl::O_APPEND() } || 1024;
+
 print "package AnyEvent::Util;\n";
 
 # broken windows perls use undocumented error codes...

@@ -23,6 +23,9 @@ lib/AnyEvent/Impl/POE.pm
 lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Qt.pm
 lib/AnyEvent/Impl/Tk.pm
+lib/AnyEvent/IO.pm
+lib/AnyEvent/IO/IOAIO.pm
+lib/AnyEvent/IO/Perl.pm
 lib/AnyEvent/Intro.pod
 lib/AnyEvent/Log.pm
 lib/AnyEvent/Loop.pm

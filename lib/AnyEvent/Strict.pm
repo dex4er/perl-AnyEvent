@@ -85,7 +85,7 @@ our $FD_CHECK_W = AE::timer 4, 4, sub {
             or die;
       } while --$cnt;
       1
-   } or AE::log crit => "file descriptor $FD_I registered with AnyEvent but prematurely closed, event loop might malfunction.\n";
+   } or AE::log crit => "File descriptor $FD_I registered with AnyEvent but prematurely closed, event loop might malfunction.";
 };
 
 sub io {

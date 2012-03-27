@@ -13,7 +13,7 @@ AnyEvent::Handle - non-blocking I/O on streaming handles via AnyEvent
       fh => \*STDIN,
       on_error => sub {
          my ($hdl, $fatal, $msg) = @_;
-         AE::log error => "got error $msg\n";
+         AE::log error => "Got error $msg!";
          $hdl->destroy;
          $cv->send;
       };
@@ -2338,7 +2338,7 @@ written to the socket:
 
    $handle->push_write (...);
    $handle->on_drain (sub {
-      AE::log debug => "all data submitted to the kernel\n";
+      AE::log debug => "All data submitted to the kernel.";
       undef $handle;
    });
 

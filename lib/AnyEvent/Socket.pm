@@ -926,7 +926,7 @@ to 15 seconds.
             },
             on_eof => sub {
                $handle->destroy; # destroy handle
-               AE::log info => "done.";
+               AE::log info => "Done.";
             };
 
          $handle->push_write ("GET / HTTP/1.0\015\012\015\012");
@@ -1116,7 +1116,7 @@ to go away.
       syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
    }, sub {
       my ($fh, $thishost, $thisport) = @_;
-      AE::log info => "bound to $thishost, port $thisport";
+      AE::log info => "Bound to $thishost, port $thisport.";
    };
 
 Example: bind a server on a unix domain socket.
