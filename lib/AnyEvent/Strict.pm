@@ -233,12 +233,12 @@ sub now {
    $class->SUPER::now (@_)
 }
 
-1;
-
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
  http://home.schmorp.de/
 
 =cut
+
+1
 

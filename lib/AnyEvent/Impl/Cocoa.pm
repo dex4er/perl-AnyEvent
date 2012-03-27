@@ -56,8 +56,6 @@ sub timer {
 #   Cocoa::EventLoop->run;
 #}
 
-1;
-
 =head1 AUTHORS
 
 Daisuke Murase <typester@cpan.org>, Marc Lehmann <schmorp@schmorp.de>.
@@ -68,4 +66,6 @@ Daisuke Murase <typester@cpan.org>, Marc Lehmann <schmorp@schmorp.de>.
    Copyright (c) 2010,2011 by Marc Lehmann <schmorp@schmorp.de>
 
 =cut
+
+1
 

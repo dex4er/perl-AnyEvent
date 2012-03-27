@@ -344,8 +344,6 @@ sub idle($) {
    ${$idle[-1]}
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>.
@@ -357,4 +355,5 @@ L<AnyEvent>.
 
 =cut
 
+1
 

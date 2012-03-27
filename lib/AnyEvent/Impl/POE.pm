@@ -406,8 +406,6 @@ sub AnyEvent::CondVar::Base::_wait {
    POE::Kernel->loop_do_timeslice until exists $_[0]{_ae_sent};
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<POE>.
@@ -418,4 +416,6 @@ L<AnyEvent>, L<POE>.
  http://home.schmorp.de/
 
 =cut
+
+1
 

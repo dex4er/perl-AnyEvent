@@ -64,8 +64,6 @@ sub idle {
    AnyEvent::Loop::idle $arg{cb}
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>.
@@ -77,4 +75,5 @@ L<AnyEvent>.
 
 =cut
 
+1
 

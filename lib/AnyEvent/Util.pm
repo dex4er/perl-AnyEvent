@@ -77,7 +77,7 @@ cannot use select on.
 
 This function gives you a pipe that actually works even on the broken
 windows platform (by creating a pair of TCP sockets on windows, so do not
-expect any speed from that, and using C<pipe> everywhere else).
+expect any speed from that) and using C<pipe> everywhere else.
 
 See C<portable_socketpair>, below, for a bidirectional "pipe".
 
@@ -126,7 +126,6 @@ BEGIN {
 
             # vista has completely broken peername/sockname that return
             # fantasy ports. this combo seems to work, though.
-            #
             (Socket::unpack_sockaddr_in getpeername $r)[0]
             == (Socket::unpack_sockaddr_in getsockname $w)[0]
                or (($! = WSAEINVAL), next);
@@ -954,9 +953,6 @@ sub idn_to_unicode($) {
    defined $res ? $res : $_[0]
 }
 
-
-1;
-
 =back
 
 =head1 AUTHOR
@@ -965,4 +961,6 @@ sub idn_to_unicode($) {
  http://home.schmorp.de/
 
 =cut
+
+1
 

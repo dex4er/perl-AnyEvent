@@ -1225,7 +1225,8 @@ package AnyEvent;
 
 # basically a tuned-down version of common::sense
 sub common_sense {
-   # from common:.sense 3.4
+   # from common:.sense 3.5
+   local $^W;
    ${^WARNING_BITS} ^= ${^WARNING_BITS} ^ "\x3c\x3f\x33\x00\x0f\xf0\x0f\xc0\xf0\xfc\x33\x00";
    # use strict vars subs - NO UTF-8, as Util.pm doesn't like this atm. (uts46data.pl)
    $^H |= 0x00000600;

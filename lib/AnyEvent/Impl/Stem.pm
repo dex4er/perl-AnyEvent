@@ -110,8 +110,6 @@ sub wait {
    }
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<Stem>.
@@ -122,4 +120,6 @@ L<AnyEvent>, L<Stem>.
  http://home.schmorp.de/
 
 =cut
+
+1
 

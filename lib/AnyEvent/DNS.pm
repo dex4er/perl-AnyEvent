@@ -1455,8 +1455,6 @@ sub wait_for_slot {
 
 use AnyEvent::Socket (); # circular dependency, so do not import anything and do it at the end
 
-1;
-
 =back
 
 =head1 AUTHOR
@@ -1466,3 +1464,4 @@ use AnyEvent::Socket (); # circular dependency, so do not import anything and do
 
 =cut
 
+1

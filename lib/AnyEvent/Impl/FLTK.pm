@@ -107,8 +107,6 @@ sub AnyEvent::CondVar::Base::_wait {
 #   FLTK::run;
 #}
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<FLTK>.
@@ -119,4 +117,6 @@ L<AnyEvent>, L<FLTK>.
  http://home.schmorp.de/
 
 =cut
+
+1
 

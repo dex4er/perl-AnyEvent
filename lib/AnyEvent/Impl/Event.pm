@@ -81,8 +81,6 @@ sub AnyEvent::CondVar::Base::_wait {
 #   Event::loop;
 #}
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<Event>.
@@ -93,4 +91,6 @@ L<AnyEvent>, L<Event>.
  http://home.schmorp.de/
 
 =cut
+
+1
 

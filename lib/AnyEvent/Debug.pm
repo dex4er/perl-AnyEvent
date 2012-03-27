@@ -711,12 +711,12 @@ use overload
    fallback => 1,
 ;
 
-1;
-
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
  http://home.schmorp.de/
 
 =cut
+
+1
 

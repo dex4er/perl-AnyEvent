@@ -1232,8 +1232,6 @@ sub tcp_congestion($$) {
       : undef
 }
 
-1;
-
 =back
 
 =head1 SECURITY CONSIDERATIONS
@@ -1251,4 +1249,6 @@ harmful in general.
  http://home.schmorp.de/
 
 =cut
+
+1
 

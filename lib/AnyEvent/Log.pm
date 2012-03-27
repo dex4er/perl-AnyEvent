@@ -1294,8 +1294,6 @@ for (my $spec = $ENV{PERL_ANYEVENT_LOG}) {
    }
 }
 
-1;
-
 =head1 EXAMPLES
 
 This section shows some common configurations, both as code, and as
@@ -1384,4 +1382,6 @@ default.
  http://home.schmorp.de/
 
 =cut
+
+1
 

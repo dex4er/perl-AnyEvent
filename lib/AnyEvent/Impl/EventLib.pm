@@ -136,8 +136,6 @@ sub AnyEvent::CondVar::Base::_wait {
    event_one_loop until exists $_[0]{_ae_sent};
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<Event::Lib>.
@@ -148,4 +146,6 @@ L<AnyEvent>, L<Event::Lib>.
  http://home.schmorp.de/
 
 =cut
+
+1
 

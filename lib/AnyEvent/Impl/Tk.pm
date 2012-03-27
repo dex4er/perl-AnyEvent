@@ -145,8 +145,6 @@ sub AnyEvent::CondVar::Base::_wait {
    Tk::DoOneEvent (0) until exists $_[0]{_ae_sent};
 }
 
-1;
-
 =head1 SEE ALSO
 
 L<AnyEvent>, L<Tk>.
@@ -158,4 +156,5 @@ L<AnyEvent>, L<Tk>.
 
 =cut
 
+1
 

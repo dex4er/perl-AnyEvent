@@ -157,3 +157,5 @@ L<AnyEvent>, L<Irssi>.
 
 =cut
 
+1
+

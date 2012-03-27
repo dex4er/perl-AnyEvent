@@ -2432,7 +2432,6 @@ know about, just append them to the C<cert_file>.
 
 =back
 
-
 =head1 SUBCLASSING AnyEvent::Handle
 
 In many cases, you might want to subclass AnyEvent::Handle.
@@ -2468,4 +2467,5 @@ Robin Redeker C<< <elmex at ta-sa.org> >>, Marc Lehmann <schmorp@schmorp.de>.
 
 =cut
 
-1; # End of AnyEvent::Handle
+1
+
