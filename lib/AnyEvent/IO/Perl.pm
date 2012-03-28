@@ -26,46 +26,70 @@ package AnyEvent::IO;
 
 our $MODEL = "Perl";
 
-sub io_load($$) {
+sub ae_load($$) {
    my ($path, $cb) = @_;
 
    open my $fh, "<:raw:perlio", $path
       or return $cb->();
    stat $fh
       or return $cb->();
-   (-s $_) == sysread $fh, my $data, -s $_
+   (-s _) == sysread $fh, my $data, -s _
       or return $cb->();
 
    $cb->($data)
 }
 
-sub io_open($$$$) {
+sub ae_open($$$$) {
    sysopen my $fh, $_[0], $_[1], $_[2]
       or return $_[3]();
 
    $_[3]($fh)
 }
 
-sub io_close($$) {
+sub ae_close($$) {
    $_[1](close $_[0]);
 }
 
-sub io_read($$$) {
+sub ae_read($$$) {
    my $data;
-
-   $_[2]( (sysread $_[0], $data, $_[1]) ? $data : () );
+   $_[2]( (defined sysread $_[0], $data, $_[1]) ? $data : () );
 }
 
-sub io_write($$$) {
-   $_[2]( syswrite $_[0], $_[1] or () );
+sub ae_write($$$) {
+   my $res = syswrite $_[0], $_[1];
+   $_[2](defined $res ? $res : ());
 }
 
-sub io_stat($$) {
+sub ae_stat($$) {
    $_[1](stat  $_[0]);
 }
 
-sub io_lstat($$) {
+sub ae_lstat($$) {
    $_[1](lstat $_[0]);
+}
+
+sub ae_link($$$) {
+   $_[2](link $_[0], $_[1] or ());
+}
+
+sub ae_symlink($$$) {
+   $_[2](symlink $_[0], $_[1] or ());
+}
+
+sub ae_rename($$$) {
+   $_[2](rename $_[0], $_[1] or ());
+}
+
+sub ae_unlink($$) {
+   $_[1](unlink $_[0] or ());
+}
+
+sub ae_mkdir($$$) {
+   $_[2](mkdir $_[0], $_[1] or ());
+}
+
+sub ae_rmdir($$) {
+   $_[1](rmdir $_[0] or ());
 }
 
 =head1 SEE ALSO

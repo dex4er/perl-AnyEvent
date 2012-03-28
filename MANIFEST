@@ -47,6 +47,9 @@ t/07_io.t
 t/08_idna.t
 t/09_multi.t
 t/10_loadall.t
+t/io_common 
+t/11_io_perl.t
+t/12_io_ioaio.t
 t/handle/01_readline.t
 t/handle/02_write.t
 t/handle/03_http_req.t

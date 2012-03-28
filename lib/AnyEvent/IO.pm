@@ -6,7 +6,7 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    use AnyEvent::IO;
 
-   io_load "/etc/passwd", sub {
+   ae_load "/etc/passwd", sub {
       my ($data) = @_
          or die "/etc/passwd: $!";
 
@@ -18,23 +18,23 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    my $filedata = AE::cv;
 
-   io_open "/etc/passwd", O_RDONLY, 0, sub {
+   ae_open "/etc/passwd", O_RDONLY, 0, sub {
       my ($fh) = @_
          or die "/etc/passwd: $!";
 
-      io_stat $fh, sub {
+      ae_stat $fh, sub {
          @_ or die "/etc/passwd: $!";
 
          my $size = -s _;
 
-         io_read $fh, $size, sub {
+         ae_read $fh, $size, sub {
             my ($data) = @_
                or die "/etc/passwd: $!";
 
             $size == length $data
                or die "/etc/passwd: short read, file changed?";
 
-            # mostly the same as io_load, above - $data contains
+            # mostly the same as ae_load, above - $data contains
             # the file contents now.
             $filedata->($data);
          };
@@ -141,9 +141,27 @@ All the functions in this module have a callback argument as their last
 argument. The callback is usually being passed the result data or result
 code, with C<$!> being set on error.
 
+Most functions signal an error by passing no arguments, which makes all of
+the following forms of error checking possible:
+
+   ae_open ...., sub {
+      my $fh = shift
+         or die "...";
+
+      my ($fh) = @_
+         or die "...";
+
+      @_
+         or die "...";
+
 When a path is specified, this path I<must be an absolute> path, unless
 you can make sure that nothing in your process calls C<chdir> or an
 equivalent function while the request executes.
+
+Changing the C<umask> while any requests execute that create files or
+otherwise rely on the current umask results in undefined behaviour -
+likewise changing anything else that would change the outcome, such as
+your effective user or group ID.
 
 Unlike other functions in the AnyEvent module family, these functions
 I<may> call your callback instantly, before returning. This should not be
@@ -157,11 +175,15 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use base "Exporter";
 
-our @IO_REQ = qw(io_load io_open io_close io_read io_write io_stat io_lstat);
-*EXPORT = \@IO_REQ;
+our @AE_REQ = qw(
+   ae_load ae_open ae_close ae_read ae_write ae_stat ae_lstat
+   ae_symlink ae_link ae_rename ae_unlink
+   ae_mkdir ae_rmdir
+);
+*EXPORT = \@AE_REQ;
 our @FLAGS = qw(O_RDONLY O_WRONLY O_RDWR O_CREAT O_EXCL O_TRUNC O_APPEND);
 *EXPORT_OK = \@FLAGS;
-our %EXPORT_TAGS = (flags => \@FLAGS, io => \@IO_REQ);
+our %EXPORT_TAGS = (flags => \@FLAGS, ae => \@AE_REQ);
 
 our $MODEL;
 
@@ -199,7 +221,7 @@ Contains the backend model in use - at the moment, this is usually
 C<Perl> or C<IOAIO>, corresponding to L<AnyEvent::IO::Perl> and
 L<AnyEvent::IO::IOAIO>, respectively.
 
-=item io_load $path, $cb->($data)
+=item ae_load $path, $cb->($data)
 
 Tries to open C<$path> and read its contents into memory (obviously,
 should only be used on files that are small enough").
@@ -209,14 +231,14 @@ only argument is the file data as a string.
 
 Example: load F</etc/hosts>.
 
-   io_load "/etc/hosts", sub {
+   ae_load "/etc/hosts", sub {
       my ($hosts) = @_
          or die "/etc/hosts: $!";
 
       AE::log info => "/etc/hosts contains ", ($hosts =~ y/\n/), " lines\n";
    };
 
-=item io_open $path, $flags, $mode, $cb->($fh)
+=item ae_open $path, $flags, $mode, $cb->($fh)
 
 Tries to open the file specified by C<$path> with the O_XXX-flags
 C<$flags> (from the Fcntl module, or see below) and the mode C<$mode> (a
@@ -228,7 +250,8 @@ If an error occurs, the callback receives I<no> arguments, otherwise, the
 only argument is the (normal perl) file handle.
 
 Changing the C<umask> while this request executes results in undefined
-behaviour.
+behaviour - likewise changing anything else that would change the outcome,
+such as your effective user or group ID.
 
 To avoid having to load L<Fcntl>, this module provides constants
 for C<O_RDONLY>, C<O_WRONLY>, C<O_RDWR>, C<O_CREAT>, C<O_EXCL>,
@@ -236,7 +259,7 @@ C<O_TRUNC> and C<O_APPEND> - you can either access them directly
 (C<AnyEvent::IO::O_RDONLY>) or import them by specifying the C<:flags>
 import tag (see SYNOPSIS).
 
-=item io_close $fh, $cb->($success)
+=item ae_close $fh, $cb->($success)
 
 Closes the file handle (yes, close can block your process
 indefinitely). If an error occurs, passes I<no> arguments, otherwise
@@ -247,7 +270,7 @@ handle might get closed by C<dup2>'ing another file descriptor over
 it, that is, the C<$fh> might still be open, but can be closed safely
 afterwards and must not be used for anything.
 
-=item io_read $fh, $length, $cb->($data)
+=item ae_read $fh, $length, $cb->($data)
 
 Tries to read C<$length> octets from the current position from C<$fh> and
 passes these bytes to C<$cb>. Otherwise the semantics are very much like
@@ -257,12 +280,12 @@ If less than C<$length> octets have been read, C<$data> will contain
 only those bytes atcually read. At EOF, C<$data> will be a zero-length
 string. If an error occurs, then nothing is passed to the callback.
 
-Obviously, multiple C<io_read>'s or C<io_write>'s at the same time on file
+Obviously, multiple C<ae_read>'s or C<ae_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviouisly
 so, because OS X is not thread safe and corrupts data when you try).
 
-=item io_write $fh, $data, $cb->($length)
+=item ae_write $fh, $data, $cb->($length)
 
 Tries to write the octets in C<$data> to the current position of C<$fh>
 and passes the actual number of bytes written to the C<$cb>. Otherwise the
@@ -271,20 +294,51 @@ semantics are very much like those of perl's C<syswrite>.
 If less than C<length $data> octets have been written, C<$length> will
 reflect that. If an error occurs, then nothing is passed to the callback.
 
-Obviously, multiple C<io_read>'s or C<io_write>'s at the same time on file
+Obviously, multiple C<ae_read>'s or C<ae_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviouisly
 so, because OS X is not thread safe and corrupts data when you try).
 
-=item io_stat $fh_or_path, $cb->($success)
+=item ae_stat $fh_or_path, $cb->($success)
 
-=item io_lstat $path, $cb->($success)
+=item ae_lstat $path, $cb->($success)
 
 Calls C<stat> or C<lstat> on the path or perl file handle. If an error
 occurs, passes I<no> arguments, otherwise passes a true value.
 
 The stat data will be available by stat'ing the C<_> file handle
 (e.g. C<-x _>, C<stat _> and so on).
+
+=item ae_link $oldpath, $newpath, $cb->($success)
+
+Calls C<link> on the paths. If an error occurs, passes I<no> arguments,
+otherwise passes a true value.
+
+=item ae_symlink $oldpath, $newpath, $cb->($success)
+
+Calls C<symlink> on the paths. If an error occurs, passes I<no> arguments,
+otherwise passes a true value.
+
+=item ae_rename $oldpath, $newpath, $cb->($success)
+
+Calls C<rename> on the paths. If an error occurs, passes I<no> arguments,
+otherwise passes a true value.
+
+=item ae_unlink $path, $cb->($success)
+
+Tries to unlink the object at C<$path>. If an error occurs, passes I<no>
+arguments, otherwise passes a true value.
+
+=item ae_mkdir $path, $perms, $cb->($success)
+
+Calls C<mkdir> on the path with the given permissions C<$perms> (when
+in doubt, C<0777> is a good value). If an error occurs, passes I<no>
+arguments, otherwise passes a true value.
+
+=item ae_rmdir $path, $cb->($success)
+
+Tries to remove the directory at C<$path>. If an error occurs, passes
+I<no> arguments, otherwise passes a true value.
 
 =back
 

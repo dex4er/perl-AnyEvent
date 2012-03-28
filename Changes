@@ -5,6 +5,7 @@ TODO: add debug/trace logging to some modules
 TODO: AnyEvent::IO
 TODO: PERL_ANYEVENT_IO_MODEL docs
 tODO: maxim souffle handle storable
+TODO: document import tags aeio, also ae_ naming
 TODO: t/io
 lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
