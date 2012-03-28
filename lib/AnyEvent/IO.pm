@@ -345,6 +345,24 @@ arguments, otherwise passes a true value.
 Tries to remove the directory at C<$path>. If an error occurs, passes
 I<no> arguments, otherwise passes a true value.
 
+=item ae_readdir $path, $cb->(\@names)
+
+Reads all filenames from the directory specified by C<$path> and passes
+them to the callback, as an array reference with the names (without a path
+prefix). The F<.> and F<..> names will be filtered out first.
+
+In case an error occurs, I<no> arguments are passed to the callback.
+
+The ordering of the file names is undefined - backends that are capable
+of it (e.g. L<IO::AIO>) will return the ordering that most likely is
+fastest to C<stat> through, and furthermore put entries that likely are
+directories first in the array.
+
+If you need best performance in recursive directory traversal or when
+looking at all files in a big diretcory, youa re advised to look at
+L<IO::AIO> directly, specifically the C<aio_readdirx> and C<aio_scandir>
+functions, which have more options to tune performance.
+
 =back
 
 =head1 ENVIRONMENT VARIABLES

@@ -97,6 +97,17 @@ sub ae_rmdir($$) {
    $_[1](rmdir $_[0] or ());
 }
 
+sub ae_readdir($$) {
+   my ($fh, @res);
+
+   opendir $fh, $_[0]
+      or return $_[1]();
+
+   @res = grep !/^\.\.?$/, readdir $fh;
+
+   $_[1]((closedir $fh) ? \@res : ());
+}
+
 =head1 SEE ALSO
 
 L<AnyEvent::IO>, L<AnyEvent>.

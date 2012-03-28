@@ -3,7 +3,7 @@
 $| = 1;
 
 BEGIN {
-   print "1..31\n";
+   print "1..35\n";
    print "ok 1 # MODEL=$AnyEvent::IO::MODEL\n";
 }
 use AnyEvent;

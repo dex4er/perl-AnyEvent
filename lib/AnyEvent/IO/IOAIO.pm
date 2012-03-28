@@ -106,6 +106,14 @@ sub ae_rmdir($$) {
    IO::AIO::aio_rmdir $_[0], sub { $cb->($_[0] >= 0 ? 1 : ()) };
 }
 
+sub ae_readdir($$) {
+   my $cb = $_[1];
+
+   IO::AIO::aio_readdirx $_[0], IO::AIO::READDIR_DIRS_FIRST | IO::AIO::READDIR_STAT_ORDER, sub {
+      $cb->($_[0] or ());
+   };
+}
+
 =back
 
 =head1 SEE ALSO
