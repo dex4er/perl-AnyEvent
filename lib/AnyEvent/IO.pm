@@ -177,8 +177,8 @@ use base "Exporter";
 
 our @AE_REQ = qw(
    ae_load ae_open ae_close ae_read ae_write ae_stat ae_lstat
-   ae_symlink ae_link ae_rename ae_unlink
-   ae_mkdir ae_rmdir
+   ae_link ae_symlink ae_readlink ae_rename ae_unlink
+   ae_mkdir ae_rmdir ae_readdir
 );
 *EXPORT = \@AE_REQ;
 our @FLAGS = qw(O_RDONLY O_WRONLY O_RDWR O_CREAT O_EXCL O_TRUNC O_APPEND);
@@ -318,6 +318,11 @@ otherwise passes a true value.
 
 Calls C<symlink> on the paths. If an error occurs, passes I<no> arguments,
 otherwise passes a true value.
+
+=item ae_readlink $path, $cb->($target)
+
+Calls C<readlink> on the paths. If an error occurs, passes I<no> arguments,
+otherwise passes the link target string.
 
 =item ae_rename $oldpath, $newpath, $cb->($success)
 

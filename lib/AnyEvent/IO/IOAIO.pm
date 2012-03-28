@@ -81,6 +81,11 @@ sub ae_symlink($$$) {
    IO::AIO::aio_symlink $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };
 }
 
+sub ae_readlink($$) {
+   my $cb = $_[1];
+   IO::AIO::aio_readlink $_[0], sub { $cb->(defined $_[0] ? $_[0] : ()) };
+}
+
 sub ae_rename($$$) {
    my $cb = $_[2];
    IO::AIO::aio_rename $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };

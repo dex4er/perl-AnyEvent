@@ -27,16 +27,14 @@ package AnyEvent::IO;
 our $MODEL = "Perl";
 
 sub ae_load($$) {
-   my ($path, $cb) = @_;
+   my ($path, $cb, $fh, $data) = @_;
 
-   open my $fh, "<:raw:perlio", $path
-      or return $cb->();
-   stat $fh
-      or return $cb->();
-   (-s _) == sysread $fh, my $data, -s _
-      or return $cb->();
-
-   $cb->($data)
+   $cb->(
+      (open $fh, "<:raw:perlio", $path
+         and stat $fh
+         and (-s _) == sysread $fh, $data, -s _)
+      ? $data : ()
+   );
 }
 
 sub ae_open($$$$) {
@@ -73,7 +71,14 @@ sub ae_link($$$) {
 }
 
 sub ae_symlink($$$) {
+   #TODO: raises an exception on !symlink systems, maybe eval + set errno?
    $_[2](symlink $_[0], $_[1] or ());
+}
+
+sub ae_readlink($$) {
+   #TODO: raises an exception on !symlink systems, maybe eval + set errno?
+   my $res = readlink $_[0];
+   $_[1](defined $res ? $res : ());
 }
 
 sub ae_rename($$$) {
