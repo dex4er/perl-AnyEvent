@@ -58,6 +58,14 @@ print -s _ != 10 ? "not " : "", "ok ", $t++, " # lstat size\n";
 t 1, rename => "$DIR/test", "$DIR/test2";
 
 #############################################################################
+# test dir
+
+t 0, readdir => "$DIR/nonexistent";
+my $res = t 1, readdir => $DIR;
+print @$res != 1           ? "not " : "", "ok ", $t++, " # res count\n";
+print $res->[0] ne "test2" ? "not " : "", "ok ", $t++, " # res data (@$res)\n";
+
+#############################################################################
 # test file
 
 $fh = t 1, open => "$DIR/test2", O_RDONLY, 0;
