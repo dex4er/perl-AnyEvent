@@ -48,8 +48,8 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
 This module provides functions that do I/O in an asynchronous fashion. It
 is to to I/O the same as L<AnyEvent> is to event libraries - it only
-interfaces to existing ones or to a portable pure-perl implementation
-(that does not, however, do asynchronous I/O).
+I<interfaces> to other implementations or to a portable pure-perl
+implementation (that does not, however, do asynchronous I/O).
 
 The only such implementation that is supported (or even known to the
 author) is L<IO::AIO>, which is used automatically when it can be
@@ -65,7 +65,7 @@ While disk I/O often seems "instant" compared to, say, socket I/O, there
 are many situations where your program can block for extended time periods
 when doing disk I/O. For example, you access a disk on an NFS server and
 it is gone - can take ages to respond again, if ever.  OR your system is
-extreemly busy because it creates or restores a backup - reading data from
+extremely busy because it creates or restores a backup - reading data from
 disk can then take seconds. Or you use Linux, which for so many years has
 a close-to-broken VM/IO subsystem that can often induce minutes or more of
 delay for disk I/O, even under what I would consider light I/O loads.
@@ -83,7 +83,7 @@ takes care to only use asynchronous I/O for everything (e.g. by using
 L<IO::AIO>).
 
 On the other hand, requiring L<IO::AIO> for AnyEvent is clearly
-impossible, as Anyevent promises to stay pure-perl, and the overhead of
+impossible, as AnyEvent promises to stay pure-perl, and the overhead of
 IO::AIO for small programs would be immense, especially when asynchronous
 I/O isn't even needed.
 
@@ -92,7 +92,7 @@ looking at right now :-)
 
 =head2 ASYNCHRONOUS VS. NON-BLOCKING
 
-Many people are continously confused on what the difference is between
+Many people are continuously confused on what the difference is between
 asynchronous I/O and non-blocking I/O. Those two terms are not well
 defined, which often makes it hard to even talk about the difference. Here
 is a short guideline that should leave you less confused:
@@ -108,16 +108,16 @@ Your program can then wait for data to arrive.
 Often, you would expect this to work for disk files as well - if the
 data isn't already in memory, one might wait for it. While this is sound
 reasoning, the POSIX API does not support this, because the operating
-system does not know where and how much of data you want to read, and
-moreso, the OS already knows that data is there, it doesn't need to "wait"
+system does not know where and how much of data you want to read, and more
+so, the OS already knows that data is there, it doesn't need to "wait"
 until it arrives from some external entity.
 
 So basically, while the concept is sound, the existing OS APIs do not
 support this, it makes no sense to switch a disk file handle into
 non-blocking mode - it will behave exactly the same as in blocking mode,
-namely it will block until he data has been read from the disk.
+namely it will block until the data has been read from the disk.
 
-Th alternative that atcually works is usually called I<asynchronous>
+Th alternative that actually works is usually called I<asynchronous>
 I/O. Asynchronous, because the actual I/O is done while your program does
 something else, and only when it is done will you get notified of it: You
 only order the operation, it will be executed in the background, and you
@@ -126,7 +126,7 @@ will get notified of the outcome.
 This works with disk files, and even with sockets and other sources that
 you could use with non-blocking I/O instead. It is, however, not very
 efficient when used with sources that could be driven in a non-blocking
-way, it makes mose sense when confronted with disk files.
+way, it makes most sense when confronted with disk files.
 
 =head1 API NOTES
 
@@ -165,7 +165,7 @@ your effective user or group ID.
 
 Unlike other functions in the AnyEvent module family, these functions
 I<may> call your callback instantly, before returning. This should not be
-a real problem, as these functions never return aynthing useful.
+a real problem, as these functions never return anything useful.
 
 =cut
 
@@ -209,22 +209,28 @@ if ($MODEL) {
    }
 }
 
-=head1 GLOBAL VARIABLES AND FUNCTIONS
+=head1 IMPORT TAGS
 
-These are exported unless documented with full package name.
+By default, this module implements all C<ae_>xxx functions. In addition,
+the following import tags can be used:
+
+   :ae        all ae functions, smae as :DEFAULT
+   :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
+
+=head1 GLOBAL VARIABLES AND FUNCTIONS
 
 =over 4
 
 =item $AnyEvent::IO::MODEL
 
-Contains the backend model in use - at the moment, this is usually
+Contains the backend I/O model in use - at the moment, this is usually
 C<Perl> or C<IOAIO>, corresponding to L<AnyEvent::IO::Perl> and
 L<AnyEvent::IO::IOAIO>, respectively.
 
 =item ae_load $path, $cb->($data)
 
 Tries to open C<$path> and read its contents into memory (obviously,
-should only be used on files that are small enough").
+should only be used on files that are "small enough").
 
 If an error occurs, the callback receives I<no> arguments, otherwise, the
 only argument is the file data as a string.
@@ -265,7 +271,7 @@ Closes the file handle (yes, close can block your process
 indefinitely). If an error occurs, passes I<no> arguments, otherwise
 passes a true value.
 
-Due to idiosynchrasies in perl, instead of calling C<close>, the file
+Due to idiosyncrasies in perl, instead of calling C<close>, the file
 handle might get closed by C<dup2>'ing another file descriptor over
 it, that is, the C<$fh> might still be open, but can be closed safely
 afterwards and must not be used for anything.
@@ -277,12 +283,12 @@ passes these bytes to C<$cb>. Otherwise the semantics are very much like
 those of perl's C<sysread>.
 
 If less than C<$length> octets have been read, C<$data> will contain
-only those bytes atcually read. At EOF, C<$data> will be a zero-length
+only those bytes actually read. At EOF, C<$data> will be a zero-length
 string. If an error occurs, then nothing is passed to the callback.
 
 Obviously, multiple C<ae_read>'s or C<ae_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
-behaviour, due to sharing of the current file offset (and less obviouisly
+behaviour, due to sharing of the current file offset (and less obviously
 so, because OS X is not thread safe and corrupts data when you try).
 
 =item ae_write $fh, $data, $cb->($length)
@@ -359,9 +365,9 @@ fastest to C<stat> through, and furthermore put entries that likely are
 directories first in the array.
 
 If you need best performance in recursive directory traversal or when
-looking at all files in a big diretcory, youa re advised to look at
-L<IO::AIO> directly, specifically the C<aio_readdirx> and C<aio_scandir>
-functions, which have more options to tune performance.
+looking at really big directories, you are advised to use L<IO::AIO>
+directly, specifically the C<aio_readdirx> and C<aio_scandir> functions,
+which have more options to tune performance.
 
 =back
 

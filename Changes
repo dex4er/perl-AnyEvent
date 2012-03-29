@@ -14,6 +14,7 @@ lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
 lib/AnyEvent/Socket.pm:   open my $fh, "<",
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 
+6.2
 	- documented Rocco fabricating statements about AnyEvent and me.
 	- new module AnyEvent::IO, that is a frontend to either a pure-perl
           synchronous I/O implementation (AnyEvent::IO::Perl), or to the
@@ -127,7 +128,7 @@ lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter fil
         - env variables can now be specified using AE_xyz instead of
           PERL_ANYEVENT_xyz, subject to some rules.
         - lots of new AnyEvent::Debug functionality.
-        - AnyEvent::Strict now checks for modifications $_ by the callback
+        - AnyEvent::Strict now checks for modifications of $_ by the callback
           (by setting it to readonly while executing the callback, if possible).
         - IO::Async sometimes cancels the wrong timer when you call cancel_timer.
           Invest extra overhead to work around this peculiar behaviour.
