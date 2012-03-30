@@ -50,7 +50,7 @@ for my $it ("", 1, 2, 3, 4) {
       # because it checks for child exit before installing the signal handler.
       # seen in version 1.352 - earlier versions had the same bug, but
       # polled for child exits regularly, so only caused a delay.
-      sleep 1 if $AnyEvent::MODEL eq "POE";
+      sleep 1 if $AnyEvent::MODEL eq "AnyEvent::Impl::POE";
 
       POSIX::_exit 3;
    }
@@ -62,7 +62,10 @@ for my $it ("", 1, 2, 3, 4) {
 
    $cv->recv;
 
-   my $pid2 = fork || POSIX::_exit 7;
+   my $pid2 = fork || do {
+      sleep 1 if $AnyEvent::MODEL eq "AnyEvent::Impl::POE";
+      POSIX::_exit 7;
+   };
 
    my $cv2 = AnyEvent->condvar;
 
