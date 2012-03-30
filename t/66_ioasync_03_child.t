@@ -45,6 +45,13 @@ for my $it ("", 1, 2, 3, 4) {
 
    unless ($pid) {
       print "ok ${it}2 # child $$\n";
+
+      # POE hits a race condition when the child dies too quickly
+      # because it checks for child exit before installing the signal handler.
+      # seen in version 1.352 - earlier versions had the same bug, but
+      # polled for child exits regularly, so only caused a delay.
+      sleep 1 if $AnyEvent::MODEL eq "POE";
+
       POSIX::_exit 3;
    }
    my $w = AnyEvent->child (pid => $pid, cb => sub {
