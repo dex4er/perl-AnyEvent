@@ -3,7 +3,6 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: AnyEvent::IO
-TODO: PERL_ANYEVENT_IO_MODEL docs
 tODO: maxim souffle handle storable
 TODO: document import tags aeio, also ae_ naming
 TODO: t/io
@@ -11,7 +10,6 @@ lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
 lib/AnyEvent/Log.pm:   open my $fh, ">>", $path
 lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
-lib/AnyEvent/Socket.pm:   open my $fh, "<",
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 
 6.2

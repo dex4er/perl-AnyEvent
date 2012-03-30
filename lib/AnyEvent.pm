@@ -2180,6 +2180,14 @@ could start your program like this:
 
    PERL_ANYEVENT_MODEL=Perl perl ...
 
+=item C<PERL_ANYEVENT_IO_MODEL>
+
+The current file I/O model - see L<AnyEvent::IO> for more info.
+
+At the moment, only C<Perl> (small, pure-perl, synchronous) and
+C<IOAIO> (truly asynchronous) are supported. The default is C<IOAIO> if
+L<AnyEvent::AIO> can be loaded, otherwise it is C<Perl>.
+
 =item C<PERL_ANYEVENT_PROTOCOLS>
 
 Used by both L<AnyEvent::DNS> and L<AnyEvent::Socket> to determine preferences

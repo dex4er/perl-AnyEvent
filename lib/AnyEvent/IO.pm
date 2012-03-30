@@ -128,6 +128,14 @@ you could use with non-blocking I/O instead. It is, however, not very
 efficient when used with sources that could be driven in a non-blocking
 way, it makes most sense when confronted with disk files.
 
+=head1 IMPORT TAGS
+
+By default, this module implements all C<ae_>xxx functions. In addition,
+the following import tags can be used:
+
+   :ae        all ae functions, smae as :DEFAULT
+   :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
+
 =head1 API NOTES
 
 The functions in this module are not meant to be the most versatile or the
@@ -137,29 +145,34 @@ extensive and faster API. If, however, you just want to do some I/O with
 the option of it being asynchronous when people need it, these functions
 are for you.
 
-All the functions in this module have a callback argument as their last
-argument. The callback is usually being passed the result data or result
-code, with C<$!> being set on error.
+All the functions in this module implement an I/O operation, usually with
+the same or similar name as the Perl builtin that it mimics, just with
+an C<ae_> prefix. The C<ae> stands for I<Asynchronous+Event>, or maybe
+C<AnyEvent> - that's up to you.
 
-Most functions signal an error by passing no arguments, which makes all of
-the following forms of error checking possible:
+Each function expects a callback as their last argument. The callback is
+usually called with the result data or result code. An error is usually
+signalled by passing no arguments to the callback, which is then free to
+look at C<$!> for the error code.
+
+This makes all of the following forms of error checking valid:
 
    ae_open ...., sub {
-      my $fh = shift
+      my $fh = shift   # scalar assignment - will assign undef on error
          or die "...";
 
-      my ($fh) = @_
+      my ($fh) = @_    # list assignment - will be 0 elements on error
          or die "...";
 
-      @_
+      @_               # check the number of elements directly
          or die "...";
 
 When a path is specified, this path I<must be an absolute> path, unless
-you can make sure that nothing in your process calls C<chdir> or an
+you make certain that nothing in your process calls C<chdir> or an
 equivalent function while the request executes.
 
-Changing the C<umask> while any requests execute that create files or
-otherwise rely on the current umask results in undefined behaviour -
+Changing the C<umask> while any requests execute that create files (or
+otherwise rely on the current umask) results in undefined behaviour -
 likewise changing anything else that would change the outcome, such as
 your effective user or group ID.
 
@@ -208,14 +221,6 @@ if ($MODEL) {
       }
    }
 }
-
-=head1 IMPORT TAGS
-
-By default, this module implements all C<ae_>xxx functions. In addition,
-the following import tags can be used:
-
-   :ae        all ae functions, smae as :DEFAULT
-   :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
 
 =head1 GLOBAL VARIABLES AND FUNCTIONS
 

@@ -86,7 +86,7 @@ that say the program *might* be buggy.
 While this is not good to performance, at least regarding speed, with a
 modern Linux kernel, the overhead is actually quite small.
 
-=item Timing Deficiencies
+=item Timing deficiencies
 
 POE manages to not have a function that returns the current time. This is
 extremely problematic, as POE can use different time functions, which can
@@ -105,7 +105,7 @@ AnyEvent works around the unavailability of the current time using
 relative timers exclusively, in the hope that POE gets it right at least
 internally.
 
-=item Event Non-Ordering
+=item Lack of defined event ordering
 
 POE cannot guarantee the order of callback invocation for timers, and
 usually gets it wrong. That is, if you have two timers, one timing out
@@ -114,7 +114,7 @@ reverse order.
 
 How one manages to even implement stuff that way escapes me.
 
-=item Child Watchers
+=item Child watchers
 
 POE offers child watchers - which is a laudable thing, as few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
@@ -143,7 +143,7 @@ years of development escapes me.
 unconditionally on finalizing, so your program will hang until all child
 processes have exited.)
 
-=item Documentation Quality
+=item Documentation quality
 
 At the time of this writing, POE was in its tenth year. Still, its
 documentation is extremely lacking, making it impossible to implement
@@ -248,27 +248,22 @@ POE manpage understands.
 The POE-recommended workaround to this is apparently to use
 C<fork>. Consequently, idle watchers will have to be emulated by AnyEvent.
 
-=item Slamming other modules with fabricated statements
+=item Questionable maintainer behaviour
 
-The author of POE isn't above fabricating statements in public and posting
-them to random unrelated mailinglists. I don't know what his goal is, but
-I have only two things to say:
+The author of POE is known to fabricate statements and post these to
+public mailinglists - apparently, spreading FUD about competing (in his
+eyes) projects or their maintainers is acceptable to him.
 
-=over 4
+This has (I believe) zero effects on the quality or usefulness of his
+code, but it does completely undermine his trustworthyness - so don't
+blindly believe anything he says, he might have just made it up to suit
+his needs (benchmark results, the names of my ten wifes, the length of my
+penis, etc. etc.). When in doubt, double-check - not just him, anybody
+actually.
 
-=item 1. Don't trust him on anything he says. He makes up stuff to reach
-his goal and when challenged, will not come up with the evidence, or
-retract wrong statements. Always verify what he says when in doubt. Always verify what
-you read here, too - everybody must be able to substantiate claims such as
-these.
-
-=item 2. I am disappointed.
-
-=back
-
-Case in question: L<http://www.nntp.perl.org/group/perl.perl5.porters/2012/01/msg182141.html>.
-He was challenged in that thread, to provide evidence for his statement by giving at
-least two examples, but of course couldn't, but also was above retracting his lie.
+Example: L<http://www.nntp.perl.org/group/perl.perl5.porters/2012/01/msg182141.html>.
+I challenged him in that thread to provide evidence for his statement by giving at
+least two examples, but of course since he just made it up, he couldn't provide any evidence.
 
 =back
 
