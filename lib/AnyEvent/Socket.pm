@@ -687,7 +687,7 @@ sub _load_hosts_unless(&$@) {
          $cv->end;
       };
 
-      if ($#HOSTS_CHECKING) {
+      unless ($#HOSTS_CHECKING) {
          # we are not the first, so we actually have to do the work
          require AnyEvent::IO;
 
