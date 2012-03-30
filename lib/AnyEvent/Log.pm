@@ -866,7 +866,7 @@ whatever it wants to do with it).
 
 =over 4
 
-=item $ctx->log_cb ($cb->($str)
+=item $ctx->log_cb ($cb->($str))
 
 Replaces the logging callback on the context (C<undef> disables the
 logging callback).
@@ -942,7 +942,8 @@ Sets the C<log_cb> to simply use C<CORE::warn> to report any messages
 
 =item $ctx->log_to_file ($path)
 
-Sets the C<log_cb> to log to a file (by appending), unbuffered.
+Sets the C<log_cb> to log to a file (by appending), unbuffered. The
+function might return before the log file has been opened or created.
 
 =item $ctx->log_to_path ($path)
 
@@ -987,28 +988,100 @@ sub log_to_warn {
    });
 }
 
+# this function is a good example of why threads are a must,
+# simply for priority inversion.
+sub _log_to_disk {
+   # eval'uating this at runtime saves 220kb rss - perl has become
+   # an insane memory waster.
+   eval q{ # poor man's autoloading {}
+      sub _log_to_disk {
+         my ($ctx, $path, $keepopen) = @_;
+
+         my $fh;
+         my @queue;
+         my $delay;
+         my $disable;
+
+         use AnyEvent::IO ();
+
+         my $kick = sub {
+            undef $delay;
+            return unless @queue;
+            $delay = 1;
+
+            # we pass $kick to $kick, so $kick itself doesn't keep a reference to $kick.
+            my $kick = shift;
+
+            # write one or more messages
+            my $write = sub {
+               # we write as many messages as have been queued
+               my $data = join "", @queue;
+               @queue = ();
+
+               AnyEvent::IO::ae_write $fh, $data, sub {
+                  $disable = 1;
+                  @_
+                     ? ($_[0] == length $data or AE::log 4 => "unable to write to logfile '$path': short write")
+                     :                           AE::log 4 => "unable to write to logfile '$path': $!";
+                  undef $disable;
+
+                  if ($keepopen) {
+                     $kick->($kick);
+                  } else {
+                     AnyEvent::IO::ae_close ($fh, sub {
+                        undef $fh;
+                        $kick->($kick);
+                     });
+                  }
+               };
+            };
+
+            if ($fh) {
+               $write->();
+            } else {
+               AnyEvent::IO::ae_open
+                  $path,
+                  AnyEvent::IO::O_CREAT | AnyEvent::IO::O_WRONLY | AnyEvent::IO::O_APPEND,
+                  0666,
+                  sub {
+                     $fh = shift
+                        or do {
+                           $disable = 1;
+                           AE::log 4 => "unable to open logfile '$path': $!";
+                           undef $disable;
+                           return;
+                        };
+
+                     $write->();
+                  }
+               ;
+            }
+         };
+
+         $ctx->log_cb (sub {
+            return if $disable;
+            push @queue, shift;
+            $kick->($kick) unless $delay;
+            0
+         });
+
+         $kick->($kick) if $keepopen; # initial open
+      };
+   };
+   die if $@;
+   &_log_to_disk
+}
+
 sub log_to_file {
    my ($ctx, $path) = @_;
 
-   open my $fh, ">>", $path
-      or die "$path: $!";
-
-   $ctx->log_cb (sub {
-      syswrite $fh, shift;
-      0
-   });
+   _log_to_disk $ctx, $path, 1;
 }
 
 sub log_to_path {
    my ($ctx, $path) = @_;
 
-   $ctx->log_cb (sub {
-      open my $fh, ">>", $path
-         or die "$path: $!";
-
-      syswrite $fh, shift;
-      0
-   });
+   _log_to_disk $ctx, $path, 0;
 }
 
 sub log_to_syslog {

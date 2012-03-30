@@ -12,18 +12,23 @@ lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
 lib/AnyEvent/Log.pm:   open my $fh, ">>", $path
 lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
+TODO: disable logging to a context while it is being logged to?
 
 6.2
-   	- child watchers are broken in POE 1.352 and there seems to be
-          no way to work around it, as POE itself is inherently racy. Document this
-          regression and sleep a second in t/68_poe_03_child.t for the time
-          being.
+        - child watchers are broken in POE 1.352 (also many earlier
+          versions)and there seems to be no way to work around it, as POE
+          itself is inherently racy. Document this regression and sleep a
+          second in t/68_poe_03_child.t for the time being.
 	- new module AnyEvent::IO, that is a frontend to either a pure-perl
           synchronous I/O implementation (AnyEvent::IO::Perl), or to the
           asynchronous I/O extension IO::AIO (AnyEvent::IO::IOAIO).
         - load /etc/hosts only when dns fails has no answer.
         - stat /etc/hosts on every access and reload it if it changed.
         - load /etc/hosts via AnyEvent::IO - potentially asynchronous.
+        - AnyEvent::Log log_to_file and log_to_path now use AnyEvent::IO. As
+          a side effect, they now use true appending as opposed to libc
+          appending, and the file might not have been opened when the function
+          returns.
         - the default logging level was not properly documented in a variety of
           places, this has hopefully been rectified.
 	- updated uts46data.pl for unicode 6.1.0.

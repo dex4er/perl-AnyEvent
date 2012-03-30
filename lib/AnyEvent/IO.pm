@@ -234,10 +234,8 @@ this is usually C<AnyEvent::IO::Perl> or C<AnyEvent::IO::IOAIO>.
 =item ae_load $path, $cb->($data)
 
 Tries to open C<$path> and read its contents into memory (obviously,
-should only be used on files that are "small enough").
-
-If an error occurs, the callback receives I<no> arguments, otherwise, the
-only argument is the file data as a string.
+should only be used on files that are "small enough"), then passes them to
+the callback as a string.
 
 Example: load F</etc/hosts>.
 
@@ -254,10 +252,10 @@ Tries to open the file specified by C<$path> with the O_XXX-flags
 C<$flags> (from the Fcntl module, or see below) and the mode C<$mode> (a
 good value is 0666 for C<O_CREAT>, and C<0> otherwise).
 
-This works very much like perl's C<sysopen> function.
+The (normal, standard, perl) file handle associated with the opened file
+is then passed to the callback.
 
-If an error occurs, the callback receives I<no> arguments, otherwise, the
-only argument is the (normal perl) file handle.
+This works very much like perl's C<sysopen> function.
 
 Changing the C<umask> while this request executes results in undefined
 behaviour - likewise changing anything else that would change the outcome,
@@ -271,9 +269,8 @@ import tag (see SYNOPSIS).
 
 =item ae_close $fh, $cb->($success)
 
-Closes the file handle (yes, close can block your process
-indefinitely). If an error occurs, passes I<no> arguments, otherwise
-passes a true value.
+Closes the file handle (yes, close can block your process indefinitely)
+and passes a true value to the callback on success.
 
 Due to idiosyncrasies in perl, instead of calling C<close>, the file
 handle might get closed by C<dup2>'ing another file descriptor over
@@ -313,55 +310,53 @@ so, because OS X is not thread safe and corrupts data when you try).
 
 =item ae_lstat $path, $cb->($success)
 
-Calls C<stat> or C<lstat> on the path or perl file handle. If an error
-occurs, passes I<no> arguments, otherwise passes a true value.
+Calls C<stat> or C<lstat> on the path or perl file handle and passes a
+true value to the callback on success.
 
 The stat data will be available by stat'ing the C<_> file handle
 (e.g. C<-x _>, C<stat _> and so on).
 
 =item ae_link $oldpath, $newpath, $cb->($success)
 
-Calls C<link> on the paths. If an error occurs, passes I<no> arguments,
-otherwise passes a true value.
+Calls C<link> on the paths and passes a true value to the callback on
+success.
 
 =item ae_symlink $oldpath, $newpath, $cb->($success)
 
-Calls C<symlink> on the paths. If an error occurs, passes I<no> arguments,
-otherwise passes a true value.
+Calls C<symlink> on the paths and passes a true value to the callback on
+success.
 
 =item ae_readlink $path, $cb->($target)
 
-Calls C<readlink> on the paths. If an error occurs, passes I<no> arguments,
-otherwise passes the link target string.
+Calls C<readlink> on the pathsand passes the link target string to the
+callback.
 
 =item ae_rename $oldpath, $newpath, $cb->($success)
 
-Calls C<rename> on the paths. If an error occurs, passes I<no> arguments,
-otherwise passes a true value.
+Calls C<rename> on the paths and passes a true value to the callback on
+success.
 
 =item ae_unlink $path, $cb->($success)
 
-Tries to unlink the object at C<$path>. If an error occurs, passes I<no>
-arguments, otherwise passes a true value.
+Tries to unlink the object at C<$path> and passes a true value to the
+callback on success.
 
 =item ae_mkdir $path, $perms, $cb->($success)
 
-Calls C<mkdir> on the path with the given permissions C<$perms> (when
-in doubt, C<0777> is a good value). If an error occurs, passes I<no>
-arguments, otherwise passes a true value.
+Calls C<mkdir> on the path with the given permissions C<$perms> (when in
+doubt, C<0777> is a good value) and passes a true value to the callback on
+success.
 
 =item ae_rmdir $path, $cb->($success)
 
-Tries to remove the directory at C<$path>. If an error occurs, passes
-I<no> arguments, otherwise passes a true value.
+Tries to remove the directory at C<$path> and passes a true value to the
+callback on success.
 
 =item ae_readdir $path, $cb->(\@names)
 
 Reads all filenames from the directory specified by C<$path> and passes
 them to the callback, as an array reference with the names (without a path
 prefix). The F<.> and F<..> names will be filtered out first.
-
-In case an error occurs, I<no> arguments are passed to the callback.
 
 The ordering of the file names is undefined - backends that are capable
 of it (e.g. L<IO::AIO>) will return the ordering that most likely is
