@@ -191,11 +191,11 @@ if ($MODEL) {
    AE::log 7 => "Found preloaded IO model '$MODEL', using it.";
 } else {
    if ($ENV{PERL_ANYEVENT_IO_MODEL} =~ /^([a-zA-Z0-9:]+)$/) {
-      if (eval { require "AnyEvent/IO/$MODEL.pm" }) {
-         AE::log 7 => "Loaded IO model '$MODEL' (forced by \$ENV{PERL_ANYEVENT_IO_MODE}), using it.";
+      if (eval { require "AnyEvent/IO/$ENV{PERL_ANYEVENT_IO_MODEL}.pm" }) {
+         AE::log 7 => "Loaded IO model '$MODEL' (forced by \$ENV{PERL_ANYEVENT_IO_MODEL}), using it.";
       } else {
          undef $MODEL;
-         AE::log 4 => "Unable to load IO model '$ENV{PERL_ANYEVENT_IO_MODEL}' (from \$ENV{PERL_ANYEVENT_IO_MODE}):\n$@";
+         AE::log 4 => "Unable to load IO model '$ENV{PERL_ANYEVENT_IO_MODEL}' (from \$ENV{PERL_ANYEVENT_IO_MODEL}):\n$@";
       }
    }
 

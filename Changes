@@ -19,6 +19,9 @@ lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter fil
 	- new module AnyEvent::IO, that is a frontend to either a pure-perl
           synchronous I/O implementation (AnyEvent::IO::Perl), or to the
           asynchronous I/O extension IO::AIO (AnyEvent::IO::IOAIO).
+        - load /etc/hosts only when dns fails has no answer.
+        - stat /etc/hosts on every access and reload it if it changed.
+        - load /etc/hosts via AnyEvent::IO - potentially asynchronous.
         - the default logging level was not properly documented in a variety of
           places, this has hopefully been rectified.
 	- updated uts46data.pl for unicode 6.1.0.
