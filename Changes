@@ -2,15 +2,10 @@ Revision history for Perl extension AnyEvent.
 
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
-TODO: AnyEvent::IO
-tODO: maxim souffle handle storable
 TODO: document import tags aeio, also ae_ naming
-TODO: t/io
 TODO: use the eval-with-cb-call trick also to speed up JSON?
 lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
-lib/AnyEvent/Log.pm:   open my $fh, ">>", $path
-lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 TODO: disable logging to a context while it is being logged to?
 
