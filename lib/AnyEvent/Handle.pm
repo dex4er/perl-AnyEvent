@@ -1732,18 +1732,17 @@ register_read_type storable => sub {
       if ($format + $len <= length $_[0]{rbuf}) {
          my $data = substr $_[0]{rbuf}, $format, $len;
          substr $_[0]{rbuf}, 0, $format + $len, "";
-         $cb->($_[0], Storable::thaw ($data));
+
+         eval { $cb->($_[0], Storable::thaw ($data)); 1 }
+            or return $_[0]->_error (Errno::EBADMSG);
       } else {
          # remove prefix
          substr $_[0]{rbuf}, 0, $format, "";
 
          # read remaining chunk
          $_[0]->unshift_read (chunk => $len, sub {
-            if (my $ref = eval { Storable::thaw ($_[1]) }) {
-               $cb->($_[0], $ref);
-            } else {
-               $_[0]->_error (Errno::EBADMSG);
-            }
+            eval { $cb->($_[0], Storable::thaw ($_[1])); 1 }
+               or $_[0]->_error (Errno::EBADMSG);
          });
       }
 
