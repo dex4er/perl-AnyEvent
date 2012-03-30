@@ -24,7 +24,7 @@ our $VERSION = $AnyEvent::VERSION;
 
 package AnyEvent::IO;
 
-our $MODEL = "Perl";
+our $MODEL = "AnyEvent::IO::Perl";
 
 sub ae_load($$) {
    my ($path, $cb, $fh, $data) = @_;

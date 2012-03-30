@@ -122,11 +122,16 @@ watchers: they are not generic enough (the POE implementation isn't even
 generic enough to let properly designed back-end use their native child
 watcher instead - it insist on doing it itself the broken way).
 
-Unfortunately, POE's child handling is inherently racy: if the child
-exits before the handler is created (which is impossible to avoid in
-general, imagine the forked program to exit immediately because of a bug,
-or imagine the POE kernel being busy for a second), one has to wait for
-another event to occur, which can take an indefinite amount of time.
+Unfortunately, POE's child handling is inherently racy: if the child exits
+before the handler is created (because e.g. it crashes or simply is quick
+about it), then current versions of POE (1.352) will I<never> invoke the
+child watcher, and there is nothing that can be done about it. Older
+versions of POE only delayed in this case. The reason is that POE first
+checks if the child has already exited, and I<then> installs the signal
+handler - aa classical race.
+
+Your only hope is for the fork'ed process to not exit too quickly, in
+which case everything happens to work.
 
 Of course, whenever POE reaps an unrelated child it will also output a
 message for it that you cannot suppress (which shouldn't be too surprising
@@ -140,8 +145,8 @@ How one manages to have such a glaring bug in an event loop after ten
 years of development escapes me.
 
 (There are more annoying bugs, for example, POE runs C<waitpid>
-unconditionally on finalizing, so your program will hang until all child
-processes have exited.)
+unconditionally at finaliser time, so your program will hang until all
+child processes have exited.)
 
 =item Documentation quality
 

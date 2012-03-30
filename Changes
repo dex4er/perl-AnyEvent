@@ -14,6 +14,10 @@ lib/AnyEvent/Log.pm:      open my $fh, ">>", $path
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 
 6.2
+   	- child watchers are broken in POE 1.352 and there seems to be
+          no way to work around it, as POE itself is inherently racy. Document this
+          regression and sleep a second in t/68_poe_03_child.t for the time
+          being.
 	- new module AnyEvent::IO, that is a frontend to either a pure-perl
           synchronous I/O implementation (AnyEvent::IO::Perl), or to the
           asynchronous I/O extension IO::AIO (AnyEvent::IO::IOAIO).

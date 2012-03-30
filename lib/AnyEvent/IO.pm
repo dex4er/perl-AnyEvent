@@ -228,9 +228,8 @@ if ($MODEL) {
 
 =item $AnyEvent::IO::MODEL
 
-Contains the backend I/O model in use - at the moment, this is usually
-C<Perl> or C<IOAIO>, corresponding to L<AnyEvent::IO::Perl> and
-L<AnyEvent::IO::IOAIO>, respectively.
+Contains the package name of the backend I/O model in use - at the moment,
+this is usually C<AnyEvent::IO::Perl> or C<AnyEvent::IO::IOAIO>.
 
 =item ae_load $path, $cb->($data)
 

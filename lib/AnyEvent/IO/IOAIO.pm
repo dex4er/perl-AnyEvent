@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::IOAIO - AnyEvent::IO backend based on IO::AIO
+AnyEvent::IO::IOAIO - AnyEvent::IO backend based on IO::AIO
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,7 @@ package AnyEvent::IO;
 use IO::AIO ();
 use AnyEvent::AIO ();
 
-our $MODEL = "IOAIO";
+our $MODEL = "AnyEvent::IO::IOAIO";
 
 sub ae_load($$) {
    my ($cb, $data) = $_[1];
