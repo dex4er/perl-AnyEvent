@@ -915,6 +915,8 @@ Tries so load and parse F</etc/resolv.conf> on portable operating
 systems. Tries various egregious hacks on windows to force the DNS servers
 and searchlist out of the system.
 
+This method must be called at most once before trying to resolve anything.
+
 =cut
 
 sub os_config {
@@ -954,7 +956,7 @@ sub os_config {
          1
       }) {
          # we use ipconfig parsing because, despite all its brokenness,
-         # it seems most stable in practise.
+         # it seems quite stable in practise.
          # unfortunately it wants a console window.
          # for good measure, we append a fallback nameserver to our list.
 
@@ -999,8 +1001,9 @@ sub os_config {
 
 =item $resolver->timeout ($timeout, ...)
 
-Sets the timeout values. See the C<timeout> constructor argument (and note
-that this method uses the values itself, not an array-reference).
+Sets the timeout values. See the C<timeout> constructor argument (and
+note that this method expects the timeout values themselves, not an
+array-reference).
 
 =cut
 
@@ -1205,7 +1208,7 @@ sub _scheduler {
          $self->_exec ($req);
 
       } elsif (my $cb = shift @{ $self->{wait} }) {
-         # found a wait_for_slot callback, call that one first
+         # found a wait_for_slot callback
          $cb->($self);
 
       } else {
