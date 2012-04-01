@@ -61,24 +61,44 @@ sub ae_write($$$) {
    };
 }
 
+sub ae_truncate($$$) {
+   my $cb = $_[2];
+   IO::AIO::aio_truncate $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
+}
+
+sub ae_utime($$$$) {
+   my $cb = $_[3];
+   IO::AIO::aio_utime $_[0], $_[1], $_[2], sub { $cb->($_[0] ? () : 1) };
+}
+
+sub ae_chown($$$$) {
+   my $cb = $_[3];
+   IO::AIO::aio_chown $_[0], $_[1], $_[2], sub { $cb->($_[0] ? () : 1) };
+}
+
+sub ae_chmod($$$) {
+   my $cb = $_[2];
+   IO::AIO::aio_chmod $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
+}
+
 sub ae_stat($$) {
    my $cb = $_[1];
-   IO::AIO::aio_stat $_[0], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_stat $_[0], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_lstat($$) {
    my $cb = $_[1];
-   IO::AIO::aio_lstat $_[0], sub { $cb->($_[0] >= 0 ? 1 : ()) }
+   IO::AIO::aio_lstat $_[0], sub { $cb->($_[0] ? () : 1) }
 }
 
 sub ae_link($$$) {
    my $cb = $_[2];
-   IO::AIO::aio_link $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_link $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_symlink($$$) {
    my $cb = $_[2];
-   IO::AIO::aio_symlink $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_symlink $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_readlink($$) {
@@ -88,22 +108,22 @@ sub ae_readlink($$) {
 
 sub ae_rename($$$) {
    my $cb = $_[2];
-   IO::AIO::aio_rename $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_rename $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_unlink($$) {
    my $cb = $_[1];
-   IO::AIO::aio_unlink $_[0], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_unlink $_[0], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_mkdir($$$) {
    my $cb = $_[2];
-   IO::AIO::aio_mkdir $_[0], $_[1], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_mkdir $_[0], $_[1], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_rmdir($$) {
    my $cb = $_[1];
-   IO::AIO::aio_rmdir $_[0], sub { $cb->($_[0] >= 0 ? 1 : ()) };
+   IO::AIO::aio_rmdir $_[0], sub { $cb->($_[0] ? () : 1) };
 }
 
 sub ae_readdir($$) {

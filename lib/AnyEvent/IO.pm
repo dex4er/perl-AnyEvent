@@ -189,7 +189,8 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use base "Exporter";
 
 our @AE_REQ = qw(
-   ae_load ae_open ae_close ae_read ae_write ae_stat ae_lstat
+   ae_load ae_open ae_close ae_read ae_write ae_truncate
+   ae_utime ae_chown ae_chmod ae_stat ae_lstat
    ae_link ae_symlink ae_readlink ae_rename ae_unlink
    ae_mkdir ae_rmdir ae_readdir
 );
@@ -306,6 +307,33 @@ handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviouisly
 so, because OS X is not thread safe and corrupts data when you try).
 
+=item ae_truncate $fh_or_path, $new_length, $cb->($success)
+
+Calls C<truncate> on the path or perl file handle and passes a true value
+to the callback on success.
+
+=item ae_utime $fh_or_path, $atime, $mtime, $cb->($success)
+
+Calls C<utime> on the path or perl file handle and passes a true value to
+the callback on success.
+
+The special case of both C<$atime> and C<$mtime> being C<undef> sets the
+times to the current time, on systems that support this.
+
+=item ae_chown $fh_or_path, $uid, $gid, $cb->($success)
+
+Calls C<chown> on the path or perl file handle and passes a true value to
+the callback on success.
+
+If C<$uid> or C<$gid> can be specified as C<undef>, in which case the
+uid or gid of the file is not changed. This differs from perl's C<chown>
+builtin, which wants C<-1> for this.
+
+=item ae_chmod $fh_or_path, $perms, $cb->($success)
+
+Calls C<chmod> on the path or perl file handle and passes a true value to
+the callback on success.
+
 =item ae_stat $fh_or_path, $cb->($success)
 
 =item ae_lstat $path, $cb->($success)
@@ -328,7 +356,7 @@ success.
 
 =item ae_readlink $path, $cb->($target)
 
-Calls C<readlink> on the pathsand passes the link target string to the
+Calls C<readlink> on the paths and passes the link target string to the
 callback.
 
 =item ae_rename $oldpath, $newpath, $cb->($success)

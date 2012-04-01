@@ -58,6 +58,22 @@ sub ae_write($$$) {
    $_[2](defined $res ? $res : ());
 }
 
+sub ae_truncate($$$) {
+   $_[2](truncate $_[0], $_[1] or ());
+}
+
+sub ae_utime($$$$) {
+   $_[3](utime $_[1], $_[2], $_[0] or ());
+}
+
+sub ae_chown($$$$) {
+   $_[3](chown defined $_[1] ? $_[1] : -1, defined $_[2] ? $_[2] : -1, $_[0] or ());
+}
+
+sub ae_chmod($$$) {
+   $_[2](chmod $_[1], $_[0] or ());
+}
+
 sub ae_stat($$) {
    $_[1](stat  $_[0]);
 }
