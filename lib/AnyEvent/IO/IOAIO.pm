@@ -25,7 +25,7 @@ our $VERSION = $AnyEvent::VERSION;
 
 package AnyEvent::IO;
 
-use IO::AIO ();
+use IO::AIO 4.13 ();
 use AnyEvent::AIO ();
 
 our $MODEL = "AnyEvent::IO::IOAIO";
