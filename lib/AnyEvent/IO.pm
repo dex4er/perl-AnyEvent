@@ -189,7 +189,7 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use base "Exporter";
 
 our @AE_REQ = qw(
-   ae_load ae_open ae_close ae_read ae_write ae_truncate
+   ae_load ae_open ae_close ae_seek ae_read ae_write ae_truncate
    ae_utime ae_chown ae_chmod ae_stat ae_lstat
    ae_link ae_symlink ae_readlink ae_rename ae_unlink
    ae_mkdir ae_rmdir ae_readdir
@@ -292,6 +292,15 @@ Obviously, multiple C<ae_read>'s or C<ae_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviously
 so, because OS X is not thread safe and corrupts data when you try).
+
+=item ae_seek $fh, $offset, $whence, $callback->($offs)
+
+Seeks the filehandle to the new C<$offset>, similarly to perl's
+C<sysseek>. The C<$whence> are the traditional values (C<0> to count from
+C<start, C<1> to count from the current position and 2> to count from the
+C<end).
+
+The resulting absolute offset will be passed to the callback on success.
 
 =item ae_write $fh, $data, $cb->($length)
 
