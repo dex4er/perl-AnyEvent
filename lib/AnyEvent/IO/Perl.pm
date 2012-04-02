@@ -48,6 +48,11 @@ sub ae_close($$) {
    $_[1](close $_[0]);
 }
 
+sub ae_seek($$$$) {
+   my $data;
+   $_[3](sysseek $_[0], $_[1], $_[2] or ());
+}
+
 sub ae_read($$$) {
    my $data;
    $_[2]( (defined sysread $_[0], $data, $_[1]) ? $data : () );

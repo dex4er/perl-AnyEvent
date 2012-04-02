@@ -297,8 +297,8 @@ so, because OS X is not thread safe and corrupts data when you try).
 
 Seeks the filehandle to the new C<$offset>, similarly to perl's
 C<sysseek>. The C<$whence> are the traditional values (C<0> to count from
-C<start, C<1> to count from the current position and 2> to count from the
-C<end).
+start, C<1> to count from the current position and C<2> to count from the
+end).
 
 The resulting absolute offset will be passed to the callback on success.
 
