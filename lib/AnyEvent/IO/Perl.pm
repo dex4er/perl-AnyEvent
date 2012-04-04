@@ -26,7 +26,7 @@ package AnyEvent::IO;
 
 our $MODEL = "AnyEvent::IO::Perl";
 
-sub ae_load($$) {
+sub io_load($$) {
    my ($path, $cb, $fh, $data) = @_;
 
    $cb->(
@@ -37,88 +37,88 @@ sub ae_load($$) {
    );
 }
 
-sub ae_open($$$$) {
+sub io_open($$$$) {
    sysopen my $fh, $_[0], $_[1], $_[2]
       or return $_[3]();
 
    $_[3]($fh)
 }
 
-sub ae_close($$) {
+sub io_close($$) {
    $_[1](close $_[0]);
 }
 
-sub ae_seek($$$$) {
+sub io_seek($$$$) {
    my $data;
    $_[3](sysseek $_[0], $_[1], $_[2] or ());
 }
 
-sub ae_read($$$) {
+sub io_read($$$) {
    my $data;
    $_[2]( (defined sysread $_[0], $data, $_[1]) ? $data : () );
 }
 
-sub ae_write($$$) {
+sub io_write($$$) {
    my $res = syswrite $_[0], $_[1];
    $_[2](defined $res ? $res : ());
 }
 
-sub ae_truncate($$$) {
+sub io_truncate($$$) {
    $_[2](truncate $_[0], $_[1] or ());
 }
 
-sub ae_utime($$$$) {
+sub io_utime($$$$) {
    $_[3](utime $_[1], $_[2], $_[0] or ());
 }
 
-sub ae_chown($$$$) {
+sub io_chown($$$$) {
    $_[3](chown defined $_[1] ? $_[1] : -1, defined $_[2] ? $_[2] : -1, $_[0] or ());
 }
 
-sub ae_chmod($$$) {
+sub io_chmod($$$) {
    $_[2](chmod $_[1], $_[0] or ());
 }
 
-sub ae_stat($$) {
+sub io_stat($$) {
    $_[1](stat  $_[0]);
 }
 
-sub ae_lstat($$) {
+sub io_lstat($$) {
    $_[1](lstat $_[0]);
 }
 
-sub ae_link($$$) {
+sub io_link($$$) {
    $_[2](link $_[0], $_[1] or ());
 }
 
-sub ae_symlink($$$) {
+sub io_symlink($$$) {
    #TODO: raises an exception on !symlink systems, maybe eval + set errno?
    $_[2](symlink $_[0], $_[1] or ());
 }
 
-sub ae_readlink($$) {
+sub io_readlink($$) {
    #TODO: raises an exception on !symlink systems, maybe eval + set errno?
    my $res = readlink $_[0];
    $_[1](defined $res ? $res : ());
 }
 
-sub ae_rename($$$) {
+sub io_rename($$$) {
    $_[2](rename $_[0], $_[1] or ());
 }
 
-sub ae_unlink($$) {
+sub io_unlink($$) {
    $_[1](unlink $_[0] or ());
 }
 
-sub ae_mkdir($$$) {
+sub io_mkdir($$$) {
    $_[2](mkdir $_[0], $_[1] or ());
 }
 
-sub ae_rmdir($$) {
+sub io_rmdir($$) {
    $_[1](rmdir $_[0] or ());
 }
 
-sub ae_readdir($$) {
+sub io_readdir($$) {
    my ($fh, @res);
 
    opendir $fh, $_[0]

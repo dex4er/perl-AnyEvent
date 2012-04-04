@@ -30,103 +30,103 @@ use AnyEvent::AIO ();
 
 our $MODEL = "AnyEvent::IO::IOAIO";
 
-sub ae_load($$) {
+sub io_load($$) {
    my ($cb, $data) = $_[1];
    IO::AIO::aio_load $_[0], $data,                  sub { $cb->($_[0] >= 0 ? $data : ()) };
 }
 
-sub ae_open($$$$) {
+sub io_open($$$$) {
    my $cb = $_[3];
    IO::AIO::aio_open $_[0], $_[1], $_[2],           sub { $cb->($_[0] or ()) };
 }
 
-sub ae_close($$) {
+sub io_close($$) {
    my $cb = $_[1];
    IO::AIO::aio_close $_[0],                        sub { $cb->($_[0] >= 0 ? 1 : ()) };
 }
 
-sub ae_seek($$$$) {
+sub io_seek($$$$) {
    my ($cb) = $_[3];
    IO::AIO::aio_seek $_[0], $_[1], $_[2],           sub { $cb->($_[0] >= 0 ? $_[0] : ()) };
 }
 
-sub ae_read($$$) {
+sub io_read($$$) {
    my ($cb, $data) = $_[2];
    IO::AIO::aio_read $_[0], undef, $_[1], $data, 0, sub { $cb->($_[0] >= 0 ? $data : ()) };
 }
 
-sub ae_write($$$) {
+sub io_write($$$) {
    my $cb = $_[2];
    IO::AIO::aio_write $_[0], undef, (length $_[1]), $_[1], 0,
                                                     sub { $cb->($_[0] >= 0 ? $_[0] : ()) };
 }
 
-sub ae_truncate($$$) {
+sub io_truncate($$$) {
    my $cb = $_[2];
    IO::AIO::aio_truncate $_[0], $_[1],              sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_utime($$$$) {
+sub io_utime($$$$) {
    my $cb = $_[3];
    IO::AIO::aio_utime $_[0], $_[1], $_[2],          sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_chown($$$$) {
+sub io_chown($$$$) {
    my $cb = $_[3];
    IO::AIO::aio_chown $_[0], $_[1], $_[2],          sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_chmod($$$) {
+sub io_chmod($$$) {
    my $cb = $_[2];
    IO::AIO::aio_chmod $_[0], $_[1],                 sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_stat($$) {
+sub io_stat($$) {
    my $cb = $_[1];
    IO::AIO::aio_stat $_[0],                         sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_lstat($$) {
+sub io_lstat($$) {
    my $cb = $_[1];
    IO::AIO::aio_lstat $_[0],                        sub { $cb->($_[0] ? () : 1) }
 }
 
-sub ae_link($$$) {
+sub io_link($$$) {
    my $cb = $_[2];
    IO::AIO::aio_link $_[0], $_[1],                  sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_symlink($$$) {
+sub io_symlink($$$) {
    my $cb = $_[2];
    IO::AIO::aio_symlink $_[0], $_[1],               sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_readlink($$) {
+sub io_readlink($$) {
    my $cb = $_[1];
    IO::AIO::aio_readlink $_[0],                     sub { $cb->(defined $_[0] ? $_[0] : ()) };
 }
 
-sub ae_rename($$$) {
+sub io_rename($$$) {
    my $cb = $_[2];
    IO::AIO::aio_rename $_[0], $_[1],                sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_unlink($$) {
+sub io_unlink($$) {
    my $cb = $_[1];
    IO::AIO::aio_unlink $_[0],                       sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_mkdir($$$) {
+sub io_mkdir($$$) {
    my $cb = $_[2];
    IO::AIO::aio_mkdir $_[0], $_[1],                 sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_rmdir($$) {
+sub io_rmdir($$) {
    my $cb = $_[1];
    IO::AIO::aio_rmdir $_[0],                        sub { $cb->($_[0] ? () : 1) };
 }
 
-sub ae_readdir($$) {
+sub io_readdir($$) {
    my $cb = $_[1];
 
    IO::AIO::aio_readdirx $_[0], IO::AIO::READDIR_DIRS_FIRST | IO::AIO::READDIR_STAT_ORDER,

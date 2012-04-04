@@ -691,13 +691,13 @@ sub _load_hosts_unless(&$@) {
          # we are not the first, so we actually have to do the work
          require AnyEvent::IO;
 
-         AnyEvent::IO::ae_stat ($etc_hosts, sub {
+         AnyEvent::IO::io_stat ($etc_hosts, sub {
             if ((stat _)[9] ne $HOSTS_MTIME) {
                AE::log 8 => "(re)loading $etc_hosts.";
                $HOSTS_MTIME = (stat _)[9];
                # we might load a newer version of hosts,but that's a harmless race,
                # as the next call will just load it again.
-               AnyEvent::IO::ae_load ($etc_hosts, sub {
+               AnyEvent::IO::io_load ($etc_hosts, sub {
                   _parse_hosts $_[0];
                   (shift @HOSTS_CHECKING)->() while @HOSTS_CHECKING;
                });

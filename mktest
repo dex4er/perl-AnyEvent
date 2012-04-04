@@ -30,11 +30,6 @@ EOF
    done
 done
 
-rm -f t/63_eventlib_02_signals.t
-rm -f t/63_eventlib_03_child.t
-rm -f t/63_eventlib_07_io.t
-rm -f t/63_eventlib_09_multi.t
-
 (
    grep -v ^t/6._ MANIFEST
    for t in t/6?_*; do

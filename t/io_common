@@ -16,7 +16,7 @@ our $t = 3;
 
 sub t {
    my $ok = shift;
-   my $f = "ae_" . shift;
+   my $f = "io_" . shift;
    $f->(@_, my $cv = AE::cv);
    my @res = $cv->recv;
 
