@@ -6,6 +6,7 @@ TODO: use the eval-with-cb-call trick also to speed up JSON?
 lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
+TODO: ssl error messages in 80ssltest
 
 6.2
         - child watchers are broken in POE 1.352 (also many earlier
@@ -34,6 +35,8 @@ lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter fil
           sentences and do no longer include the package name.
         - the storable read type would sometimes throw an exception instead
           of causing EBADMSG (analyzed by Maxime Soulé).
+        - work around a bug in openssl 1.0.1 which enforces a minimum rsa
+          keysize (reported by Paul Howarth).
 	- documented Rocco fabricating statements about AnyEvent and me.
 
 6.14 Tue Jan 31 20:00:24 CET 2012

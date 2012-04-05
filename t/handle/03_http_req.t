@@ -22,7 +22,7 @@ my $hdl; $hdl =
    AnyEvent::Handle->new (
       connect => ['www.google.com', 80],
       on_error => sub {
-         warn "socket error: $!";
+         warn "handle error: $_[2]";
          $cv->broadcast;
       },
       on_eof => sub {

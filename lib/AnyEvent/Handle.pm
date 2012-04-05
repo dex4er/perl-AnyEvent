@@ -13,7 +13,7 @@ AnyEvent::Handle - non-blocking I/O on streaming handles via AnyEvent
       fh => \*STDIN,
       on_error => sub {
          my ($hdl, $fatal, $msg) = @_;
-         AE::log error => "Got error $msg!";
+         AE::log error => $msg;
          $hdl->destroy;
          $cv->send;
       };
@@ -172,9 +172,15 @@ cases where the other side can close the connection at will, it is
 often easiest to not report C<EPIPE> errors in this callback.
 
 AnyEvent::Handle tries to find an appropriate error code for you to check
-against, but in some cases (TLS errors), this does not work well. It is
-recommended to always output the C<$message> argument in human-readable
-error messages (it's usually the same as C<"$!">).
+against, but in some cases (TLS errors), this does not work well.
+
+If you report the error to the user, it is recommended to always output
+the C<$message> argument in human-readable error messages (you don't need
+to report C<"$!"> if you report C<$message>).
+
+If you want to react programmatically to the error, then looking at C<$!>
+and comparing it against some of the documented C<Errno> values is usually
+better than looking at the C<$message>.
 
 Non-fatal errors can be retried by returning, but it is recommended
 to simply ignore this parameter and instead abondon the handle object
@@ -1857,7 +1863,7 @@ sub _tls_error {
    return $self->_error ($!, 1)
       if $err == Net::SSLeay::ERROR_SYSCALL ();
 
-   my $err =Net::SSLeay::ERR_error_string (Net::SSLeay::ERR_get_error ());
+   my $err = Net::SSLeay::ERR_error_string (Net::SSLeay::ERR_get_error ());
 
    # reduce error string to look less scary
    $err =~ s/^error:[0-9a-fA-F]{8}:[^:]+:([^:]+):/\L$1: /;
