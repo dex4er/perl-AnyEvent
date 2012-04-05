@@ -1018,7 +1018,7 @@ sub _log_to_disk {
                my $data = join "", @queue;
                @queue = ();
 
-               AnyEvent::IO::io_write $fh, $data, sub {
+               AnyEvent::IO::aio_write $fh, $data, sub {
                   $disable = 1;
                   @_
                      ? ($_[0] == length $data or AE::log 4 => "unable to write to logfile '$path': short write")
@@ -1028,7 +1028,7 @@ sub _log_to_disk {
                   if ($keepopen) {
                      $kick->($kick);
                   } else {
-                     AnyEvent::IO::io_close ($fh, sub {
+                     AnyEvent::IO::aio_close ($fh, sub {
                         undef $fh;
                         $kick->($kick);
                      });
@@ -1039,7 +1039,7 @@ sub _log_to_disk {
             if ($fh) {
                $write->();
             } else {
-               AnyEvent::IO::io_open
+               AnyEvent::IO::aio_open
                   $path,
                   AnyEvent::IO::O_CREAT | AnyEvent::IO::O_WRONLY | AnyEvent::IO::O_APPEND,
                   0666,

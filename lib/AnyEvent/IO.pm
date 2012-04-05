@@ -6,7 +6,7 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    use AnyEvent::IO;
 
-   io_load "/etc/passwd", sub {
+   aio_load "/etc/passwd", sub {
       my ($data) = @_
          or die "/etc/passwd: $!";
 
@@ -18,23 +18,23 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    my $filedata = AE::cv;
 
-   io_open "/etc/passwd", O_RDONLY, 0, sub {
+   aio_open "/etc/passwd", O_RDONLY, 0, sub {
       my ($fh) = @_
          or die "/etc/passwd: $!";
 
-      io_stat $fh, sub {
+      aio_stat $fh, sub {
          @_ or die "/etc/passwd: $!";
 
          my $size = -s _;
 
-         io_read $fh, $size, sub {
+         aio_read $fh, $size, sub {
             my ($data) = @_
                or die "/etc/passwd: $!";
 
             $size == length $data
                or die "/etc/passwd: short read, file changed?";
 
-            # mostly the same as io_load, above - $data contains
+            # mostly the same as aio_load, above - $data contains
             # the file contents now.
             $filedata->($data);
          };
@@ -130,10 +130,10 @@ way, it makes most sense when confronted with disk files.
 
 =head1 IMPORT TAGS
 
-By default, this module implements all C<io_>xxx functions. In addition,
+By default, this module implements all C<aio_>xxx functions. In addition,
 the following import tags can be used:
 
-   :io        all io_ functions, smae as :DEFAULT
+   :io        all aio_ functions, smae as :DEFAULT
    :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
 
 =head1 API NOTES
@@ -146,8 +146,9 @@ the option of it being asynchronous when people need it, these functions
 are for you.
 
 All the functions in this module implement an I/O operation, usually with
-the same or similar name as the Perl builtin that it mimics, but with
-an C<io_> prefix.
+the same or similar name as the Perl builtin that it mimics, but with an
+C<aio_> prefix. If you like you can think of the C<aio_> functions as
+"AnyEvent I/O" or "Asynchronous I/O" variants.
 
 Each function expects a callback as their last argument. The callback is
 usually called with the result data or result code. An error is usually
@@ -156,7 +157,7 @@ look at C<$!> for the error code.
 
 This makes all of the following forms of error checking valid:
 
-   io_open ...., sub {
+   aio_open ...., sub {
       my $fh = shift   # scalar assignment - will assign undef on error
          or die "...";
 
@@ -187,16 +188,16 @@ use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 use base "Exporter";
 
-our @IO_REQ = qw(
-   io_load io_open io_close io_seek io_read io_write io_truncate
-   io_utime io_chown io_chmod io_stat io_lstat
-   io_link io_symlink io_readlink io_rename io_unlink
-   io_mkdir io_rmdir io_readdir
+our @AIO_REQ = qw(
+   aio_load aio_open aio_close aio_seek aio_read aio_write aio_truncate
+   aio_utime aio_chown aio_chmod aio_stat aio_lstat
+   aio_link aio_symlink aio_readlink aio_rename aio_unlink
+   aio_mkdir aio_rmdir aio_readdir
 );
-*EXPORT = \@IO_REQ;
+*EXPORT = \@AIO_REQ;
 our @FLAGS = qw(O_RDONLY O_WRONLY O_RDWR O_CREAT O_EXCL O_TRUNC O_APPEND);
 *EXPORT_OK = \@FLAGS;
-our %EXPORT_TAGS = (flags => \@FLAGS, io => \@IO_REQ);
+our %EXPORT_TAGS = (flags => \@FLAGS, aio => \@AIO_REQ);
 
 our $MODEL;
 
@@ -231,7 +232,7 @@ if ($MODEL) {
 Contains the package name of the backend I/O model in use - at the moment,
 this is usually C<AnyEvent::IO::Perl> or C<AnyEvent::IO::IOAIO>.
 
-=item io_load $path, $cb->($data)
+=item aio_load $path, $cb->($data)
 
 Tries to open C<$path> and read its contents into memory (obviously,
 should only be used on files that are "small enough"), then passes them to
@@ -239,14 +240,14 @@ the callback as a string.
 
 Example: load F</etc/hosts>.
 
-   io_load "/etc/hosts", sub {
+   aio_load "/etc/hosts", sub {
       my ($hosts) = @_
          or die "/etc/hosts: $!";
 
       AE::log info => "/etc/hosts contains ", ($hosts =~ y/\n/), " lines\n";
    };
 
-=item io_open $path, $flags, $mode, $cb->($fh)
+=item aio_open $path, $flags, $mode, $cb->($fh)
 
 Tries to open the file specified by C<$path> with the O_XXX-flags
 C<$flags> (from the Fcntl module, or see below) and the mode C<$mode> (a
@@ -267,7 +268,7 @@ C<O_TRUNC> and C<O_APPEND> - you can either access them directly
 (C<AnyEvent::IO::O_RDONLY>) or import them by specifying the C<:flags>
 import tag (see SYNOPSIS).
 
-=item io_close $fh, $cb->($success)
+=item aio_close $fh, $cb->($success)
 
 Closes the file handle (yes, close can block your process indefinitely)
 and passes a true value to the callback on success.
@@ -277,7 +278,7 @@ handle might get closed by C<dup2>'ing another file descriptor over
 it, that is, the C<$fh> might still be open, but can be closed safely
 afterwards and must not be used for anything.
 
-=item io_read $fh, $length, $cb->($data)
+=item aio_read $fh, $length, $cb->($data)
 
 Tries to read C<$length> octets from the current position from C<$fh> and
 passes these bytes to C<$cb>. Otherwise the semantics are very much like
@@ -287,12 +288,12 @@ If less than C<$length> octets have been read, C<$data> will contain
 only those bytes actually read. At EOF, C<$data> will be a zero-length
 string. If an error occurs, then nothing is passed to the callback.
 
-Obviously, multiple C<io_read>'s or C<io_write>'s at the same time on file
+Obviously, multiple C<aio_read>'s or C<aio_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviously
 so, because OS X is not thread safe and corrupts data when you try).
 
-=item io_seek $fh, $offset, $whence, $callback->($offs)
+=item aio_seek $fh, $offset, $whence, $callback->($offs)
 
 Seeks the filehandle to the new C<$offset>, similarly to perl's
 C<sysseek>. The C<$whence> are the traditional values (C<0> to count from
@@ -301,7 +302,7 @@ end).
 
 The resulting absolute offset will be passed to the callback on success.
 
-=item io_write $fh, $data, $cb->($length)
+=item aio_write $fh, $data, $cb->($length)
 
 Tries to write the octets in C<$data> to the current position of C<$fh>
 and passes the actual number of bytes written to the C<$cb>. Otherwise the
@@ -310,17 +311,17 @@ semantics are very much like those of perl's C<syswrite>.
 If less than C<length $data> octets have been written, C<$length> will
 reflect that. If an error occurs, then nothing is passed to the callback.
 
-Obviously, multiple C<io_read>'s or C<io_write>'s at the same time on file
+Obviously, multiple C<aio_read>'s or C<aio_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviouisly
 so, because OS X is not thread safe and corrupts data when you try).
 
-=item io_truncate $fh_or_path, $new_length, $cb->($success)
+=item aio_truncate $fh_or_path, $new_length, $cb->($success)
 
 Calls C<truncate> on the path or perl file handle and passes a true value
 to the callback on success.
 
-=item io_utime $fh_or_path, $atime, $mtime, $cb->($success)
+=item aio_utime $fh_or_path, $atime, $mtime, $cb->($success)
 
 Calls C<utime> on the path or perl file handle and passes a true value to
 the callback on success.
@@ -328,7 +329,7 @@ the callback on success.
 The special case of both C<$atime> and C<$mtime> being C<undef> sets the
 times to the current time, on systems that support this.
 
-=item io_chown $fh_or_path, $uid, $gid, $cb->($success)
+=item aio_chown $fh_or_path, $uid, $gid, $cb->($success)
 
 Calls C<chown> on the path or perl file handle and passes a true value to
 the callback on success.
@@ -337,14 +338,14 @@ If C<$uid> or C<$gid> can be specified as C<undef>, in which case the
 uid or gid of the file is not changed. This differs from perl's C<chown>
 builtin, which wants C<-1> for this.
 
-=item io_chmod $fh_or_path, $perms, $cb->($success)
+=item aio_chmod $fh_or_path, $perms, $cb->($success)
 
 Calls C<chmod> on the path or perl file handle and passes a true value to
 the callback on success.
 
-=item io_stat $fh_or_path, $cb->($success)
+=item aio_stat $fh_or_path, $cb->($success)
 
-=item io_lstat $path, $cb->($success)
+=item aio_lstat $path, $cb->($success)
 
 Calls C<stat> or C<lstat> on the path or perl file handle and passes a
 true value to the callback on success.
@@ -352,43 +353,43 @@ true value to the callback on success.
 The stat data will be available by stat'ing the C<_> file handle
 (e.g. C<-x _>, C<stat _> and so on).
 
-=item io_link $oldpath, $newpath, $cb->($success)
+=item aio_link $oldpath, $newpath, $cb->($success)
 
 Calls C<link> on the paths and passes a true value to the callback on
 success.
 
-=item io_symlink $oldpath, $newpath, $cb->($success)
+=item aio_symlink $oldpath, $newpath, $cb->($success)
 
 Calls C<symlink> on the paths and passes a true value to the callback on
 success.
 
-=item io_readlink $path, $cb->($target)
+=item aio_readlink $path, $cb->($target)
 
 Calls C<readlink> on the paths and passes the link target string to the
 callback.
 
-=item io_rename $oldpath, $newpath, $cb->($success)
+=item aio_rename $oldpath, $newpath, $cb->($success)
 
 Calls C<rename> on the paths and passes a true value to the callback on
 success.
 
-=item io_unlink $path, $cb->($success)
+=item aio_unlink $path, $cb->($success)
 
 Tries to unlink the object at C<$path> and passes a true value to the
 callback on success.
 
-=item io_mkdir $path, $perms, $cb->($success)
+=item aio_mkdir $path, $perms, $cb->($success)
 
 Calls C<mkdir> on the path with the given permissions C<$perms> (when in
 doubt, C<0777> is a good value) and passes a true value to the callback on
 success.
 
-=item io_rmdir $path, $cb->($success)
+=item aio_rmdir $path, $cb->($success)
 
 Tries to remove the directory at C<$path> and passes a true value to the
 callback on success.
 
-=item io_readdir $path, $cb->(\@names)
+=item aio_readdir $path, $cb->(\@names)
 
 Reads all filenames from the directory specified by C<$path> and passes
 them to the callback, as an array reference with the names (without a path

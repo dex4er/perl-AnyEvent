@@ -918,7 +918,7 @@ sub _load_resolv_conf_file {
    $self->_config_begin;
 
    require AnyEvent::IO;
-   AnyEvent::IO::io_load ($resolv_conf, sub {
+   AnyEvent::IO::aio_load ($resolv_conf, sub {
       if (my ($contents) = @_) {
          $self->parse_resolv_conf ($contents);
       } else {
@@ -1020,7 +1020,7 @@ sub os_config {
       # try /etc/resolv.conf everywhere else
 
       require AnyEvent::IO;
-      AnyEvent::IO::io_stat ("/etc/resolv.conf", sub {
+      AnyEvent::IO::aio_stat ("/etc/resolv.conf", sub {
          $self->_load_resolv_conf_file ("/etc/resolv.conf")
             if @_;
          $self->_config_done;

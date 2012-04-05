@@ -2,8 +2,10 @@
 
 $| = 1;
 
+# not tested: symlink, readlink, link, utime, chown, chmod
+
 BEGIN {
-   print "1..37\n";
+   print "1..38\n";
    print "ok 1 # MODEL=$AnyEvent::IO::MODEL\n";
 }
 use AnyEvent;
@@ -16,7 +18,7 @@ our $t = 3;
 
 sub t {
    my $ok = shift;
-   my $f = "io_" . shift;
+   my $f = "aio_" . shift;
    $f->(@_, my $cv = AE::cv);
    my @res = $cv->recv;
 
@@ -41,11 +43,13 @@ my $fh = t 1, open => "$DIR/test", O_CREAT | O_EXCL | O_WRONLY, 0666;
 t 0, rmdir => $DIR;
 
 t 1, write => $fh, "tes--";
-t 1, write => $fh, "test2";
+t 1, write => $fh, "test2truncate";
 t 1, write => $fh, "";
 
 t 1, seek  => $fh, 3, 0;
 t 1, write => $fh, "t1";
+
+t 1, truncate => $fh, 5+5;
 
 t 1, stat => $fh;
 print -s _ != 10 ? "not " : "", "ok ", $t++, " # stat size\n";
