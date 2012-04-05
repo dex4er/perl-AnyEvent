@@ -577,8 +577,8 @@ which have more options to tune performance.
 Example: recursively scan a directory hierarchy, silently skip diretcories
 we couldn't read and print all others.
 
-   sub scan;
-   sub scan {
+   sub scan($); # visibility-in-next statement is not so useful these days
+   sub scan($) {
       my ($path) = @_;
 
       aio_readdir $path, sub {
@@ -608,7 +608,7 @@ manpage.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://software.schmorp.de/pkg/AnyEvent.html
 
 =cut
 
