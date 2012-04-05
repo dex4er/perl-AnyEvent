@@ -958,7 +958,7 @@ sub idn_to_unicode($) {
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://software.schmorp.de/pkg/AnyEvent.html
 
 =cut
 
