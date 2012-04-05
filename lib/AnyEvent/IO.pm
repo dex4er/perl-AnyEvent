@@ -8,7 +8,7 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    aio_load "/etc/passwd", sub {
       my ($data) = @_
-         or die "/etc/passwd: $!";
+         or return AE::log error => "/etc/passwd: $!";
 
       warn "/etc/passwd contains ", ($data =~ y/://) , " colons.\n";
    };
@@ -20,19 +20,20 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    aio_open "/etc/passwd", O_RDONLY, 0, sub {
       my ($fh) = @_
-         or die "/etc/passwd: $!";
+         or return AE::log error => "/etc/passwd: $!";
 
       aio_stat $fh, sub {
-         @_ or die "/etc/passwd: $!";
+         @_
+            or return AE::log error => "/etc/passwd: $!";
 
          my $size = -s _;
 
          aio_read $fh, $size, sub {
             my ($data) = @_
-               or die "/etc/passwd: $!";
+               or return AE::log error => "/etc/passwd: $!";
 
             $size == length $data
-               or die "/etc/passwd: short read, file changed?";
+               or return AE::log error => "/etc/passwd: short read, file changed?";
 
             # mostly the same as aio_load, above - $data contains
             # the file contents now.
@@ -133,7 +134,7 @@ way, it makes most sense when confronted with disk files.
 By default, this module implements all C<aio_>xxx functions. In addition,
 the following import tags can be used:
 
-   :io        all aio_ functions, smae as :DEFAULT
+   :aio       all aio_* functions, smae as :DEFAULT
    :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
 
 =head1 API NOTES
@@ -145,10 +146,14 @@ extensive and faster API. If, however, you just want to do some I/O with
 the option of it being asynchronous when people need it, these functions
 are for you.
 
+=head2 NAMING
+
 All the functions in this module implement an I/O operation, usually with
 the same or similar name as the Perl builtin that it mimics, but with an
 C<aio_> prefix. If you like you can think of the C<aio_> functions as
 "AnyEvent I/O" or "Asynchronous I/O" variants.
+
+=head2 CALLING CONVENTIONS AND ERROR REPORTING
 
 Each function expects a callback as their last argument. The callback is
 usually called with the result data or result code. An error is usually
@@ -159,17 +164,21 @@ This makes all of the following forms of error checking valid:
 
    aio_open ...., sub {
       my $fh = shift   # scalar assignment - will assign undef on error
-         or die "...";
+         or return AE::log error => "...";
 
       my ($fh) = @_    # list assignment - will be 0 elements on error
-         or die "...";
+         or return AE::log error => "...";
 
       @_               # check the number of elements directly
-         or die "...";
+         or return AE::log error => "...";
+
+=head2 CAVEAT: RELATIVE PATHS
 
 When a path is specified, this path I<must be an absolute> path, unless
 you make certain that nothing in your process calls C<chdir> or an
 equivalent function while the request executes.
+
+=head2 CAVEAT: OTHER SHARED STATE
 
 Changing the C<umask> while any requests execute that create files (or
 otherwise rely on the current umask) results in undefined behaviour -
@@ -179,6 +188,34 @@ your effective user or group ID.
 Unlike other functions in the AnyEvent module family, these functions
 I<may> call your callback instantly, before returning. This should not be
 a real problem, as these functions never return anything useful.
+
+=head2 BEHAVIOUR AT PROGRAM EXIT
+
+Both L<AnyEvent::IO::Perl> and L<AnyEvent::IO::IOAIO> implementations
+make sure that operations that have started will be finished on a clean
+programs exit. That makes programs work that start some I/O operations and
+then exit. For example this complete program:
+
+   use AnyEvent::IO;
+
+   aio_stat "path1", sub {
+      aio_stat "path2", sub {
+         warn "both stats done\n";
+      };
+   };
+
+Starts a C<stat> operation and then exits by "falling off the end" of
+the program. Nevertheless, I<both> C<stat> operations will be executed,
+as AnyEvent::IO waits for all outstanding requests to finish and you can
+start new requests from request callbacks.
+
+In fact, since L<AnyEvent::IO::Perl> is currently synchronous, the
+program will do both stats before falling off the end, but with
+L<AnyEvent::IO::IOAIO>, the program first falls of the end, then the stats
+are executed.
+
+While not guaranteed, this behaviour will be present in future versions,
+if reasonably possible (which is extreemly likely :).
 
 =cut
 
@@ -242,7 +279,7 @@ Example: load F</etc/hosts>.
 
    aio_load "/etc/hosts", sub {
       my ($hosts) = @_
-         or die "/etc/hosts: $!";
+         or return AE::log error => "/etc/hosts: $!";
 
       AE::log info => "/etc/hosts contains ", ($hosts =~ y/\n/), " lines\n";
    };
@@ -256,7 +293,7 @@ good value is 0666 for C<O_CREAT>, and C<0> otherwise).
 The (normal, standard, perl) file handle associated with the opened file
 is then passed to the callback.
 
-This works very much like perl's C<sysopen> function.
+This works very much like Perl's C<sysopen> function.
 
 Changing the C<umask> while this request executes results in undefined
 behaviour - likewise changing anything else that would change the outcome,
@@ -268,6 +305,17 @@ C<O_TRUNC> and C<O_APPEND> - you can either access them directly
 (C<AnyEvent::IO::O_RDONLY>) or import them by specifying the C<:flags>
 import tag (see SYNOPSIS).
 
+Example: securely open a file in F</var/tmp>, fail if it exists or is a symlink.
+
+   use AnyEvent::IO qw(:flags);
+
+   aio_open "/var/tmp/mytmp$$", O_CREAT | O_EXCL | O_RDWR, 0600, sub {
+      my ($fh) = @_
+         or return AE::log error => "$! - denial of service attack?";
+
+      # now we have $fh
+   };
+
 =item aio_close $fh, $cb->($success)
 
 Closes the file handle (yes, close can block your process indefinitely)
@@ -278,11 +326,16 @@ handle might get closed by C<dup2>'ing another file descriptor over
 it, that is, the C<$fh> might still be open, but can be closed safely
 afterwards and must not be used for anything.
 
+Example: close a file handle, and dirty as we are, do not even bother
+to check for errors.
+
+   aio_close $fh, sub { };
+
 =item aio_read $fh, $length, $cb->($data)
 
 Tries to read C<$length> octets from the current position from C<$fh> and
 passes these bytes to C<$cb>. Otherwise the semantics are very much like
-those of perl's C<sysread>.
+those of Perl's C<sysread>.
 
 If less than C<$length> octets have been read, C<$data> will contain
 only those bytes actually read. At EOF, C<$data> will be a zero-length
@@ -293,33 +346,68 @@ handles sharing the underlying open file description results in undefined
 behaviour, due to sharing of the current file offset (and less obviously
 so, because OS X is not thread safe and corrupts data when you try).
 
+Example: read 128 octets from a file.
+
+   aio_read $fh, 128, sub {
+      my ($data) = @_
+         or return AE::log error "read from fh: $!";
+  
+      if (length $data) {
+         print "read ", length $data, " octets.\n";
+      } else {
+         print "EOF\n";
+      }
+   };
+
 =item aio_seek $fh, $offset, $whence, $callback->($offs)
 
-Seeks the filehandle to the new C<$offset>, similarly to perl's
+Seeks the filehandle to the new C<$offset>, similarly to Perl's
 C<sysseek>. The C<$whence> are the traditional values (C<0> to count from
 start, C<1> to count from the current position and C<2> to count from the
 end).
 
 The resulting absolute offset will be passed to the callback on success.
 
+Example: measure the size of the file in the old-fashioned way using seek.
+
+   aio_seek $fh, 0, 2, sub {
+      my ($size) = @_
+         or return AE::log error => "seek to end failed: $!";
+
+      # maybe we need to seek to the beginning again?
+      aio_seek $fh, 0, 0, sub {
+         # now we are hopefully at the beginning
+      };
+   };
+
 =item aio_write $fh, $data, $cb->($length)
 
 Tries to write the octets in C<$data> to the current position of C<$fh>
 and passes the actual number of bytes written to the C<$cb>. Otherwise the
-semantics are very much like those of perl's C<syswrite>.
+semantics are very much like those of Perl's C<syswrite>.
 
 If less than C<length $data> octets have been written, C<$length> will
 reflect that. If an error occurs, then nothing is passed to the callback.
 
 Obviously, multiple C<aio_read>'s or C<aio_write>'s at the same time on file
 handles sharing the underlying open file description results in undefined
-behaviour, due to sharing of the current file offset (and less obviouisly
+behaviour, due to sharing of the current file offset (and less obviously
 so, because OS X is not thread safe and corrupts data when you try).
 
 =item aio_truncate $fh_or_path, $new_length, $cb->($success)
 
 Calls C<truncate> on the path or perl file handle and passes a true value
 to the callback on success.
+
+Example: truncate F</etc/passwd> to zero length - this only works on
+systems that support C<truncate>, should not be tried out for obvious
+reasons and debian will probably open yte another security bug about this
+example.
+
+   aio_truncate "/etc/passwd", sub {
+      @_
+         or return AE::log error => "/etc/passwd: $! - are you root enough?";
+   };
 
 =item aio_utime $fh_or_path, $atime, $mtime, $cb->($success)
 
@@ -329,19 +417,40 @@ the callback on success.
 The special case of both C<$atime> and C<$mtime> being C<undef> sets the
 times to the current time, on systems that support this.
 
+Example: try to touch F<file>.
+
+   aio_utime "file", undef, undef, sub { };
+
 =item aio_chown $fh_or_path, $uid, $gid, $cb->($success)
 
 Calls C<chown> on the path or perl file handle and passes a true value to
 the callback on success.
 
 If C<$uid> or C<$gid> can be specified as C<undef>, in which case the
-uid or gid of the file is not changed. This differs from perl's C<chown>
-builtin, which wants C<-1> for this.
+uid or gid of the file is not changed. This differs from Perl's C<chown>
+built-in, which wants C<-1> for this.
+
+Example: update the group of F<file> to 0 (root), but leave the owner alone.
+
+   aio_chown "file", undef, 0, sub {
+      @_
+         or return AE::log error => "chown 'file': $!";
+   };
 
 =item aio_chmod $fh_or_path, $perms, $cb->($success)
 
 Calls C<chmod> on the path or perl file handle and passes a true value to
 the callback on success.
+
+Example: change F<file> to be user/group/world-readable, but leave the other flags
+alone.
+
+   aio_stat "file", sub {
+      @_
+         or return AE::log error => "file: $!";
+
+      aio_chmod "file", (stat _)[2] & 07777 | 00444, sub { };
+   };
 
 =item aio_stat $fh_or_path, $cb->($success)
 
@@ -350,33 +459,83 @@ the callback on success.
 Calls C<stat> or C<lstat> on the path or perl file handle and passes a
 true value to the callback on success.
 
-The stat data will be available by stat'ing the C<_> file handle
+The stat data will be available by C<stat>'ing the C<_> file handle
 (e.g. C<-x _>, C<stat _> and so on).
+
+Example: see if we can find the number of subdirectories of F</etc>.
+
+   aio_stat "/etc", sub {
+      @_
+         or return AE::log error => "/etc: $!";
+
+      (stat _)[3] >= 2
+         or return AE::log warn => "/etc has low link count - non-POSIX filesystem?";
+
+      print "/etc has ", (stat _)[3] - 2, " subdirectories.\n";
+   };
 
 =item aio_link $oldpath, $newpath, $cb->($success)
 
 Calls C<link> on the paths and passes a true value to the callback on
 success.
 
+Example: link "F<file> to F<file.bak>, then rename F<file.new> over F<file>,
+to atomically replace it.
+
+   aio_link "file", "file.bak", sub {
+      @_
+         or return AE::log error => "file: $!";
+
+      aio_rename "file.new", "file", sub {
+         @_
+            or return AE::log error => "file.new: $!";
+
+         print "file atomically replaced by file.new, backup file.bak\n";
+      };
+   };
+
 =item aio_symlink $oldpath, $newpath, $cb->($success)
 
 Calls C<symlink> on the paths and passes a true value to the callback on
 success.
+
+Example: create a symlink "F<slink> containing "random data".
+
+   aio_symlink "random data", "slink", sub {
+      @_
+         or return AE::log error => "slink: $!";
+   };
 
 =item aio_readlink $path, $cb->($target)
 
 Calls C<readlink> on the paths and passes the link target string to the
 callback.
 
+Example: read the symlink called Fyslink> and verify that it contains "random data".
+
+  aio_readlink "slink", sub {
+     my ($target) = @_
+        or return AE::log error => "slink: $!";
+
+     $target eq "random data"
+        or AE::log critical => "omg, the world will end!";
+  };
+
 =item aio_rename $oldpath, $newpath, $cb->($success)
 
 Calls C<rename> on the paths and passes a true value to the callback on
 success.
 
+See C<aio_link> for an example.
+
 =item aio_unlink $path, $cb->($success)
 
 Tries to unlink the object at C<$path> and passes a true value to the
 callback on success.
+
+Example: try to delete the file F<tmpfile.dat~>.
+
+   aio_unlink "tmpfile.dat~", sub { };
 
 =item aio_mkdir $path, $perms, $cb->($success)
 
@@ -384,10 +543,20 @@ Calls C<mkdir> on the path with the given permissions C<$perms> (when in
 doubt, C<0777> is a good value) and passes a true value to the callback on
 success.
 
+Example: try to create the directory F<subdir> and leave it to whoeveer
+comes after us to check whether it worked.
+
+   aio_mkdir "subdir", 0777, sub { };
+
 =item aio_rmdir $path, $cb->($success)
 
 Tries to remove the directory at C<$path> and passes a true value to the
 callback on success.
+
+Example: try to remove the directory F<subdir> and don't give a damn if
+that fails.
+
+   aio_rmdir "subdir", sub { };
 
 =item aio_readdir $path, $cb->(\@names)
 
@@ -404,6 +573,30 @@ If you need best performance in recursive directory traversal or when
 looking at really big directories, you are advised to use L<IO::AIO>
 directly, specifically the C<aio_readdirx> and C<aio_scandir> functions,
 which have more options to tune performance.
+
+Example: recursively scan a directory hierarchy, silently skip diretcories
+we couldn't read and print all others.
+
+   sub scan;
+   sub scan {
+      my ($path) = @_;
+
+      aio_readdir $path, sub {
+         my ($names) = @_
+            or return;
+
+         print "$path\n";
+
+         for my $name (@$names) {
+            aio_lstat "$path/$name", sub {
+               scan "$path/$name"
+                  if -d _;
+            };
+         }
+      };
+   }
+
+   scan "/etc";
 
 =back
 
