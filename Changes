@@ -6,17 +6,16 @@ TODO: use the eval-with-cb-call trick also to speed up JSON?
 lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
-TODO: ssl error messages in 80ssltest
 
 6.2
         - child watchers are broken in POE 1.352 (also many earlier
-          versions)and there seems to be no way to work around it, as POE
-          itself is inherently racy. Document this regression and sleep a
-          second in t/68_poe_03_child.t for the time being.
+          versions) and there seems to be no way to work around it, as POE
+          itself is inherently racy. Document this regression and add a delay
+          in t/68_poe_03_child.t for the time being.
 	- new module AnyEvent::IO, that is a frontend to either a pure-perl
           synchronous I/O implementation (AnyEvent::IO::Perl), or to the
           asynchronous I/O extension IO::AIO (AnyEvent::IO::IOAIO).
-        - load /etc/hosts only when dns fails has no answer.
+        - load /etc/hosts only when DNS has no answer.
         - stat /etc/hosts on every access and reload it if it changed.
         - load /etc/hosts via AnyEvent::IO - potentially asynchronous.
         - AnyEvent::Log log_to_file and log_to_path now use AnyEvent::IO. As
