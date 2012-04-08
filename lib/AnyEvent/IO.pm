@@ -134,7 +134,7 @@ way, it makes most sense when confronted with disk files.
 By default, this module implements all C<aio_>xxx functions. In addition,
 the following import tags can be used:
 
-   :aio       all aio_* functions, smae as :DEFAULT
+   :aio       all aio_* functions, same as :DEFAULT
    :flags     the fcntl open flags (O_CREAT, O_RDONLY, ...)
 
 =head1 API NOTES
@@ -608,7 +608,7 @@ manpage.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://software.schmorp.de/pkg/AnyEvent.html
 
 =cut
 

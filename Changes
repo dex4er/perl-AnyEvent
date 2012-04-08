@@ -7,7 +7,7 @@ lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
 lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
 lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 
-6.2
+7
         - child watchers are broken in POE 1.352 (also many earlier
           versions) and there seems to be no way to work around it, as POE
           itself is inherently racy. Document this regression and add a delay
