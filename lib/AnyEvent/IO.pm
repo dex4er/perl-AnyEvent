@@ -94,44 +94,58 @@ looking at right now :-)
 =head2 ASYNCHRONOUS VS. NON-BLOCKING
 
 Many people are continuously confused on what the difference is between
-asynchronous I/O and non-blocking I/O. Those two terms are not well
-defined, which often makes it hard to even talk about the difference. Here
-is a short guideline that should leave you less confused:
+asynchronous I/O and non-blocking I/O. In fact, those two terms are
+not well defined, which often makes it hard to even talk about the
+difference. Here is a short guideline that should leave you less
+confused. It only talks about read operations, but the reasoning works
+with other I/O operations as well.
 
 Non-blocking I/O means that data is delivered by some external means,
 automatically - that is, something I<pushes> data towards your file
-handle without you having to do anything. Non-blocking means that if your
-operating system currently has no data available for you, it will not wait
-("block" as it would normally do), but immediately return with an error.
+handle, without you having to do anything. Non-blocking means that if
+your operating system currently has no data (or EOF, or some error)
+available for you, it will not wait ("block") as it would normally do,
+but immediately return with an error (e.g. C<EWOULDBLOCK> - "I would have
+blocked, but you forbid it").
 
-Your program can then wait for data to arrive.
+Your program can then wait for data to arrive by other means, for example,
+an I/O watcher which tells you when to re-attempt the read, after which it
+can try to read again, and so on.
 
-Often, you would expect this to work for disk files as well - if the
-data isn't already in memory, one might wait for it. While this is sound
-reasoning, the POSIX API does not support this, because the operating
-system does not know where and how much of data you want to read, and more
-so, the OS already knows that data is there, it doesn't need to "wait"
-until it arrives from some external entity.
+Often, you would expect this to work for disk files as well - if the data
+isn't already in memory, one might want to wait for it and then re-attempt
+the read for example. While this is sound reasoning, the POSIX API does
+not support this, because disk drives and file systems do not send data
+"on their own", and more so, the OS already knows that data is there, it
+doesn't need to "wait" until it arrives from some external entity, it only
+needs to transfer the data from disk to your memory buffer.
 
 So basically, while the concept is sound, the existing OS APIs do not
-support this, it makes no sense to switch a disk file handle into
-non-blocking mode - it will behave exactly the same as in blocking mode,
-namely it will block until the data has been read from the disk.
+support this. Therefore, it makes no sense to switch a disk file handle
+into non-blocking mode - it will behave exactly the same as in blocking
+mode, namely it will block until the data has been read from the disk.
 
-The alternative that actually works is usually called I<asynchronous>
-I/O. Asynchronous, because the actual I/O is done while your program does
-something else, and only when it is done will you get notified of it: You
-only order the operation, it will be executed in the background, and you
-will get notified of the outcome.
+The alternative to non-blocking I/O that actually works with disk files
+is usually called I<asynchronous I/O>. Asynchronous, because the actual
+I/O is done while your program does something else: there is no need to
+call the read function to see if data is there, you only order the read
+once, and it will notify you when the read has finished and the data is
+your buffer - all the work is done in the background.
 
-This works with disk files, and even with sockets and other sources that
-you could use with non-blocking I/O instead. It is, however, not very
-efficient when used with sources that could be driven in a non-blocking
-way, it makes most sense when confronted with disk files.
+This works with disk files, and even with sockets and other sources. It
+is, however, not very efficient when used with sources that could be
+driven in a non-blocking way, because it usually has higher overhead
+in the OS than non-blocking I/O, because it ties memory buffers for a
+potentially unlimited time and often only a limited number of operations
+can be done in parallel.
+
+That's why asynchronous I/O makes most sense when confronted with disk
+files, and non-blocking I/O only makes sense with sockets, pipes and
+similar streaming sources.
 
 =head1 IMPORT TAGS
 
-By default, this module implements all C<aio_>xxx functions. In addition,
+By default, this module exports all C<aio_>xxx functions. In addition,
 the following import tags can be used:
 
    :aio       all aio_* functions, same as :DEFAULT
@@ -139,19 +153,18 @@ the following import tags can be used:
 
 =head1 API NOTES
 
-The functions in this module are not meant to be the most versatile or the
-highest-performers. They are meant to be easy to use for common cases. You
-are advised to use L<IO::AIO> directly when possible, which has a more
-extensive and faster API. If, however, you just want to do some I/O with
-the option of it being asynchronous when people need it, these functions
-are for you.
+The functions in this module are not meant to be the most versatile or
+the highest-performers (they are not very slow either, of course). They
+are primarily meant to give users of your code the option to do the I/O
+asynchronously (by installing L<IO::AIO>), without adding a dependency on
+that module.
 
 =head2 NAMING
 
 All the functions in this module implement an I/O operation, usually with
-the same or similar name as the Perl builtin that it mimics, but with an
-C<aio_> prefix. If you like you can think of the C<aio_> functions as
-"AnyEvent I/O" or "Asynchronous I/O" variants.
+the same or similar name as the Perl built-in that they mimic, but with
+an C<aio_> prefix. If you like you can think of the C<aio_>xxx functions as
+"AnyEvent I/O" or "Asynchronous I/O" variants of Perl built-ins.
 
 =head2 CALLING CONVENTIONS AND ERROR REPORTING
 
