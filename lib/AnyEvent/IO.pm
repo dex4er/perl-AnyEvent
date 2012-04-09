@@ -118,7 +118,7 @@ support this, it makes no sense to switch a disk file handle into
 non-blocking mode - it will behave exactly the same as in blocking mode,
 namely it will block until the data has been read from the disk.
 
-Th alternative that actually works is usually called I<asynchronous>
+The alternative that actually works is usually called I<asynchronous>
 I/O. Asynchronous, because the actual I/O is done while your program does
 something else, and only when it is done will you get notified of it: You
 only order the operation, it will be executed in the background, and you
@@ -608,7 +608,7 @@ manpage.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://software.schmorp.de/pkg/AnyEvent.html
+ http://anyevent.schmorp.de
 
 =cut
 

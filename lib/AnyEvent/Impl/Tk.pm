@@ -152,7 +152,7 @@ L<AnyEvent>, L<Tk>.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://software.schmorp.de/pkg/AnyEvent.html
+ http://anyevent.schmorp.de
 
 =cut
 

@@ -231,7 +231,7 @@ L<AnyEvent>, L<IO::Async>.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://software.schmorp.de/pkg/AnyEvent.html
+ http://anyevent.schmorp.de
 
  Paul Evans <leonerd@leonerd.org.uk>
  Rewrote the backend for IO::Async version 0.33.
