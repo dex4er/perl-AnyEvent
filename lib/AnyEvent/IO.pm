@@ -267,7 +267,7 @@ if ($MODEL) {
       if (eval { require IO::AIO; require AnyEvent::AIO; require AnyEvent::IO::IOAIO }) {
          AE::log 7 => "Autoloaded IO model 'IOAIO', using it.";
       } else {
-         require AnyEvent::IO::PP;
+         require AnyEvent::IO::Perl;
          AE::log 7 => "Autoloaded IO model 'Perl', using it.";
       }
    }
