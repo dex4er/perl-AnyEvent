@@ -949,7 +949,7 @@ sub os_config {
 
    if ((AnyEvent::WIN32 || $^O =~ /cygwin/i)) {
       # TODO: this blocks the program, but should not, but I
-      # am too lazy to implement and test it. ned to boot windows. ugh.
+      # am too lazy to implement and test it. need to boot windows. ugh.
 
       #no strict 'refs';
 

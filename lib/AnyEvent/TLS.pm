@@ -585,8 +585,6 @@ sub new {
    my ($dh_bio, $dh_file);
 
    if (exists $arg{dh_file}) {
-      croak
-
       $dh_file = $arg{dh_file};
 
       $dh_bio = Net::SSLeay::BIO_new_file ($dh_file, "r")

@@ -3,12 +3,9 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
-lib/AnyEvent/DNS.pm:   open my $fh, "<", $resolv_conf
-lib/AnyEvent/DNS.pm:         if (open my $fh, "ipconfig /all |") {
-lib/AnyEvent/TLS.pm:         or croak "$dh_file: failed to open DH parameter file: $!";
 TODO: common pitfalls?
 
-7.0
+7.0  Fri Apr 13 06:33:30 CEST 2012
         - child watchers are broken in POE 1.352 (also many earlier
           versions) and there seems to be no way to work around it, as POE
           itself is inherently racy. Document this regression and add a delay
@@ -19,6 +16,7 @@ TODO: common pitfalls?
         - load /etc/hosts only when DNS has no answer.
         - stat /etc/hosts on every access and reload it if it changed.
         - load /etc/hosts via AnyEvent::IO - potentially asynchronous.
+        - fix a buggy croak in the dh parameter rsading in AnyEvent::TLS.
         - AnyEvent::Log log_to_file and log_to_path now use AnyEvent::IO. As
           a side effect, they now use true appending as opposed to libc
           appending, and the file might not have been opened when the function
