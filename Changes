@@ -5,6 +5,10 @@ TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
 TODO: common pitfalls? invoke-before-return
 
+7.01
+	- use File::Spec to get the tmpdir in t/*, to avoid needless
+          failures on (most, not mine :) windows boxes.
+
 7.0  Fri Apr 13 06:33:30 CEST 2012
         - child watchers are broken in POE 1.352 (also many earlier
           versions) and there seems to be no way to work around it, as POE
