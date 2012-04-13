@@ -421,7 +421,7 @@ WATCHERS
     will be delayed. The maximum time a signal might be delayed is 10
     seconds by default, but can be overriden via
     $ENV{PERL_ANYEVENT_MAX_SIGNAL_LATENCY} or $AnyEvent::MAX_SIGNAL_LATENCY
-    - see the Ö<ENVIRONMENT VARIABLES> section for details.
+    - see the "ENVIRONMENT VARIABLES" section for details.
 
     All these problems can be avoided by installing the optional
     Async::Interrupt module, which works with most event loops. It will not
@@ -1216,25 +1216,24 @@ ENVIRONMENT VARIABLES
     The following environment variables are currently known to AnyEvent:
 
     "PERL_ANYEVENT_VERBOSE"
-        By default, AnyEvent will only log messages with loglevel 3
-        ("critical") or higher (see AnyEvent::Log). You can set this
-        environment variable to a numerical loglevel to make AnyEvent more
-        (or less) talkative.
+        By default, AnyEvent will log messages with loglevel 4 ("error") or
+        higher (see AnyEvent::Log). You can set this environment variable to
+        a numerical loglevel to make AnyEvent more (or less) talkative.
 
         If you want to do more than just set the global logging level you
         should have a look at "PERL_ANYEVENT_LOG", which allows much more
         complex specifications.
 
         When set to 0 ("off"), then no messages whatsoever will be logged
-        with the default logging settings.
+        with everything else at defaults.
 
-        When set to 5 or higher ("warn"), causes AnyEvent to warn about
-        unexpected conditions, such as not being able to load the event
-        model specified by "PERL_ANYEVENT_MODEL", or a guard callback
-        throwing an exception - this is the minimum recommended level.
+        When set to 5 or higher ("warn"), AnyEvent warns about unexpected
+        conditions, such as not being able to load the event model specified
+        by "PERL_ANYEVENT_MODEL", or a guard callback throwing an exception
+        - this is the minimum recommended level for use during development.
 
-        When set to 7 or higher (info), cause AnyEvent to report which event
-        model it chooses.
+        When set to 7 or higher (info), AnyEvent reports which event model
+        it chooses.
 
         When set to 8 or higher (debug), then AnyEvent will report extra
         information on which optional modules it loads and how it implements
@@ -1256,7 +1255,8 @@ ENVIRONMENT VARIABLES
         Note that specifying this environment variable causes the
         AnyEvent::Log module to be loaded, while "PERL_ANYEVENT_VERBOSE"
         does not, so only using the latter saves a few hundred kB of memory
-        until the first message is being logged.
+        unless a module explicitly needs the extra features of
+        AnyEvent::Log.
 
     "PERL_ANYEVENT_STRICT"
         AnyEvent does not do much argument checking by default, as thorough
@@ -1318,6 +1318,13 @@ ENVIRONMENT VARIABLES
         could start your program like this:
 
            PERL_ANYEVENT_MODEL=Perl perl ...
+
+    "PERL_ANYEVENT_IO_MODEL"
+        The current file I/O model - see AnyEvent::IO for more info.
+
+        At the moment, only "Perl" (small, pure-perl, synchronous) and
+        "IOAIO" (truly asynchronous) are supported. The default is "IOAIO"
+        if AnyEvent::AIO can be loaded, otherwise it is "Perl".
 
     "PERL_ANYEVENT_PROTOCOLS"
         Used by both AnyEvent::DNS and AnyEvent::Socket to determine
@@ -2076,6 +2083,8 @@ SEE ALSO
     Non-blocking handles, pipes, stream sockets, TCP clients and servers:
     AnyEvent::Handle, AnyEvent::Socket, AnyEvent::TLS.
 
+    Asynchronous File I/O: AnyEvent::IO.
+
     Asynchronous DNS: AnyEvent::DNS.
 
     Thread support: Coro, Coro::AnyEvent, Coro::EV, Coro::Event.
@@ -2085,5 +2094,5 @@ SEE ALSO
 
 AUTHOR
        Marc Lehmann <schmorp@schmorp.de>
-       http://home.schmorp.de/
+       http://anyevent.schmorp.de
 
