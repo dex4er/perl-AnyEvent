@@ -27,7 +27,9 @@ sub t {
    wantarray ? @res : $res[0]
 }
 
-our $TMP = "/tmp";
+use File::Spec;
+
+our $TMP = File::Spec->tmpdir;
 our $DIR = "$TMP/ae_io_testdir_$$~";
 
 t 1, mkdir => $DIR, 0777

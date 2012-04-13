@@ -6,6 +6,7 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 
    use AnyEvent::IO;
 
+   # load /etc/passwd, call clalback with the file data when done.
    aio_load "/etc/passwd", sub {
       my ($data) = @_
          or return AE::log error => "/etc/passwd: $!";
@@ -13,21 +14,26 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
       warn "/etc/passwd contains ", ($data =~ y/://) , " colons.\n";
    };
 
+   # the rest of the SYNOPSIS does the same, but with individual I/O calls
+
    # also import O_XXX flags
    use AnyEvent::IO qw(:DEFAULT :flags);
 
    my $filedata = AE::cv;
 
+   # first open the file
    aio_open "/etc/passwd", O_RDONLY, 0, sub {
       my ($fh) = @_
          or return AE::log error => "/etc/passwd: $!";
 
+      # now stat the file to get the size
       aio_stat $fh, sub {
          @_
             or return AE::log error => "/etc/passwd: $!";
 
          my $size = -s _;
 
+         # now read all the file data
          aio_read $fh, $size, sub {
             my ($data) = @_
                or return AE::log error => "/etc/passwd: $!";
@@ -197,6 +203,8 @@ Changing the C<umask> while any requests execute that create files (or
 otherwise rely on the current umask) results in undefined behaviour -
 likewise changing anything else that would change the outcome, such as
 your effective user or group ID.
+
+=head2 CALLBACKS MIGHT BE CALLED BEFORE FUNCTION RETURNS TO CALLER
 
 Unlike other functions in the AnyEvent module family, these functions
 I<may> call your callback instantly, before returning. This should not be

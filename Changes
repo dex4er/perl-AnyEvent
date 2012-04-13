@@ -3,7 +3,7 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
-TODO: common pitfalls?
+TODO: common pitfalls? invoke-before-return
 
 7.0  Fri Apr 13 06:33:30 CEST 2012
         - child watchers are broken in POE 1.352 (also many earlier
