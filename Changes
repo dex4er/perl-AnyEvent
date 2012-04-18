@@ -4,8 +4,11 @@ TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
 TODO: common pitfalls? invoke-before-return
+TODO: AnyEvent::Handle with AnyEvent::IO?
 
 7.01
+	- fail with EPROTO in AnyEvent::Handle wqhen TLS is requested but
+          not available, instead of throwing an exception.
 	- use File::Spec to get the tmpdir in t/*, to avoid needless
           failures on (most, not mine :) windows boxes.
 
