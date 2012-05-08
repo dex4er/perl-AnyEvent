@@ -2242,7 +2242,7 @@ close the connection first (highly desirable for a busy TCP server). A
 client dropping the connection is an error, which means this variant can
 detect an unexpected detection close.
 
-To handle this case, always make sure you have a on-empty read queue, by
+To handle this case, always make sure you have a non-empty read queue, by
 pushing the "read request start" handler on it:
 
    # we assume a request starts with a single line
