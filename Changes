@@ -6,11 +6,12 @@ TODO: use the eval-with-cb-call trick also to speed up JSON?
 TODO: common pitfalls? invoke-before-return
 TODO: AnyEvent::Handle with AnyEvent::IO?
 
-7.01
+7.01 Sun May 13 01:03:17 CEST 2012
 	- fail with EPROTO in AnyEvent::Handle wqhen TLS is requested but
           not available, instead of throwing an exception.
 	- use File::Spec to get the tmpdir in t/*, to avoid needless
           failures on (most, not mine :) windows boxes.
+        - new handle read types: tls_detect and tls_autostart.
 
 7.0  Fri Apr 13 06:33:30 CEST 2012
         - child watchers are broken in POE 1.352 (also many earlier
