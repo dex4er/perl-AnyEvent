@@ -3,8 +3,12 @@ Revision history for Perl extension AnyEvent.
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
-TODO: common pitfalls? invoke-before-return
+TODO: FAQ: common pitfalls? invoke-before-return
+TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
+	
+	- verified that AnyEvent::Socket follows RFC5952.
+        - try to parse "ADDR#PORT" in addition to "ADDR PORT".
 
 7.01 Sun May 13 01:03:17 CEST 2012
 	- fail with EPROTO in AnyEvent::Handle wqhen TLS is requested but

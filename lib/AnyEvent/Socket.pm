@@ -237,11 +237,11 @@ problem. Unfortunately, just splitting on the colon makes it hard to
 specify IPv6 addresses and doesn't support the less common but well
 standardised C<[ip literal]> syntax.
 
-This function tries to do this job in a better way, it supports the
-following formats, where C<port> can be a numerical port number of a
-service name, or a C<name=port> string, and the C< port> and C<:port>
-parts are optional. Also, everywhere where an IP address is supported
-a hostname or unix domain socket address is also supported (see
+This function tries to do this job in a better way, it supports (at
+least) the following formats, where C<port> can be a numerical port
+number of a service name, or a C<name=port> string, and the C< port> and
+C<:port> parts are optional. Also, everywhere where an IP address is
+supported a hostname or unix domain socket address is also supported (see
 C<parse_unix>), and strings starting with C</> will also be interpreted as
 unix domain sockets.
 
@@ -285,7 +285,7 @@ sub parse_hostport($;$) {
       return ("unix/", $_)
          if m%^/%;
 
-      # parse host, special cases: "ipv6" or "ipv6 port"
+      # parse host, special cases: "ipv6" or "ipv6[#p ]port"
       unless (
          ($host) = /^\s* ([0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F\.:]*)/xgc
          and parse_ipv6 $host
@@ -302,7 +302,7 @@ sub parse_hostport($;$) {
       }
 
       # parse port
-      if (/\G (?:\s+|:) ([^:[:space:]]+) \s*$/xgc) {
+      if (/\G (?:\s+|:|#) ([^:[:space:]]+) \s*$/xgc) {
          $port = $1;
       } elsif (/\G\s*$/gc && length $_[1]) {
          $port = $_[1];
