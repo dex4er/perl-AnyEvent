@@ -302,7 +302,7 @@ sub parse_hostport($;$) {
       }
 
       # parse port
-      if (/\G (?:\s+|:|#) ([^:[:space:]]+) \s*$/xgc) {
+      if (/\G (?:\s+|:|\#) ([^:[:space:]]+) \s*$/xgc) {
          $port = $1;
       } elsif (/\G\s*$/gc && length $_[1]) {
          $port = $_[1];
