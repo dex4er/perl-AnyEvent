@@ -605,6 +605,7 @@ sub run_cmd {
             $cv->begin;
 
             fcntl $pr, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
+            fh_nonblocking $pr, 1;
             my $w; $w = AE::io $pr, 0,
                "SCALAR" eq ref $ob
                   ? sub {
@@ -649,6 +650,7 @@ sub run_cmd {
             }
 
             fcntl $pw, AnyEvent::F_SETFD, AnyEvent::FD_CLOEXEC;
+            fh_nonblocking $pw, 1;
             my $w; $w = AE::io $pw, 1, sub {
                my $len = syswrite $pw, $data;
 

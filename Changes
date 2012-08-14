@@ -6,7 +6,10 @@ TODO: use the eval-with-cb-call trick also to speed up JSON?
 TODO: FAQ: common pitfalls? invoke-before-return
 TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
-	
+
+7.02 Tue Aug 14 04:27:58 CEST 2012
+	- AnyEvent::Util::run_cmd could block indefinitely (analyzed and test
+          program by Yorhel).
 	- verified that AnyEvent::Socket follows RFC5952.
         - try to parse "ADDR#PORT" in addition to "ADDR PORT".
 
