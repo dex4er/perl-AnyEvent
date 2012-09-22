@@ -10,7 +10,7 @@ BEGIN { eval "use Fcntl  ()" }
 BEGIN { eval "use POSIX  ()" }
 
 open my $fh, ">lib/AnyEvent/constants.pl"
-   or die "lib/AnyEvent/constants.pl: $_[0]\n";
+   or die "lib/AnyEvent/constants.pl: $!\n";
 
 my $oldstdout = select $fh;
 
