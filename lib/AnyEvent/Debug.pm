@@ -176,7 +176,7 @@ i id,...     prints the watcher with the given ids in more detail
 t            enable tracing for newly created watchers (enabled by default)
 ut           disable tracing for newly created watchers
 t  id,...    enable tracing for the given watcher (enabled by default)
-ut id,...    disable tracing for the given weatcher
+ut id,...    disable tracing for the given watcher
 w id,...     converts the watcher ids to watcher objects (for scripting)
 EOF
    }

@@ -7,6 +7,8 @@ TODO: FAQ: common pitfalls? invoke-before-return
 TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 
+TODO: Maxime Soulé patch
+
 7.02 Tue Aug 14 04:27:58 CEST 2012
 	- AnyEvent::Util::run_cmd could block indefinitely (analyzed and test
           program by Yorhel).
