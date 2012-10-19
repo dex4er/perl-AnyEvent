@@ -54,7 +54,7 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 =head1 DESCRIPTION
 
 This module provides functions that do I/O in an asynchronous fashion. It
-is to to I/O the same as L<AnyEvent> is to event libraries - it only
+is to I/O the same as L<AnyEvent> is to event libraries - it only
 I<interfaces> to other implementations or to a portable pure-perl
 implementation (that does not, however, do asynchronous I/O).
 
