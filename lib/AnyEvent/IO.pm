@@ -56,12 +56,12 @@ AnyEvent::IO - the DBI of asynchronous I/O implementations
 This module provides functions that do I/O in an asynchronous fashion. It
 is to I/O the same as L<AnyEvent> is to event libraries - it only
 I<interfaces> to other implementations or to a portable pure-perl
-implementation (that does not, however, do asynchronous I/O).
+implementation (which does not, however, do asynchronous I/O).
 
-The only such implementation that is supported (or even known to the
-author) is L<IO::AIO>, which is used automatically when it can be
-loaded. If it is not available, L<AnyEvent::IO> falls back to its
-(synchronous) pure-perl implementation.
+The only other implementation that is supported (or even known to
+the author) is L<IO::AIO>, which is used automatically when it can
+be loaded. If it is not available, L<AnyEvent::IO> falls back to its
+synchronous pure-perl implementation.
 
 Unlike L<AnyEvent>, which model to use is currently decided at module load
 time, not at first use. Future releases might change this.
@@ -71,7 +71,7 @@ time, not at first use. Future releases might change this.
 While disk I/O often seems "instant" compared to, say, socket I/O, there
 are many situations where your program can block for extended time periods
 when doing disk I/O. For example, you access a disk on an NFS server and
-it is gone - can take ages to respond again, if ever.  OR your system is
+it is gone - can take ages to respond again, if ever. Or your system is
 extremely busy because it creates or restores a backup - reading data from
 disk can then take seconds. Or you use Linux, which for so many years has
 a close-to-broken VM/IO subsystem that can often induce minutes or more of
