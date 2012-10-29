@@ -493,7 +493,7 @@ sub inet_aton {
       if ($ipv4) {
          $cv->begin;
          AnyEvent::DNS::a ($name, sub {
-            $res[$ipv4] = [map &parse_ipv4, @_];
+            $res[$ipv4] = [map { parse_ipv4 $_ } @_];
             $cv->end;
          });
       };
@@ -501,7 +501,7 @@ sub inet_aton {
       if ($ipv6) {
          $cv->begin;
          AnyEvent::DNS::aaaa ($name, sub {
-            $res[$ipv6] = [map &parse_ipv6, @_];
+            $res[$ipv6] = [map { parse_ipv6 $_ } @_];
             $cv->end;
          });
       };
