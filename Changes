@@ -9,8 +9,6 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 
 	- AnyEvent::Socket::inet_aton did not work when dns resolution was
           used to find the addresses (analyzed and patch by Maxime Soulé).
-        - fix a race where getpeername would be called, causing an error,
-          after the tcp_connect guard has been destroyed.
 
 7.02 Tue Aug 14 04:27:58 CEST 2012
 	- AnyEvent::Util::run_cmd could block indefinitely (analyzed and test

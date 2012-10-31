@@ -1025,8 +1025,6 @@ sub tcp_connect($$$;$) {
                 || $! == AnyEvent::Util::WSAEWOULDBLOCK)
          ) {
             $state{ww} = AE::io $state{fh}, 1, sub {
-               return unless exists $state{fh};
-
                # we are connected, or maybe there was an error
                if (my $sin = getpeername $state{fh}) {
                   my ($port, $host) = unpack_sockaddr $sin;
