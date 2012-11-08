@@ -671,7 +671,7 @@ sub _parse_hosts($) {
    }
 }
 
-# helper function - unless dns delivered results, check and parse hosts, then clal continuation code
+# helper function - unless dns delivered results, check and parse hosts, then call continuation code
 sub _load_hosts_unless(&$@) {
    my ($cont, $cv, @dns) = @_;
 
@@ -796,7 +796,7 @@ sub resolve_sockaddr($$$$$$) {
                   _load_hosts_unless {
                      push @res,
                         map [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, $_]],
-                           @{ $HOSTS{$node}[0] };
+                           @{ $hosts->[0] };
                   } $cv, @_;
                };
             }
@@ -811,7 +811,7 @@ sub resolve_sockaddr($$$$$$) {
                   _load_hosts_unless {
                      push @res,
                         map [$idx + 0.5, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
-                           @{ $HOSTS{$node}[1] }
+                           @{ $hosts->[1] }
                   } $cv, @_;
                };
             }
