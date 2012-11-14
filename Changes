@@ -7,10 +7,11 @@ TODO: FAQ: common pitfalls? invoke-before-return
 TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 
-TODO: %HOSTS fill up during name resolution (sten).
 TODO: leka on guard undef resolve (sten)
 	- AnyEvent::Socket::inet_aton did not work when dns resolution was
           used to find the addresses (analyzed and patch by Maxime Soulé).
+        - fix a memory leak in the /etc/hosts lookup code when hosts don't
+          resolve and are not in hosts (analyzed by sten).
 
 7.02 Tue Aug 14 04:27:58 CEST 2012
 	- AnyEvent::Util::run_cmd could block indefinitely (analyzed and test
