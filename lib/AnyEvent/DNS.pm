@@ -1403,6 +1403,8 @@ sub resolve($%) {
          ? map +($_ => 1), @{ $opt{accept} }
          : ($qtype => 1);
 
+         @search = "laendlx";#d#
+
       # advance in searchlist
       my ($do_search, $do_req);
       
