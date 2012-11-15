@@ -804,7 +804,6 @@ sub resolve_sockaddr($$$$$$) {
             # aaaa records
             if ($family != 4) {
                $cv->begin;
-               next;#d#
                AnyEvent::DNS::aaaa $node, sub {
                   push @res, [$idx, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, parse_ipv6 $_]]
                      for @_;
