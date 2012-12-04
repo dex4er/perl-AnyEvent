@@ -7,6 +7,8 @@ TODO: FAQ: common pitfalls? invoke-before-return
 TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 
+	- t/63* tests were wrongly in MANIFEST.
+
 7.04 Thu Nov 15 02:23:58 CET 2012
 	- debugging code left in.
 

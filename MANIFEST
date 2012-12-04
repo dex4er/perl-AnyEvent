@@ -47,7 +47,7 @@ t/07_io.t
 t/08_idna.t
 t/09_multi.t
 t/10_loadall.t
-t/io_common 
+t/io_common
 t/11_io_perl.t
 t/12_io_ioaio.t
 t/handle/01_readline.t
@@ -85,13 +85,6 @@ t/62_cocoa_04_condvar.t
 t/62_cocoa_05_dns.t
 t/62_cocoa_07_io.t
 t/62_cocoa_09_multi.t
-t/63_eventlib_01_basic.t
-t/63_eventlib_02_signals.t
-t/63_eventlib_03_child.t
-t/63_eventlib_04_condvar.t
-t/63_eventlib_05_dns.t
-t/63_eventlib_07_io.t
-t/63_eventlib_09_multi.t
 t/64_glib_01_basic.t
 t/64_glib_02_signals.t
 t/64_glib_03_child.t
