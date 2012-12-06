@@ -813,11 +813,15 @@ In list context, all parameters passed to C<send> will be returned,
 in scalar context only the first one will be returned.
 
 Note that doing a blocking wait in a callback is not supported by any
-event loop, that is, recursive invocation of a blocking C<< ->recv
->> is not allowed, and the C<recv> call will C<croak> if such a
-condition is detected. This condition can be slightly loosened by using
-L<Coro::AnyEvent>, which allows you to do a blocking C<< ->recv >> from
-any thread that doesn't run the event loop itself.
+event loop, that is, recursive invocation of a blocking C<< ->recv >> is
+not allowed and the C<recv> call will C<croak> if such a condition is
+detected. This requirement can be dropped by relying on L<Coro::AnyEvent>
+, which allows you to do a blocking C<< ->recv >> from any thread
+that doesn't run the event loop itself. L<Coro::AnyEvent> is loaded
+automatically when L<Coro> is used with L<AnyEvent>, so code does not need
+to do anything special to take advantage of that: any code that would
+normally block your program because it calls C<recv>, be executed in an
+C<async> thread instead without blocking other threads.
 
 Not all event models support a blocking wait - some die in that case
 (programs might want to do that to stay interactive), so I<if you are
