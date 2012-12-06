@@ -765,6 +765,10 @@ begun can potentially be zero:
 
    $cv->end;
 
+   ...
+
+   my $results = $cv->recv;
+
 This code fragment supposedly pings a number of hosts and calls
 C<send> after results for all then have have been gathered - in any
 order. To achieve this, the code issues a call to C<begin> when it starts
