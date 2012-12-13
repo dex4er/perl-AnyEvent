@@ -132,6 +132,27 @@ sub shell($$) {
 
                if ($line =~ /^\s*exit\b/) {
                   syswrite $fh, "sorry, no... if you want to execute exit, try CORE::exit.\015\012";
+               } elsif ($line =~ /^\s*coro\b\s*(.*)/) {
+                  my $arg = $1;
+                  if (eval { require Coro; require Coro::Debug }) {
+                     if ($arg =~ /\S/) {
+                        Coro::async (sub {
+                           select $fh;
+                           Coro::Debug::command ($arg);
+                           local $| = 1; # older Coro versions do not flush
+                           syswrite $fh, "> ";
+                        });
+                        return;
+                     } else {
+                        undef $rw;
+                        syswrite $fh, "switching to Coro::Debug...\015\012";
+                        Coro::async (sub { Coro::Debug::session ($fh) });
+                        return;
+                     }
+                  } else {
+                     syswrite $fh, "Coro not available.\015\012";
+                  }
+
                } else {
                   package AnyEvent::Debug::shell;
 
@@ -178,6 +199,8 @@ ut           disable tracing for newly created watchers
 t  id,...    enable tracing for the given watcher (enabled by default)
 ut id,...    disable tracing for the given watcher
 w id,...     converts the watcher ids to watcher objects (for scripting)
+coro xxx     run xxx as Coro::Debug shell command, if available
+coro         switch to Coro::Debug shell, if available
 EOF
    }
 
