@@ -2931,6 +2931,16 @@ chosen event library does not come with a timing source of its own. The
 pure-perl event loop (L<AnyEvent::Loop>) will additionally load it to
 try to use a monotonic clock for timing stability.
 
+=item L<AnyEvent::AIO> (and L<IO::AIO>)
+
+The default implementation of L<AnyEvent::IO> is to do I/O synchronously,
+stopping programs while they access the disk, which is fine for a lot of
+programs.
+
+Installing AnyEvent::AIO (and its IO::AIO dependency) makes it switch to
+a true asynchronous implementation, so event processing can continue even
+while waiting for disk I/O.
+
 =back
 
 
