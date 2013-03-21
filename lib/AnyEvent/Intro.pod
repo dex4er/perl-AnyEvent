@@ -530,13 +530,16 @@ single line with a user name and then reading the finger response, as
 specified by that user. OK, RFC 1288 specifies a vastly more complex
 protocol, but it basically boils down to this:
 
-   # telnet kernel.org finger
-   Trying 204.152.191.37...
-   Connected to kernel.org (204.152.191.37).
+   # telnet freebsd.org finger
+   Trying 8.8.178.135...
+   Connected to freebsd.org (8.8.178.135).
    Escape character is '^]'.
-   
-   The latest stable version of the Linux kernel is: [...]
-   Connection closed by foreign host.
+   larry
+   Login: lile                             Name: Larry Lile
+   Directory: /home/lile                   Shell: /usr/local/bin/bash
+   No Mail.
+   Mail forwarded to: lile@stdio.com
+   No Plan.
 
 So let's write a little AnyEvent function that makes a finger request:
 
@@ -733,9 +736,9 @@ ignored IPv6 and a few other things that C<tcp_connect> handles for us.
 But the main advantage is that we can not only run this finger function in
 the background, we even can run multiple sessions in parallel, like this:
 
-   my $f1 = finger "trouble", "noc.dfn.de"; # check for trouble tickets
-   my $f2 = finger "1736"   , "noc.dfn.de"; # fetch ticket 1736
-   my $f3 = finger "hpa"    , "kernel.org"; # finger hpa
+   my $f1 = finger "kuriyama", "freebsd.org";
+   my $f2 = finger "thierry" , "freebsd.org";
+   my $f3 = finger "larry"   , "freebsd.org";
 
    print "trouble tickets:\n"     , $f1->recv, "\n";
    print "trouble ticket #1736:\n", $f2->recv, "\n";

@@ -13,6 +13,7 @@ TODO: maybe always try to downgrade in push_write.
           available.
 	- t/63* tests were wrongly in MANIFEST.
         - mention IO::AIO as optional dependency.
+        - kernel.org's finger server went MIA, switch to freebsd.org.
 
 7.04 Thu Nov 15 02:23:58 CET 2012
 	- debugging code left in.
