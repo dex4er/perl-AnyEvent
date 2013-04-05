@@ -1149,24 +1149,24 @@ modules of the AnyEvent author himself :)
 
 =over 4
 
-=item L<AnyEvent::Util>
+=item L<AnyEvent::Util> (part of the AnyEvent distribution)
 
 Contains various utility functions that replace often-used blocking
 functions such as C<inet_aton> with event/callback-based versions.
 
-=item L<AnyEvent::Socket>
+=item L<AnyEvent::Socket> (part of the AnyEvent distribution)
 
 Provides various utility functions for (internet protocol) sockets,
 addresses and name resolution. Also functions to create non-blocking tcp
 connections or tcp servers, with IPv6 and SRV record support and more.
 
-=item L<AnyEvent::Handle>
+=item L<AnyEvent::Handle> (part of the AnyEvent distribution)
 
 Provide read and write buffers, manages watchers for reads and writes,
 supports raw and formatted I/O, I/O queued and fully transparent and
 non-blocking SSL/TLS (via L<AnyEvent::TLS>).
 
-=item L<AnyEvent::DNS>
+=item L<AnyEvent::DNS> (part of the AnyEvent distribution)
 
 Provides rich asynchronous DNS resolver capabilities.
 
@@ -1176,7 +1176,7 @@ Implement event-based interfaces to the protocols of the same name (for
 the curious, IGS is the International Go Server and FCP is the Freenet
 Client Protocol).
 
-=item L<AnyEvent::AIO>
+=item L<AnyEvent::AIO> (part of the AnyEvent distribution)
 
 Truly asynchronous (as opposed to non-blocking) I/O, should be in the
 toolbox of every event programmer. AnyEvent::AIO transparently fuses

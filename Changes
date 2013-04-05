@@ -9,6 +9,8 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe always try to downgrade in push_write.
+.plan archives for this user: finger icculus?listarchives=1@icculus.org
+finger mikachu@
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).
 	- AnyEvent::Debug shell can now run coro shell commands, if
