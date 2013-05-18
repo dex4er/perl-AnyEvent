@@ -273,7 +273,7 @@ Example 2: fire an event after 0.5 seconds, then roughly every second.
 
    my $w = AnyEvent->timer (after => 0.5, interval => 1, cb => sub {
       warn "timeout\n";
-   };
+   });
 
 =head3 TIMING ISSUES
 
