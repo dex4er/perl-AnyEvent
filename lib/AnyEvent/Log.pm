@@ -155,7 +155,7 @@ our ($COLLECT, $FILTER, $LOG);
 our ($now_int, $now_str1, $now_str2);
 
 # Format Time, not public - yet?
-sub ft($) {
+sub format_time($) {
    my $i = int $_[0];
    my $f = sprintf "%06d", 1e6 * ($_[0] - $i);
 
@@ -264,8 +264,8 @@ AnyEvent::post_detect {
 our @LEVEL2STR = qw(0 fatal alert crit error warn note info debug trace);
 
 # time, ctx, level, msg
-sub _format($$$$) {
-   my $ts = ft $_[0];
+sub default_format($$$$) {
+   my $ts = format_time $_[0];
    my $ct = " ";
 
    my @res;
@@ -324,7 +324,7 @@ sub _log {
                # format msg
                my $str = $ctx->[4]
                   ? $ctx->[4]($now, $_[0], $level, $format)
-                  : ($fmt[$level] ||= _format $now, $_[0], $level, $format);
+                  : ($fmt[$level] ||= default_format $now, $_[0], $level, $format);
 
                $success = 1;
 
@@ -455,6 +455,41 @@ Since C<AnyEvent::Log> has to work even before the L<AnyEvent> has been
 initialised, this switch will also decide whether to use C<CORE::time> or
 C<Time::HiRes::time> when logging a message before L<AnyEvent> becomes
 available.
+
+=item AnyEvent::Log::format_time $timestamp
+
+Formats a timestamp as returned by C<< AnyEvent->now > or C<<
+AnyEvent->time >> or many other functions in the same way as
+C<AnyEvent::Log> does.
+
+In your main program (as opposed to in your module) you can override
+the default timestamp display format by loading this module and then
+redefining this function.
+
+Most commonly, this function can be used in formatting callbacks.
+
+=item AnyEvent::Log::default_format $time, $ctx, $level, $msg
+
+Format a log message using the given timestamp, logging context, log level
+and log message.
+
+This is the formatting function used to format messages when no custom
+function is provided.
+
+In your main program (as opposed to in your module) you can override the
+default message format by loading this module and then redefining this
+function.
+
+=item AnyEvent::Log::fatal_exit
+
+This is the function that is called after logging a C<fatal> log
+message. It must not return.
+
+The default implementation simpl calls C<exit 1>.
+
+In your main program (as opposed to in your module) you can override
+the fatal exit function by loading this module and then redefining this
+function. Make sure you don't return.
 
 =back
 
@@ -909,6 +944,20 @@ reference that just stores the values.
 If, for some reason, you want to use C<caller> to find out more about the
 logger then you should walk up the call stack until you are no longer
 inside the C<AnyEvent::Log> package.
+
+To implement your own logging callback, you might find the
+C<AnyEvent::Log::format_time> and C<AnyEvent::Log::default_format>
+functions useful.
+
+Example: format the message just as AnyEvent::Log would, by letting
+AnyEvent::Log do the work. This is a good basis to design a formatting
+callback that only changes minor aspects of the formatting.
+
+   $ctx->fmt_cb (sub {
+      my ($time, $ctx, $lvl, $msg) = @_;
+
+      AnyEvent::Log::default_format $time, $ctx, $lvl, $msg
+   });
 
 Example: format just the raw message, with numeric log level in angle
 brackets.

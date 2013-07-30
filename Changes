@@ -14,6 +14,9 @@ TODO: Daniel Carosone    (5.2K)   1 inbox       AnyEvent::IO vs AnyEvent::AIO (d
 TODO: maybe implement env variable to give hosts precedence
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).
+        - expose AnyEvent::Log::format_time, and allow users to redefine it.
+        - expose AnyEvent::Log::default_format, and allow redefinition.
+        - expose AnyEvent::Log::fatal_exit, to allow redefinition.
 	- AnyEvent::Debug shell can now run coro shell commands, if available.
 	- t/63* tests were wrongly in MANIFEST.
         - mention IO::AIO as optional dependency.
