@@ -8,7 +8,7 @@ no warnings 'utf8';
 
 binmode STDOUT, ":utf8";
 
-open my $fh, "GET http://www.unicode.org/Public/idna/6.1.0/IdnaMappingTable.txt |"
+open my $fh, "GET http://www.unicode.org/Public/idna/6.2.0/IdnaMappingTable.txt |"
    or die;
 
 my $valid;

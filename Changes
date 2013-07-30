@@ -23,6 +23,7 @@ TODO: maybe implement env variable to give hosts precedence
           (reported by various people).
         - hard-disable $^W in most tests, it generates too much garbage output.
         - use a (hopefully) more future-proof method to emulate common::sense.
+        - upgrade to UTS-46:6.2.0.
 
 7.04 Thu Nov 15 02:23:58 CET 2012
 	- debugging code left in.
