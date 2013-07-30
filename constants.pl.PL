@@ -2,19 +2,48 @@
 
 # this file is unfortunately only executed at Makefile.PL time
 
+my ($fh, $oldstdout);
+
+BEGIN {
+   open $fh, ">lib/AnyEvent/constants.pl"
+      or die "lib/AnyEvent/constants.pl: $!\n";
+
+   $oldstdout = select $fh;
+
+   print "# automatically generated from constants.pl.PL\n";
+}
+
+{
+   # from common::sense 3.7
+   use strict qw(vars subs);
+   no warnings;
+   use warnings qw(FATAL closed threads internal debugging pack malloc portable prototype
+                   inplace io pipe unpack deprecated glob digit printf
+                   layer reserved taint closure semicolon);
+   no warnings qw(exec newline unopened);
+
+   BEGIN {
+      my $H    = $^H;
+      my $WARN = ${^WARNING_BITS};
+
+      print "sub AnyEvent::common_sense {\n";
+      printf "   local \$^W;\n";
+      printf "   \${^WARNING_BITS} ^= \${^WARNING_BITS} ^ \"%s\";\n",
+             join "", map "\\x$_", unpack "(H2)*", ${^WARNING_BITS};
+      # use strict, use utf8;
+      printf "   \$^H |= 0x%x;\n", $^H;
+      print "}\n";
+   }
+}
+
 use Config;
+
+print "# generated for perl $] built for $Config{archname}\n";
 
 # when built as part of perl, these are not available
 BEGIN { eval "use Socket ()" }
 BEGIN { eval "use Fcntl  ()" }
 BEGIN { eval "use POSIX  ()" }
-
-open my $fh, ">lib/AnyEvent/constants.pl"
-   or die "lib/AnyEvent/constants.pl: $!\n";
-
-my $oldstdout = select $fh;
-
-print "# automatically generated from constants.pl.PL for perl $] built for $Config{archname}\n";
 
 sub i($$) {
    print "sub $_[0](){", $_[1]*1, "}\n";

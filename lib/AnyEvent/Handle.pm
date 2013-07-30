@@ -1487,11 +1487,13 @@ register_read_type line => sub {
    my ($self, $cb, $eol) = @_;
 
    if (@_ < 3) {
-      # this is more than twice as fast as the generic code below
+      # this is faster then the generic code below
       sub {
-         $_[0]{rbuf} =~ s/^([^\015\012]*)(\015?\012)// or return;
+         (my $pos = index $_[0]{rbuf}, "\012") >= 0
+            or return;
 
-         $cb->($_[0], "$1", "$2");
+         (my $str = substr $_[0]{rbuf}, 0, $pos + 1, "") =~ s/(\015?\012)\Z// or die;
+         $cb->($_[0], $str, "$1");
          1
       }
    } else {

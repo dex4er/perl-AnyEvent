@@ -1,6 +1,7 @@
 use AnyEvent;
 use AnyEvent::Util;
 
+         BEGIN { $^W = 0 }
          BEGIN { $ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\n}), exit 0) }
          BEGIN { eval q{use AnyEvent::Impl::FLTK;1} or ((print qq{1..0 # SKIP AnyEvent::Impl::FLTK not loadable\n}), exit 0) }
          

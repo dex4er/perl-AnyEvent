@@ -22,6 +22,7 @@ EOF
       t=${1#t/}
       <t/"$t" \
       sed -e "s/.*require AnyEvent::Impl::Perl.*/\\
+         BEGIN { $^W = 0 }\\
          BEGIN { \$ENV{PERL_ANYEVENT_LOOP_TESTS} or ((print qq{1..0 # SKIP PERL_ANYEVENT_LOOP_TESTS not true\\\\n}), exit 0) }\\
          BEGIN { eval q{use $module;1} or ((print qq{1..0 # SKIP $module not loadable\\\\n}), exit 0) }\\
          $extra\\
@@ -30,9 +31,11 @@ EOF
    done
 done
 
-(
-   grep -v ^t/6._ MANIFEST
-   for t in t/6?_*; do
-      echo $t
-   done
-) >MANIFEST~ && mv MANIFEST~ MANIFEST
+if false; then
+   (
+      grep -v ^t/6._ MANIFEST
+      for t in t/6?_*; do
+         echo $t
+      done
+   ) >MANIFEST~ && mv MANIFEST~ MANIFEST
+fi
