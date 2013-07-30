@@ -737,12 +737,12 @@ But the main advantage is that we can not only run this finger function in
 the background, we even can run multiple sessions in parallel, like this:
 
    my $f1 = finger "kuriyama", "freebsd.org";
-   my $f2 = finger "thierry" , "freebsd.org";
-   my $f3 = finger "larry"   , "freebsd.org";
+   my $f2 = finger "icculus?listarchives=1", "icculus.org";
+   my $f3 = finger "mikachu", "icculus.org";
 
-   print "trouble tickets:\n"     , $f1->recv, "\n";
-   print "trouble ticket #1736:\n", $f2->recv, "\n";
-   print "kernel release info: "  , $f3->recv, "\n";
+   print "kuriyama's gpg key\n"    , $f1->recv, "\n";
+   print "icculus' plan archive\n" , $f2->recv, "\n";
+   print "mikachu's plan zomgn\n"  , $f3->recv, "\n";
 
 It doesn't look like it, but in fact all three requests run in
 parallel. The code waits for the first finger request to finish first, but

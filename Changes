@@ -9,15 +9,18 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe always try to downgrade in push_write.
-.plan archives for this user: finger icculus?listarchives=1@icculus.org
-finger mikachu@
+TODO: maybe handle \r in lines?
+TODO: expose default formatting implementation (ft &c) in AE::log, also allow overridign fatal exit
+TODO: José Micó          (3.0K)   1 inbox       Error connecting to hosts resolved from /etc/hosts
+TODO: Daniel Carosone    (5.2K)   1 inbox       AnyEvent::IO vs AnyEvent::AIO (doc patch)
+TODO: maybe implement env variable to give hosts precedence
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).
 	- AnyEvent::Debug shell can now run coro shell commands, if
           available.
 	- t/63* tests were wrongly in MANIFEST.
         - mention IO::AIO as optional dependency.
-        - kernel.org's finger server went MIA, switch to freebsd.org.
+        - kernel.org's finger server went MIA, switch to freebsd.org and icculus.org.
 
 7.04 Thu Nov 15 02:23:58 CET 2012
 	- debugging code left in.
