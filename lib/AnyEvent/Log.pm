@@ -458,7 +458,7 @@ available.
 
 =item AnyEvent::Log::format_time $timestamp
 
-Formats a timestamp as returned by C<< AnyEvent->now > or C<<
+Formats a timestamp as returned by C<< AnyEvent->now >> or C<<
 AnyEvent->time >> or many other functions in the same way as
 C<AnyEvent::Log> does.
 

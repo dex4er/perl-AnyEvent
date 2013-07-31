@@ -662,9 +662,11 @@ sub _parse_hosts($) {
       next unless @aliases;
 
       if (my $ip = parse_ipv4 $addr) {
+         ($ip) = $ip =~ /^(.*)$/s if AnyEvent::TAINT;
          push @{ $HOSTS{$_}[0] }, $ip
             for @aliases;
       } elsif (my $ip = parse_ipv6 $addr) {
+         ($ip) = $ip =~ /^(.*)$/s if AnyEvent::TAINT;
          push @{ $HOSTS{$_}[1] }, $ip
             for @aliases;
       }

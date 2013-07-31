@@ -58,10 +58,11 @@ is to I/O the same as L<AnyEvent> is to event libraries - it only
 I<interfaces> to other implementations or to a portable pure-perl
 implementation (which does not, however, do asynchronous I/O).
 
-The only other implementation that is supported (or even known to
-the author) is L<IO::AIO>, which is used automatically when it can
-be loaded. If it is not available, L<AnyEvent::IO> falls back to its
-synchronous pure-perl implementation.
+The only other implementation that is supported (or even known to the
+author) is L<IO::AIO>, which is used automatically when it can be loaded
+(via L<AnyEvent::AIO>, which also needs to be installed). If it is not
+available, then L<AnyEvent::IO> falls back to its synchronous pure-perl
+implementation.
 
 Unlike L<AnyEvent>, which model to use is currently decided at module load
 time, not at first use. Future releases might change this.
@@ -162,8 +163,8 @@ the following import tags can be used:
 The functions in this module are not meant to be the most versatile or
 the highest-performers (they are not very slow either, of course). They
 are primarily meant to give users of your code the option to do the I/O
-asynchronously (by installing L<IO::AIO>), without adding a dependency on
-that module.
+asynchronously (by installing L<IO::AIO> and L<AnyEvent::AIO>),
+without adding a dependency on those modules.
 
 =head2 NAMING
 
