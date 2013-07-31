@@ -8,9 +8,7 @@ TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 
-TODO: expose default formatting implementation (ft &c) in AE::log, also allow overridign fatal exit
 TODO: José Micó          (3.0K)   1 inbox       Error connecting to hosts resolved from /etc/hosts
-TODO: Daniel Carosone    (5.2K)   1 inbox       AnyEvent::IO vs AnyEvent::AIO (doc patch)
 TODO: maybe implement env variable to give hosts precedence
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).
@@ -24,6 +22,8 @@ TODO: maybe implement env variable to give hosts precedence
           icculus.org.
         - handle lone \015's properly in AE::Handle's default line read
           (reported by various people).
+        - clarify that AnyEvent::AIO is needed for AnyEvent::IO to function
+          asynchronously (reported by Daniel Carosone).
         - hard-disable $^W in most tests, it generates too much garbage output.
         - use a (hopefully) more future-proof method to emulate common::sense.
         - upgrade to UTS-46:6.2.0.
