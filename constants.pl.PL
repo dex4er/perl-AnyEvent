@@ -23,9 +23,6 @@ BEGIN {
    no warnings qw(exec newline unopened);
 
    BEGIN {
-      my $H    = $^H;
-      my $WARN = ${^WARNING_BITS};
-
       print "sub AnyEvent::common_sense {\n";
       printf "   local \$^W;\n";
       printf "   \${^WARNING_BITS} ^= \${^WARNING_BITS} ^ \"%s\";\n",

@@ -7,27 +7,30 @@ TODO: FAQ: common pitfalls? invoke-before-return
 TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
-
 TODO: maybe implement env variable to give hosts precedence
-TODO: hosts not used first time.
+
+7.05 Wed Aug 21 10:38:08 CEST 2013
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).
+        - handle lone \015's properly in AE::Handle's default line read
+          (reported by various people).
+        - untaint ip addresses found in /etc/hosts (patch by José Micó).
+        - the memleak fix in 7.03 caused resolving via /etc/hosts to always
+          fail on first use (reported and testcase by Andrew Whatson).
         - expose AnyEvent::Log::format_time, and allow users to redefine it.
         - expose AnyEvent::Log::default_format, and allow redefinition.
         - expose AnyEvent::Log::fatal_exit, to allow redefinition.
 	- AnyEvent::Debug shell can now run coro shell commands, if available.
 	- t/63* tests were wrongly in MANIFEST.
-        - mention IO::AIO as optional dependency.
         - kernel.org's finger server went MIA, switch to freebsd.org and
           icculus.org.
-        - handle lone \015's properly in AE::Handle's default line read
-          (reported by various people).
-        - clarify that AnyEvent::AIO is needed for AnyEvent::IO to function
-          asynchronously (reported by Daniel Carosone).
-        - untaint ip addresses found in /etc/hosts (patch by José Micó).
+        - clarify that IO::AIO and AnyEvent::AIO are needed for AnyEvent::IO
+          to function asynchronously (reported by Daniel Carosone).
         - hard-disable $^W in most tests, it generates too much garbage output.
         - use a (hopefully) more future-proof method to emulate common::sense.
         - upgrade to UTS-46:6.2.0.
+        - switch to INSTLIB from INSTLIBDIR, as INSTLIBDIR was wrongly
+          documented. should not affect anything.
 
 7.04 Thu Nov 15 02:23:58 CET 2012
 	- debugging code left in.

@@ -264,7 +264,7 @@ WATCHERS
 
        my $w = AnyEvent->timer (after => 0.5, interval => 1, cb => sub {
           warn "timeout\n";
-       };
+       });
 
    TIMING ISSUES
     There are two ways to handle timers: based on real time (relative, "fire
@@ -738,6 +738,10 @@ WATCHERS
 
            $cv->end;
 
+           ...
+
+           my $results = $cv->recv;
+
         This code fragment supposedly pings a number of hosts and calls
         "send" after results for all then have have been gathered - in any
         order. To achieve this, the code issues a call to "begin" when it
@@ -776,10 +780,15 @@ WATCHERS
 
         Note that doing a blocking wait in a callback is not supported by
         any event loop, that is, recursive invocation of a blocking "->recv"
-        is not allowed, and the "recv" call will "croak" if such a condition
-        is detected. This condition can be slightly loosened by using
-        Coro::AnyEvent, which allows you to do a blocking "->recv" from any
-        thread that doesn't run the event loop itself.
+        is not allowed and the "recv" call will "croak" if such a condition
+        is detected. This requirement can be dropped by relying on
+        Coro::AnyEvent , which allows you to do a blocking "->recv" from any
+        thread that doesn't run the event loop itself. Coro::AnyEvent is
+        loaded automatically when Coro is used with AnyEvent, so code does
+        not need to do anything special to take advantage of that: any code
+        that would normally block your program because it calls "recv", be
+        executed in an "async" thread instead without blocking other
+        threads.
 
         Not all event models support a blocking wait - some die in that case
         (programs might want to do that to stay interactive), so *if you are
@@ -1084,22 +1093,22 @@ OTHER MODULES
     non-exhaustive list), and the list is heavily biased towards modules of
     the AnyEvent author himself :)
 
-    AnyEvent::Util
+    AnyEvent::Util (part of the AnyEvent distribution)
         Contains various utility functions that replace often-used blocking
         functions such as "inet_aton" with event/callback-based versions.
 
-    AnyEvent::Socket
+    AnyEvent::Socket (part of the AnyEvent distribution)
         Provides various utility functions for (internet protocol) sockets,
         addresses and name resolution. Also functions to create non-blocking
         tcp connections or tcp servers, with IPv6 and SRV record support and
         more.
 
-    AnyEvent::Handle
+    AnyEvent::Handle (part of the AnyEvent distribution)
         Provide read and write buffers, manages watchers for reads and
         writes, supports raw and formatted I/O, I/O queued and fully
         transparent and non-blocking SSL/TLS (via AnyEvent::TLS).
 
-    AnyEvent::DNS
+    AnyEvent::DNS (part of the AnyEvent distribution)
         Provides rich asynchronous DNS resolver capabilities.
 
     AnyEvent::HTTP, AnyEvent::IRC, AnyEvent::XMPP, AnyEvent::GPSD,
@@ -1108,7 +1117,7 @@ OTHER MODULES
         (for the curious, IGS is the International Go Server and FCP is the
         Freenet Client Protocol).
 
-    AnyEvent::AIO
+    AnyEvent::AIO (part of the AnyEvent distribution)
         Truly asynchronous (as opposed to non-blocking) I/O, should be in
         the toolbox of every event programmer. AnyEvent::AIO transparently
         fuses IO::AIO and AnyEvent together, giving AnyEvent access to
@@ -2002,6 +2011,15 @@ RECOMMENDED/OPTIONAL MODULES
         when the chosen event library does not come with a timing source of
         its own. The pure-perl event loop (AnyEvent::Loop) will additionally
         load it to try to use a monotonic clock for timing stability.
+
+    AnyEvent::AIO (and IO::AIO)
+        The default implementation of AnyEvent::IO is to do I/O
+        synchronously, stopping programs while they access the disk, which
+        is fine for a lot of programs.
+
+        Installing AnyEvent::AIO (and its IO::AIO dependency) makes it
+        switch to a true asynchronous implementation, so event processing
+        can continue even while waiting for disk I/O.
 
 FORK
     Most event libraries are not fork-safe. The ones who are usually are

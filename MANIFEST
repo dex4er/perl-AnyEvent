@@ -56,6 +56,7 @@ t/handle/03_http_req.t
 t/handle/04_listen.t
 
 t/80_ssltest.t
+t/81_hosts.t
 
 eg/bench
 eg/runbench

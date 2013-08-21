@@ -1238,7 +1238,7 @@ BEGIN {
 
 use Carp ();
 
-our $VERSION = '7.04';
+our $VERSION = '7.05';
 our $MODEL;
 our @ISA;
 our @REGISTRY;
