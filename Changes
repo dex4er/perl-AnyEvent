@@ -9,6 +9,9 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
+	- force a toplevel domain name in t/81_hosts.t (analyzed by
+          David Jack Wange Olrik).
+
 7.05 Wed Aug 21 10:38:08 CEST 2013
 	- uts46data.pl couldn't be found due to wrong naming of the file
           (reported by Fulko Hew).

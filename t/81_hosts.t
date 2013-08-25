@@ -1,7 +1,7 @@
 use File::Temp qw(tempfile);
 use Test::More tests => 2;
 
-my $test_host = 'test.invalid.tld';
+my $test_host = 'test.invalid.tld.';
 my $test_addr = '127.9.9.9';
 
 my ($hosts_fh, $hosts_file) = tempfile UNLINK => 1;
