@@ -9,6 +9,8 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
+        - calling AnyEvent->now_update with AnyEvent::Impl::Perl causes an
+          endless loop (reported by Dietrich Rebmann).
 	- force a toplevel domain name in t/81_hosts.t (analyzed by
           David Jack Wange Olrik).
 
