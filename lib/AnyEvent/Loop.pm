@@ -130,7 +130,7 @@ our ($NOW, $MNOW);
 sub MAXWAIT() { 3600 } # never sleep for longer than this many seconds
 
 BEGIN {
-   local $SIG{__DIE__};
+   local $SIG{__DIE__}; # protect us against the many broken __DIE__ handlers out there
    my $time_hires = eval "use Time::HiRes (); 1";
    my $clk_tck    = eval "use POSIX (); POSIX::sysconf (POSIX::_SC_CLK_TCK ())";
    my $round; # actual granularity
@@ -153,7 +153,7 @@ BEGIN {
 
          $next = (POSIX::times ())[0];
          # we assume 32 bit signed on wrap but 64 bit will never wrap
-         $last -= 4294967296 if $last > $next; # 0x100000000, but perl has probelsm with big hex constants
+         $last -= 4294967296 if $last > $next; # 0x100000000, but perl has problems with big hex constants
          $MNOW += ($next - $last) * $HZ1;
          $last = $next;
       };
