@@ -747,7 +747,7 @@ one call to C<begin>, so the condvar waits for all calls to C<end> before
 sending.
 
 The ping example mentioned above is slightly more complicated, as the
-there are results to be passwd back, and the number of tasks that are
+there are results to be passed back, and the number of tasks that are
 begun can potentially be zero:
 
    my $cv = AnyEvent->condvar;

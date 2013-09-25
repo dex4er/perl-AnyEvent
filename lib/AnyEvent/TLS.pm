@@ -127,12 +127,13 @@ The constructor supports these arguments (all as key => value pairs).
 
 =over 4
 
-=item method => "SSLv2" | "SSLv3" | "TLSv1" | "any"
+=item method => "SSLv2" | "SSLv3" | "TLSv1" | "TLSv1_1" | "TLSv1_2" | "any"
 
-The protocol parser to use. C<SSLv2>, C<SSLv3> and C<TLSv1> will use
-a parser for those protocols only (so will I<not> accept or create
-connections with/to other protocol versions), while C<any> (the
-default) uses a parser capable of all three protocols.
+The protocol parser to use. C<SSLv2>, C<SSLv3>, C<TLSv1>, C<TLSv1_1>
+and C<TLSv1_2> will use a parser for those protocols only (so will
+I<not> accept or create connections with/to other protocol versions),
+while C<any> (the default) uses a parser capable of all three
+protocols.
 
 The default is to use C<"any"> but disable SSLv2. This has the effect of
 sending a SSLv2 hello, indicating the support for SSLv3 and TLSv1, but not
@@ -141,10 +142,14 @@ actually negotiating an (insecure) SSLv2 connection.
 Specifying a specific version is almost always wrong to use for a server
 speaking to a wide variety of clients (e.g. web browsers), and often wrong
 for a client. If you only want to allow a specific protocol version, use
-the C<sslv2>, C<sslv3> or C<tlsv1> arguments instead.
+the C<sslv2>, C<sslv3>, C<tlsv1>, C<tlsv1_1> or C<tlsv1_2> arguments instead.
 
 For new services it is usually a good idea to enforce a C<TLSv1> method
 from the beginning.
+
+C<TLSv1_1> and C<TLSv1_2> require L<Net::SSLeay> >= 1.55 and OpenSSL
+>= 1.0.1. Check the L<Net::SSLeay> and OpenSSL documentations for more
+details.
 
 =item sslv2 => $enabled
 
@@ -157,6 +162,20 @@ Enable or disable SSLv3 (normally I<enabled>).
 =item tlsv1 => $enabled
 
 Enable or disable TLSv1 (normally I<enabled>).
+
+=item tlsv1_1 => $enabled
+
+Enable or disable TLSv1_1 (normally I<enabled>).
+
+This requires L<Net::SSLeay> >= 1.55 and OpenSSL >= 1.0.1. Check the
+L<Net::SSLeay> and OpenSSL documentations for more details.
+
+=item tlsv1_2 => $enabled
+
+Enable or disable TLSv1_2 (normally I<enabled>).
+
+This requires L<Net::SSLeay> >= 1.55 and OpenSSL >= 1.0.1. Check the
+L<Net::SSLeay> and OpenSSL documentations for more details.
 
 =item verify => $enable
 
@@ -553,6 +572,30 @@ sub init ();
 #   ocsp_request => 7,
 #);
 
+BEGIN {
+   eval 'sub _check_tls_gt_1 (){'
+      . (($Net::SSLeay::VERSION >= 1.55 && Net::SSLeay::OPENSSL_VERSION_NUMBER() >= 0x1000100f)*1)
+      . '}';
+}
+
+our %SSL_METHODS = (
+   any     => \&Net::SSLeay::CTX_new,
+   sslv23  => \&Net::SSLeay::CTX_new, # deliberately undocumented
+   sslv2   => \&Net::SSLeay::CTX_v2_new,
+   sslv3   => \&Net::SSLeay::CTX_v3_new,
+   tlsv1   => \&Net::SSLeay::CTX_tlsv1_new,
+);
+
+# Add TLSv1_1 and TLSv1_2 if Net::SSLEay and openssl allow them
+if (_check_tls_gt_1) {
+   $SSL_METHODS{tlsv1_1} = \&Net::SSLeay::CTX_tlsv1_1_new;
+   $SSL_METHODS{tlsv1_2} = \&Net::SSLeay::CTX_tlsv1_2_new;
+} else {
+   for my $method (qw(tlsv1_1 tlsv1_2)) {
+      $SSL_METHODS{$method} = sub { croak "AnyEvent::TLS method '$method' requires openssl v1.0.1 and Net::SSLeay 1.55 or higher" };
+   }
+}
+
 sub new {
    my ($class, %arg) = @_;
 
@@ -560,12 +603,8 @@ sub new {
 
    my $method = lc $arg{method} || "any";
 
-   my $ctx = $method eq "any"    ? Net::SSLeay::CTX_new       ()
-           : $method eq "sslv23" ? Net::SSLeay::CTX_new       () # deliberately undocumented
-           : $method eq "sslv2"  ? Net::SSLeay::CTX_v2_new    ()
-           : $method eq "sslv3"  ? Net::SSLeay::CTX_v3_new    ()
-           : $method eq "tlsv1"  ? Net::SSLeay::CTX_tlsv1_new ()
-           : croak "'$method' is not a valid AnyEvent::TLS method (must be one of SSLv2, SSLv3, TLSv1 or any)";
+   my $ctx = ($SSL_METHODS{$method}
+              || croak "'$method' is not a valid AnyEvent::TLS method (must be one of @{[ sort keys %SSL_METHODS ]})")->();
 
    my $self = bless { ctx => $ctx }, $class; # to make sure it's destroyed if we croak
 
@@ -574,6 +613,8 @@ sub new {
    $op |= Net::SSLeay::OP_NO_SSLv2      () unless $arg{sslv2};
    $op |= Net::SSLeay::OP_NO_SSLv3      () if exists $arg{sslv3} && !$arg{sslv3};
    $op |= Net::SSLeay::OP_NO_TLSv1      () if exists $arg{tlsv1} && !$arg{tlsv1};
+   $op |= Net::SSLeay::OP_NO_TLSv1_1    () if exists $arg{tlsv1_1} && !$arg{tlsv1_1} && _check_tls_gt_1;
+   $op |= Net::SSLeay::OP_NO_TLSv1_2    () if exists $arg{tlsv1_1} && !$arg{tlsv1_1} && _check_tls_gt_1;
    $op |= Net::SSLeay::OP_SINGLE_DH_USE () if !exists $arg{dh_single_use} || $arg{dh_single_use};
 
    Net::SSLeay::CTX_set_options ($ctx, $op);
