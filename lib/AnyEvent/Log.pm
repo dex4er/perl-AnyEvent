@@ -73,9 +73,9 @@ level at runtime with something like:
    $AnyEvent::Log::FILTER->level ("info");
 
 The design goal behind this module was to keep it simple (and small),
-but make it powerful enough to be potentially useful for any module, and
-extensive enough for the most common tasks, such as logging to multiple
-targets, or being able to log into a database.
+but make it powerful enough to be potentially useful for any module,
+and extensive enough for the most common tasks, such as logging to
+multiple targets, or being able to log into a database.
 
 The module is also usable before AnyEvent itself is initialised, in which
 case some of the functionality might be reduced.
@@ -1497,6 +1497,12 @@ assumes the log level for AnyEvent::Debug hasn't been changed from the
 default.
 
 =back
+
+=head1 ASYNCHRONOUS DISK I/O
+
+This module uses L<AnyEvent::IO> to actually write log messages (in
+C<log_to_file> and C<log_to_path>), so it doesn't block your program when
+the disk is busy and a non-blocking L<AnyEvent::IO> backend is available.
 
 =head1 AUTHOR
 
