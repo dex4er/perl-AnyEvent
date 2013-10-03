@@ -574,7 +574,7 @@ sub init ();
 
 BEGIN {
    eval 'sub _check_tls_gt_1 (){'
-      . (($Net::SSLeay::VERSION >= 1.55 && Net::SSLeay::OPENSSL_VERSION_NUMBER() >= 0x1000100f)*1)
+      . (($Net::SSLeay::VERSION >= 1.55 && Net::SSLeay::OPENSSL_VERSION_NUMBER() >= 0x1000100f) * 1)
       . '}';
 }
 
@@ -614,7 +614,7 @@ sub new {
    $op |= Net::SSLeay::OP_NO_SSLv3      () if exists $arg{sslv3} && !$arg{sslv3};
    $op |= Net::SSLeay::OP_NO_TLSv1      () if exists $arg{tlsv1} && !$arg{tlsv1};
    $op |= Net::SSLeay::OP_NO_TLSv1_1    () if exists $arg{tlsv1_1} && !$arg{tlsv1_1} && _check_tls_gt_1;
-   $op |= Net::SSLeay::OP_NO_TLSv1_2    () if exists $arg{tlsv1_1} && !$arg{tlsv1_1} && _check_tls_gt_1;
+   $op |= Net::SSLeay::OP_NO_TLSv1_2    () if exists $arg{tlsv1_2} && !$arg{tlsv1_2} && _check_tls_gt_1;
    $op |= Net::SSLeay::OP_SINGLE_DH_USE () if !exists $arg{dh_single_use} || $arg{dh_single_use};
 
    Net::SSLeay::CTX_set_options ($ctx, $op);
