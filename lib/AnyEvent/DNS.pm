@@ -1106,7 +1106,7 @@ sub _recv {
 
    my ($port, $host) = AnyEvent::Socket::unpack_sockaddr ($peer);
 
-   return unless $port == 53 && grep $_ eq $host, @{ $self->{server} };
+   return unless $port == DOMAIN_PORT && grep $_ eq $host, @{ $self->{server} };
 
    $self->_feed ($pkt);
 }
