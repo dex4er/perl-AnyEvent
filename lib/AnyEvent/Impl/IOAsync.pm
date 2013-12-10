@@ -19,6 +19,40 @@ I/O, timers, signals and child process watchers. Idle watchers are emulated.
 I/O watchers need to dup their fh because IO::Async only supports IO handles,
 not plain file descriptors.
 
+=head1 FUNCTIONS AND VARIABLES
+
+The only user-servicible part in this module is the C<set_loop> function
+and C<$LOOP> variable:
+
+=over 4
+
+=item AnyEvent::Impl::IOAsync::set_loop $new_loop
+
+Unfortunately, IO::Async has no concept of a default loop. Modules using
+IO::Async must be told by their caller which loop to use, which makes it
+impossible to transparently use IO::Async from a module.
+
+This module is no exception. It creates a new IO::Async::Loop object when
+it is loaded. This might not be the right loop object, though, and thus
+you can replace it by a call to this function with the loop object of your
+choice.
+
+Note that switching loops while watchers are already initialised can have
+unexpected effects, and is not supported unless you can live witht he
+consequences.
+
+=item $AnyEvent::Impl::IOAsync::LOOP
+
+This variable always contains the IO::Async::Loop object used by this
+AnyEvent backend. See above for more info.
+
+Storing the "default" loop makes this module a possible arbiter for other
+modules that want to use IO::Async transparently. It's advised to directly
+refer to this variable each time you want to use it, without making a
+local copy.
+
+=back
+
 =head1 PROBLEMS WITH IO::Async
 
 This section had a long list of problems and shortcomings that made it

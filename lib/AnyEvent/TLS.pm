@@ -250,15 +250,10 @@ This RFC isn't very useful in determining how to do verification so it
 just assumes that subjectAltNames are possible, but no wildcards are
 possible anywhere.
 
-=item [$check_cn, $wildcards_in_alt, $wildcards_in_cn]
+=item [$wildcards_in_alt, $wildcards_in_cn, $check_cn]
 
 You can also specify a scheme yourself by using an array reference with
 three integers.
-
-C<$check_cn> specifies if and how the common name field is used: C<0>
-means it will be completely ignored, C<1> means it will only be used if
-no host names have been found in the subjectAltNames, and C<2> means the
-common name will always be checked against the peername.
 
 C<$wildcards_in_alt> and C<$wildcards_in_cn> specify whether and where
 wildcards (C<*>) are allowed in subjectAltNames and the common name,
@@ -266,6 +261,11 @@ respectively. C<0> means no wildcards are allowed, C<1> means they
 are allowed only as the first component (C<*.example.org>), and C<2>
 means they can be used anywhere (C<www*.example.org>), except that very
 dangerous matches will not be allowed (C<*.org> or C<*>).
+
+C<$check_cn> specifies if and how the common name field is checked: C<0>
+means it will be completely ignored, C<1> means it will only be used if
+no host names have been found in the subjectAltNames, and C<2> means the
+common name will always be checked against the peername.
 
 =back
 

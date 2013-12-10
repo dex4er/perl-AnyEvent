@@ -11,13 +11,16 @@ TODO: maybe implement env variable to give hosts precedence
 
 TODO: newer openssl versions don't like 0-byte writes, work around
 TODO: mention AnyEvent::fork etc.
-TODO: mention AnyEvent::Impl::IOAsync::set_loop (also implement get_loop).
-TODO: From: Maxime Soulé <btik-cpan@scoubidou.com>    verify_peername => [ 2, 0, 0 ]
+	- the documentation for custom tls verify schemes was wrong. make it agree
+          with the code (reported by Maxime Soulé).
 	- added cbor read and write types to AnyEvent::Handle (using CBOR::XS).
         - calling AnyEvent->now_update with AnyEvent::Impl::Perl caused an
           endless loop (reported by Dietrich Rebmann).
         - add tlsv1_1 and tlsv1_2 protocols to AnyEvent::TLS
           (patch by Maxime Soulé).
+        - document AnyEvent::Impl::IOAsync::set_loop and
+          $AnyEvent::Impl::IOAsync::LOOP. Though only documented now, this
+          functionality has _always_ been available.
 	- force a toplevel domain name in t/81_hosts.t (analyzed by
           David Jack Wange Olrik).
         - document that AnyEvent::Log uses AnyEvent::IO.
