@@ -9,11 +9,12 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
-TODO: newer openssl versions don't like 0-byte writes, work around
 TODO: mention AnyEvent::fork etc.
 	- the documentation for custom tls verify schemes was wrong. make it agree
           with the code (reported by Maxime Soulé).
 	- added cbor read and write types to AnyEvent::Handle (using CBOR::XS).
+        - work around an API change in openssl that could cause wrong tls connection
+          aborts, likely on windows only (analyzed by sten).
         - calling AnyEvent->now_update with AnyEvent::Impl::Perl caused an
           endless loop (reported by Dietrich Rebmann).
         - add tlsv1_1 and tlsv1_2 protocols to AnyEvent::TLS

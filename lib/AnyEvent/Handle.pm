@@ -2065,15 +2065,18 @@ sub _dotls {
 
    my $tmp;
 
-   if (length $self->{_tls_wbuf}) {
-      while (($tmp = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
-         substr $self->{_tls_wbuf}, 0, $tmp, "";
+   while (length $self->{_tls_wbuf}) {
+      if (($tmp = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) <= 0) {
+         $tmp = Net::SSLeay::get_error ($self->{tls}, $tmp);
+
+         return $self->_tls_error ($tmp)
+            if $tmp != $ERROR_WANT_READ
+               && ($tmp != $ERROR_SYSCALL || $!);
+
+         last;
       }
 
-      $tmp = Net::SSLeay::get_error ($self->{tls}, $tmp);
-      return $self->_tls_error ($tmp)
-         if $tmp != $ERROR_WANT_READ
-            && ($tmp != $ERROR_SYSCALL || $!);
+      substr $self->{_tls_wbuf}, 0, $tmp, "";
    }
 
    while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
@@ -2097,7 +2100,7 @@ sub _dotls {
       $self->{tls} or return; # tls session might have gone away in callback
    }
 
-   $tmp = Net::SSLeay::get_error ($self->{tls}, -1);
+   $tmp = Net::SSLeay::get_error ($self->{tls}, -1); # -1 is not neccessarily correct, but Net::SSLeay doesn't tell us
    return $self->_tls_error ($tmp)
       if $tmp != $ERROR_WANT_READ
          && ($tmp != $ERROR_SYSCALL || $!);
