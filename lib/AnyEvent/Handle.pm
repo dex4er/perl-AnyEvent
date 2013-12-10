@@ -498,7 +498,7 @@ callback.
 This callback will only be called on TLS shutdowns, not when the
 underlying handle signals EOF.
 
-=item json => JSON or JSON::XS object
+=item json => L<JSON> or L<JSON::XS> object
 
 This is the json coder object used by the C<json> read and write types.
 
@@ -506,8 +506,21 @@ If you don't supply it, then AnyEvent::Handle will create and use a
 suitable one (on demand), which will write and expect UTF-8 encoded JSON
 texts.
 
-Note that you are responsible to depend on the JSON module if you want to
-use this functionality, as AnyEvent does not have a dependency itself.
+Note that you are responsible to depend on the L<JSON> module if you want
+to use this functionality, as AnyEvent does not have a dependency on it
+itself.
+
+=item cbor => L<CBOR::XS> object
+
+This is the cbor coder object used by the C<cbor> read and write types.
+
+If you don't supply it, then AnyEvent::Handle will create and use a
+suitable one (on demand), which will write CBOR without using extensions,
+if possible. texts.
+
+Note that you are responsible to depend on the L<CBOR::XS> module if you
+want to use this functionality, as AnyEvent does not have a dependency on
+it itself.
 
 =back
 
@@ -1055,10 +1068,10 @@ The generated JSON text is guaranteed not to contain any newlines: While
 this module doesn't need delimiters after or between JSON texts to be
 able to read them, many other languages depend on that.
 
-A simple RPC protocol that interoperates easily with others is to send
-JSON arrays (or objects, although arrays are usually the better choice as
-they mimic how function argument passing works) and a newline after each
-JSON text:
+A simple RPC protocol that interoperates easily with other languages is
+to send JSON arrays (or objects, although arrays are usually the better
+choice as they mimic how function argument passing works) and a newline
+after each JSON text:
 
    $handle->push_write (json => ["method", "arg1", "arg2"]); # whatever
    $handle->push_write ("\012");
@@ -1071,6 +1084,26 @@ rely on the fact that the newline will be skipped as leading whitespace:
 Other languages could read single lines terminated by a newline and pass
 this line into their JSON decoder of choice.
 
+=item cbor => $perl_scalar
+
+Encodes the given scalar into a CBOR value. Unless you provide your own
+L<CBOR::XS> object, this means it will be encoded to a CBOR string not
+using any extensions, if possible.
+
+CBOR values are self-delimiting, so you can write CBOR at one end of
+a handle and read them at the other end without using any additional
+framing.
+
+A simple nd very very fast RPC protocol that interoperates with
+other languages is to send CBOR and receive CBOR values (arrays are
+recommended):
+
+   $handle->push_write (cbor => ["method", "arg1", "arg2"]); # whatever
+ 
+An AnyEvent::Handle receiver would simply use the C<cbor> read type:
+
+   $handle->push_read (cbor => sub { my $array = $_[1]; ... });
+
 =cut
 
 sub json_coder() {
@@ -1081,9 +1114,20 @@ sub json_coder() {
 register_write_type json => sub {
    my ($self, $ref) = @_;
 
-   my $json = $self->{json} ||= json_coder;
+   ($self->{json} ||= json_coder)
+      ->encode ($ref)
+};
 
-   $json->encode ($ref)
+sub cbor_coder() {
+   require CBOR::XS;
+   CBOR::XS->new
+}
+
+register_write_type cbor => sub {
+   my ($self, $scalar) = @_;
+
+   ($self->{cbor} ||= cbor_coder)
+      ->encode ($scalar)
 };
 
 =item storable => $reference
@@ -1686,7 +1730,6 @@ register_read_type json => sub {
    my $json = $self->{json} ||= json_coder;
 
    my $data;
-   my $rbuf = \$self->{rbuf};
 
    sub {
       my $ref = eval { $json->incr_parse ($_[0]{rbuf}) };
@@ -1710,6 +1753,52 @@ register_read_type json => sub {
       } else {
          $_[0]{rbuf} = "";
 
+         ()
+      }
+   }
+};
+
+=item cbor => $cb->($handle, $scalar)
+
+Reads a CBOR value, decodes it and passes it to the callback. When a parse
+error occurs, an C<EBADMSG> error will be raised.
+
+If a L<CBOR::XS> object was passed to the constructor, then that will be
+used for the final decode, otherwise it will create a CBOR coder without
+enabling any options.
+
+You have to provide a dependency to L<CBOR::XS> on your own: this module
+will load the L<CBOR::XS> module, but AnyEvent does not depend on it
+itself.
+
+Since CBOR values are fully self-delimiting, the C<cbor> read and write
+types are an ideal simple RPC protocol: just exchange CBOR datagrams. See
+the C<cbor> write type description, above, for an actual example.
+
+=cut
+
+register_read_type cbor => sub {
+   my ($self, $cb) = @_;
+
+   my $cbor = $self->{cbor} ||= cbor_coder;
+
+   my $data;
+
+   sub {
+      my (@value) = eval { $cbor->incr_parse ($_[0]{rbuf}) };
+
+      if (@value) {
+         $cb->($_[0], @value);
+
+         1
+      } elsif ($@) {
+         # error case
+         $cbor->incr_reset;
+
+         $_[0]->_error (Errno::EBADMSG);
+
+         ()
+      } else {
          ()
       }
    }
