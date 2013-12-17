@@ -9,6 +9,7 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
+7.07 Tue Dec 17 17:45:02 CET 2013
 	- the documentation for custom tls verify schemes was wrong. make it agree
           with the code (reported by Maxime Soulé).
 	- added cbor read and write types to AnyEvent::Handle (using CBOR::XS).
