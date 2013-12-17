@@ -489,6 +489,10 @@ Example: fork a process and wait for it
 
    my $done = AnyEvent->condvar;
   
+   # this forks and immediately calls exit in the child. this
+   # normally has all sorts of bad consequences for your parent,
+   # so take this as an example only. always fork and exec,
+   # or call POSIX::_exit, in real code.
    my $pid = fork or exit 5;
   
    my $w = AnyEvent->child (
@@ -1183,6 +1187,17 @@ toolbox of every event programmer. AnyEvent::AIO transparently fuses
 L<IO::AIO> and AnyEvent together, giving AnyEvent access to event-based
 file I/O, and much more.
 
+=item L<AnyEvent::Fork>, L<AnyEvent::Fork::RPC>, L<AnyEvent::Fork::Pool>, L<AnyEvent::Fork::Remote>
+
+These let you safely fork new subprocesses, either locally or
+remotely (e.g.v ia ssh), using some RPC protocol or not, without
+the limitations normally imposed by fork (AnyEvent works fine for
+example). Dynamically-resized worker pools are obviously included as well.
+
+And they are quite tiny and fast as well - "abusing" L<AnyEvent::Fork>
+just to exec external programs can easily beat using C<fork> and C<exec>
+(or even C<system>) in most programs.
+
 =item L<AnyEvent::Filesys::Notify>
 
 AnyEvent is good for non-blocking stuff, but it can't detect file or
@@ -1193,17 +1208,13 @@ some weird, without doubt broken, stuff on OS X to monitor files. It can
 fall back to blocking scans at regular intervals transparently on other
 platforms, so it's about as portable as it gets.
 
-(I haven't used it myself, but I haven't heard anybody complaining about
-it yet).
+(I haven't used it myself, but it seems the biggest problem with it is
+it quite bad performance).
 
 =item L<AnyEvent::DBI>
 
 Executes L<DBI> requests asynchronously in a proxy process for you,
 notifying you in an event-based way when the operation is finished.
-
-=item L<AnyEvent::HTTPD>
-
-A simple embedded webserver.
 
 =item L<AnyEvent::FastPing>
 
@@ -2953,16 +2964,34 @@ is loaded).
 
 If you have to fork, you must either do so I<before> creating your first
 watcher OR you must not use AnyEvent at all in the child OR you must do
-something completely out of the scope of AnyEvent.
+something completely out of the scope of AnyEvent (see below).
 
 The problem of doing event processing in the parent I<and> the child
 is much more complicated: even for backends that I<are> fork-aware or
 fork-safe, their behaviour is not usually what you want: fork clones all
 watchers, that means all timers, I/O watchers etc. are active in both
-parent and child, which is almost never what you want. USing C<exec>
-to start worker children from some kind of manage rprocess is usually
+parent and child, which is almost never what you want. Using C<exec>
+to start worker children from some kind of manage prrocess is usually
 preferred, because it is much easier and cleaner, at the expense of having
 to have another binary.
+
+In addition to logical problems with fork, there are also implementation
+problems. For example, on POSIX systems, you cannot fork at all in Perl
+code if a thread (I am talking of pthreads here) was ever created in the
+process, and this is just the tip of the iceberg. In general, using fork
+from Perl is difficult, and attempting to use fork without an exec to
+implement some kind of parallel processing is almost certainly doomed.
+
+To safely fork and exec, you should use a module such as
+L<Proc::FastSpawn> that let's you safely fork and exec new processes.
+
+If you want to do multiprocessing using processes, you can
+look at the L<AnyEvent::Fork> module (and some related modules
+such as L<AnyEvent::Fork::RPC>, L<AnyEvent::Fork::Pool> and
+L<AnyEvent::Fork::Remote>). This module allows you to safely create
+subprocesses without any limitations - you can use X11 toolkits or
+AnyEvent in the children created by L<AnyEvent::Fork> safely and without
+any special precautions.
 
 
 =head1 SECURITY CONSIDERATIONS

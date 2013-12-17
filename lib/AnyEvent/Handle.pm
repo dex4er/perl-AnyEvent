@@ -498,17 +498,13 @@ callback.
 This callback will only be called on TLS shutdowns, not when the
 underlying handle signals EOF.
 
-=item json => L<JSON> or L<JSON::XS> object
+=item json => L<JSON>, L<JSON::PP> or L<JSON::XS> object
 
 This is the json coder object used by the C<json> read and write types.
 
 If you don't supply it, then AnyEvent::Handle will create and use a
 suitable one (on demand), which will write and expect UTF-8 encoded JSON
 texts.
-
-Note that you are responsible to depend on the L<JSON> module if you want
-to use this functionality, as AnyEvent does not have a dependency on it
-itself.
 
 =item cbor => L<CBOR::XS> object
 
@@ -1108,7 +1104,7 @@ An AnyEvent::Handle receiver would simply use the C<cbor> read type:
 
 sub json_coder() {
    eval { require JSON::XS; JSON::XS->new->utf8 }
-      || do { require JSON; JSON->new->utf8 }
+      || do { require JSON::PP; JSON::PP->new->utf8 }
 }
 
 register_write_type json => sub {
@@ -1710,13 +1706,12 @@ register_read_type packstring => sub {
 Reads a JSON object or array, decodes it and passes it to the
 callback. When a parse error occurs, an C<EBADMSG> error will be raised.
 
-If a C<json> object was passed to the constructor, then that will be used
-for the final decode, otherwise it will create a JSON coder expecting UTF-8.
+If a C<json> object was passed to the constructor, then that will be
+used for the final decode, otherwise it will create a L<JSON::XS> or
+L<JSON::PP> coder object expecting UTF-8.
 
 This read type uses the incremental parser available with JSON version
-2.09 (and JSON::XS version 2.2) and above. You have to provide a
-dependency on your own: this module will load the JSON module, but
-AnyEvent does not depend on it itself.
+2.09 (and JSON::XS version 2.2) and above.
 
 Since JSON texts are fully self-delimiting, the C<json> read and write
 types are an ideal simple RPC protocol: just exchange JSON datagrams. See
