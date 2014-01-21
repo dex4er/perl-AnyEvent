@@ -1035,7 +1035,7 @@ asynchronously does something for you and returns some transaction
 object or guard to let you cancel the operation. For example,
 C<AnyEvent::Socket::tcp_connect>:
 
-   # start a conenction attempt unless one is active
+   # start a connection attempt unless one is active
    $self->{connect_guard} ||= AnyEvent::Socket::tcp_connect "www.example.net", 80, sub {
       delete $self->{connect_guard};
       ...
@@ -2212,7 +2212,7 @@ list.
 
 This variable can effectively be used for denial-of-service attacks
 against local programs (e.g. when setuid), although the impact is likely
-small, as the program has to handle conenction and other failures anyways.
+small, as the program has to handle connection and other failures anyways.
 
 Examples: C<PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6> - prefer IPv4 over IPv6,
 but support both and try to use both.  C<PERL_ANYEVENT_PROTOCOLS=ipv4>

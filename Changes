@@ -1,5 +1,10 @@
 Revision history for Perl extension AnyEvent.
 
+03:55:22 <Sadrak> Doku zu new: It is possible to push requests on the read and write queues, and modify properties of the stream, even 
+                  while
+03:55:23 <Sadrak>                AnyEvent::Handle is connecting.
+03:55:39 <Sadrak> doku zu on_connect: It is not allowed to use the read or write queues while the handle object is connecting.
+
 TODO: document TCP_*** constants
 TODO: add debug/trace logging to some modules
 TODO: use the eval-with-cb-call trick also to speed up JSON?
