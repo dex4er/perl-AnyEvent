@@ -904,9 +904,6 @@ in not-yet-connected state as only argument and must return the connection
 timeout value (or C<0>, C<undef> or the empty list to indicate the default
 timeout is to be used).
 
-Note that the socket could be either a IPv4 TCP socket or an IPv6 TCP
-socket (although only IPv4 is currently supported by this module).
-
 Note to the poor Microsoft Windows users: Windows (of course) doesn't
 correctly signal connection errors, so unless your event library works
 around this, failed connections will simply hang. The only event libraries
