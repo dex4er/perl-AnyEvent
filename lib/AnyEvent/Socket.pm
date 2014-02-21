@@ -578,8 +578,14 @@ module (C<format_address> converts it to C<unix/>).
 # perl contains a bug (imho) where it requires that the kernel always returns
 # sockaddr_un structures of maximum length (which is not, AFAICS, required
 # by any standard). try to 0-pad structures for the benefit of those platforms.
+# unfortunately, the IO::Async author chose to break Socket again in version
+# 2.011 - it now contains a bogus length check, so we disable the workaround.
 
-my $sa_un_zero = eval { Socket::pack_sockaddr_un "" }; $sa_un_zero ^= $sa_un_zero;
+my $sa_un_zero = $Socket::VERSION >= 2.011
+   ? ""
+   : eval { Socket::pack_sockaddr_un "" };
+
+$sa_un_zero ^= $sa_un_zero;
 
 sub unpack_sockaddr($) {
    my $af = sockaddr_family $_[0];
