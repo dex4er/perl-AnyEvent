@@ -16,6 +16,8 @@ TODO: maybe implement env variable to give hosts precedence
 
         - work around a newly introduced bug in Socket 2.011 (an
           errornous sun_length check) (analyzed by Maxime Soulé).
+	- AnyEvent::TLS didn't load (but refer to) AnyEvent::Socket
+          (analyzed by Ben Magistro).
 
 7.07 Tue Dec 17 17:45:02 CET 2013
 	- the documentation for custom tls verify schemes was wrong. make it agree

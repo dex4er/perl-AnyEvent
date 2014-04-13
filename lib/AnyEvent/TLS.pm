@@ -1009,7 +1009,8 @@ sub verify_hostname($$$) {
    my @cert_alt = Net::SSLeay::X509_get_subjectAltNames ($cert);
 
    # rfc2460 - convert to network byte order
-   my $ip = AnyEvent::Socket::parse_address $cn;
+   require AnyEvent::Socket ();
+   my $ip = AnyEvent::Socket::parse_address ($cn);
 
    my $alt_dns_count;
 
