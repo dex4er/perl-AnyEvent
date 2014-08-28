@@ -698,7 +698,7 @@ resolver object.
 The resolver is created with the following parameters:
 
    untaint          enabled
-   max_outstanding  $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}
+   max_outstanding  $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS} (default 10)
 
 C<os_config> will be used for OS-specific configuration, unless
 C<$ENV{PERL_ANYEVENT_RESOLV_CONF}> is specified, in which case that file
@@ -722,7 +722,7 @@ sub resolver() {
    $RESOLVER || do {
       $RESOLVER = new AnyEvent::DNS
          untaint         => 1,
-         max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 1,
+         max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 10,
       ;
 
       $ENV{PERL_ANYEVENT_RESOLV_CONF}
