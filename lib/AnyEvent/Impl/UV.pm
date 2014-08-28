@@ -49,7 +49,7 @@ sub io_watcher_cb {
 }
 
 sub AnyEvent::Impl::UV::io_slave::new {
-   bless +{ parent => $_[1] }, $_[0];
+   bless { parent => $_[1] }, $_[0]
 }
 
 sub AnyEvent::Impl::UV::io_slave::DESTROY {
@@ -90,7 +90,7 @@ sub io {
    unless (defined $master->{w}) {
       $master->{w} = UV::poll_init $fd;
       return warnlog $master->{w} unless defined $master->{w};
-      $master->{slaves} = +{};
+      $master->{slaves} = {};
    }
 
    my $slave = AnyEvent::Impl::UV::io_slave->new ($master);

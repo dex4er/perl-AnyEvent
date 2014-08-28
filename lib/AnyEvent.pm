@@ -2,8 +2,8 @@
 
 AnyEvent - the DBI of event loop programming
 
-EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async, Qt,
-FLTK and POE are various supported event loops/environments.
+EV, Event, Glib, Tk, UV, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async,
+Qt, FLTK and POE are various supported event loops/environments.
 
 =head1 SYNOPSIS
 
@@ -885,6 +885,7 @@ create watchers. Nothing special needs to be done by the main program.
    AnyEvent::Impl::Event     based on Event, very stable, few glitches.
    AnyEvent::Impl::Glib      based on Glib, slow but very stable.
    AnyEvent::Impl::Tk        based on Tk, very broken.
+   AnyEvent::Impl::UV        based on UV, innovated square wheels.
    AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
    AnyEvent::Impl::POE       based on POE, very slow, some limitations.
    AnyEvent::Impl::Irssi     used when running within irssi.
@@ -1368,6 +1369,7 @@ our @models = (
    # everything below here should not be autoloaded
    [Event::Lib::           => AnyEvent::Impl::EventLib::], # too buggy
    [Tk::                   => AnyEvent::Impl::Tk::],       # crashes with many handles
+   [UV::                   => AnyEvent::Impl::UV::],       # switched from libev, added back all bugs imaginable
    [Qt::                   => AnyEvent::Impl::Qt::],       # requires special main program
    [POE::Kernel::          => AnyEvent::Impl::POE::],      # lasciate ogni speranza
    [Wx::                   => AnyEvent::Impl::POE::],
