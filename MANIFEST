@@ -23,6 +23,7 @@ lib/AnyEvent/Impl/POE.pm
 lib/AnyEvent/Impl/Perl.pm
 lib/AnyEvent/Impl/Qt.pm
 lib/AnyEvent/Impl/Tk.pm
+lib/AnyEvent/Impl/UV.pm
 lib/AnyEvent/IO.pm
 lib/AnyEvent/IO/IOAIO.pm
 lib/AnyEvent/IO/Perl.pm
@@ -128,3 +129,11 @@ t/69_ev_04_condvar.t
 t/69_ev_05_dns.t
 t/69_ev_07_io.t
 t/69_ev_09_multi.t
+t/70_uv_01_basic.t
+t/70_uv_02_signals.t
+t/70_uv_03_child.t
+t/70_uv_04_condvar.t
+t/70_uv_05_dns.t
+t/70_uv_07_io.t
+t/70_uv_09_multi.t
+

@@ -67,6 +67,7 @@ WriteMakefile(
         'lib/AnyEvent/Impl/Perl.pm'      => '$(INST_LIB)/AnyEvent/Impl/Perl.pm',
         'lib/AnyEvent/Impl/Qt.pm'        => '$(INST_LIB)/AnyEvent/Impl/Qt.pm',
         'lib/AnyEvent/Impl/Tk.pm'        => '$(INST_LIB)/AnyEvent/Impl/Tk.pm',
+        'lib/AnyEvent/Impl/UV.pm'        => '$(INST_LIB)/AnyEvent/Impl/UV.pm',
         'lib/AnyEvent/IO.pm'             => '$(INST_LIB)/AnyEvent/IO.pm',
         'lib/AnyEvent/IO/IOAIO.pm'       => '$(INST_LIB)/AnyEvent/IO/IOAIO.pm',
         'lib/AnyEvent/IO/Perl.pm'        => '$(INST_LIB)/AnyEvent/IO/Perl.pm',
