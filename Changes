@@ -23,6 +23,10 @@ TODO: Mike Lowell AnyEvent + libuv
           (analyzed by Ben Magistro).
         - AnyEvent::Strict will now confess, not croak. This is in line with
           it being a development/debugging tool.
+        - work around a number of libglib bugs (debug builds of libglib enforce
+          certain undocumented behaviour patterns such as not being able to
+          remove a child watch source after it has fired, which we will try
+          to emulate to avoid "criticals". what where they thinking...).
         - changed default dns resolver "max_outstanding" value from 1 to 10,
           the latter beinfg the intended value all along
           (reported by Ilya Chesnokov).

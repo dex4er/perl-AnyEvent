@@ -19,10 +19,22 @@ Glib is probably the most inefficient event loop that has ever seen the
 light of the world: Glib not only scans all its watchers (really, ALL of
 them, whether I/O-related, timer-related or what not) during each loop
 iteration, it also does so multiple times and rebuilds the poll list for
-the kernel each time again, dynamically even.
+the kernel each time again, dynamically even. Newer versions of libglib
+fortunately do not call malloc/free on every single watcher invocation,
+though.
 
-On the positive side, and most importantly, Glib generally works
-correctly, no quarrels there.
+Glib also enforces certain undocumented behaviours, for example, you
+cannot always remove active child watchers, and the conditions on when
+it is valid to do so are not documented. Of course, if you get it wrong,
+you get "GLib-CRITICAL" messages. This makes it extremely hard to write
+"correct" glib programs, as you have to study the source code to get it
+right, and hope future versions don't change any internals.
+
+AnyEvent implements the necessary workarounds, at a small performance
+cost.
+
+On the positive side, and most importantly, when it works, Glib generally
+works correctly, no quarrels there.
 
 If you create many watchers (as in: more than two), you might consider one
 of the L<Glib::EV>, L<EV::Glib> or L<Glib::Event> modules that map Glib to
@@ -70,9 +82,18 @@ sub timer {
                 remove Glib::Source $source;
                 $source = add Glib::Timeout $ival, sub { &$cb; 1 };
                 &$cb;
-                0
+                1 # already removed, should be a nop
               }
-            : sub { &$cb; 0 };
+            : sub {
+               # due to the braindamaged libglib API (it manages
+               # removed-but-active watchers internally, but forces
+               # users to # manage the same externally as well),
+               # we have to go through these contortions.
+               remove Glib::Source $source;
+               undef $source;
+               &$cb;
+               1 # already removed, should be a nop
+            };
 
    bless \\$source, $class
 }
@@ -87,7 +108,8 @@ sub idle {
 }
 
 sub DESTROY {
-   remove Glib::Source $${$_[0]};
+   remove Glib::Source $${$_[0]}
+      if defined $${$_[0]};
 }
 
 our %pid_w;
@@ -105,10 +127,16 @@ sub child {
    $pid_cb{$pid}{$cb+0} = $cb;
 
    $pid_w{$pid} ||= Glib::Child->watch_add ($pid, sub {
+      # the unbelievably braindamaged glib api ignores the return
+      # value and always removes the watcher (this is of course
+      # undocumented), so we need to go through these contortions to
+      # work around this, here and in DESTROY.
+      undef $pid_w{$pid};
+
       $_->($_[0], $_[1])
          for values %{ $pid_cb{$pid} };
 
-      1
+      1 # gets ignored
    });
 
    bless [$pid, $cb+0], "AnyEvent::Impl::Glib::child"
@@ -120,7 +148,8 @@ sub AnyEvent::Impl::Glib::child::DESTROY {
    delete $pid_cb{$pid}{$icb};
    unless (%{ $pid_cb{$pid} }) {
       delete $pid_cb{$pid};
-      remove Glib::Source delete $pid_w{$pid};
+      my $source = delete $pid_w{$pid};
+      remove Glib::Source if defined $source;
    }
 }
 
