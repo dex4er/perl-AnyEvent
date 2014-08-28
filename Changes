@@ -14,9 +14,7 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
-TODO: Ilya Chesnokov, resoolver requests, limit.
 TODO: improve confess skipping
-TODO: Mike Lowell AnyEvent + libuv
         - work around a newly introduced bug in Socket 2.011 (an
           errornous sun_length check) (analyzed by Maxime Soulé).
 	- AnyEvent::TLS didn't load (but refer to) AnyEvent::Socket
