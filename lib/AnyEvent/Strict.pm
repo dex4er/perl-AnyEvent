@@ -28,6 +28,9 @@ use Carp qw(confess);
 use Errno ();
 use POSIX ();
 
+$Carp::Internal{AE}               = 1;
+$Carp::Internal{AnyEvent::Strict} = 1;
+
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 
 AnyEvent::_isa_hook 1 => "AnyEvent::Strict", 1;

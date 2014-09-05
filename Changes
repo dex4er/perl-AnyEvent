@@ -14,7 +14,6 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
-TODO: improve confess skipping
         - work around a newly introduced bug in Socket 2.011 (an
           errornous sun_length check) (analyzed by Maxime Soulé).
 	- AnyEvent::TLS didn't load (but refer to) AnyEvent::Socket
@@ -25,6 +24,8 @@ TODO: improve confess skipping
           certain undocumented behaviour patterns such as not being able to
           remove a child watch source after it has fired, which we will try
           to emulate to avoid "criticals". what where they thinking...).
+        - mention json security issues in AnyEvent::Handle, now that Douglas
+          Crockford has foolishly and incompatibly changed JSON.
         - changed default dns resolver "max_outstanding" value from 1 to 10,
           the latter beinfg the intended value all along
           (reported by Ilya Chesnokov).

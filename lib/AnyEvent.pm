@@ -1568,7 +1568,7 @@ package AE;
 our $VERSION = $AnyEvent::VERSION;
 
 sub _reset() {
-   eval q{ 
+   eval q{
       # fall back to the main API by default - backends and AnyEvent::Base
       # implementations can overwrite these.
 
