@@ -1,8 +1,9 @@
 NAME
     AnyEvent - the DBI of event loop programming
 
-    EV, Event, Glib, Tk, Perl, Event::Lib, Irssi, rxvt-unicode, IO::Async,
-    Qt, FLTK and POE are various supported event loops/environments.
+    EV, Event, Glib, Tk, UV, Perl, Event::Lib, Irssi, rxvt-unicode,
+    IO::Async, Qt, FLTK and POE are various supported event
+    loops/environments.
 
 SYNOPSIS
        use AnyEvent;
@@ -845,6 +846,7 @@ SUPPORTED EVENT LOOPS/BACKENDS
            AnyEvent::Impl::Event     based on Event, very stable, few glitches.
            AnyEvent::Impl::Glib      based on Glib, slow but very stable.
            AnyEvent::Impl::Tk        based on Tk, very broken.
+           AnyEvent::Impl::UV        based on UV, innovated square wheels.
            AnyEvent::Impl::EventLib  based on Event::Lib, leaks memory and worse.
            AnyEvent::Impl::POE       based on POE, very slow, some limitations.
            AnyEvent::Impl::Irssi     used when running within irssi.
@@ -986,7 +988,7 @@ GLOBAL VARIABLES AND FUNCTIONS
         transaction object or guard to let you cancel the operation. For
         example, "AnyEvent::Socket::tcp_connect":
 
-           # start a conenction attempt unless one is active
+           # start a connection attempt unless one is active
            $self->{connect_guard} ||= AnyEvent::Socket::tcp_connect "www.example.net", 80, sub {
               delete $self->{connect_guard};
               ...
@@ -1360,7 +1362,7 @@ ENVIRONMENT VARIABLES
 
         This variable can effectively be used for denial-of-service attacks
         against local programs (e.g. when setuid), although the impact is
-        likely small, as the program has to handle conenction and other
+        likely small, as the program has to handle connection and other
         failures anyways.
 
         Examples: "PERL_ANYEVENT_PROTOCOLS=ipv4,ipv6" - prefer IPv4 over
