@@ -472,7 +472,8 @@ when the program exits I<and> all redirected file descriptors have been
 exhausted.
 
 The C<$cmd> is either a single string, which is then passed to a shell, or
-an arrayref, which is passed to the C<execvp> function.
+an arrayref, which is passed to the C<execvp> function (the first array
+element is used both for the executable name and argv[0]).
 
 The key-value pairs can be:
 
@@ -564,7 +565,7 @@ Example: run F<openssl> and create a self-signed certificate and key,
 storing them in C<$cert> and C<$key>. When finished, check the exit status
 in the callback and print key and certificate.
 
-   my $cv = run_cmd [qw(openssl req 
+   my $cv = run_cmd [qw(openssl req
                      -new -nodes -x509 -days 3650
                      -newkey rsa:2048 -keyout /dev/fd/3
                      -batch -subj /CN=AnyEvent
