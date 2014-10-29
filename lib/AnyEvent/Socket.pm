@@ -601,7 +601,7 @@ sub unpack_sockaddr($) {
    }
 }
 
-=item resolve_sockaddr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
+=item AnyEvent::Socket::resolve_sockaddr $node, $service, $proto, $family, $type, $cb->([$family, $type, $proto, $sockaddr], ...)
 
 Tries to resolve the given nodename and service name into protocol families
 and sockaddr structures usable to connect to this node and service in a

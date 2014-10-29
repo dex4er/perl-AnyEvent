@@ -485,7 +485,7 @@ function.
 This is the function that is called after logging a C<fatal> log
 message. It must not return.
 
-The default implementation simpl calls C<exit 1>.
+The default implementation simply calls C<exit 1>.
 
 In your main program (as opposed to in your module) you can override
 the fatal exit function by loading this module and then redefining this
