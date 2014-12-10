@@ -134,9 +134,6 @@ parameters, together with a retry callback. At the time it is called the
 read and write queues, EOF status, TLS status and similar properties of
 the handle will have been reset.
 
-It is not allowed to use the read or write queues while the handle object
-is connecting.
-
 If, for some reason, the handle is not acceptable, calling C<$retry> will
 continue with the next connection target (in case of multi-homed hosts or
 SRV records there can be multiple connection endpoints). The C<$retry>

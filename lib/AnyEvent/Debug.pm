@@ -46,7 +46,7 @@ our %STRCACHE;
 
 This function binds on the given host and service port and returns a
 shell object, which determines the lifetime of the shell. Any number
-of conenctions are accepted on the port, and they will give you a very
+of connections are accepted on the port, and they will give you a very
 primitive shell that simply executes every line you enter.
 
 All commands will be executed "blockingly" with the socket C<select>ed for

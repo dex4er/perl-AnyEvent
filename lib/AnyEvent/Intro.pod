@@ -175,7 +175,7 @@ in scope when a closure is created can be used inside the closure:
    call_me_back_later sub { $arg->method };
 
 Under most circumstances, closures are faster, use fewer resources and
-result in much clearer code then the traditional approach. Faster,
+result in much clearer code than the traditional approach. Faster,
 because parameter passing and storing them in local variables in Perl
 is relatively slow. Fewer resources, because closures take references
 to existing variables without having to create new ones, and clearer
