@@ -646,7 +646,7 @@ sub verbose {
 
    my $res = "type:    $self->{type} watcher\n"
            . "args:    " . (join " ", %{ $self->{arg} }) . "\n" # TODO: decode fh?
-           . "created: " . (AnyEvent::Log::ft $self->{now}) . " ($self->{now})\n"
+           . "created: " . (AnyEvent::Log::format_time $self->{now}) . " ($self->{now})\n"
            . "file:    ${ $self->{rfile} }\n"
            . "line:    $self->{line}\n"
            . "subname: $self->{sub}\n"
@@ -662,7 +662,7 @@ sub verbose {
    if (exists $self->{error}) {
       $res .= "errors:   " . @{$self->{error}} . "\n";
 
-      $res .= "error: " . (AnyEvent::Log::ft $_->[0]) . " ($_->[0]) $_->[1]\n"
+      $res .= "error: " . (AnyEvent::Log::format_time $_->[0]) . " ($_->[0]) $_->[1]\n"
          for @{$self->{error}};
    }
 

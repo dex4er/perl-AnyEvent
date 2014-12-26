@@ -9,6 +9,10 @@ TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
 
+	- AnyEvent::Debug called an internal function (AnyEvent::Log::ft)
+          that was renamed to AnyEvent::Log:format_time. uinder its old name
+          (analyzed by Michael Stovenour).
+
 7.08 Wed Dec 10 05:27:17 CET 2014
         - work around a newly introduced bug in Socket 2.011 (an
           errornous sun_length check) (analyzed by Maxime Soulé).
