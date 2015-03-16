@@ -3045,13 +3045,13 @@ L<AnyEvent::Debug> (interactive shell, watcher tracing).
 
 Supported event modules: L<AnyEvent::Loop>, L<EV>, L<EV::Glib>,
 L<Glib::EV>, L<Event>, L<Glib::Event>, L<Glib>, L<Tk>, L<Event::Lib>,
-L<Qt>, L<POE>, L<FLTK>.
+L<Qt>, L<POE>, L<FLTK>, L<Cocoa::EventLoop>, L<UV>.
 
 Implementations: L<AnyEvent::Impl::EV>, L<AnyEvent::Impl::Event>,
 L<AnyEvent::Impl::Glib>, L<AnyEvent::Impl::Tk>, L<AnyEvent::Impl::Perl>,
 L<AnyEvent::Impl::EventLib>, L<AnyEvent::Impl::Qt>,
-L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>, L<Anyevent::Impl::Irssi>,
-L<AnyEvent::Impl::FLTK>.
+L<AnyEvent::Impl::POE>, L<AnyEvent::Impl::IOAsync>, L<AnyEvent::Impl::Irssi>,
+L<AnyEvent::Impl::FLTK>, L<AnyEvent::Impl::Cocoa>, L<AnyEvent::Impl::UV>.
 
 Non-blocking handles, pipes, stream sockets, TCP clients and
 servers: L<AnyEvent::Handle>, L<AnyEvent::Socket>, L<AnyEvent::TLS>.

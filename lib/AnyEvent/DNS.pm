@@ -47,9 +47,9 @@ our @DNS_FALLBACK; # some public dns servers as fallback
 
    my $ipv4 = $prep->(
       ["08080808", "08080404"], # 8.8.8.8, 8.8.4.4 - google public dns
-#      ["d1f40003", "d1f30004"], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
-      ["04020201", "04020203", "04020204", "04020205", "04020206"], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
-      ["cdd22ad2", "4044c8c8"], # 205.210.42.205, 64.68.200.200 - cache1/2.dnsresolvers.com - verified public
+##      ["d1f40003", "d1f30004"], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
+##      ["04020201", "04020203", "04020204", "04020205", "04020206"], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
+##      ["cdd22ad2", "4044c8c8"], # 205.210.42.205, 64.68.200.200 - cache1/2.dnsresolvers.com - verified public
 #      ["8d010101"], # 141.1.1.1 - cable&wireless - status unknown
    );
 

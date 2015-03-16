@@ -122,7 +122,7 @@ sub shell($$) {
 
          $logger_guard if 0; # reference it
 
-         if (defined $len ? $len == 0 : $! != Errno::EAGAIN) {
+         if (defined $len ? $len == 0 : ($! != Errno::EAGAIN && $! != Errno::EWOULDBLOCK)) {
             undef $rw;
          } else {
             while ($rbuf =~ s/^(.*)\015?\012//) {

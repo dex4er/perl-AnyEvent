@@ -55,7 +55,7 @@ package AnyEvent::Handle;
 use Scalar::Util ();
 use List::Util ();
 use Carp ();
-use Errno qw(EAGAIN EINTR);
+use Errno qw(EAGAIN EWOULDBLOCK EINTR);
 
 use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(WSAEWOULDBLOCK);
@@ -973,7 +973,7 @@ sub _drain_wbuf {
                   && $self->{on_drain};
 
             delete $self->{_ww} unless length $self->{wbuf};
-         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != EWOULDBLOCK && $! != WSAEWOULDBLOCK) {
             $self->_error ($!, 1);
          }
       };
@@ -2040,7 +2040,7 @@ sub start_read {
             $self->{_eof} = 1;
             $self->_drain_rbuf;
 
-         } elsif ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) {
+         } elsif ($! != EAGAIN && $! != EINTR && $! != EWOULDBLOCK && $! != WSAEWOULDBLOCK) {
             return $self->_error ($!, 1);
          }
       };
@@ -2306,7 +2306,7 @@ sub DESTROY {
 
          if ($len > 0) {
             substr $wbuf, 0, $len, "";
-         } elsif (defined $len || ($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK)) {
+         } elsif (defined $len || ($! != EAGAIN && $! != EINTR && $! != EWOULDBLOCK && $! != WSAEWOULDBLOCK)) {
             @linger = (); # end
          }
       };

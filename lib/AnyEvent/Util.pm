@@ -311,7 +311,7 @@ sub _fork_schedule {
          POSIX::_exit (0);
          exit 1;
          
-      } elsif (($! != &Errno::EAGAIN && $! != &Errno::ENOMEM) || !$forks) {
+      } elsif (($! != &Errno::EAGAIN && $! != &Errno::EWOULDBLOCK && $! != &Errno::ENOMEM) || !$forks) {
          # we ignore some errors as long as we can run at least one job
          # maybe we should wait a few seconds and retry instead
          die "fork_call: $!";
