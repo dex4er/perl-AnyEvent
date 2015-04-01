@@ -1572,7 +1572,8 @@ register_read_type line => sub {
 =item regex => $accept[, $reject[, $skip], $cb->($handle, $data)
 
 Makes a regex match against the regex object C<$accept> and returns
-everything up to and including the match.
+everything up to and including the match. All the usual regex variables
+($1, %+ etc.) from the regex match are available in the callback.
 
 Example: read a single line terminated by '\n'.
 

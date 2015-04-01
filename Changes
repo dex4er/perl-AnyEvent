@@ -8,10 +8,24 @@ TODO: FAQ: scope-ids? hosts file order?
 TODO: AnyEvent::Handle with AnyEvent::IO?
 TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc6761)
 TODO: maybe implement env variable to give hosts precedence
+TODO: hosts always read? that's not expected
 
 	- AnyEvent::Debug called an internal function (AnyEvent::Log::ft)
           that was renamed to AnyEvent::Log:format_time. uinder its old name
           (analyzed by Michael Stovenour).
+        - update AnyEvent::DNS fallback resolver addresses:
+          seems google effectively killed most other free dns resolvers,
+          so remove them, but add cable and wireless (ecrc) since it was
+          stable for 20 years or so, official or not, and there should be
+          an alternative to google.
+        - perl5porters broke windows error codes in 5.20, and mapped
+          WSAEWOULDBLOCK on the (different) EWOULDBLOCK error code, and
+          WSAEINPROGRESS into the incompatible ERINPROGRESS code, probably
+          because they were so cool. They probably broke other error codes
+          for no reason, too, but I didn't care for checking, it's too
+          depressing. This version only works around the WSAEWOULDBLOCK
+          issue, because I don't have a nice way to work around the
+          WSAEINPROGRESS bug.
 
 7.08 Wed Dec 10 05:27:17 CET 2014
         - work around a newly introduced bug in Socket 2.011 (an
