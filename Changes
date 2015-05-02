@@ -10,6 +10,7 @@ TODO: invalid. and localhost. specialcasing inside AEDNS and not AESocket (rfc67
 TODO: maybe implement env variable to give hosts precedence
 TODO: hosts always read? that's not expected
 
+7.09 Sat May  2 16:38:53 CEST 2015
 	- AnyEvent::Debug called an internal function (AnyEvent::Log::ft)
           that was renamed to AnyEvent::Log:format_time. uinder its old name
           (analyzed by Michael Stovenour).

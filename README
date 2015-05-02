@@ -2123,12 +2123,13 @@ SEE ALSO
     AnyEvent::Debug (interactive shell, watcher tracing).
 
     Supported event modules: AnyEvent::Loop, EV, EV::Glib, Glib::EV, Event,
-    Glib::Event, Glib, Tk, Event::Lib, Qt, POE, FLTK.
+    Glib::Event, Glib, Tk, Event::Lib, Qt, POE, FLTK, Cocoa::EventLoop, UV.
 
     Implementations: AnyEvent::Impl::EV, AnyEvent::Impl::Event,
     AnyEvent::Impl::Glib, AnyEvent::Impl::Tk, AnyEvent::Impl::Perl,
     AnyEvent::Impl::EventLib, AnyEvent::Impl::Qt, AnyEvent::Impl::POE,
-    AnyEvent::Impl::IOAsync, Anyevent::Impl::Irssi, AnyEvent::Impl::FLTK.
+    AnyEvent::Impl::IOAsync, AnyEvent::Impl::Irssi, AnyEvent::Impl::FLTK,
+    AnyEvent::Impl::Cocoa, AnyEvent::Impl::UV.
 
     Non-blocking handles, pipes, stream sockets, TCP clients and servers:
     AnyEvent::Handle, AnyEvent::Socket, AnyEvent::TLS.
